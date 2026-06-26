@@ -1,0 +1,123 @@
+# Naming Rules
+
+> 모든 화면, 기능, 컴포넌트 이름은 이 규칙을 따른다. 규칙 외의 이름은 사용하지 않는다.
+
+---
+
+## Screen Naming
+
+**패턴:** `S##_ScreenNameScreen`
+
+| Screen ID | 이름 |
+|-----------|------|
+| S01 | S01_CommitListScreen |
+| S02 | S02_HistoryViewScreen |
+| S03 | S03_CodeViewerScreen |
+| S04 | S04_AISummaryViewerScreen |
+| S05 | S05_DependencyCanvasScreen |
+| S06 | S06_SettingsScreen |
+
+- 번호는 2자리 zero-padding (`S01`, `S02`, ...).
+- 이름은 PascalCase, 반드시 `Screen` 접미사로 끝낸다.
+- Figma 프레임 이름과 코드 컴포넌트 이름을 동일하게 유지한다.
+
+---
+
+## Feature Naming
+
+**패턴:** `F##_FeatureName`
+
+| Feature ID | 이름 |
+|------------|------|
+| F01 | F01_CommitLog |
+| F02 | F02_ChangedFileTree |
+| F03 | F03_CodeViewer |
+| F04 | F04_DependencyCanvas |
+| F05 | F05_AISummaryFile |
+| F05b | F05b_AISummaryCommit |
+| F06 | F06_AISettings |
+| F07 | F07_SavePathSettings |
+| F08 | F08_BatchAISummary |
+
+- 번호는 2자리 zero-padding (`F01`, `F02`, ...).
+- 알파벳 suffix는 소문자로 붙인다 (`F05b`).
+- 이름은 PascalCase, Feature의 핵심 동작을 명사형으로 표현한다.
+
+---
+
+## Component Naming
+
+**패턴:** `PascalCase`
+
+### 예시
+
+```
+CommitListItem
+CommitFilterPanel
+DateRangeFilter
+AuthorDropdown
+KeywordSearchInput
+FileTreeNode
+FileStatusBadge
+SavedBadge
+FileActionButtons
+DependencyGraph
+FileNode
+DependencyEdge
+LegendPanel
+CanvasControls
+AISummaryViewer
+StreamingTextRenderer
+RegenerateButton
+AIProviderButton
+SavePathSelector
+BatchProgressBar
+```
+
+---
+
+## 금지 이름 목록
+
+아래 이름은 Figma, 코드, 문서 어디에서도 사용하지 않는다.
+
+| 금지 | 대체 방법 |
+|------|-----------|
+| `Frame 1` | 화면 목적을 나타내는 이름 사용 (`CommitListScreen`) |
+| `Group 1` | 그룹의 역할을 나타내는 이름 사용 (`FilterSection`) |
+| `Container` | 포함된 콘텐츠로 이름 표현 (`CommitListItem`) |
+| `Wrapper` | 포함된 콘텐츠로 이름 표현 (`AISummaryViewer`) |
+| `Box` | 포함된 콘텐츠로 이름 표현 (`StatusBadge`) |
+| `Area` | 포함된 콘텐츠로 이름 표현 (`FilterPanel`) |
+| `Div` | 의미 있는 이름 사용 |
+| `Section` (단독) | 접두사 추가 (`FilterSection`, `ActionSection`) |
+| `Inner`, `Outer` | 계층 구조로 표현 |
+
+---
+
+## 디렉토리 Naming
+
+**패턴:** `snake_case`
+
+```
+docs/
+  features/
+    F01_commit_log/
+    F02_changed_file_tree/
+    F04_dependency_canvas/
+  screens/
+    S01_commit_list/
+    S05_dependency_canvas/
+```
+
+- Feature/Screen ID는 대문자, 이름 부분은 소문자 snake_case.
+- 파일명은 `spec.md`, `blueprint.md`로 고정.
+
+---
+
+## 저장 파일 Naming
+
+AI 정리 결과물 저장 시 파일시스템 규칙:
+
+- **파일 단위:** `{설정경로}/{폴더명}/{파일명}.md`
+- **커밋 단위:** `{설정경로}/{폴더명}/_commit_summary.md`
+- **폴더명 규칙:** 커밋 메시지 앞 50자. 파일시스템 불가 특수문자(`/`, `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`)는 `_`로 치환.

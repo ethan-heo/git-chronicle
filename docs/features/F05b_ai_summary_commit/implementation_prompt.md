@@ -1,0 +1,195 @@
+# Implementation Prompt: F05b_AISummaryCommit
+
+> Claude Code 또는 Cursor에 직접 입력하여 구현을 생성하는 프롬프트
+
+---
+
+## Technical Context
+
+F05_AISummaryFile과 거의 동일한 구현. `summaryMode = 'commit'`으로 분기하며, 아래 두 가지 차이만 있다:
+
+1. **diff 범위**: 단일 파일이 아닌 커밋 전체 diff (`git show {hash}`)
+2. **저장 파일명**: `_commit_summary.md` (파일 경로 기반 이름 아님)
+
+---
+
+## Files to Create / Modify
+
+| 파일 | 역할 |
+|------|------|
+| `src/extension/aiService.ts` | F05와 공유 (변경 불필요) |
+| `src/extension/summaryFileService.ts` | `saveCommitSummary()`, `loadCommitSummary()` 함수 추가 |
+| `src/extension/gitService.ts` | `fetchCommitFullDiff()` 함수 추가 |
+| `src/webview/screens/S04_AISummaryViewerScreen.tsx` | `summaryMode` 분기 처리 추가 |
+
+---
+
+## TypeScript Interfaces
+
+```typescript
+// F05와 공유하는 타입 (추가 없음)
+// summaryMode: 'file' | 'commit' 전역 상태 활용
+```
+
+---
+
+## Extension Host Implementation
+
+### `fetchCommitFullDiff()` in `gitService.ts`
+
+```typescript
+export async function fetchCommitFullDiff(
+  repoPath: string,
+  commitHash: string
+): Promise<string> {
+  const git = simpleGit(repoPath);
+  // 커밋 전체 diff (모든 변경 파일 포함)
+  const diff = await git.show([
+    commitHash,
+    '--stat',
+    '-p',
+    '--unified=3',
+  ]);
+  return diff;
+}
+```
+
+### `summaryFileService.ts` 추가 함수
+
+```typescript
+export function saveCommitSummary(
+  savePath: string,
+  commitHash: string,
+  content: string
+): void {
+  const dir = path.join(savePath, commitHash);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, '_commit_summary.md'), content, 'utf-8');
+}
+
+export function loadCommitSummary(
+  savePath: string,
+  commitHash: string
+): string | null {
+  const mdPath = path.join(savePath, commitHash, '_commit_summary.md');
+  if (!fs.existsSync(mdPath)) return null;
+  return fs.readFileSync(mdPath, 'utf-8');
+}
+```
+
+### 메시지 핸들러 (`generateCommitSummary`)
+
+```typescript
+case 'generateCommitSummary': {
+  const { commitHash, provider, savePath } = message;
+
+  const fullDiff = await fetchCommitFullDiff(repoPath, commitHash);
+  const TOKEN_LIMIT_CHARS = 20000;  // 커밋 전체 diff는 더 넉넉하게
+  const isOverLimit = fullDiff.length > TOKEN_LIMIT_CHARS;
+
+  panel.webview.postMessage({ command: 'summaryTokenWarning', isOverLimit });
+
+  const prompt = buildCommitSummaryPrompt(commitHash, fullDiff);
+
+  let fullContent = '';
+  streamAISummary({
+    provider,
+    prompt,
+    onChunk: chunk => {
+      fullContent += chunk;
+      panel.webview.postMessage({ command: 'summaryChunk', chunk });
+    },
+    onComplete: () => {
+      saveCommitSummary(savePath, commitHash, fullContent);
+      panel.webview.postMessage({ command: 'summaryComplete' });
+    },
+    onError: err => {
+      panel.webview.postMessage({ command: 'summaryError', error: err });
+    },
+  });
+  break;
+}
+```
+
+---
+
+## AI 프롬프트 템플릿
+
+```typescript
+export function buildCommitSummaryPrompt(commitHash: string, diff: string): string {
+  return `다음은 Git 커밋의 전체 변경 내용입니다.
+
+커밋 해시: ${commitHash.slice(0, 7)}
+
+\`\`\`diff
+${diff}
+\`\`\`
+
+위 커밋의 전체 변경 사항을 한국어로 요약해 주세요:
+1. 이 커밋의 목적과 배경
+2. 주요 변경 파일별 핵심 내용
+3. 전체적인 영향 범위
+
+마크다운 형식으로 작성해 주세요.`;
+}
+```
+
+---
+
+## Webview 분기 처리 (`S04_AISummaryViewerScreen.tsx`)
+
+```tsx
+// summaryMode에 따라 Extension Host 명령 분기
+useEffect(() => {
+  if (!selectedCommit) return;
+
+  if (summaryMode === 'commit') {
+    // 저장본 확인
+    const saved = loadCommitSummary(savePath, selectedCommit.hash);
+    if (saved) {
+      setSummaryContent(saved);
+      setHasSavedSummary(true);
+      return;
+    }
+    // 새로 생성
+    window.vscode.postMessage({
+      command: 'generateCommitSummary',
+      commitHash: selectedCommit.hash,
+      provider: activeAIProvider,
+      savePath,
+    });
+  } else {
+    // F05 파일 요약 로직 (기존)
+    window.vscode.postMessage({
+      command: 'generateFileSummary',
+      commitHash: selectedCommit.hash,
+      filePath: selectedFile!.path,
+      provider: activeAIProvider,
+      savePath,
+    });
+  }
+}, [summaryMode, selectedCommit]);
+
+// TopHeader breadcrumb 분기
+const breadcrumb = summaryMode === 'commit'
+  ? `${selectedCommit?.message} > 커밋 전체 요약`
+  : `${selectedCommit?.message} > ${selectedFile?.path}`;
+```
+
+---
+
+## Business Rules
+
+1. 저장 파일명은 항상 `_commit_summary.md` (하이픈으로 시작 → 파일 정렬 시 상단 노출)
+2. F05의 `hasSavedSummary`는 `ChangedFile` 단위이고, 커밋 요약은 별도 상태로 관리
+3. `OverwriteConfirmDialog`, `RegenerateButton`, `StreamingTextRenderer`는 F05와 동일 컴포넌트 재사용
+4. `summaryMode`는 Zustand 전역 상태에서 관리
+
+---
+
+## References
+
+- [F05b spec.md](./spec.md)
+- [F05b blueprint.md](./blueprint.md)
+- [F05 implementation_prompt.md](../F05_ai_summary_file/implementation_prompt.md)
+- [state_model.md](../../core/state_model.md)

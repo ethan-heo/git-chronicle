@@ -1,0 +1,102 @@
+# Feature: F02_ChangedFileTree
+
+## Related Original Sections
+
+- [화면 구성 > S-02](../../product/product_overview.md#s-02)
+- [사용자 시나리오 > 3.3 이력 조회](../../product/product_overview.md#feature-summary)
+- [기능 상세 > 4.7 변경 파일 트리](../../product/product_overview.md#feature-summary)
+- [Blueprint (UI/컴포넌트 명세)](./blueprint.md)
+
+---
+
+## Purpose
+
+선택된 커밋에서 변경된 파일을 디렉토리 트리 구조로 표시하여, 사용자가 변경 범위를 파악하고 파일별 코드 뷰어 또는 AI 정리 뷰어로 진입할 수 있도록 한다.
+
+---
+
+## User Goal
+
+특정 커밋에서 어떤 파일이 어떻게 변경되었는지 트리 형태로 확인하고, 관심 있는 파일의 diff 또는 AI 정리로 이동한다.
+
+---
+
+## User Scenarios
+
+1. 선택된 커밋의 변경 파일이 **디렉토리 트리** 형태로 표시된다.
+2. 파일 항목에 마우스를 호버링하면 두 개의 액션 버튼이 활성화된다.
+   - **[코드 보기]** → 코드 뷰어(S-03) 활성화
+   - **[AI 정리 보기]** → AI 정리 뷰어(S-04) 활성화
+     - 해당 파일의 AI 정리 저장본이 이미 존재하면 파일명 옆에 **"저장됨"** 뱃지가 표시되며, 클릭 시 기존 저장본을 즉시 불러온다.
+     - 저장본이 없으면 AI를 호출하여 새로 생성한다.
+3. 화면 상단에는 커밋 단위 액션 버튼이 위치한다.
+   - **[커밋 AI 정리]** → S-04 활성화 (커밋 전체 종합 요약)
+   - **[전체 파일 AI 정리]** → 모든 파일 AI 정리 순차 생성 (F-08)
+   - **[캔버스 보기]** → S-05 활성화
+
+---
+
+## Business Rules
+
+| 항목 | 내용 |
+|------|------|
+| 파일 상태 표시 | 파일명 앞 뱃지 레터로 구분: `A` 추가 / `M` 수정 / `D` 삭제 / `R` 이름 변경 |
+| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, 해당 파일의 `.md` 저장본이 존재할 때만 표시 |
+| 대용량 커밋 처리 | 변경 파일 수 무관하게 전체 렌더링. 성능 문제 발생 시 추후 가상 리스트(react-window) 적용 검토 |
+| 트리 구조 | 디렉토리 경로 기준으로 계층 분리. 디렉토리 노드는 토글 가능 |
+
+---
+
+## Error Handling
+
+| 상황 | 처리 |
+|------|------|
+| 변경 파일 로드 실패 | `ErrorState`: "변경 파일 목록을 불러오지 못했습니다" + [재시도] 버튼 |
+| 변경 파일 없음 | `EmptyState`: "변경된 파일이 없습니다" |
+
+---
+
+## Dependencies
+
+- [F05_AISummaryFile](../F05_ai_summary_file/spec.md) — 파일 클릭 시 AI 정리 생성
+- [F08_BatchAISummary](../F08_batch_ai_summary/spec.md) — [전체 파일 AI 정리] 버튼
+- [F03_CodeViewer](../F03_code_viewer/spec.md) — [코드 보기] 버튼
+
+---
+
+## Related Screens
+
+- [S02_HistoryViewScreen](../../screens/S02_history_view/blueprint.md)
+
+---
+
+## Data Sources
+
+| 소스 | 타입 | 설명 |
+|------|------|------|
+| `selectedCommit` | `Commit` | 전역 상태. 변경 파일 조회 기준 커밋 |
+| `savePath` | `string \| null` | 전역 상태. 저장본 존재 여부 판단용 |
+| simple-git `diff --name-status` | `ChangedFile[]` | Extension Host에서 해당 커밋의 변경 파일 목록 추출 |
+| 로컬 파일시스템 | `boolean` | `{savePath}/{폴더명}/{파일명}.md` 존재 여부로 `hasSavedSummary` 설정 |
+
+---
+
+## Outputs
+
+| 출력 | 타입 | 설명 |
+|------|------|------|
+| `changedFiles` | `ChangedFile[]` | 전역 상태 업데이트. 변경 파일 목록 |
+| `selectedFile` | `ChangedFile` | 전역 상태 업데이트. 파일 클릭 시 설정 |
+
+---
+
+## Side Effects
+
+| 효과 | 트리거 | 설명 |
+|------|--------|------|
+| `changedFiles` 전역 상태 업데이트 | `selectedCommit` 설정 시 | 해당 커밋의 변경 파일 목록 로드 |
+| S-03 화면 전환 | `selectedFile` 설정 + [코드 보기] | `currentScreen = "S03"`, `previousScreen = "S02"` |
+| S-04 화면 전환 | `selectedFile` 설정 + [AI 정리 보기] | `currentScreen = "S04"`, `summaryMode = "file"` |
+| S-04 화면 전환 (커밋) | [커밋 AI 정리] 클릭 | `currentScreen = "S04"`, `summaryMode = "commit"` |
+| S-05 화면 전환 | [캔버스 보기] 클릭 | `currentScreen = "S05"` |
+| F08 시작 트리거 | [전체 파일 AI 정리] 클릭 | `isBatchRunning = true`, `batchTotal` 설정 |

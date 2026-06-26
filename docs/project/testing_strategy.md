@@ -1,0 +1,161 @@
+# Testing Strategy — Git Author Explorer
+
+> **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
+
+---
+
+## 테스트 계층
+
+Git Author Explorer의 테스트는 세 계층으로 구분한다.
+
+| 계층 | 도구 | 대상 | 목적 |
+|------|------|------|------|
+| 단위 테스트 | Vitest | 유틸 함수, Zustand 스토어 액션 | 비즈니스 로직 정확성 |
+| 컴포넌트 테스트 | Vitest + Testing Library | React 컴포넌트 | UI 렌더링·인터랙션 |
+| Extension 통합 테스트 | VSCode Extension Test Runner | Extension Host 서비스 | Node.js API 연동 |
+
+---
+
+## 단위 테스트 (Unit Tests)
+
+### 대상
+
+#### 유틸 함수 (`src/webview/shared/utils/`)
+
+```typescript
+// folderName.test.ts
+describe('getFolderName', () => {
+  it('커밋 메시지 앞 50자만 사용한다', () => {
+    const long = 'a'.repeat(60);
+    expect(getFolderName(long)).toHaveLength(50);
+  });
+
+  it('파일시스템 불가 문자를 _로 치환한다', () => {
+    expect(getFolderName('fix: resolve /path/issue')).toBe('fix_ resolve _path_issue');
+  });
+
+  it('모든 금지 문자(/ \\ : * ? " < > |)를 치환한다', () => {
+    const input = '/:*?"<>|\\';
+    const result = getFolderName(input);
+    expect(result).not.toMatch(/[\/\\:*?"<>|]/);
+  });
+});
+```
+
+#### Zustand 스토어 액션
+
+```typescript
+// useAppStore.test.ts
+describe('useAppStore', () => {
+  it('selectCommit 시 selectedFile이 초기화된다', () => {
+    const { selectCommit } = useAppStore.getState();
+    selectCommit(mockCommit);
+    expect(useAppStore.getState().selectedFile).toBeNull();
+  });
+
+  it('setActiveAIProvider 시 다른 provider가 비활성화된다', () => {
+    // ...
+  });
+
+  it('startBatch 후 completeBatch 시 batchCurrent가 0으로 초기화된다', () => {
+    // ...
+  });
+});
+```
+
+### 커버리지 목표
+
+- 유틸 함수: **100%**
+- Zustand 액션: **80% 이상**
+
+---
+
+## 컴포넌트 테스트 (Component Tests)
+
+### 원칙
+
+- Testing Library의 `getByRole`, `getByText`를 우선 사용한다. `getByTestId`는 최후 수단.
+- 사용자 행동을 중심으로 테스트한다 ("클릭 시 X가 표시된다" 형태).
+- 실제 Zustand 스토어를 사용하되, 테스트마다 스토어를 초기화한다.
+
+### 주요 테스트 케이스
+
+#### CommitListItem
+
+```typescript
+it('커밋 정보(해시·메시지·작성자·날짜)가 렌더링된다', ...);
+it('클릭 시 onClick 콜백이 호출된다', ...);
+it('Enter 키로 클릭과 동일한 효과가 발생한다', ...);
+```
+
+#### FileTreeNode
+
+```typescript
+it('파일 상태 뱃지(A/M/D/R)가 올바르게 표시된다', ...);
+it('savePath가 설정되고 .md 파일이 존재하면 저장됨 뱃지가 표시된다', ...);
+it('호버 시 [코드 보기] / [AI 정리 보기] 버튼이 나타난다', ...);
+```
+
+#### AISummaryViewer
+
+```typescript
+it('isGeneratingSummary = true 시 스트리밍 텍스트가 순차 표시된다', ...);
+it('summaryError가 있으면 ErrorState 컴포넌트가 렌더링된다', ...);
+it('저장본 로드 완료 후 react-markdown으로 렌더링된다', ...);
+```
+
+#### BatchProgressBar
+
+```typescript
+it('isBatchRunning = false 시 렌더링되지 않는다', ...);
+it('진행 상태가 "n / 전체" 형식으로 표시된다', ...);
+it('[취소] 클릭 시 cancelBatch 액션이 호출된다', ...);
+```
+
+---
+
+## Extension 통합 테스트
+
+### 대상
+
+- `gitService.ts`: `git log`, `git diff` 실행 결과 파싱
+- `summaryStorage.ts`: 파일 존재 여부 확인, 저장, 읽기
+- `cliDetector.ts`: `--version` 실행으로 CLI 감지
+
+### 실행 방법
+
+```bash
+npm run test:extension
+```
+
+VSCode Extension Test Runner가 실제 VSCode 프로세스를 시작하여 Extension Host 환경에서 테스트를 실행한다.
+
+---
+
+## 테스트 제외 대상
+
+| 항목 | 이유 |
+|------|------|
+| Shiki 렌더링 결과 | 외부 라이브러리 내부 로직. 스냅샷 테스트로 대체 |
+| React Flow 캔버스 레이아웃 | 그래픽 좌표 계산은 시각적 검증이 필요 |
+| child_process.spawn 실제 AI 호출 | CI 환경에 CLI 설치 불가. Mock 사용 |
+
+---
+
+## CI/CD 통합
+
+```yaml
+# .github/workflows/test.yml
+- run: npm run typecheck
+- run: npm run lint
+- run: npm run test          # Vitest 단위/컴포넌트 테스트
+# Extension 통합 테스트는 로컬에서만 실행 (headful VSCode 필요)
+```
+
+---
+
+## 관련 문서
+
+- [architecture.md](./architecture.md)
+- [coding_standards.md](./coding_standards.md)
+- [directory_structure.md](./directory_structure.md)
