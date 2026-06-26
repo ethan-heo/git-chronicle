@@ -94,10 +94,14 @@ src/webview/
 │   │   ├── FileTreeNode.tsx          # 파일 노드 (상태/저장됨/액션)
 │   │   ├── tree.ts                   # ChangedFile[] → 디렉토리 트리 변환
 │   │   └── index.ts                  # F02 barrel export
-│   ├── F03_code_viewer/
-│   │   ├── CodeViewerFeature.tsx
-│   │   ├── DiffViewer.tsx            # unified diff + Shiki 하이라이팅
-│   │   └── useCodeViewer.ts
+│   ├── F03/
+│   │   ├── S03_CodeViewerScreen.tsx  # S03 화면 조합, diff 메시지 구독
+│   │   ├── DiffViewer.tsx            # 상태 분기 + diff list 컨테이너
+│   │   ├── DiffLine.tsx              # old/new line number + +/- prefix + code token
+│   │   ├── parseDiff.ts              # unified diff → DiffLineData[]
+│   │   ├── highlightDiff.ts          # Shiki lazy highlighter
+│   │   ├── types.ts                  # DiffLineData, FileDiffPayload 타입
+│   │   └── index.ts                  # F03 barrel export
 │   ├── F04_dependency_canvas/
 │   │   ├── DependencyCanvasFeature.tsx
 │   │   ├── DependencyGraph.tsx       # React Flow 캔버스 루트

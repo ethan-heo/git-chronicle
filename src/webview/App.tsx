@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { S01CommitListScreen } from './features/F01';
 import { S02HistoryViewScreen } from './features/F02';
+import { S03CodeViewerScreen } from './features/F03';
 import { TopHeader } from './shared/components';
 import { useAppStore } from './store/appStore';
 
@@ -15,7 +16,11 @@ export const App: FC = () => {
     return <S02HistoryViewScreen />;
   }
 
-  if (currentScreen === 'S03' || currentScreen === 'S04' || currentScreen === 'S05') {
+  if (currentScreen === 'S03') {
+    return <S03CodeViewerScreen />;
+  }
+
+  if (currentScreen === 'S04' || currentScreen === 'S05' || currentScreen === 'S06') {
     return (
       <main className="app-shell commit-log-shell pending-screen-shell">
         <TopHeader title={getPendingTitle(currentScreen, summaryMode)} context={selectedFile?.path ?? selectedCommit?.shortHash ?? '준비 중'} showBackButton onBackClick={goToHistoryView} />
@@ -39,6 +44,10 @@ function getPendingTitle(screen: string, summaryMode: string): string {
 
   if (screen === 'S04') {
     return summaryMode === 'commit' ? '커밋 AI 정리' : 'AI 정리 보기';
+  }
+
+  if (screen === 'S06') {
+    return '설정';
   }
 
   return '캔버스 보기';

@@ -8,12 +8,13 @@
 
 ```typescript
 interface DiffViewerProps {
-  diff: string;               // unified diff 텍스트 (git diff 출력 원본)
-  filePath: string;           // 언어 감지용 파일 경로
-  isBinary: boolean;          // 이진 파일 여부
-  isDeleted: boolean;         // 삭제된 파일 여부
+  diffLines: DiffLineData[];  // parseDiff + Shiki token 적용 결과
+  filePath: string;           // aria-label 및 언어 감지 기준
   isLoading: boolean;         // diff 로딩 중 여부
   error: string | null;       // 에러 메시지
+  isBinaryFile: boolean;      // 이진 파일 여부
+  isDeletedFile: boolean;     // 삭제된 파일 여부
+  onRetry: () => void;        // 실패 시 재시도
 }
 ```
 
@@ -25,8 +26,8 @@ interface DiffViewerProps {
 DiffViewer
 ├── [isLoading = true]  → LoadingState ("코드 변경이력을 불러오는 중...")
 ├── [error !== null]    → ErrorState + [재시도]
-├── [isBinary = true]   → "Binary file — diff를 표시할 수 없습니다" 안내
-├── [isDeleted = true]  → "삭제된 파일입니다" 배너 + 삭제 전 코드 표시 (Shiki)
+├── [isBinaryFile = true]   → "Binary file — diff를 표시할 수 없습니다" 안내
+├── [isDeletedFile = true]  → "삭제된 파일입니다" 배너 + 삭제 전 코드 표시 (Shiki)
 └── [정상]              → unified diff Shiki 하이라이팅 렌더링
 ```
 
@@ -35,10 +36,12 @@ DiffViewer
 ## Shiki 통합
 
 - VSCode TextMate 문법 기반 하이라이팅.
-- 언어 그래머는 `filePath`에서 확장자로 감지하여 동적 로드 (모든 언어를 번들에 포함하지 않음).
+- `S03_CodeViewerScreen`에서 `highlightDiff.ts`를 lazy import한다.
+- `highlightDiff.ts`는 Shiki fine-grained bundle을 사용해 지원 언어만 포함한다.
+- 언어는 `filePath` 확장자로 감지한다. 미지원 확장자는 `text`로 fallback한다.
 - diff 라인 색상:
-  - `+` (추가): `var(--vscode-diffEditor-insertedTextBackground)` 배경
-  - `-` (삭제): `var(--vscode-diffEditor-removedTextBackground)` 배경
+  - `+` (추가): `var(--gae-color-diff-added)` 배경
+  - `-` (삭제): `var(--gae-color-diff-removed)` 배경
   - ` ` (컨텍스트): 기본 배경
 
 ---
@@ -59,8 +62,9 @@ DiffViewer
 
 - unified diff 형식 고정 (`git diff --unified`).
 - 이진 파일: diff 표시 불가 메시지만 표시. 다운로드 링크 없음.
-- 삭제 파일: "이 파일은 커밋에서 삭제되었습니다" 배너를 상단에 표시하고, 삭제 전 전체 내용을 코드로 표시.
-- 줄 번호: 표시하지 않음 (추후 추가 검토).
+- 삭제 파일: "삭제된 파일입니다" 배너를 상단에 표시하고, 삭제 전 내용을 diff 라인으로 표시.
+- 줄 번호: old/new 두 컬럼을 표시한다. 좁은 너비에서는 숨길 수 있다.
+- Shiki 하이라이팅 실패 시 plain text 토큰으로 fallback한다.
 
 ---
 
@@ -75,16 +79,25 @@ DiffViewer
   font-size: var(--vscode-editor-font-size, 13px);
 }
 .diff-line-added {
-  background: var(--vscode-diffEditor-insertedTextBackground);
+  background: var(--gae-color-diff-added);
 }
 .diff-line-removed {
-  background: var(--vscode-diffEditor-removedTextBackground);
+  background: var(--gae-color-diff-removed);
 }
-.diff-binary-notice,
+.diff-line {
+  display: grid;
+  grid-template-columns: 48px 48px 18px minmax(0, 1fr);
+  white-space: pre;
+}
 .diff-deleted-notice {
   padding: 12px 16px;
   color: var(--vscode-descriptionForeground);
   font-style: italic;
+}
+.diff-viewer-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 ```
 

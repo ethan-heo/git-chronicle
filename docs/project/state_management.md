@@ -177,9 +177,9 @@ handleChangedFilesLoaded: (files) => set({
 }),
 ```
 
-### F02 화면 전환 액션
+### F02/F03 화면 전환 액션
 
-F02에서 후속 화면으로 전환한다. 현재 S03/S04/S05는 placeholder 화면이며, 실제 데이터 로딩은 후속 Feature 구현에서 연결한다.
+F02에서 후속 화면으로 전환한다. S03은 구현되어 `selectedFile`과 `selectedCommit`을 기준으로 diff를 로드한다. S04/S05는 placeholder 화면이며, 실제 데이터 로딩은 후속 Feature 구현에서 연결한다.
 
 ```typescript
 selectFileForCode: (file) => set({
@@ -200,7 +200,11 @@ goToCommitAISummary: () => set({
 }),
 
 goToCanvasView: () => set({ currentScreen: 'S05' }),
+
+goToSettingsView: () => set({ currentScreen: 'S06' }),
 ```
+
+S03 자체의 diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 읽기 전용 화면의 로컬 상태로 관리한다. Extension Host 메시지는 `features/F03/S03_CodeViewerScreen.tsx`에서 직접 구독한다.
 
 ### startBatchAISummary
 

@@ -114,4 +114,4 @@
 | 메시지 요청 | Webview → Extension: `FETCH_CHANGED_FILES` |
 | 메시지 응답 | Extension → Webview: `CHANGED_FILES_LOADED`, `CHANGED_FILES_LOAD_FAILED` |
 | 브라우저 개발 모드 | VSCode API가 없으면 `appStore.ts`의 `demoChangedFiles`를 사용 |
-| 후속 화면 | S03/S04/S05는 현재 placeholder 화면으로 이동 |
+| 후속 화면 | S03은 실제 코드 뷰어로 이동. S04/S05는 현재 placeholder 화면으로 이동 |

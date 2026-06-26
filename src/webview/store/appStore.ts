@@ -43,6 +43,7 @@ interface AppState extends FilterState {
   selectFileForAI: (file: ChangedFile) => void;
   goToCommitAISummary: () => void;
   goToCanvasView: () => void;
+  goToSettingsView: () => void;
   startBatchAISummary: () => void;
   openRepository: () => void;
   handleCommitsLoaded: (payload: CommitsLoadedPayload) => void;
@@ -203,6 +204,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   goToCanvasView: () => {
     set({
       currentScreen: 'S05',
+    });
+  },
+
+  goToSettingsView: () => {
+    set({
+      currentScreen: 'S06',
     });
   },
 

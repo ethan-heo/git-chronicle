@@ -737,6 +737,107 @@ button:focus-visible,
   font-size: 14px;
 }
 
+.code-viewer-shell {
+  background: var(--vscode-editor-background, var(--gae-color-surface-primary));
+}
+
+.diff-viewer {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  background: var(--vscode-editor-background, var(--gae-color-surface-primary));
+  color: var(--vscode-editor-foreground, var(--gae-color-text-primary));
+  font-family: var(--gae-font-family-mono);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.52;
+}
+
+.diff-viewer:focus-visible {
+  outline: 1px solid var(--gae-border-color-focus);
+  outline-offset: -1px;
+}
+
+.diff-viewer-state {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: var(--vscode-editor-background, var(--gae-color-surface-primary));
+}
+
+.diff-line-list {
+  min-width: max-content;
+  padding: 4px 0 12px;
+}
+
+.diff-line {
+  display: grid;
+  grid-template-columns: 48px 48px 18px minmax(0, 1fr);
+  min-height: 20px;
+  white-space: pre;
+}
+
+.diff-line-added {
+  background: var(--gae-color-diff-added);
+}
+
+.diff-line-removed {
+  background: var(--gae-color-diff-removed);
+}
+
+.diff-line-number {
+  padding: 0 9px;
+  border-right: 1px solid color-mix(in srgb, var(--gae-border-color-default) 58%, transparent);
+  color: var(--vscode-editorLineNumber-foreground, var(--gae-color-text-secondary));
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  user-select: none;
+}
+
+.diff-line-prefix {
+  color: var(--gae-color-text-secondary);
+  text-align: center;
+  user-select: none;
+}
+
+.diff-line-added .diff-line-prefix {
+  color: var(--gae-color-status-added);
+}
+
+.diff-line-removed .diff-line-prefix {
+  color: var(--gae-color-status-deleted);
+}
+
+.diff-line-content {
+  min-width: 0;
+  padding: 0 14px 0 4px;
+  font-family: inherit;
+}
+
+.diff-deleted-notice {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--gae-border-color-default);
+  background: color-mix(in srgb, var(--gae-color-semantic-warning) 16%, var(--gae-color-surface-secondary));
+  color: var(--gae-color-text-primary);
+  padding: 8px 12px;
+  font-size: var(--gae-font-size-sm);
+}
+
+@media (max-width: 320px) {
+  .diff-line {
+    grid-template-columns: 18px minmax(0, 1fr);
+  }
+
+  .diff-line-number {
+    display: none;
+  }
+}
+
 .commit-filter-panel {
   flex-shrink: 0;
   border-bottom: 1px solid var(--gae-border-color-default);

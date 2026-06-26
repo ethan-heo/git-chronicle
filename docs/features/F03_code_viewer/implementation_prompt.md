@@ -6,9 +6,10 @@
 
 ## Technical Context
 
-- **diff 데이터**: Extension Host에서 `simple-git show {hash}:{file}` 또는 `git diff {hash}^ {hash} -- {file}`로 unified diff 추출
-- **구문 강조**: Webview에서 `Shiki` 라이브러리로 diff 라인 하이라이팅
+- **diff 데이터**: Extension Host에서 `simple-git show --format= --find-renames --unified=3 {hash} -- {file}`로 커밋 내 파일 diff 추출
+- **구문 강조**: Webview에서 `Shiki` fine-grained bundle을 lazy import하여 diff 라인 코드 토큰에만 적용
 - **출력 전용**: 상태 변경 없음 (read-only)
+- **현재 구현 위치**: S03 화면은 `src/webview/features/F03/` 내부에 feature-local screen으로 구현한다.
 
 ---
 
@@ -17,9 +18,17 @@
 | 파일 | 역할 |
 |------|------|
 | `src/extension/gitService.ts` | `fetchFileDiff()` 함수 추가 |
+| `src/extension/messageHandler.ts` | `FETCH_FILE_DIFF` / `FILE_DIFF_LOADED` / `FILE_DIFF_LOAD_FAILED` 메시지 처리 |
+| `src/webview/features/F03/types.ts` | diff line, highlight token, payload 타입 |
+| `src/webview/features/F03/parseDiff.ts` | unified diff 파싱 및 old/new line number 계산 |
+| `src/webview/features/F03/highlightDiff.ts` | Shiki highlighter lazy chunk 구성 |
 | `src/webview/features/F03/DiffViewer.tsx` | diff 렌더링 컨테이너 |
 | `src/webview/features/F03/DiffLine.tsx` | 개별 diff 라인 컴포넌트 |
-| `src/webview/screens/S03_CodeViewerScreen.tsx` | S03 화면 조합 컴포넌트 |
+| `src/webview/features/F03/S03_CodeViewerScreen.tsx` | S03 화면 조합 컴포넌트 |
+| `src/webview/features/F03/index.ts` | F03 barrel export |
+| `src/webview/App.tsx` | `currentScreen === "S03"` 라우팅 연결 |
+| `src/webview/styles.css` | diff viewer 레이아웃, line number, added/removed 배경 |
+| `tests/unit/parseDiff.test.ts` | unified diff 파서 회귀 테스트 |
 
 ---
 
@@ -31,21 +40,23 @@ type DiffLineType = 'added' | 'removed' | 'context';
 interface DiffLineData {
   type: DiffLineType;
   content: string;    // 앞의 +/-/ 제거한 실제 내용
-  lineNumber?: number; // context/added는 새 파일 기준, removed는 기존 파일 기준
+  oldLineNumber: number | null;
+  newLineNumber: number | null;
+  tokens: HighlightToken[];
 }
 
 interface DiffViewerProps {
-  selectedFile: ChangedFile;
-  selectedCommit: Commit;
   diffLines: DiffLineData[];
+  filePath: string;
   isLoading: boolean;
+  error: string | null;
   isBinaryFile: boolean;
   isDeletedFile: boolean;
+  onRetry: () => void;
 }
 
 interface DiffLineProps {
   line: DiffLineData;
-  index: number;
 }
 ```
 
@@ -63,35 +74,26 @@ export async function fetchFileDiff(
 ): Promise<{ rawDiff: string; isBinary: boolean; isDeleted: boolean }> {
   const git = simpleGit(repoPath);
 
-  // 이진 파일 감지
-  const isBinary = await isFileBinary(repoPath, commitHash, filePath);
-  if (isBinary) return { rawDiff: '', isBinary: true, isDeleted: false };
+  const rawDiff = await git.show([
+    '--format=',
+    '--find-renames',
+    '--unified=3',
+    commitHash,
+    '--',
+    filePath,
+  ]);
+  const isBinary = /^Binary files? /m.test(rawDiff) || /^GIT binary patch$/m.test(rawDiff);
+  const isDeleted = /^deleted file mode /m.test(rawDiff);
 
-  const parentHash = `${commitHash}^`;
-  try {
-    // unified diff 추출
-    const diff = await git.diff([
-      '--unified=3',
-      parentHash,
-      commitHash,
-      '--',
-      filePath,
-    ]);
-    const isDeleted = diff.includes('deleted file mode');
-    return { rawDiff: diff, isBinary: false, isDeleted };
-  } catch {
-    // 첫 커밋인 경우 show 사용
-    const content = await git.show([`${commitHash}:${filePath}`]);
-    return { rawDiff: content, isBinary: false, isDeleted: false };
-  }
+  return { rawDiff: isBinary ? '' : rawDiff, isBinary, isDeleted };
 }
 ```
 
 Extension Host 메시지 핸들러:
 ```typescript
-case 'fetchFileDiff': {
-  const result = await fetchFileDiff(repoPath, message.commitHash, message.filePath);
-  panel.webview.postMessage({ command: 'fileDiffLoaded', ...result });
+case 'FETCH_FILE_DIFF': {
+  const result = await fetchFileDiff(repoPath, payload.commitHash, payload.filePath);
+  panel.webview.postMessage({ type: 'FILE_DIFF_LOADED', payload: result });
   break;
 }
 ```
@@ -103,48 +105,41 @@ case 'fetchFileDiff': {
 ### Diff 파싱 유틸리티
 
 ```typescript
-// src/webview/utils/parseDiff.ts
+// src/webview/features/F03/parseDiff.ts
 export function parseDiff(rawDiff: string): DiffLineData[] {
-  return rawDiff
-    .split('\n')
-    .filter(line => !line.startsWith('@@') && !line.startsWith('diff ') && !line.startsWith('index '))
-    .map(line => {
-      if (line.startsWith('+') && !line.startsWith('+++')) {
-        return { type: 'added' as const, content: line.slice(1) };
-      }
-      if (line.startsWith('-') && !line.startsWith('---')) {
-        return { type: 'removed' as const, content: line.slice(1) };
-      }
-      return { type: 'context' as const, content: line.startsWith(' ') ? line.slice(1) : line };
-    });
+  // @@ -old,+new hunk header를 기준으로 old/new line number를 계산한다.
+  // diff metadata(diff --git, index, ---/+++)는 렌더링 대상에서 제외한다.
 }
 ```
+
+### Shiki 하이라이팅
+
+- `S03_CodeViewerScreen.tsx`에서 diff load 완료 후 `await import('./highlightDiff')`로 하이라이터를 지연 로드한다.
+- `highlightDiff.ts`는 `shiki/core`, `shiki/engine/javascript`, `shiki/langs/*.mjs`, `shiki/themes/dark-plus.mjs`를 직접 import한다.
+- 현재 지원 확장자: `ts`, `tsx`, `js`, `jsx`, `json`, `css`, `html`, `md`, `mdx`, `yaml`, `yml`.
+- 알 수 없는 확장자는 `text`로 처리하여 plain text로 렌더링한다.
 
 ### `DiffLine.tsx`
 
 ```tsx
-const LINE_STYLES: Record<DiffLineType, React.CSSProperties> = {
-  added: { background: 'var(--vscode-diffEditor-insertedLineBackground)' },
-  removed: { background: 'var(--vscode-diffEditor-removedLineBackground)' },
-  context: { background: 'transparent' },
-};
-
 const LINE_PREFIX: Record<DiffLineType, string> = {
   added: '+',
   removed: '-',
   context: ' ',
 };
 
-export const DiffLine: React.FC<DiffLineProps> = ({ line, index }) => (
-  <div
-    className={`diff-line diff-line--${line.type}`}
-    style={LINE_STYLES[line.type]}
-    aria-label={`${line.type === 'added' ? '추가' : line.type === 'removed' ? '삭제' : '컨텍스트'} 라인`}
-  >
-    <span className="diff-line-prefix" aria-hidden="true">
-      {LINE_PREFIX[line.type]}
-    </span>
-    <code className="diff-line-content">{line.content}</code>
+export const DiffLine: FC<DiffLineProps> = ({ line }) => (
+  <div className={`diff-line diff-line-${line.type}`} role="listitem">
+    <span className="diff-line-number" aria-hidden="true">{line.oldLineNumber ?? ''}</span>
+    <span className="diff-line-number" aria-hidden="true">{line.newLineNumber ?? ''}</span>
+    <span className="diff-line-prefix" aria-hidden="true">{LINE_PREFIX[line.type]}</span>
+    <code className="diff-line-content">
+      {line.tokens.map((token, index) => (
+        <span key={`${index}-${token.content}`} style={token.color ? { color: token.color } : undefined}>
+          {token.content || ' '}
+        </span>
+      ))}
+    </code>
   </div>
 );
 ```
@@ -153,25 +148,19 @@ export const DiffLine: React.FC<DiffLineProps> = ({ line, index }) => (
 
 ```tsx
 export const DiffViewer: React.FC<DiffViewerProps> = ({
-  diffLines, isLoading, isBinaryFile, isDeletedFile
+  diffLines, filePath, isLoading, error, isBinaryFile, isDeletedFile, onRetry
 }) => {
-  if (isLoading) return <LoadingState />;
-  if (isBinaryFile) return <div className="binary-notice">이진 파일은 diff를 표시할 수 없습니다.</div>;
-  if (isDeletedFile) return (
-    <div className="deleted-notice">
-      <p>삭제된 파일입니다.</p>
-      {diffLines.length > 0 && (
-        <div className="diff-container" role="list">
-          {diffLines.map((line, i) => <DiffLine key={i} line={line} index={i} />)}
-        </div>
-      )}
-    </div>
-  );
+  if (isLoading) return <LoadingState label="코드 변경이력을 불러오는 중..." size="lg" />;
+  if (error) return <ErrorState message={error} onRetry={onRetry} />;
+  if (isBinaryFile) return <EmptyState message="Binary file — diff를 표시할 수 없습니다" />;
 
   return (
-    <div className="diff-viewer" role="list" aria-label="파일 diff">
-      {diffLines.map((line, i) => <DiffLine key={i} line={line} index={i} />)}
-    </div>
+    <section className="diff-viewer" role="region" aria-label={`${filePath} 코드 변경 내역`} tabIndex={0}>
+      {isDeletedFile ? <div className="diff-deleted-notice" role="alert">삭제된 파일입니다</div> : null}
+      <div className="diff-line-list" role="list">
+        {diffLines.map((line, index) => <DiffLine key={`${index}-${line.type}`} line={line} />)}
+      </div>
+    </section>
   );
 };
 ```
@@ -179,18 +168,27 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({
 ### `S03_CodeViewerScreen.tsx`
 
 ```tsx
-export const S03_CodeViewerScreen: React.FC = () => {
-  const { selectedFile, selectedCommit } = useAppStore();
-  const [diffLines, setDiffLines] = useState<DiffLineData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isBinaryFile, setIsBinaryFile] = useState(false);
-  const [isDeletedFile, setIsDeletedFile] = useState(false);
+export const S03CodeViewerScreen: FC = () => {
+  const selectedCommit = useAppStore((state) => state.selectedCommit);
+  const selectedFile = useAppStore((state) => state.selectedFile);
+  const [diffState, setDiffState] = useState<FileDiffState>(initialDiffState);
+
+  const applyLoadedDiff = async (payload: FileDiffPayload, filePath: string) => {
+    if (payload.isBinary) {
+      setDiffState({ ...initialDiffState, isBinaryFile: true });
+      return;
+    }
+
+    const parsedLines = parseDiff(payload.rawDiff);
+    const { highlightDiffLines } = await import('./highlightDiff');
+    const highlightedLines = await highlightDiffLines(parsedLines, filePath);
+    setDiffState({ ...initialDiffState, diffLines: highlightedLines, isDeletedFile: payload.isDeleted });
+  };
 
   useEffect(() => {
     if (!selectedFile || !selectedCommit) return;
-    setIsLoading(true);
-    window.vscode.postMessage({
-      command: 'fetchFileDiff',
+    setDiffState({ ...initialDiffState, isLoading: true });
+    postMessage('FETCH_FILE_DIFF', {
       commitHash: selectedCommit.hash,
       filePath: selectedFile.path,
     });
@@ -198,31 +196,28 @@ export const S03_CodeViewerScreen: React.FC = () => {
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.data.command !== 'fileDiffLoaded') return;
-      const { rawDiff, isBinary, isDeleted } = event.data;
-      setIsBinaryFile(isBinary);
-      setIsDeletedFile(isDeleted);
-      setDiffLines(parseDiff(rawDiff));
-      setIsLoading(false);
+      if (event.data.type !== 'FILE_DIFF_LOADED') return;
+      void applyLoadedDiff(event.data.payload, selectedFile.path);
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [selectedFile]);
 
-  const breadcrumb = `${selectedCommit?.message} > ${selectedFile?.path}`;
+  if (!selectedCommit || !selectedFile) return null;
 
   return (
-    <div className="screen s03-code-viewer-screen">
-      <TopHeader title={breadcrumb} showBack showSettings />
+    <main className="app-shell commit-log-shell code-viewer-shell">
+      <TopHeader title={selectedCommit.message} context={`${selectedCommit.shortHash} > ${selectedFile.path}`} showBackButton showSettingsIcon />
       <DiffViewer
-        diffLines={diffLines}
-        isLoading={isLoading}
-        isBinaryFile={isBinaryFile}
-        isDeletedFile={isDeletedFile}
-        selectedFile={selectedFile!}
-        selectedCommit={selectedCommit!}
+        diffLines={diffState.diffLines}
+        filePath={selectedFile.path}
+        isLoading={diffState.isLoading}
+        error={diffState.error}
+        isBinaryFile={diffState.isBinaryFile}
+        isDeletedFile={diffState.isDeletedFile}
+        onRetry={loadFileDiff}
       />
-    </div>
+    </main>
   );
 };
 ```
@@ -232,11 +227,27 @@ export const S03_CodeViewerScreen: React.FC = () => {
 ## Business Rules
 
 1. diff는 `unified=3` 컨텍스트 라인 포함 (앞뒤 3줄)
-2. `@@` 헤더 라인, `diff --git`, `index` 라인은 렌더링에서 제외
+2. `@@` 헤더 라인, `diff --git`, `index`, `---`, `+++`, rename metadata는 렌더링에서 제외
 3. 이진 파일: `BinaryFileNotice` 표시, diff 없음
 4. 삭제된 파일: `DeletedFileNotice` + 삭제 전 내용 diff 표시
 5. 이 화면은 Side Effect 없음 (read-only)
-6. Shiki 하이라이팅은 선택적 강화 — 필수 아님 (v1.0에서 plain text로 시작 가능)
+6. Shiki 하이라이팅 실패 시 토큰 없는 plain text diff로 fallback
+7. 브라우저 개발 모드에서는 VSCode API가 없으므로 S03 데모 diff를 사용
+
+---
+
+## Verification
+
+F03 구현 또는 수정 후 다음 검증을 실행한다.
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+```
+
+`pnpm build`에서 `highlightDiff.js` chunk size warning이 발생할 수 있다. 현재는 F03 진입 시점에만 로드되는 lazy chunk이므로 기능 검증 실패로 보지 않는다.
 
 ---
 
@@ -247,12 +258,17 @@ export const S03_CodeViewerScreen: React.FC = () => {
   font-family: var(--vscode-editor-font-family);
   font-size: var(--vscode-editor-font-size);
   background: var(--vscode-editor-background);
-  overflow-y: auto;
+  overflow: auto;
 }
-.diff-line--added { background: var(--vscode-diffEditor-insertedLineBackground); }
-.diff-line--removed { background: var(--vscode-diffEditor-removedLineBackground); }
+.diff-line {
+  display: grid;
+  grid-template-columns: 48px 48px 18px minmax(0, 1fr);
+  white-space: pre;
+}
+.diff-line-added { background: var(--gae-color-diff-added); }
+.diff-line-removed { background: var(--gae-color-diff-removed); }
 .diff-line-prefix { color: var(--vscode-descriptionForeground); user-select: none; }
-.binary-notice, .deleted-notice { color: var(--vscode-descriptionForeground); padding: 16px; }
+.diff-deleted-notice { color: var(--vscode-descriptionForeground); padding: 8px 12px; }
 ```
 
 ---

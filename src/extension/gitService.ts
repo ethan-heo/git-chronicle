@@ -29,6 +29,12 @@ export interface FetchCommitsOptions {
   keyword?: string;
 }
 
+export interface FileDiffResult {
+  rawDiff: string;
+  isBinary: boolean;
+  isDeleted: boolean;
+}
+
 const DEFAULT_PAGE_SIZE = 200;
 const FIELD_SEPARATOR = '\x1f';
 const RECORD_SEPARATOR = '\x1e';
@@ -106,6 +112,25 @@ export async function fetchChangedFiles(repoPath: string, commitHash: string, sa
     .split('\n')
     .map((line) => parseChangedFileLine(line, commitHash, savePath))
     .filter((file): file is ChangedFile => Boolean(file));
+}
+
+export async function fetchFileDiff(repoPath: string, commitHash: string, filePath: string): Promise<FileDiffResult> {
+  const git = simpleGit(repoPath);
+  const isRepo = await git.checkIsRepo();
+
+  if (!isRepo) {
+    throw new GitRepositoryNotFoundError(repoPath);
+  }
+
+  const rawDiff = await git.show(['--format=', '--find-renames', '--unified=3', commitHash, '--', filePath]);
+  const isBinary = /^Binary files? /m.test(rawDiff) || /^GIT binary patch$/m.test(rawDiff);
+  const isDeleted = /^deleted file mode /m.test(rawDiff);
+
+  return {
+    rawDiff: isBinary ? '' : rawDiff,
+    isBinary,
+    isDeleted,
+  };
 }
 
 function parseChangedFileLine(line: string, commitHash: string, savePath: string | null): ChangedFile | null {

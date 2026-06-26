@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { fetchChangedFiles, fetchCommits, GitRepositoryNotFoundError } from './gitService';
+import { fetchChangedFiles, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
 
 interface WebviewMessage {
   type: string;
-  payload?: FetchCommitsPayload | FetchChangedFilesPayload;
+  payload?: FetchCommitsPayload | FetchChangedFilesPayload | FetchFileDiffPayload;
 }
 
 interface FetchCommitsPayload {
@@ -18,6 +18,11 @@ interface FetchCommitsPayload {
 interface FetchChangedFilesPayload {
   commitHash?: string;
   savePath?: string | null;
+}
+
+interface FetchFileDiffPayload {
+  commitHash?: string;
+  filePath?: string;
 }
 
 export function registerMessageHandler(panel: vscode.WebviewPanel): void {
@@ -36,6 +41,9 @@ export function registerMessageHandler(panel: vscode.WebviewPanel): void {
         break;
       case 'FETCH_CHANGED_FILES':
         await handleFetchChangedFiles(panel, message.payload as FetchChangedFilesPayload);
+        break;
+      case 'FETCH_FILE_DIFF':
+        await handleFetchFileDiff(panel, message.payload as FetchFileDiffPayload);
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
@@ -143,6 +151,46 @@ async function handleFetchChangedFiles(panel: vscode.WebviewPanel, payload: Fetc
       type: 'CHANGED_FILES_LOAD_FAILED',
       payload: {
         message: error instanceof Error ? error.message : '변경 파일 목록을 불러오지 못했습니다',
+      },
+    });
+  }
+}
+
+async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: FetchFileDiffPayload = {}): Promise<void> {
+  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+  if (!repoPath) {
+    await panel.webview.postMessage({
+      type: 'FILE_DIFF_LOAD_FAILED',
+      payload: {
+        message: 'Git 저장소가 감지되지 않았습니다',
+      },
+    });
+    return;
+  }
+
+  if (!payload.commitHash || !payload.filePath) {
+    await panel.webview.postMessage({
+      type: 'FILE_DIFF_LOAD_FAILED',
+      payload: {
+        message: '선택된 파일이 없습니다',
+      },
+    });
+    return;
+  }
+
+  try {
+    const diff = await fetchFileDiff(repoPath, payload.commitHash, payload.filePath);
+
+    await panel.webview.postMessage({
+      type: 'FILE_DIFF_LOADED',
+      payload: diff,
+    });
+  } catch (error) {
+    await panel.webview.postMessage({
+      type: 'FILE_DIFF_LOAD_FAILED',
+      payload: {
+        message: error instanceof Error ? error.message : 'diff를 불러오지 못했습니다',
       },
     });
   }

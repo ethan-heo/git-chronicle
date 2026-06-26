@@ -60,10 +60,14 @@ src/
     │   │   ├── FileTreeNode.tsx
     │   │   ├── tree.ts
     │   │   └── index.ts
-    │   ├── F03_code_viewer/
-    │   │   ├── CodeViewerFeature.tsx
+    │   ├── F03/
+    │   │   ├── S03_CodeViewerScreen.tsx
     │   │   ├── DiffViewer.tsx
-    │   │   └── useCodeViewer.ts
+    │   │   ├── DiffLine.tsx
+    │   │   ├── parseDiff.ts
+    │   │   ├── highlightDiff.ts
+    │   │   ├── types.ts
+    │   │   └── index.ts
     │   ├── F04_dependency_canvas/
     │   │   ├── DependencyCanvasFeature.tsx
     │   │   ├── DependencyGraph.tsx
@@ -151,7 +155,7 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_COMMITS'; payload: CommitFilter & { page: number; pageSize: number } }
   | { type: 'FETCH_CHANGED_FILES'; payload: { commitHash: string; savePath?: string | null } }
   | { type: 'OPEN_REPOSITORY' }
-  | { type: 'LOAD_FILE_DIFF'; payload: { commitHash: string; filePath: string } }
+  | { type: 'FETCH_FILE_DIFF'; payload: { commitHash: string; filePath: string } }
   | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; filePath: string } }
   | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string } }
   | { type: 'START_BATCH_AI_SUMMARY'; payload: { commitHash: string; files: string[] } }
@@ -169,7 +173,8 @@ type ExtensionToWebviewMessage =
   | { type: 'COMMITS_LOAD_FAILED'; payload: { message: string } }
   | { type: 'CHANGED_FILES_LOADED'; payload: { files: ChangedFile[] } }
   | { type: 'CHANGED_FILES_LOAD_FAILED'; payload: { message: string } }
-  | { type: 'FILE_DIFF_LOADED'; payload: { diff: string } }
+  | { type: 'FILE_DIFF_LOADED'; payload: { rawDiff: string; isBinary: boolean; isDeleted: boolean } }
+  | { type: 'FILE_DIFF_LOAD_FAILED'; payload: { message: string } }
   | { type: 'AI_SUMMARY_CHUNK'; payload: { chunk: string } }
   | { type: 'AI_SUMMARY_DONE'; payload: { savedPath: string } }
   | { type: 'AI_SUMMARY_ERROR'; payload: { message: string } }
@@ -183,14 +188,14 @@ type ExtensionToWebviewMessage =
 ### Zustand 상태 관리 (Webview 전용)
 
 - Webview 내 전역 상태는 Zustand 단일 스토어(`useAppStore`, 구현 파일: `src/webview/store/appStore.ts`)에서 관리한다.
-- Extension에서 받은 메시지는 현재 `S01_CommitListScreen.tsx`와 `features/F02/S02_HistoryViewScreen.tsx`에서 구독하여 Zustand 스토어를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
+- Extension에서 받은 메시지는 현재 `S01_CommitListScreen.tsx`, `features/F02/S02_HistoryViewScreen.tsx`, `features/F03/S03_CodeViewerScreen.tsx`에서 구독하여 화면 또는 Zustand 상태를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
 - 화면 전환(`currentScreen`)도 Zustand 상태로 관리한다. `react-router`는 사용하지 않는다.
 
 ### Browser Dev Fallback
 
 - `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
 - 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록과 F02 변경 파일 트리용 데모 데이터를 사용해 UI를 확인할 수 있게 한다.
-- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES` 메시지를 보내고 `simple-git` 결과로 상태를 갱신한다.
+- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF` 메시지를 보내고 `simple-git` 결과로 상태를 갱신한다.
 
 ### child_process (Extension Host 전용)
 

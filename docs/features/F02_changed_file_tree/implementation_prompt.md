@@ -249,7 +249,7 @@ goToCommitAISummary: () => set({
 }),
 ```
 
-현재 S-03/S-04/S-05는 `App.tsx`에서 placeholder 화면으로 렌더링된다. 실제 `LOAD_FILE_DIFF`, `START_AI_SUMMARY_FILE`, `LOAD_DEPENDENCY_GRAPH` 연결은 F03/F05/F04 구현 범위에서 추가한다.
+현재 S-03은 `features/F03/S03_CodeViewerScreen.tsx`에서 실제 코드 뷰어로 렌더링된다. S-04/S-05는 `App.tsx`에서 placeholder 화면으로 렌더링되며, 실제 `START_AI_SUMMARY_FILE`, `LOAD_DEPENDENCY_GRAPH` 연결은 F05/F04 구현 범위에서 추가한다.
 
 ---
 
