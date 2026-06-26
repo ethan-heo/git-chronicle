@@ -9,8 +9,9 @@
 ```typescript
 interface TopHeaderProps {
   title: string;                    // 화면 제목 또는 breadcrumb 경로
+  context?: string;                 // 제목 아래 보조 컨텍스트
   showBackButton?: boolean;         // 기본값: false
-  showSettingsIcon?: boolean;       // 기본값: true
+  showSettingsIcon?: boolean;       // 기본값: false
   onBackClick?: () => void;         // showBackButton === true 시 필수
   onSettingsClick?: () => void;     // S06 진입 콜백
 }
@@ -36,25 +37,29 @@ interface TopHeaderProps {
 ```tsx
 export const TopHeader: React.FC<TopHeaderProps> = ({
   title,
+  context,
   showBackButton = false,
-  showSettingsIcon = true,
+  showSettingsIcon = false,
   onBackClick,
   onSettingsClick,
 }) => (
-  <header className="top-header" role="banner">
-    {showBackButton && (
-      <BackButton onClick={onBackClick!} />
-    )}
-    <h1 className="top-header-title" title={title}>
-      {title}
-    </h1>
+  <header className="top-header">
+    <div className="top-header-leading">
+      {showBackButton && onBackClick && (
+        <BackButton onClick={onBackClick} />
+      )}
+      <div className="top-header-title-group">
+        <h1>{title}</h1>
+        {context ? <p>{context}</p> : null}
+      </div>
+    </div>
     {showSettingsIcon && (
       <button
-        className="top-header-settings-btn"
+        className="top-header-icon-button"
         onClick={onSettingsClick}
         aria-label="설정 열기"
       >
-        ⚙
+        ...
       </button>
     )}
   </header>
@@ -69,31 +74,31 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 .top-header {
   display: flex;
   align-items: center;
-  height: 40px;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--vscode-panel-border);
-  background: var(--vscode-editor-background);
+  justify-content: space-between;
+  gap: var(--gae-spacing-lg);
+  padding: var(--gae-spacing-md) var(--gae-spacing-xl);
+  border-bottom: 1px solid var(--gae-border-color-default);
+  background: var(--gae-color-surface-secondary);
   position: sticky;
   top: 0;
   z-index: 10;
 }
-.top-header-title {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--vscode-editor-foreground);
+.top-header-title-group h1 {
+  margin: 0;
+  font-size: var(--gae-font-size-md);
+  font-weight: var(--gae-font-weight-bold);
+  color: var(--gae-color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: 0;
 }
-.top-header-settings-btn {
+.top-header-icon-button {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--vscode-descriptionForeground);
-  font-size: 16px;
-  padding: 4px;
+  color: var(--gae-color-text-secondary);
+  width: 28px;
+  height: 28px;
 }
 ```
 
@@ -109,9 +114,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
 ## Accessibility
 
-- `role="banner"`, `<h1>` 사용
+- `<header>`, `<h1>` 사용
 - 설정 버튼: `aria-label="설정 열기"`
-- title overflow 시 tooltip(`title` attribute)으로 전체 경로 확인 가능
+- 긴 title/context는 ellipsis 처리하여 좁은 VSCode 패널에서 레이아웃을 보존
 
 ---
 

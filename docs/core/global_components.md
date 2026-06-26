@@ -11,12 +11,14 @@
 
 | 속성 | 타입 | 설명 |
 |------|------|------|
-| `label` | `string` | 버튼 텍스트 |
+| `children` | `React.ReactNode` | 버튼 내부 콘텐츠 |
 | `onClick` | `() => void` | 클릭 핸들러 |
-| `isDisabled` | `boolean` | 비활성화 여부 |
-| `isLoading` | `boolean` | 로딩 중 여부 (스피너 표시) |
+| `disabled` | `boolean` | 비활성화 여부 |
+| `isLoading` | `boolean` | 로딩 중 여부. 스피너 표시 및 클릭 비활성화 |
 
 **States:** `default`, `hover`, `disabled`, `loading`
+
+**구현 파일:** `src/webview/shared/components/PrimaryButton.tsx`
 
 **Figma 이름:** `PrimaryButton`
 
@@ -31,6 +33,8 @@
 | `onClick` | `() => void` | 클릭 시 `previousScreen`으로 네비게이션 |
 
 **States:** `default`, `hover`
+
+**구현 파일:** `src/webview/shared/components/BackButton.tsx`
 
 **Figma 이름:** `BackButton`
 
@@ -58,6 +62,8 @@
 
 **Figma 이름:** `EmptyState`
 
+**구현 파일:** `src/webview/shared/components/EmptyState.tsx`
+
 ---
 
 ## LoadingState
@@ -70,6 +76,8 @@
 | `size` | `"sm" \| "md" \| "lg"` | 스피너 크기 |
 
 **States:** `spinning`
+
+**구현 파일:** `src/webview/shared/components/LoadingState.tsx`
 
 **Figma 이름:** `LoadingState`
 
@@ -93,6 +101,8 @@
 
 **Figma 이름:** `ErrorState`
 
+**구현 파일:** `src/webview/shared/components/ErrorState.tsx`
+
 ---
 
 ## Toast
@@ -115,6 +125,8 @@
 
 **표시 위치:** 화면 하단 우측 고정. 여러 개 동시 표시 시 최대 3개 스택.
 
+**구현 파일:** `src/webview/shared/components/Toast.tsx`
+
 **Figma 이름:** `Toast`
 
 ---
@@ -131,7 +143,25 @@
 
 **States:** `hidden` (기본), `visible` (호버 시)
 
+**구현 파일:** `src/webview/shared/components/FileActionButtons.tsx`
+
 **Figma 이름:** `FileActionButtons`
+
+---
+
+## FileStatusBadge
+
+**용도:** 파일 트리 노드 또는 캔버스 노드에서 파일 변경 상태를 색상 + 문자 레터로 표시하는 뱃지.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `status` | `"A" \| "M" \| "D" \| "R"` | 파일 변경 상태 |
+
+**상태 매핑:** `A` 추가, `M` 수정, `D` 삭제, `R` 이름 변경
+
+**구현 파일:** `src/webview/shared/components/FileStatusBadge.tsx`
+
+**Figma 이름:** `FileStatusBadge`
 
 ---
 
@@ -145,6 +175,8 @@
 
 **표시 조건:** 저장 경로가 설정되어 있고, 해당 파일의 `.md` 저장본이 존재할 때만 표시.
 
+**구현 파일:** `src/webview/shared/components/SavedBadge.tsx`
+
 **Figma 이름:** `SavedBadge`
 
 ---
@@ -156,9 +188,22 @@
 | 속성 | 타입 | 설명 |
 |------|------|------|
 | `title` | `string` | 화면 제목 또는 컨텍스트 경로 |
-| `showSettingsIcon` | `boolean` | 설정(⚙) 아이콘 표시 여부 |
+| `context` | `string \| undefined` | 제목 아래 보조 컨텍스트 텍스트 |
+| `showSettingsIcon` | `boolean` | 설정 아이콘 표시 여부. 기본값 `false` |
 | `showBackButton` | `boolean` | 뒤로가기 버튼 표시 여부 |
 | `onSettingsClick` | `() => void` | 설정 아이콘 클릭 → S-06 진입 |
 | `onBackClick` | `() => void` | 뒤로가기 버튼 클릭 핸들러 |
 
+**구현 파일:** `src/webview/shared/components/TopHeader.tsx`
+
 **Figma 이름:** `TopHeader`
+
+---
+
+## Export Rule
+
+전역 컴포넌트는 `src/webview/shared/components/index.ts`에서 재-export한다.
+
+```typescript
+import { PrimaryButton, EmptyState, TopHeader } from './shared/components';
+```

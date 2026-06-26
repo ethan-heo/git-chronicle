@@ -122,6 +122,8 @@ src/webview/
 │   ├── S05_DependencyCanvasScreen.tsx
 │   └── S06_SettingsScreen.tsx
 └── shared/
+    ├── design/
+    │   └── tokens.ts                 # --gae-* 디자인 토큰의 TypeScript 참조 상수
     ├── components/
     │   ├── TopHeader.tsx
     │   ├── BackButton.tsx
@@ -135,7 +137,8 @@ src/webview/
     │   ├── ActionButton.tsx
     │   ├── FileStatusBadge.tsx
     │   ├── SavedBadge.tsx
-    │   └── FileActionButtons.tsx
+    │   ├── FileActionButtons.tsx
+    │   └── index.ts                  # 전역 컴포넌트 barrel export
     ├── hooks/
     │   ├── useVSCodeMessage.ts       # Extension → Webview 메시지 구독
     │   └── useDebounce.ts            # 300ms 디바운싱 훅
