@@ -23,14 +23,15 @@
 | `src/webview/features/F01/CommitList.tsx` | 커밋 목록 컴포넌트 |
 | `src/webview/features/F01/CommitListItem.tsx` | 개별 커밋 행 컴포넌트 |
 | `src/webview/features/F01/InfiniteScrollTrigger.tsx` | Intersection Observer 트리거 |
-| `src/webview/screens/S01_CommitListScreen.tsx` | S01 화면 조합 컴포넌트 |
+| `src/webview/features/F01/S01_CommitListScreen.tsx` | S01 화면 조합 컴포넌트 |
+| `src/webview/types/commit.ts` | `Commit`, `FilterState`, `ScreenID` 타입 |
 
 ---
 
 ## TypeScript Interfaces
 
 ```typescript
-// src/types/index.ts
+// src/webview/types/commit.ts
 
 interface Commit {
   hash: string;          // 전체 SHA
@@ -56,6 +57,9 @@ interface AppState extends FilterState {
   isLoadingCommits: boolean;
   isGitRepoDetected: boolean;
   currentScreen: ScreenID;
+  commitLoadError: string | null;
+  loadMoreError: string | null;
+  hasLoadedCommits: boolean;
 }
 ```
 
@@ -83,40 +87,37 @@ export async function fetchCommits(opts: FetchCommitsOptions): Promise<Commit[]>
   const pageSize = opts.pageSize ?? 200;
 
   const args: string[] = [
-    '--max-count', String(pageSize),
-    '--skip', String(opts.page * pageSize),
-    '--format=%H|%h|%s|%an|%aI',  // hash|shortHash|message|author|date
+    'log',
+    `--max-count=${pageSize}`,
+    `--skip=${opts.page * pageSize}`,
+    '--date=iso-strict',
+    '--pretty=format:%H%x1f%h%x1f%s%x1f%an%x1f%aI%x1e',
   ];
 
-  if (opts.dateStart) args.push('--after', opts.dateStart);
-  if (opts.dateEnd) args.push('--before', opts.dateEnd);
-  if (opts.author) args.push('--author', opts.author);
-  if (opts.keyword) args.push('--grep', opts.keyword);
+  if (opts.dateStart) args.push(`--after=${opts.dateStart}`);
+  if (opts.dateEnd) args.push(`--before=${opts.dateEnd}`);
+  if (opts.author) args.push(`--author=${opts.author}`);
+  if (opts.keyword) args.push(`--grep=${opts.keyword}`);
 
-  const result = await git.log({ '--': undefined, ...Object.fromEntries(
-    args.reduce((acc, val, i) => {
-      if (i % 2 === 0) acc.push([val, args[i + 1]]);
-      return acc;
-    }, [] as [string, string][])
-  )});
+  const output = await git.raw(args);
 
-  // simple-git log 파싱 후 Commit[] 반환
-  return result.all.map(c => ({
-    hash: c.hash,
-    shortHash: c.hash.slice(0, 7),
-    message: c.message,
-    author: c.author_name,
-    date: c.date,
-  }));
+  // 구현에서는 제어 문자 구분자 기반 raw log를 파싱한다.
+  return parseRawLog(output);
 }
 ```
 
 Extension Host에서 Webview 메시지 핸들러:
 ```typescript
-// COMMAND: "fetchCommits"
-case 'fetchCommits': {
+case 'FETCH_COMMITS': {
   const commits = await fetchCommits({ repoPath, ...message.payload });
-  panel.webview.postMessage({ command: 'commitsLoaded', commits });
+  panel.webview.postMessage({
+    type: 'COMMITS_LOADED',
+    payload: { commits, page: message.payload.page, pageSize: message.payload.pageSize },
+  });
+  break;
+}
+case 'OPEN_REPOSITORY': {
+  await vscode.commands.executeCommand('vscode.openFolder');
   break;
 }
 ```
@@ -149,9 +150,13 @@ const useAppStore = create<AppState>((set, get) => ({
     set({ isLoadingCommits: true });
     const page = reset ? 0 : state.commitPage;
     // Extension Host로 메시지 전송
-    window.vscode.postMessage({
-      command: 'fetchCommits',
-      payload: { page, filterDateStart: state.filterDateStart, /* ... */ }
+    postMessage('FETCH_COMMITS', {
+      page,
+      pageSize: 200,
+      filterDateStart: state.filterDateStart,
+      filterDateEnd: state.filterDateEnd,
+      filterAuthor: state.filterAuthor,
+      filterKeyword: state.filterKeyword,
     });
   },
 
@@ -161,6 +166,8 @@ const useAppStore = create<AppState>((set, get) => ({
   },
 }));
 ```
+
+브라우저 개발 서버(`pnpm dev`)에서는 VSCode API가 없으므로 `isVSCodeRuntime()`이 false일 때 데모 커밋 데이터를 사용한다. 이 fallback은 필터·무한 스크롤 UI 확인용이며, Extension Host 실행 시에는 항상 `FETCH_COMMITS` 메시지와 `simple-git` 결과를 사용한다.
 
 ### `CommitListItem.tsx`
 
@@ -236,7 +243,7 @@ export const KeywordSearchInput: React.FC<KeywordSearchInputProps> = ({
 2. 페이지 크기 200, `--max-count` + `--skip` 기반
 3. 로드된 커밋 수 < 200이면 `hasMoreCommits = false`
 4. 필터 변경 시 반드시 `commitPage = 0`, `commitList = []`로 초기화 후 재로드
-5. `authorList`는 첫 페이지 로드 시 `commitList`에서 중복 제거 후 추출
+5. `authorList`는 로드된 `commitList`에서 중복 제거 후 추출
 
 ---
 

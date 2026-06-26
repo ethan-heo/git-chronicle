@@ -26,6 +26,8 @@
 - `authorList`: 드롭다운용 작성자 목록 (전역 상태 업데이트)
 - `selectedCommit`: 클릭 시 선택된 커밋 (전역 상태 업데이트 → S-02 진입 트리거)
 
+> 현재 구현은 `src/webview/features/F01/` 아래에 F01 전용 컴포넌트를 두고, `S01_CommitListScreen.tsx`를 같은 디렉토리에서 조합한다.
+
 ---
 
 ## Components
@@ -141,7 +143,8 @@ interface AuthorDropdownProps {
 - `default` (전체), `selected`, `open`
 
 #### Accessibility
-- `role="combobox"`, `aria-expanded`, `aria-label="작성자 필터"`
+- native `<select>` 구현 시 `aria-label="작성자 필터"`를 제공한다.
+- 커스텀 combobox로 확장할 경우 `role="combobox"`, `aria-expanded`를 함께 제공한다.
 
 #### Reusability
 F01_CommitLog 전용. CommitFilterPanel 내에서만 사용.

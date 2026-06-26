@@ -45,6 +45,8 @@ S01_CommitListScreen
     └─ InfiniteScrollTrigger
 ```
 
+현재 구현 파일은 `src/webview/features/F01/S01_CommitListScreen.tsx`이며, F01 전용 컴포넌트와 같은 디렉토리에서 조합한다.
+
 ---
 
 ## Components
@@ -88,7 +90,7 @@ S01_CommitListScreen
     → (있음) git log 로드 → CommitList 표시
         → 필터 변경 → CommitList 재로드
         → 스크롤 하단 → 추가 200개 로드
-        → CommitListItem 클릭 → S02 진입
+        → CommitListItem 클릭 → selectedCommit 설정 및 S02 진입
     → ⚙ 클릭 → S06 진입
 ```
 

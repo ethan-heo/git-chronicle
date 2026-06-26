@@ -24,6 +24,9 @@
 | `isLoadingCommits` | `boolean` | `false` | 커밋 목록 로딩 중 여부 |
 | `hasMoreCommits` | `boolean` | `true` | 추가 로드 가능한 커밋 존재 여부 (무한 스크롤) |
 | `commitPage` | `number` | `0` | 현재 로드된 페이지 (200개 단위) |
+| `commitLoadError` | `string \| null` | `null` | 초기 커밋 로드 실패 메시지 |
+| `loadMoreError` | `string \| null` | `null` | 추가 로드 실패 시 하단에 표시할 메시지 |
+| `hasLoadedCommits` | `boolean` | `false` | 첫 로드 완료 여부. 빈 상태와 초기 로딩 구분에 사용 |
 
 ---
 
@@ -35,7 +38,7 @@
 | `filterDateEnd` | `string \| null` | `null` | 날짜 필터 종료일 (ISO 8601) |
 | `filterAuthor` | `string \| null` | `null` | 작성자 필터 선택값 |
 | `filterKeyword` | `string` | `""` | 커밋 메시지 키워드 검색어 |
-| `authorList` | `string[]` | `[]` | 드롭다운용 작성자 목록 (커밋 로드 시 추출) |
+| `authorList` | `string[]` | `[]` | 드롭다운용 작성자 목록 (로드된 커밋 목록에서 추출) |
 
 ---
 
@@ -93,7 +96,8 @@
 | 상태 키 | 타입 | 초기값 | 설명 |
 |---------|------|--------|------|
 | `currentScreen` | `ScreenID` | `"S01"` | 현재 활성 화면 ID |
-| `previousScreen` | `ScreenID \| null` | `null` | 뒤로가기 버튼이 복귀할 화면 ID |
+
+> F01 현재 구현은 별도 `previousScreen` 상태 없이 `goToCommitList()` 액션으로 S02에서 S01로 복귀한다.
 
 ---
 
@@ -106,6 +110,7 @@ type AIProviderName = "claude" | "gemini" | "codex";
 
 interface Commit {
   hash: string;
+  shortHash: string;
   message: string;
   author: string;
   date: string; // ISO 8601

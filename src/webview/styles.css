@@ -64,6 +64,12 @@ body {
   margin: 0;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 button,
 input,
 select,
@@ -490,6 +496,312 @@ button:focus-visible,
   border-left-color: var(--gae-color-semantic-error);
 }
 
+.commit-log-shell {
+  display: flex;
+  height: 100vh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.commit-log-shell .top-header {
+  flex-shrink: 0;
+  padding: 10px 12px;
+}
+
+.commit-log-shell .top-header h1 {
+  font-size: 14px;
+}
+
+.commit-log-shell .top-header p {
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.commit-filter-panel {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--gae-border-color-default);
+  background: var(--gae-color-surface-secondary);
+}
+
+.commit-filter-panel-active {
+  box-shadow: inset 2px 0 0 var(--gae-color-accent-primary);
+}
+
+.commit-filter-header {
+  display: flex;
+  min-height: 31px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gae-spacing-sm);
+  padding: 4px 10px;
+}
+
+.commit-filter-toggle {
+  display: inline-flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--gae-color-text-primary);
+  cursor: pointer;
+  padding: 3px 0;
+  text-align: left;
+}
+
+.active-filter-summary {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--gae-color-text-link);
+  font-size: 11px;
+}
+
+.active-filter-summary > span {
+  border-radius: var(--gae-border-radius-round);
+  background: var(--gae-color-accent-primary);
+  color: var(--gae-color-text-on-accent);
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: var(--gae-font-weight-medium);
+}
+
+.filter-reset-button {
+  border: none;
+  background: transparent;
+  color: var(--gae-color-text-link);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 11px;
+}
+
+.filter-reset-button:hover {
+  text-decoration: underline;
+}
+
+.commit-filter-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 10px 12px;
+}
+
+.commit-filter-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.commit-filter-label {
+  color: var(--gae-color-text-secondary);
+  font-size: 11px;
+}
+
+.date-range-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-range-filter span {
+  color: var(--gae-color-text-secondary);
+  font-size: 12px;
+}
+
+.commit-filter-field input,
+.commit-filter-field select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--gae-border-radius-sm);
+  background: var(--vscode-input-background, #3c3c3c);
+  color: var(--vscode-input-foreground, var(--gae-color-text-primary));
+  color-scheme: dark;
+  font-size: 12px;
+}
+
+.commit-filter-field input:focus,
+.commit-filter-field select:focus {
+  border-color: var(--gae-border-color-focus);
+  outline: none;
+}
+
+.date-range-filter input {
+  flex: 1;
+  padding: 3px 6px;
+}
+
+.commit-filter-field select {
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.keyword-search-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.keyword-search-input input {
+  padding: 5px 26px 5px 28px;
+}
+
+.keyword-search-icon {
+  position: absolute;
+  left: 8px;
+  display: inline-flex;
+  color: var(--gae-color-text-secondary);
+  pointer-events: none;
+}
+
+.keyword-clear-button {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--gae-border-radius-sm);
+  background: transparent;
+  color: var(--gae-color-text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.keyword-clear-button:hover {
+  background: var(--gae-color-surface-hover);
+  color: var(--gae-color-text-primary);
+}
+
+.commit-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.commit-list-state {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.commit-list-state .empty-state,
+.commit-list-state .error-state,
+.commit-list-state .loading-state {
+  justify-content: center;
+}
+
+.commit-list-state .error-state {
+  flex-direction: column;
+}
+
+.commit-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.commit-list-item {
+  display: flex;
+  min-height: 48px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  border-left: 2px solid transparent;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.commit-list-item:hover {
+  background: var(--gae-color-surface-hover);
+}
+
+.commit-list-item:focus-visible {
+  outline: 1px solid var(--gae-border-color-focus);
+  outline-offset: -1px;
+}
+
+.commit-message {
+  overflow: hidden;
+  color: var(--gae-color-text-primary);
+  font-size: 13px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-meta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  color: var(--gae-color-text-secondary);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.commit-hash {
+  color: var(--gae-color-text-link);
+  font-family: var(--gae-font-family-mono);
+  font-size: 11px;
+}
+
+.commit-list-footer,
+.commit-list-end,
+.commit-list-inline-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  color: var(--gae-color-text-secondary);
+  font-size: 11px;
+}
+
+.commit-list-inline-error {
+  color: var(--gae-color-semantic-error);
+}
+
+.commit-list-end {
+  opacity: 0.72;
+}
+
+.infinite-scroll-trigger {
+  height: 1px;
+}
+
+.selected-commit-panel {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 12px;
+}
+
+.selected-commit-panel h2 {
+  margin: 0;
+  color: var(--gae-color-text-primary);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.selected-commit-panel p {
+  margin: 0;
+  color: var(--gae-color-text-secondary);
+  font-size: 12px;
+}
+
 @keyframes gae-spin {
   to {
     transform: rotate(360deg);
@@ -521,5 +833,9 @@ button:focus-visible,
 
   .hero-panel h1 {
     font-size: 20px;
+  }
+
+  .commit-message {
+    white-space: normal;
   }
 }

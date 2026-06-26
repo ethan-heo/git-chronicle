@@ -33,7 +33,7 @@ enum ScreenID { S01 = 'S01', ... }
 ```typescript
 // 1. imports
 import React from 'react';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore } from '../../store/appStore';
 
 // 2. 타입 정의
 interface MyComponentProps {

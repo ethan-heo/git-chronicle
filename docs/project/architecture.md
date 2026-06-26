@@ -22,9 +22,7 @@ src/
 │   ├── index.ts                      # Extension 진입점 (activate / deactivate)
 │   ├── webviewPanel.ts               # WebviewPanel 생성·관리
 │   ├── messageHandler.ts             # Webview → Extension 메시지 라우터
-│   ├── git/
-│   │   ├── gitService.ts             # simple-git 래퍼 (log, diff, show)
-│   │   └── gitTypes.ts               # Commit, ChangedFile 등 공통 타입
+│   ├── gitService.ts                 # simple-git 기반 커밋 조회 서비스
 │   ├── ai/
 │   │   ├── aiRunner.ts               # child_process.spawn 기반 AI CLI 실행기
 │   │   ├── aiTypes.ts                # AIProvider, AIRunResult 타입
@@ -39,15 +37,21 @@ src/
     ├── main.tsx                      # React 진입점 (ReactDOM.createRoot)
     ├── App.tsx                       # 화면 라우터 (currentScreen 기반 조건부 렌더링)
     ├── store/
-    │   ├── useAppStore.ts            # Zustand 전역 상태 스토어
-    │   └── types.ts                  # 스토어 타입 정의
+    │   └── appStore.ts               # Zustand 전역 상태 스토어
+    ├── types/
+    │   └── commit.ts                 # Commit, FilterState, ScreenID 타입
     ├── bridge/
     │   └── vscodeApi.ts              # acquireVsCodeApi() 래퍼, postMessage 헬퍼
     ├── features/
-    │   ├── F01_commit_log/
-    │   │   ├── CommitLogFeature.tsx
+    │   ├── F01/
+    │   │   ├── S01_CommitListScreen.tsx
     │   │   ├── CommitFilterPanel.tsx
-    │   │   └── useCommitLog.ts
+    │   │   ├── DateRangeFilter.tsx
+    │   │   ├── AuthorDropdown.tsx
+    │   │   ├── KeywordSearchInput.tsx
+    │   │   ├── CommitList.tsx
+    │   │   ├── CommitListItem.tsx
+    │   │   └── InfiniteScrollTrigger.tsx
     │   ├── F02_changed_file_tree/
     │   │   ├── ChangedFileTreeFeature.tsx
     │   │   ├── FileTreeNode.tsx
@@ -81,8 +85,8 @@ src/
     │       ├── BatchAISummaryFeature.tsx
     │       ├── BatchProgressBar.tsx
     │       └── useBatchAISummary.ts
-    ├── screens/
-    │   ├── S01_CommitListScreen.tsx
+    ├── screens/                      # 향후 독립 Screen 컴포넌트 확장 위치
+    │   ├── S01_CommitListScreen.tsx  # 현재 F01/S01_CommitListScreen.tsx에서 구현
     │   ├── S02_HistoryViewScreen.tsx
     │   ├── S03_CodeViewerScreen.tsx
     │   ├── S04_AISummaryViewerScreen.tsx
@@ -115,7 +119,7 @@ src/
 
 - 각 Feature 디렉토리는 자신의 UI 컴포넌트, 커스텀 훅, 타입을 자체적으로 포함한다.
 - Feature 간 직접 import를 금지한다. 공통 로직은 반드시 `shared/`로 추출한다.
-- Feature 컴포넌트는 Screen 컴포넌트에서만 조합된다.
+- Feature 컴포넌트는 Screen 컴포넌트에서 조합한다. 현재 F01은 `src/webview/features/F01/S01_CommitListScreen.tsx`에 화면 조합 컴포넌트를 함께 둔다.
 
 ### Shared Component Rule (공유 컴포넌트 규칙)
 
@@ -140,7 +144,8 @@ src/
 ```typescript
 // Webview → Extension (요청)
 type WebviewToExtensionMessage =
-  | { type: 'LOAD_COMMITS'; payload: CommitFilter }
+  | { type: 'FETCH_COMMITS'; payload: CommitFilter & { page: number; pageSize: number } }
+  | { type: 'OPEN_REPOSITORY' }
   | { type: 'LOAD_FILE_DIFF'; payload: { commitHash: string; filePath: string } }
   | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; filePath: string } }
   | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string } }
@@ -154,7 +159,9 @@ type WebviewToExtensionMessage =
 
 // Extension → Webview (응답/이벤트)
 type ExtensionToWebviewMessage =
-  | { type: 'COMMITS_LOADED'; payload: { commits: Commit[]; hasMore: boolean } }
+  | { type: 'COMMITS_LOADED'; payload: { commits: Commit[]; page: number; pageSize: number } }
+  | { type: 'GIT_REPOSITORY_NOT_FOUND'; payload: { message: string } }
+  | { type: 'COMMITS_LOAD_FAILED'; payload: { message: string } }
   | { type: 'FILE_DIFF_LOADED'; payload: { diff: string } }
   | { type: 'AI_SUMMARY_CHUNK'; payload: { chunk: string } }
   | { type: 'AI_SUMMARY_DONE'; payload: { savedPath: string } }
@@ -168,9 +175,15 @@ type ExtensionToWebviewMessage =
 
 ### Zustand 상태 관리 (Webview 전용)
 
-- Webview 내 전역 상태는 Zustand 단일 스토어(`useAppStore`)에서 관리한다.
-- Extension에서 받은 메시지는 `useVSCodeMessage` 훅에서 구독하여 Zustand 스토어를 업데이트한다.
+- Webview 내 전역 상태는 Zustand 단일 스토어(`useAppStore`, 구현 파일: `src/webview/store/appStore.ts`)에서 관리한다.
+- Extension에서 받은 메시지는 현재 `S01_CommitListScreen.tsx`에서 구독하여 Zustand 스토어를 업데이트한다. 메시지 구독 로직이 여러 화면으로 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
 - 화면 전환(`currentScreen`)도 Zustand 상태로 관리한다. `react-router`는 사용하지 않는다.
+
+### Browser Dev Fallback
+
+- `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
+- 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록용 데모 데이터를 사용해 필터·무한 스크롤 UI를 확인할 수 있게 한다.
+- 실제 Extension Host 실행에서는 동일한 액션이 `FETCH_COMMITS` 메시지를 보내고 `simple-git` 결과로 상태를 갱신한다.
 
 ### child_process (Extension Host 전용)
 
