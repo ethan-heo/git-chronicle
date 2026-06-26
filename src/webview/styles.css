@@ -1,0 +1,97 @@
+@import 'tailwindcss';
+
+:root {
+  color: var(--vscode-foreground, #d4d4d4);
+  background: var(--vscode-editor-background, #1e1e1e);
+  font-family: var(--vscode-font-family, system-ui, sans-serif);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--vscode-editor-background, #1e1e1e);
+}
+
+.top-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--vscode-panel-border, #333);
+  background: var(--vscode-sideBar-background, #252526);
+  padding: 14px 20px;
+}
+
+.top-header h1 {
+  margin: 0;
+  color: var(--vscode-foreground, #f5f5f5);
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.top-header p {
+  margin: 4px 0 0;
+  color: var(--vscode-descriptionForeground, #a0a0a0);
+  font-size: 12px;
+}
+
+.hero-panel {
+  max-width: 760px;
+  padding: 40px 20px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--vscode-textLink-foreground, #4daafc);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.hero-panel h1 {
+  margin: 0;
+  color: var(--vscode-foreground, #f5f5f5);
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.description {
+  margin: 16px 0 0;
+  color: var(--vscode-descriptionForeground, #b8b8b8);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.status-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  border: 1px solid var(--vscode-panel-border, #3c3c3c);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--vscode-foreground, #e5e5e5);
+  font-size: 13px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--vscode-descriptionForeground, #858585);
+}
+
+.status-connected {
+  background: var(--vscode-testing-iconPassed, #73c991);
+}
+
+.status-unknown {
+  background: var(--vscode-testing-iconFailed, #f14c4c);
+}

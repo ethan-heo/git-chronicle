@@ -70,7 +70,7 @@
 | 항목 | 최솟값 | 권장값 |
 |------|--------|--------|
 | Node.js | 18.x LTS | 20.x LTS |
-| npm | 9.x | 10.x |
+| pnpm | 9.x | 10.x |
 | VSCode | 1.85.0 | 최신 안정 버전 |
 | macOS / Linux / Windows | 모두 지원 | — |
 
@@ -113,7 +113,8 @@
 
 ## 패키지 관리
 
-- 패키지 매니저: **npm** (lockfile: `package-lock.json`)
+- 패키지 매니저: **pnpm** (lockfile: `pnpm-lock.yaml`)
+- 의존성 설치는 `pnpm install`로 수행한다.
 - Webview 의존성과 Extension Host 의존성을 `package.json`에서 구분하지 않는다. 단, `bundledDependencies`에 Extension Host에서 필요한 패키지(`simple-git`, `dependency-cruiser`)를 명시한다.
 - Webview 번들(`dist/webview/`) 내에는 `react`, `react-dom`, `zustand`, `@xyflow/react`, `react-markdown`, `shiki`, `tailwindcss` 등이 포함된다.
 

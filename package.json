@@ -1,0 +1,83 @@
+{
+  "name": "git-author-explorer",
+  "displayName": "Git Author Explorer",
+  "description": "Explore Git commits, changed files, dependency graphs, and AI summaries in VSCode.",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@10.19.0",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18.0.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:gitAuthorExplorer.open"
+  ],
+  "main": "./dist/extension/index.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitAuthorExplorer.open",
+        "title": "Git Author Explorer: Open"
+      }
+    ],
+    "configuration": {
+      "title": "Git Author Explorer",
+      "properties": {
+        "gitAuthorExplorer.savePath": {
+          "type": "string",
+          "default": "",
+          "description": "Default path for saved AI summaries."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build && tsc -p tsconfig.extension.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:extension": "vscode-test",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.extension.json --noEmit"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.8.4",
+    "dependency-cruiser": "^17.1.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "shiki": "^3.7.0",
+    "simple-git": "^3.28.0",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.10",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.15.32",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^8.34.1",
+    "@typescript-eslint/parser": "^8.34.1",
+    "@vscode/test-electron": "^2.5.2",
+    "@vitejs/plugin-react": "^4.5.2",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^4.1.10",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  },
+  "bundledDependencies": [
+    "simple-git",
+    "dependency-cruiser"
+  ]
+}
