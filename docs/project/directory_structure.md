@@ -86,10 +86,14 @@ src/webview/
 │   │   ├── CommitListItem.tsx        # 커밋 행
 │   │   ├── InfiniteScrollTrigger.tsx # IntersectionObserver 추가 로드 트리거
 │   │   └── index.ts                  # F01 barrel export
-│   ├── F02_changed_file_tree/
-│   │   ├── ChangedFileTreeFeature.tsx
-│   │   ├── FileTreeNode.tsx          # 디렉토리/파일 노드 (재귀 렌더링)
-│   │   └── useFileTree.ts
+│   ├── F02/
+│   │   ├── S02_HistoryViewScreen.tsx # S02 화면 조합, 변경 파일 메시지 구독
+│   │   ├── CommitActionBar.tsx       # 커밋 단위 액션 버튼
+│   │   ├── FileTree.tsx              # 변경 파일 트리 컨테이너
+│   │   ├── DirectoryNode.tsx         # 디렉토리 노드 (재귀 렌더링)
+│   │   ├── FileTreeNode.tsx          # 파일 노드 (상태/저장됨/액션)
+│   │   ├── tree.ts                   # ChangedFile[] → 디렉토리 트리 변환
+│   │   └── index.ts                  # F02 barrel export
 │   ├── F03_code_viewer/
 │   │   ├── CodeViewerFeature.tsx
 │   │   ├── DiffViewer.tsx            # unified diff + Shiki 하이라이팅

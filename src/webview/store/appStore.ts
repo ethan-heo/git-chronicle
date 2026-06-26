@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { isVSCodeRuntime, postMessage } from '../bridge/vscodeApi';
-import type { Commit, FilterState, ScreenID } from '../types/commit';
+import type { ChangedFile, Commit, FilterState, ScreenID, SummaryMode } from '../types/commit';
 
 const PAGE_SIZE = 200;
 const DEMO_PAGE_SIZE = 12;
@@ -15,6 +15,15 @@ interface AppState extends FilterState {
   commitList: Commit[];
   authorList: string[];
   selectedCommit: Commit | null;
+  changedFiles: ChangedFile[];
+  selectedFile: ChangedFile | null;
+  isLoadingChangedFiles: boolean;
+  changedFilesError: string | null;
+  savePath: string | null;
+  summaryMode: SummaryMode;
+  isBatchRunning: boolean;
+  batchTotal: number;
+  batchCurrent: number;
   commitPage: number;
   hasMoreCommits: boolean;
   isLoadingCommits: boolean;
@@ -24,20 +33,38 @@ interface AppState extends FilterState {
   loadMoreError: string | null;
   hasLoadedCommits: boolean;
   loadCommits: (reset?: boolean) => void;
+  loadChangedFiles: () => void;
   setFilter: (filter: Partial<FilterState>) => void;
   clearFilters: () => void;
   selectCommit: (commit: Commit) => void;
   goToCommitList: () => void;
+  goToHistoryView: () => void;
+  selectFileForCode: (file: ChangedFile) => void;
+  selectFileForAI: (file: ChangedFile) => void;
+  goToCommitAISummary: () => void;
+  goToCanvasView: () => void;
+  startBatchAISummary: () => void;
   openRepository: () => void;
   handleCommitsLoaded: (payload: CommitsLoadedPayload) => void;
   handleRepositoryNotFound: () => void;
   handleCommitsLoadFailed: (message?: string) => void;
+  handleChangedFilesLoaded: (files: ChangedFile[]) => void;
+  handleChangedFilesLoadFailed: (message?: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
   commitList: [],
   authorList: [],
   selectedCommit: null,
+  changedFiles: [],
+  selectedFile: null,
+  isLoadingChangedFiles: false,
+  changedFilesError: null,
+  savePath: null,
+  summaryMode: 'file',
+  isBatchRunning: false,
+  batchTotal: 0,
+  batchCurrent: 0,
   commitPage: 0,
   hasMoreCommits: true,
   isLoadingCommits: false,
@@ -87,6 +114,31 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
+  loadChangedFiles: () => {
+    const state = get();
+
+    if (!state.selectedCommit || state.isLoadingChangedFiles) {
+      return;
+    }
+
+    set({
+      isLoadingChangedFiles: true,
+      changedFilesError: null,
+    });
+
+    if (!isVSCodeRuntime()) {
+      window.setTimeout(() => {
+        get().handleChangedFilesLoaded(demoChangedFiles);
+      }, 220);
+      return;
+    }
+
+    postMessage('FETCH_CHANGED_FILES', {
+      commitHash: state.selectedCommit.hash,
+      savePath: state.savePath,
+    });
+  },
+
   setFilter: (filter) => {
     set(filter);
     get().loadCommits(true);
@@ -105,6 +157,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectCommit: (commit) => {
     set({
       selectedCommit: commit,
+      selectedFile: null,
+      changedFiles: [],
+      changedFilesError: null,
+      isLoadingChangedFiles: false,
       currentScreen: 'S02',
     });
   },
@@ -113,6 +169,63 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       currentScreen: 'S01',
     });
+  },
+
+  goToHistoryView: () => {
+    set({
+      currentScreen: 'S02',
+    });
+  },
+
+  selectFileForCode: (file) => {
+    set({
+      selectedFile: file,
+      currentScreen: 'S03',
+    });
+  },
+
+  selectFileForAI: (file) => {
+    set({
+      selectedFile: file,
+      summaryMode: 'file',
+      currentScreen: 'S04',
+    });
+  },
+
+  goToCommitAISummary: () => {
+    set({
+      selectedFile: null,
+      summaryMode: 'commit',
+      currentScreen: 'S04',
+    });
+  },
+
+  goToCanvasView: () => {
+    set({
+      currentScreen: 'S05',
+    });
+  },
+
+  startBatchAISummary: () => {
+    const total = get().changedFiles.length;
+
+    if (total === 0) {
+      return;
+    }
+
+    set({
+      isBatchRunning: true,
+      batchTotal: total,
+      batchCurrent: 0,
+    });
+
+    if (isVSCodeRuntime()) {
+      const state = get();
+      postMessage('START_BATCH_AI_SUMMARY', {
+        commitHash: state.selectedCommit?.hash,
+        files: state.changedFiles.map((file) => file.path),
+      });
+    }
   },
 
   openRepository: () => postMessage('OPEN_REPOSITORY'),
@@ -156,6 +269,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       commitLoadError: hasExistingCommits ? null : message,
       loadMoreError: hasExistingCommits ? message : null,
       hasLoadedCommits: true,
+    });
+  },
+
+  handleChangedFilesLoaded: (files) => {
+    set({
+      changedFiles: files,
+      isLoadingChangedFiles: false,
+      changedFilesError: null,
+    });
+  },
+
+  handleChangedFilesLoadFailed: (message = '변경 파일 목록을 불러오지 못했습니다') => {
+    set({
+      changedFiles: [],
+      isLoadingChangedFiles: false,
+      changedFilesError: message,
     });
   },
 }));
@@ -215,4 +344,17 @@ const demoCommits: Commit[] = [
   { hash: '9a8b7c6d5', shortHash: '9a8b7c6', message: 'feat: 좁은 너비에서 필터 패널 토글 접기 지원', author: 'Jane Cooper', date: '2026-06-07T12:44:00+09:00' },
   { hash: '3c4d5e6f7', shortHash: '3c4d5e6', message: 'init: F01_CommitLog 컴포넌트 스캐폴딩', author: '김지훈', date: '2026-06-06T10:03:00+09:00' },
   { hash: 'f6e5d4c3b', shortHash: 'f6e5d4c', message: 'init: 프로젝트 초기 설정 및 VSCode 확장 부트스트랩', author: '이수민', date: '2026-06-05T16:52:00+09:00' },
+];
+
+const demoChangedFiles: ChangedFile[] = [
+  { path: 'src/components/CommitList/CommitList.tsx', status: 'M', hasSavedSummary: true },
+  { path: 'src/components/CommitList/CommitListItem.tsx', status: 'M', hasSavedSummary: false },
+  { path: 'src/components/CommitList/useInfiniteScroll.ts', status: 'A', hasSavedSummary: true },
+  { path: 'src/components/CommitFilter/CommitFilterPanel.tsx', status: 'M', hasSavedSummary: false },
+  { path: 'src/hooks/useIntersectionObserver.ts', status: 'A', hasSavedSummary: false },
+  { path: 'src/hooks/useScrollTrigger.ts', status: 'D', hasSavedSummary: false },
+  { path: 'src/utils/pagination.ts', status: 'M', hasSavedSummary: true },
+  { path: 'src/types/commit.ts', oldPath: 'src/types/git.ts', status: 'R', hasSavedSummary: false },
+  { path: 'tests/CommitList.test.tsx', status: 'M', hasSavedSummary: false },
+  { path: 'docs/F01_blueprint.md', status: 'M', hasSavedSummary: false },
 ];

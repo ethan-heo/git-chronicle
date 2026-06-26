@@ -1,21 +1,29 @@
 import type { FC } from 'react';
 import { S01CommitListScreen } from './features/F01';
+import { S02HistoryViewScreen } from './features/F02';
 import { TopHeader } from './shared/components';
 import { useAppStore } from './store/appStore';
 
 export const App: FC = () => {
-  const { currentScreen, selectedCommit, goToCommitList } = useAppStore();
+  const currentScreen = useAppStore((state) => state.currentScreen);
+  const selectedCommit = useAppStore((state) => state.selectedCommit);
+  const selectedFile = useAppStore((state) => state.selectedFile);
+  const summaryMode = useAppStore((state) => state.summaryMode);
+  const goToHistoryView = useAppStore((state) => state.goToHistoryView);
 
-  if (currentScreen === 'S02' && selectedCommit) {
+  if (currentScreen === 'S02') {
+    return <S02HistoryViewScreen />;
+  }
+
+  if (currentScreen === 'S03' || currentScreen === 'S04' || currentScreen === 'S05') {
     return (
-      <main className="app-shell commit-log-shell">
-        <TopHeader title="커밋 이력" context={selectedCommit.shortHash} showBackButton onBackClick={goToCommitList} />
-        <section className="selected-commit-panel" aria-labelledby="selected-commit-title">
-          <span className="commit-hash">{selectedCommit.shortHash}</span>
-          <h2 id="selected-commit-title">{selectedCommit.message}</h2>
-          <p>
-            {selectedCommit.author} · {formatDate(selectedCommit.date)}
-          </p>
+      <main className="app-shell commit-log-shell pending-screen-shell">
+        <TopHeader title={getPendingTitle(currentScreen, summaryMode)} context={selectedFile?.path ?? selectedCommit?.shortHash ?? '준비 중'} showBackButton onBackClick={goToHistoryView} />
+        <section className="history-view-state">
+          <div className="pending-screen-message">
+            <strong>{getPendingTitle(currentScreen, summaryMode)}</strong>
+            <span>{currentScreen} 화면은 다음 기능 단계에서 구현됩니다.</span>
+          </div>
         </section>
       </main>
     );
@@ -24,18 +32,14 @@ export const App: FC = () => {
   return <S01CommitListScreen />;
 };
 
-function formatDate(date: string): string {
-  const parsedDate = new Date(date);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return date;
+function getPendingTitle(screen: string, summaryMode: string): string {
+  if (screen === 'S03') {
+    return '코드 보기';
   }
 
-  return new Intl.DateTimeFormat('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  })
-    .format(parsedDate)
-    .replaceAll(' ', '');
+  if (screen === 'S04') {
+    return summaryMode === 'commit' ? '커밋 AI 정리' : 'AI 정리 보기';
+  }
+
+  return '캔버스 보기';
 }

@@ -299,6 +299,16 @@ button:focus-visible,
   background: var(--gae-color-accent-primary-hover);
 }
 
+.primary-button-secondary {
+  border: 1px solid var(--gae-border-color-default);
+  background: var(--gae-color-accent-secondary);
+  color: var(--gae-color-text-primary);
+}
+
+.primary-button-secondary:hover:not(:disabled) {
+  background: var(--gae-color-accent-secondary-hover);
+}
+
 .primary-button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
@@ -413,15 +423,15 @@ button:focus-visible,
 
 .file-status-badge {
   display: inline-flex;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border: 1px solid currentColor;
   border-radius: var(--gae-border-radius-sm);
+  background: color-mix(in srgb, currentColor 14%, transparent);
   font-family: var(--gae-font-family-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: var(--gae-font-weight-bold);
 }
 
@@ -454,7 +464,8 @@ button:focus-visible,
 
 .file-action-buttons {
   display: inline-flex;
-  gap: var(--gae-spacing-sm);
+  flex-shrink: 0;
+  gap: var(--gae-spacing-xs);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--gae-motion-duration-fast) var(--gae-motion-easing-default);
@@ -463,6 +474,29 @@ button:focus-visible,
 .file-action-buttons-visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+.file-action-button {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-sm);
+  background: var(--gae-color-accent-secondary);
+  color: var(--gae-color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.file-action-button:hover {
+  background: var(--gae-color-accent-secondary-hover);
+  color: var(--gae-color-text-primary);
+}
+
+.file-action-button:last-child:hover {
+  color: var(--gae-color-text-link);
 }
 
 .toast-container {
@@ -516,6 +550,191 @@ button:focus-visible,
 .commit-log-shell .top-header p {
   margin-top: 2px;
   font-size: 11px;
+}
+
+.history-view-shell {
+  position: relative;
+}
+
+.commit-action-bar {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--gae-border-color-default);
+  background: var(--gae-color-surface-primary);
+  padding: 8px 10px;
+}
+
+.file-tree-panel {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  background: var(--gae-color-surface-primary);
+}
+
+.file-tree-summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px 5px;
+  color: var(--gae-color-text-secondary);
+  font-size: 11px;
+}
+
+.file-tree-summary > span {
+  font-weight: var(--gae-font-weight-bold);
+  text-transform: uppercase;
+}
+
+.file-tree-summary > strong {
+  border-radius: var(--gae-border-radius-round);
+  background: var(--gae-color-accent-secondary);
+  color: var(--gae-color-text-primary);
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: var(--gae-font-weight-medium);
+}
+
+.file-tree-stats {
+  display: inline-flex;
+  flex: 1;
+  justify-content: flex-end;
+  gap: 8px;
+  font-family: var(--gae-font-family-mono);
+  font-size: 10px;
+}
+
+.file-tree-stat-a {
+  color: var(--gae-color-status-added);
+}
+
+.file-tree-stat-m {
+  color: var(--gae-color-status-modified);
+}
+
+.file-tree-stat-d {
+  color: var(--gae-color-status-deleted);
+}
+
+.file-tree-stat-r {
+  color: var(--gae-color-status-renamed);
+}
+
+.file-tree {
+  padding: 2px 0 8px;
+}
+
+.directory-node-header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 24px;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  color: var(--gae-color-text-primary);
+  cursor: pointer;
+  padding-top: 3px;
+  padding-right: 10px;
+  padding-bottom: 3px;
+  text-align: left;
+}
+
+.directory-node-header:hover {
+  background: var(--gae-color-surface-hover);
+}
+
+.directory-caret {
+  display: inline-flex;
+  width: 12px;
+  flex-shrink: 0;
+  justify-content: center;
+  color: var(--gae-color-text-secondary);
+  font-size: 10px;
+}
+
+.directory-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--gae-color-text-link);
+  opacity: 0.85;
+}
+
+.directory-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changed-file-row {
+  display: flex;
+  min-width: 0;
+  min-height: 24px;
+  align-items: center;
+  gap: 6px;
+  padding-top: 3px;
+  padding-right: 8px;
+  padding-bottom: 3px;
+}
+
+.changed-file-row:hover,
+.changed-file-row:focus-visible {
+  background: var(--gae-color-surface-hover);
+}
+
+.changed-file-row:hover .file-action-buttons,
+.changed-file-row:focus-within .file-action-buttons {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.changed-file-row-d .changed-file-name {
+  color: var(--gae-color-text-secondary);
+  text-decoration: line-through;
+}
+
+.changed-file-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--gae-color-text-secondary);
+  opacity: 0.82;
+}
+
+.changed-file-name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--gae-color-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-view-state {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.pending-screen-message {
+  display: flex;
+  max-width: 360px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--gae-color-text-secondary);
+  text-align: center;
+}
+
+.pending-screen-message strong {
+  color: var(--gae-color-text-primary);
+  font-size: 14px;
 }
 
 .commit-filter-panel {

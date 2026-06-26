@@ -25,14 +25,16 @@
 
 1. 선택된 커밋의 변경 파일이 **디렉토리 트리** 형태로 표시된다.
 2. 파일 항목에 마우스를 호버링하면 두 개의 액션 버튼이 활성화된다.
-   - **[코드 보기]** → 코드 뷰어(S-03) 활성화
-   - **[AI 정리 보기]** → AI 정리 뷰어(S-04) 활성화
-     - 해당 파일의 AI 정리 저장본이 이미 존재하면 파일명 옆에 **"저장됨"** 뱃지가 표시되며, 클릭 시 기존 저장본을 즉시 불러온다.
-     - 저장본이 없으면 AI를 호출하여 새로 생성한다.
+   - **[코드 보기]** → `selectedFile` 설정 후 S-03으로 전환
+   - **[AI 정리 보기]** → `selectedFile` 설정 후 S-04로 전환, `summaryMode = "file"` 설정
+     - 해당 파일의 AI 정리 저장본이 이미 존재하면 파일명 옆에 **"저장됨"** 뱃지가 표시된다.
+     - 저장본 로드 또는 AI 생성은 F03/F05 구현 단계에서 연결한다.
 3. 화면 상단에는 커밋 단위 액션 버튼이 위치한다.
-   - **[커밋 AI 정리]** → S-04 활성화 (커밋 전체 종합 요약)
-   - **[전체 파일 AI 정리]** → 모든 파일 AI 정리 순차 생성 (F-08)
-   - **[캔버스 보기]** → S-05 활성화
+   - **[커밋 AI 정리]** → S-04로 전환, `summaryMode = "commit"` 설정
+   - **[전체 파일 AI 정리]** → `isBatchRunning = true`, `batchTotal = changedFiles.length` 설정 후 F-08 메시지 전송
+   - **[캔버스 보기]** → S-05로 전환
+
+> 현재 S-03/S-04/S-05는 후속 기능 화면이 구현되기 전까지 placeholder 화면으로 렌더링된다.
 
 ---
 
@@ -41,7 +43,7 @@
 | 항목 | 내용 |
 |------|------|
 | 파일 상태 표시 | 파일명 앞 뱃지 레터로 구분: `A` 추가 / `M` 수정 / `D` 삭제 / `R` 이름 변경 |
-| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, 해당 파일의 `.md` 저장본이 존재할 때만 표시 |
+| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, `{savePath}/{commitHash}/{filePath}.md` 저장본이 존재할 때만 표시 |
 | 대용량 커밋 처리 | 변경 파일 수 무관하게 전체 렌더링. 성능 문제 발생 시 추후 가상 리스트(react-window) 적용 검토 |
 | 트리 구조 | 디렉토리 경로 기준으로 계층 분리. 디렉토리 노드는 토글 가능 |
 
@@ -76,8 +78,8 @@
 |------|------|------|
 | `selectedCommit` | `Commit` | 전역 상태. 변경 파일 조회 기준 커밋 |
 | `savePath` | `string \| null` | 전역 상태. 저장본 존재 여부 판단용 |
-| simple-git `diff --name-status` | `ChangedFile[]` | Extension Host에서 해당 커밋의 변경 파일 목록 추출 |
-| 로컬 파일시스템 | `boolean` | `{savePath}/{폴더명}/{파일명}.md` 존재 여부로 `hasSavedSummary` 설정 |
+| simple-git `diff-tree --name-status --root` | `ChangedFile[]` | Extension Host에서 해당 커밋의 변경 파일 목록 추출 |
+| 로컬 파일시스템 | `boolean` | `{savePath}/{commitHash}/{filePath}.md` 존재 여부로 `hasSavedSummary` 설정 |
 
 ---
 
@@ -95,8 +97,21 @@
 | 효과 | 트리거 | 설명 |
 |------|--------|------|
 | `changedFiles` 전역 상태 업데이트 | `selectedCommit` 설정 시 | 해당 커밋의 변경 파일 목록 로드 |
-| S-03 화면 전환 | `selectedFile` 설정 + [코드 보기] | `currentScreen = "S03"`, `previousScreen = "S02"` |
+| S-03 화면 전환 | `selectedFile` 설정 + [코드 보기] | `currentScreen = "S03"` |
 | S-04 화면 전환 | `selectedFile` 설정 + [AI 정리 보기] | `currentScreen = "S04"`, `summaryMode = "file"` |
 | S-04 화면 전환 (커밋) | [커밋 AI 정리] 클릭 | `currentScreen = "S04"`, `summaryMode = "commit"` |
 | S-05 화면 전환 | [캔버스 보기] 클릭 | `currentScreen = "S05"` |
-| F08 시작 트리거 | [전체 파일 AI 정리] 클릭 | `isBatchRunning = true`, `batchTotal` 설정 |
+| F08 시작 트리거 | [전체 파일 AI 정리] 클릭 | `isBatchRunning = true`, `batchTotal` 설정, VSCode 런타임에서는 `START_BATCH_AI_SUMMARY` 전송 |
+
+---
+
+## Current Implementation Notes
+
+| 항목 | 현재 구현 |
+|------|-----------|
+| 화면 파일 | `src/webview/features/F02/S02_HistoryViewScreen.tsx` |
+| 트리 구성 유틸 | `src/webview/features/F02/tree.ts` |
+| 메시지 요청 | Webview → Extension: `FETCH_CHANGED_FILES` |
+| 메시지 응답 | Extension → Webview: `CHANGED_FILES_LOADED`, `CHANGED_FILES_LOAD_FAILED` |
+| 브라우저 개발 모드 | VSCode API가 없으면 `appStore.ts`의 `demoChangedFiles`를 사용 |
+| 후속 화면 | S03/S04/S05는 현재 placeholder 화면으로 이동 |

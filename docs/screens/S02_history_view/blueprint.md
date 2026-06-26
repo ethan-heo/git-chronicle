@@ -37,14 +37,13 @@ S01_CommitListScreen에서 커밋 항목 클릭 시 진입. `selectedCommit` 전
 
 ```
 S02_HistoryViewScreen
-├─ BatchProgressBar (isBatchRunning 시 최상단 고정)
 ├─ TopHeader (커밋 메시지)
 │   ├─ BackButton → S01
 │   └─ SettingsIcon (⚙) → S06
 ├─ CommitActionBar
-│   ├─ PrimaryButton [커밋 AI 정리] → S04
-│   ├─ PrimaryButton [전체 파일 AI 정리] → F08 시작
-│   └─ PrimaryButton [캔버스 보기] → S05
+│   ├─ PrimaryButton [커밋 AI 정리] → S04 placeholder
+│   ├─ PrimaryButton [전체 파일 AI 정리] → F08 시작 상태 설정
+│   └─ PrimaryButton [캔버스 보기] → S05 placeholder
 └─ FileTree (스크롤 영역)
     ├─ DirectoryNode
     │   └─ FileTreeNode
@@ -60,7 +59,7 @@ S02_HistoryViewScreen
 
 | 컴포넌트 | 출처 |
 |---------|------|
-| `BatchProgressBar` | [F08 blueprint](../../features/F08_batch_ai_summary/blueprint.md) |
+| `BatchProgressBar` | [F08 blueprint](../../features/F08_batch_ai_summary/blueprint.md) — F08 구현 시 추가 |
 | `TopHeader` | [global_components](../../core/global_components.md#topheader) |
 | `BackButton` | [global_components](../../core/global_components.md#backbutton) |
 | `CommitActionBar` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md) |
@@ -84,7 +83,7 @@ S02_HistoryViewScreen
 | `empty` | `changedFiles.length === 0` | `EmptyState`: "변경된 파일이 없습니다" |
 | `populated` | `changedFiles.length > 0` | `FileTree` + `CommitActionBar` |
 | `error` | 로드 실패 | `ErrorState` |
-| `batchRunning` | `isBatchRunning === true` | `BatchProgressBar` 최상단 고정 추가 |
+| `batchRunning` | `isBatchRunning === true` | [전체 파일 AI 정리] 버튼 비활성화 (`BatchProgressBar`는 F08 구현 시 추가) |
 
 ---
 
@@ -95,12 +94,11 @@ S02_HistoryViewScreen
     → changedFiles 로드
     → FileTree 표시
         → 파일 호버 → FileActionButtons 표시
-            → [코드 보기] → S03
-            → [AI 정리 보기] → S04 (저장본 있으면 즉시, 없으면 생성)
-        → [커밋 AI 정리] → S04
-        → [전체 파일 AI 정리] → F08 시작 → BatchProgressBar 표시
-            → [취소] → 일괄 생성 중단 → Toast
-        → [캔버스 보기] → S05
+            → [코드 보기] → S03 placeholder
+            → [AI 정리 보기] → S04 placeholder
+        → [커밋 AI 정리] → S04 placeholder
+        → [전체 파일 AI 정리] → isBatchRunning true, START_BATCH_AI_SUMMARY 전송
+        → [캔버스 보기] → S05 placeholder
     → BackButton → S01
     → ⚙ → S06
 ```
@@ -109,5 +107,5 @@ S02_HistoryViewScreen
 
 ## Responsive Rules
 
-- `CommitActionBar` 버튼은 좁은 너비에서 아이콘만 표시 + 툴팁
-- `BatchProgressBar`는 항상 전체 너비로 표시
+- 현재 구현은 `CommitActionBar` 텍스트 버튼을 유지한다.
+- `BatchProgressBar`는 F08 구현 시 추가한다.

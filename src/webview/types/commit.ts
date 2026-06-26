@@ -13,4 +13,15 @@ export interface FilterState {
   filterKeyword: string;
 }
 
-export type ScreenID = 'S01' | 'S02' | 'S06';
+export type FileStatus = 'A' | 'M' | 'D' | 'R';
+
+export interface ChangedFile {
+  path: string;
+  oldPath?: string;
+  status: FileStatus;
+  hasSavedSummary: boolean;
+}
+
+export type SummaryMode = 'file' | 'commit';
+
+export type ScreenID = 'S01' | 'S02' | 'S03' | 'S04' | 'S05' | 'S06';

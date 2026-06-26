@@ -90,7 +90,9 @@ F02_ChangedFileTree 전용. S02_HistoryViewScreen 상단에서만 사용.
 ```typescript
 interface FileTreeProps {
   changedFiles: ChangedFile[];
-  savePath: string | null;
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
   onFileCodeView: (file: ChangedFile) => void;
   onFileAISummary: (file: ChangedFile) => void;
 }
@@ -101,7 +103,7 @@ interface FileTreeProps {
 - 파일 노드 호버 → `FileActionButtons` 표시
 
 #### States
-- `loading`, `empty`, `populated`
+- `loading`, `empty`, `populated`, `error`
 
 #### Accessibility
 - `role="tree"`, `aria-label="변경 파일 트리"`
@@ -124,11 +126,10 @@ F02_ChangedFileTree 전용. S02_HistoryViewScreen 내 스크롤 영역에서만 
 #### Props
 ```typescript
 interface DirectoryNodeProps {
-  name: string;
-  isExpanded: boolean;
+  node: DirectoryTreeNode;
   depth: number;
-  children: React.ReactNode;
-  onToggle: () => void;
+  onCodeView: (file: ChangedFile) => void;
+  onAISummary: (file: ChangedFile) => void;
 }
 ```
 
@@ -159,6 +160,7 @@ F02_ChangedFileTree 전용. FileTree 내에서 재귀적으로 사용.
 ```typescript
 interface FileTreeNodeProps {
   file: ChangedFile;
+  name: string;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
   onAISummary: (file: ChangedFile) => void;
@@ -273,12 +275,14 @@ S02_HistoryViewScreen
 |---------|--------|------|
 | 파일 호버 | `FileTreeNode` 마우스 진입 | `FileActionButtons` 표시 |
 | 파일 호버 해제 | 마우스 이탈 | `FileActionButtons` 숨김 |
-| [코드 보기] | 버튼 클릭 | S-03 진입 |
-| [AI 정리 보기] | 버튼 클릭 | S-04 진입 (저장본 있으면 즉시 표시, 없으면 생성) |
-| [커밋 AI 정리] | 버튼 클릭 | S-04 진입 (커밋 전체 요약) |
-| [전체 파일 AI 정리] | 버튼 클릭 | F08 시작 |
+| [코드 보기] | 버튼 클릭 | `selectedFile` 설정 후 S-03 진입 |
+| [AI 정리 보기] | 버튼 클릭 | `selectedFile` 설정 후 S-04 진입, `summaryMode = "file"` |
+| [커밋 AI 정리] | 버튼 클릭 | S-04 진입, `summaryMode = "commit"` |
+| [전체 파일 AI 정리] | 버튼 클릭 | `isBatchRunning = true`, `batchTotal` 설정 |
 | [캔버스 보기] | 버튼 클릭 | S-05 진입 |
 | 디렉토리 클릭 | `DirectoryNode` 클릭 | 펼침/접힘 토글 |
+
+> 현재 S-03/S-04/S-05는 placeholder 화면으로 라우팅되며, 실제 Diff/AI/Canvas 로딩은 각 후속 Feature 구현에서 연결한다.
 
 ---
 
@@ -315,7 +319,23 @@ S02_HistoryViewScreen
 
 ## Responsive Rules
 
-- 좁은 패널에서 `CommitActionBar`의 버튼 레이블이 잘리면 아이콘만 표시 + 툴팁 제공
+- 현재 구현은 `CommitActionBar` 텍스트 버튼을 유지한다.
+- 좁은 패널에서 버튼 레이블을 아이콘만 표시하는 개선은 후속 UI polish 항목으로 남긴다.
+
+---
+
+## Current Implementation Files
+
+| 파일 | 역할 |
+|------|------|
+| `src/webview/features/F02/S02_HistoryViewScreen.tsx` | S02 화면 조합, 변경 파일 메시지 구독 |
+| `src/webview/features/F02/CommitActionBar.tsx` | 커밋 단위 액션 버튼 |
+| `src/webview/features/F02/FileTree.tsx` | 변경 파일 트리 상태 분기와 요약 |
+| `src/webview/features/F02/DirectoryNode.tsx` | 디렉토리 노드 토글 |
+| `src/webview/features/F02/FileTreeNode.tsx` | 파일 행, 상태 배지, 저장됨 뱃지, 호버 액션 |
+| `src/webview/features/F02/tree.ts` | `ChangedFile[]` → 디렉토리 트리 변환 |
+| `src/webview/shared/components/FileStatusBadge.tsx` | A/M/D/R 공유 상태 배지 |
+| `src/webview/shared/components/FileActionButtons.tsx` | 코드 보기/AI 정리 보기 공유 액션 버튼 |
 
 ---
 

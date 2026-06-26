@@ -1,4 +1,6 @@
 import simpleGit from 'simple-git';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface Commit {
   hash: string;
@@ -6,6 +8,15 @@ export interface Commit {
   message: string;
   author: string;
   date: string;
+}
+
+export type FileStatus = 'A' | 'M' | 'D' | 'R';
+
+export interface ChangedFile {
+  path: string;
+  oldPath?: string;
+  status: FileStatus;
+  hasSavedSummary: boolean;
 }
 
 export interface FetchCommitsOptions {
@@ -79,4 +90,66 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
         date,
       };
     });
+}
+
+export async function fetchChangedFiles(repoPath: string, commitHash: string, savePath: string | null): Promise<ChangedFile[]> {
+  const git = simpleGit(repoPath);
+  const isRepo = await git.checkIsRepo();
+
+  if (!isRepo) {
+    throw new GitRepositoryNotFoundError(repoPath);
+  }
+
+  const output = await git.raw(['diff-tree', '--no-commit-id', '--name-status', '-r', '--root', commitHash]);
+
+  return output
+    .split('\n')
+    .map((line) => parseChangedFileLine(line, commitHash, savePath))
+    .filter((file): file is ChangedFile => Boolean(file));
+}
+
+function parseChangedFileLine(line: string, commitHash: string, savePath: string | null): ChangedFile | null {
+  const trimmed = line.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const [rawStatus, firstPath, secondPath] = trimmed.split('\t');
+  const status = normalizeStatus(rawStatus);
+
+  if (!status || !firstPath) {
+    return null;
+  }
+
+  const filePath = status === 'R' ? secondPath : firstPath;
+
+  if (!filePath) {
+    return null;
+  }
+
+  return {
+    path: filePath,
+    oldPath: status === 'R' ? firstPath : undefined,
+    status,
+    hasSavedSummary: hasSavedSummary(savePath, commitHash, filePath),
+  };
+}
+
+function normalizeStatus(rawStatus: string): FileStatus | null {
+  const status = rawStatus.charAt(0);
+
+  if (status === 'A' || status === 'M' || status === 'D' || status === 'R') {
+    return status;
+  }
+
+  return null;
+}
+
+function hasSavedSummary(savePath: string | null, commitHash: string, filePath: string): boolean {
+  if (!savePath) {
+    return false;
+  }
+
+  return fs.existsSync(path.join(savePath, commitHash, `${filePath}.md`));
 }

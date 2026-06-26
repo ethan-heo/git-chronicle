@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { fetchCommits, GitRepositoryNotFoundError } from './gitService';
+import { fetchChangedFiles, fetchCommits, GitRepositoryNotFoundError } from './gitService';
 
 interface WebviewMessage {
   type: string;
-  payload?: FetchCommitsPayload;
+  payload?: FetchCommitsPayload | FetchChangedFilesPayload;
 }
 
 interface FetchCommitsPayload {
@@ -13,6 +13,11 @@ interface FetchCommitsPayload {
   filterDateEnd?: string | null;
   filterAuthor?: string | null;
   filterKeyword?: string;
+}
+
+interface FetchChangedFilesPayload {
+  commitHash?: string;
+  savePath?: string | null;
 }
 
 export function registerMessageHandler(panel: vscode.WebviewPanel): void {
@@ -27,7 +32,10 @@ export function registerMessageHandler(panel: vscode.WebviewPanel): void {
         });
         break;
       case 'FETCH_COMMITS':
-        await handleFetchCommits(panel, message.payload);
+        await handleFetchCommits(panel, message.payload as FetchCommitsPayload);
+        break;
+      case 'FETCH_CHANGED_FILES':
+        await handleFetchChangedFiles(panel, message.payload as FetchChangedFilesPayload);
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
@@ -92,6 +100,49 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
       type: 'COMMITS_LOAD_FAILED',
       payload: {
         message: error instanceof Error ? error.message : '커밋 목록을 불러오지 못했습니다',
+      },
+    });
+  }
+}
+
+async function handleFetchChangedFiles(panel: vscode.WebviewPanel, payload: FetchChangedFilesPayload = {}): Promise<void> {
+  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+  if (!repoPath) {
+    await panel.webview.postMessage({
+      type: 'CHANGED_FILES_LOAD_FAILED',
+      payload: {
+        message: 'Git 저장소가 감지되지 않았습니다',
+      },
+    });
+    return;
+  }
+
+  if (!payload.commitHash) {
+    await panel.webview.postMessage({
+      type: 'CHANGED_FILES_LOAD_FAILED',
+      payload: {
+        message: '선택된 커밋이 없습니다',
+      },
+    });
+    return;
+  }
+
+  try {
+    const configuredSavePath = vscode.workspace.getConfiguration('gitAuthorExplorer').get<string>('savePath') || null;
+    const changedFiles = await fetchChangedFiles(repoPath, payload.commitHash, payload.savePath ?? configuredSavePath);
+
+    await panel.webview.postMessage({
+      type: 'CHANGED_FILES_LOADED',
+      payload: {
+        files: changedFiles,
+      },
+    });
+  } catch (error) {
+    await panel.webview.postMessage({
+      type: 'CHANGED_FILES_LOAD_FAILED',
+      payload: {
+        message: error instanceof Error ? error.message : '변경 파일 목록을 불러오지 못했습니다',
       },
     });
   }
