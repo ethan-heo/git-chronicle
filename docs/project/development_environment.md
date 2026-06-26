@@ -81,7 +81,8 @@
 ```json
 {
   "scripts": {
-    "dev": "vite build --watch",
+    "dev": "vite --host 127.0.0.1",
+    "dev:watch": "vite build --watch",
     "build": "vite build && tsc -p tsconfig.extension.json",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -91,6 +92,9 @@
   }
 }
 ```
+
+- `pnpm dev`: Webview SPA를 브라우저에서 확인하는 개발 서버를 실행한다. 기본 접속 URL은 `http://127.0.0.1:5173/`이다.
+- `pnpm dev:watch`: VSCode Extension Webview 배포 번들을 감시 빌드한다.
 
 ---
 

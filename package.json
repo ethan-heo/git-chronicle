@@ -36,7 +36,8 @@
     }
   },
   "scripts": {
-    "dev": "vite build --watch",
+    "dev": "vite --host 127.0.0.1",
+    "dev:watch": "vite build --watch",
     "build": "vite build && tsc -p tsconfig.extension.json",
     "test": "vitest run",
     "test:watch": "vitest",
