@@ -88,7 +88,7 @@ export async function fetchChangedFiles(
       path: filePath,
       oldPath: status === 'R' ? firstPath : undefined,
       status,
-      hasSavedSummary: Boolean(savePath && fs.existsSync(path.join(savePath, commitHash, `${filePath}.md`))),
+      hasSavedSummary: hasSavedSummary(savePath, commitHash, filePath),
     };
   });
 }
@@ -249,7 +249,7 @@ goToCommitAISummary: () => set({
 }),
 ```
 
-현재 S-03은 `features/F03/S03_CodeViewerScreen.tsx`에서 실제 코드 뷰어로 렌더링된다. S-05는 `features/F04/S05_DependencyCanvasScreen.tsx`에서 실제 의존성 캔버스로 렌더링된다. S-04는 `App.tsx`에서 placeholder 화면으로 렌더링되며, 실제 `START_AI_SUMMARY_FILE` 연결은 F05 구현 범위에서 추가한다.
+현재 S-03은 `features/F03/S03_CodeViewerScreen.tsx`에서 실제 코드 뷰어로 렌더링된다. S-04는 `features/F05/S04_AISummaryViewerScreen.tsx`에서 파일 단위 AI 요약 뷰어로 렌더링되며 `START_AI_SUMMARY_FILE` 메시지를 사용한다. S-05는 `features/F04/S05_DependencyCanvasScreen.tsx`에서 실제 의존성 캔버스로 렌더링된다.
 
 ---
 

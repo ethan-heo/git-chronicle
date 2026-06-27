@@ -34,7 +34,7 @@
    - **[전체 파일 AI 정리]** → `isBatchRunning = true`, `batchTotal = changedFiles.length` 설정 후 F-08 메시지 전송
    - **[캔버스 보기]** → S-05로 전환
 
-> 현재 S-03은 코드 뷰어, S-05는 의존성 캔버스로 구현되어 실제 화면으로 전환된다. S-04 AI 요약 화면은 후속 기능 구현 전까지 placeholder 화면으로 렌더링된다.
+> 현재 S-03은 코드 뷰어, S-04는 파일 단위 AI 요약 뷰어, S-05는 의존성 캔버스로 구현되어 실제 화면으로 전환된다. S-04의 커밋 단위 요약은 F05b 구현 범위에서 확장한다.
 
 ---
 
@@ -43,7 +43,7 @@
 | 항목 | 내용 |
 |------|------|
 | 파일 상태 표시 | 파일명 앞 뱃지 레터로 구분: `A` 추가 / `M` 수정 / `D` 삭제 / `R` 이름 변경 |
-| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, `{savePath}/{commitHash}/{filePath}.md` 저장본이 존재할 때만 표시 |
+| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, `{savePath}/{commitHash}/{normalizedFilePath}.md` 저장본이 존재할 때만 표시. `normalizedFilePath`는 파일 경로의 `/` 또는 `\`를 `__`로 치환 |
 | 대용량 커밋 처리 | 변경 파일 수 무관하게 전체 렌더링. 성능 문제 발생 시 추후 가상 리스트(react-window) 적용 검토 |
 | 트리 구조 | 디렉토리 경로 기준으로 계층 분리. 디렉토리 노드는 토글 가능 |
 
@@ -79,7 +79,7 @@
 | `selectedCommit` | `Commit` | 전역 상태. 변경 파일 조회 기준 커밋 |
 | `savePath` | `string \| null` | 전역 상태. 저장본 존재 여부 판단용 |
 | simple-git `diff-tree --name-status --root` | `ChangedFile[]` | Extension Host에서 해당 커밋의 변경 파일 목록 추출 |
-| 로컬 파일시스템 | `boolean` | `{savePath}/{commitHash}/{filePath}.md` 존재 여부로 `hasSavedSummary` 설정 |
+| 로컬 파일시스템 | `boolean` | `{savePath}/{commitHash}/{normalizedFilePath}.md` 존재 여부로 `hasSavedSummary` 설정 |
 
 ---
 
@@ -114,4 +114,4 @@
 | 메시지 요청 | Webview → Extension: `FETCH_CHANGED_FILES` |
 | 메시지 응답 | Extension → Webview: `CHANGED_FILES_LOADED`, `CHANGED_FILES_LOAD_FAILED` |
 | 브라우저 개발 모드 | VSCode API가 없으면 `appStore.ts`의 `demoChangedFiles`를 사용 |
-| 후속 화면 | S03은 실제 코드 뷰어로 이동. S05는 실제 의존성 캔버스로 이동. S04는 현재 placeholder 화면으로 이동 |
+| 후속 화면 | S03은 실제 코드 뷰어로 이동. S04는 파일 단위 AI 요약 뷰어로 이동. S05는 실제 의존성 캔버스로 이동 |

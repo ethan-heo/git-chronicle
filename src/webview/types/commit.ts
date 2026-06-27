@@ -32,4 +32,6 @@ export interface DependencyEdge {
 
 export type SummaryMode = 'file' | 'commit';
 
+export type AIProviderName = 'claude' | 'gemini' | 'codex';
+
 export type ScreenID = 'S01' | 'S02' | 'S03' | 'S04' | 'S05' | 'S06';

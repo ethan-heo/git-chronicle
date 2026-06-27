@@ -55,9 +55,13 @@
 
 | 상태 키 | 타입 | 초기값 | 설명 |
 |---------|------|--------|------|
+| `isLoadingSummary` | `boolean` | `false` | 저장본 확인 또는 설정 로딩 중 여부 |
 | `isGeneratingSummary` | `boolean` | `false` | AI 정리 생성 중 여부 (단일 파일/커밋) |
 | `currentSummaryContent` | `string` | `""` | 스트리밍 중 누적된 AI 정리 텍스트 |
 | `summaryError` | `string \| null` | `null` | AI 정리 실패 시 오류 메시지 |
+| `summarySavedPath` | `string \| null` | `null` | 현재 표시 중인 AI 정리 저장 파일 경로 |
+| `hasCurrentSavedSummary` | `boolean` | `false` | 현재 표시 중인 요약이 저장본 또는 저장 완료본인지 여부 |
+| `isSummaryTokenLimitExceeded` | `boolean` | `false` | diff가 경고 기준(12,000자)을 초과했는지 여부 |
 | `summaryMode` | `"file" \| "commit"` | `"file"` | 현재 AI 정리 모드 (파일 단위 / 커밋 단위) |
 
 ---
@@ -133,7 +137,7 @@ interface AIProvider {
 
 ## 상태 초기화 규칙
 
-- `selectedCommit` 변경 시: `selectedFile`, `changedFiles`, `currentSummaryContent`, `summaryError` 초기화.
+- `selectedCommit` 변경 시: `selectedFile`, `changedFiles`, 의존성 상태, `currentSummaryContent`, `isLoadingSummary`, `isGeneratingSummary`, `summaryError`, `summarySavedPath`, `hasCurrentSavedSummary`, `isSummaryTokenLimitExceeded` 초기화.
 - `savePath` null 설정 시: `isGeneratingSummary`가 true이면 진행 중인 생성을 중단하지 않음 (이미 시작된 작업은 완료 후 저장 불가 토스트 표시).
 - `isBatchRunning` false 전환 시: `batchTotal`, `batchCompleted`, `batchFailedCount`, `batchCancelled` 초기화.
 - 확장 프로그램 재활성화 시: 네비게이션 상태는 S-01로 리셋. AI 프로바이더·저장 경로 상태는 VSCode ExtensionContext에서 복원.

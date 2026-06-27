@@ -23,15 +23,11 @@ src/
 │   ├── webviewPanel.ts               # WebviewPanel 생성·관리
 │   ├── messageHandler.ts             # Webview → Extension 메시지 라우터
 │   ├── gitService.ts                 # simple-git 기반 커밋 조회 서비스
-│   ├── ai/
-│   │   ├── aiRunner.ts               # child_process.spawn 기반 AI CLI 실행기
-│   │   ├── aiTypes.ts                # AIProvider, AIRunResult 타입
-│   │   └── cliDetector.ts            # {cli} --version 실행으로 CLI 등록 확인
-│   ├── storage/
-│   │   ├── summaryStorage.ts         # AI 정리 파일 읽기/쓰기 (fs.mkdirSync recursive)
-│   │   └── settingsStorage.ts        # VSCode ExtensionContext.globalState 래퍼
-│   └── dependency/
-│       └── dependencyAnalyzer.ts     # dependency-cruiser 실행·결과 파싱
+│   ├── dependencyService.ts          # dependency-cruiser 실행·결과 파싱
+│   ├── aiService.ts                  # child_process.spawn 기반 AI CLI 스트리밍 실행
+│   ├── aiTypes.ts                    # AIProviderName 타입
+│   ├── prompts.ts                    # 파일/커밋 AI 정리 프롬프트 빌더
+│   └── summaryFileService.ts         # AI 정리 파일 읽기/쓰기/존재 확인
 │
 └── webview/                          # Webview SPA (React + TypeScript)
     ├── main.tsx                      # React 진입점 (ReactDOM.createRoot)
@@ -68,16 +64,23 @@ src/
     │   │   ├── highlightDiff.ts
     │   │   ├── types.ts
     │   │   └── index.ts
-    │   ├── F04_dependency_canvas/
-    │   │   ├── DependencyCanvasFeature.tsx
+    │   ├── F04/
+    │   │   ├── S05_DependencyCanvasScreen.tsx
     │   │   ├── DependencyGraph.tsx
     │   │   ├── FileNode.tsx
     │   │   ├── DependencyEdge.tsx
-    │   │   └── useDependencyCanvas.ts
-    │   ├── F05_ai_summary_file/
-    │   │   ├── AISummaryFileFeature.tsx
+    │   │   ├── CanvasControls.tsx
+    │   │   ├── LegendPanel.tsx
+    │   │   ├── graph.ts
+    │   │   └── index.ts
+    │   ├── F05/
+    │   │   ├── S04_AISummaryViewerScreen.tsx
     │   │   ├── AISummaryViewer.tsx
-    │   │   └── useAISummaryFile.ts
+    │   │   ├── StreamingTextRenderer.tsx
+    │   │   ├── RegenerateButton.tsx
+    │   │   ├── TokenLimitWarning.tsx
+    │   │   ├── OverwriteConfirmDialog.tsx
+    │   │   └── index.ts
     │   ├── F05b_ai_summary_commit/
     │   │   ├── AISummaryCommitFeature.tsx
     │   │   └── useAISummaryCommit.ts
@@ -156,7 +159,8 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_CHANGED_FILES'; payload: { commitHash: string; savePath?: string | null } }
   | { type: 'OPEN_REPOSITORY' }
   | { type: 'FETCH_FILE_DIFF'; payload: { commitHash: string; filePath: string } }
-  | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; filePath: string } }
+  | { type: 'FETCH_AI_SUMMARY_SETTINGS' }
+  | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; filePath: string; provider?: AIProviderName | null; savePath?: string | null; forceRegenerate?: boolean } }
   | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string } }
   | { type: 'START_BATCH_AI_SUMMARY'; payload: { commitHash: string; files: string[] } }
   | { type: 'CANCEL_BATCH_AI_SUMMARY' }
@@ -175,8 +179,12 @@ type ExtensionToWebviewMessage =
   | { type: 'CHANGED_FILES_LOAD_FAILED'; payload: { message: string } }
   | { type: 'FILE_DIFF_LOADED'; payload: { rawDiff: string; isBinary: boolean; isDeleted: boolean } }
   | { type: 'FILE_DIFF_LOAD_FAILED'; payload: { message: string } }
+  | { type: 'AI_SUMMARY_SETTINGS_LOADED'; payload: { savePath: string | null; activeAIProvider: AIProviderName | null } }
+  | { type: 'AI_SUMMARY_LOADED'; payload: { content: string; savedPath: string; provider: AIProviderName; fromSaved: true } }
+  | { type: 'AI_SUMMARY_STARTED'; payload: { provider: AIProviderName } }
+  | { type: 'AI_SUMMARY_TOKEN_WARNING'; payload: { isOverLimit: boolean } }
   | { type: 'AI_SUMMARY_CHUNK'; payload: { chunk: string } }
-  | { type: 'AI_SUMMARY_DONE'; payload: { savedPath: string } }
+  | { type: 'AI_SUMMARY_DONE'; payload: { content: string; savedPath: string; provider: AIProviderName } }
   | { type: 'AI_SUMMARY_ERROR'; payload: { message: string } }
   | { type: 'BATCH_PROGRESS'; payload: { current: number; total: number } }
   | { type: 'BATCH_DONE'; payload: { failedCount: number } }
@@ -188,18 +196,18 @@ type ExtensionToWebviewMessage =
 ### Zustand 상태 관리 (Webview 전용)
 
 - Webview 내 전역 상태는 Zustand 단일 스토어(`useAppStore`, 구현 파일: `src/webview/store/appStore.ts`)에서 관리한다.
-- Extension에서 받은 메시지는 현재 `S01_CommitListScreen.tsx`, `features/F02/S02_HistoryViewScreen.tsx`, `features/F03/S03_CodeViewerScreen.tsx`에서 구독하여 화면 또는 Zustand 상태를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
+- Extension에서 받은 메시지는 현재 `features/F01/S01_CommitListScreen.tsx`, `features/F02/S02_HistoryViewScreen.tsx`, `features/F03/S03_CodeViewerScreen.tsx`, `features/F05/S04_AISummaryViewerScreen.tsx`에서 구독하여 화면 또는 Zustand 상태를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
 - 화면 전환(`currentScreen`)도 Zustand 상태로 관리한다. `react-router`는 사용하지 않는다.
 
 ### Browser Dev Fallback
 
 - `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
 - 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록과 F02 변경 파일 트리용 데모 데이터를 사용해 UI를 확인할 수 있게 한다.
-- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF` 메시지를 보내고 `simple-git` 결과로 상태를 갱신한다.
+- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF`, F05가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
 
 ### child_process (Extension Host 전용)
 
-- AI CLI 실행(`child_process.spawn`)은 Extension Host의 `aiRunner.ts`에서만 수행한다.
+- AI CLI 실행(`child_process.spawn`)은 Extension Host의 `aiService.ts`에서만 수행한다.
 - 스트리밍 출력은 `data` 이벤트마다 `AI_SUMMARY_CHUNK` 메시지로 Webview에 전달한다.
 - 타임아웃 120초 초과 시 프로세스를 `kill()`하고 `AI_SUMMARY_ERROR` 메시지를 전송한다.
 
@@ -210,16 +218,19 @@ type ExtensionToWebviewMessage =
 ```
 Webview (F05_AISummaryFile)
   └─ [AI 정리 보기 클릭]
-       └─ postMessage({ type: 'START_AI_SUMMARY_FILE', payload: { commitHash, filePath } })
+       └─ postMessage({ type: 'START_AI_SUMMARY_FILE', payload: { commitHash, filePath, provider, savePath } })
             ↓
 Extension Host (messageHandler.ts)
-  └─ gitService.getFileDiff(commitHash, filePath)
-       └─ summaryStorage.checkExists(savePath, folderName, fileName)
-            ├─ [존재 시] → postMessage({ type: 'AI_SUMMARY_DONE', payload: { savedPath } })
-            └─ [없을 시] → aiRunner.spawn(activeProvider, diff)
-                              ├─ [data chunk] → postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } })
-                              └─ [close]       → summaryStorage.save(...)
-                                                  → postMessage({ type: 'AI_SUMMARY_DONE', ... })
+  └─ summaryFileService.loadSummary(savePath, commitHash, filePath)
+       ├─ [존재 시] → postMessage({ type: 'AI_SUMMARY_LOADED', payload: { content, savedPath, provider, fromSaved: true } })
+       └─ [없을 시]
+            └─ gitService.fetchFileDiff(repoPath, commitHash, filePath)
+                 ├─ postMessage({ type: 'AI_SUMMARY_TOKEN_WARNING', payload: { isOverLimit } })
+                 ├─ postMessage({ type: 'AI_SUMMARY_STARTED', payload: { provider } })
+                 └─ aiService.streamAISummary(provider, prompt)
+                      ├─ [stdout chunk] → postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } })
+                      └─ [close]        → summaryFileService.saveSummary(...)
+                                          → postMessage({ type: 'AI_SUMMARY_DONE', payload: { content, savedPath, provider } })
 ```
 
 ---

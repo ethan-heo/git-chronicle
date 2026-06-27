@@ -20,7 +20,7 @@ F05_AISummaryFile과 거의 동일한 구현. `summaryMode = 'commit'`으로 분
 | `src/extension/aiService.ts` | F05와 공유 (변경 불필요) |
 | `src/extension/summaryFileService.ts` | `saveCommitSummary()`, `loadCommitSummary()` 함수 추가 |
 | `src/extension/gitService.ts` | `fetchCommitFullDiff()` 함수 추가 |
-| `src/webview/screens/S04_AISummaryViewerScreen.tsx` | `summaryMode` 분기 처리 추가 |
+| `src/webview/features/F05/S04_AISummaryViewerScreen.tsx` | `summaryMode` 분기 처리 추가 |
 
 ---
 
@@ -77,17 +77,20 @@ export function loadCommitSummary(
 }
 ```
 
-### 메시지 핸들러 (`generateCommitSummary`)
+### 메시지 핸들러 (`START_AI_SUMMARY_COMMIT`)
+
+F05와 동일하게 `{ type, payload }` 메시지 프로토콜과 `AI_SUMMARY_*` 응답 이벤트를 사용한다.
 
 ```typescript
-case 'generateCommitSummary': {
-  const { commitHash, provider, savePath } = message;
+case 'START_AI_SUMMARY_COMMIT': {
+  const { commitHash, provider, savePath, forceRegenerate } = message.payload;
 
   const fullDiff = await fetchCommitFullDiff(repoPath, commitHash);
   const TOKEN_LIMIT_CHARS = 20000;  // 커밋 전체 diff는 더 넉넉하게
   const isOverLimit = fullDiff.length > TOKEN_LIMIT_CHARS;
 
-  panel.webview.postMessage({ command: 'summaryTokenWarning', isOverLimit });
+  panel.webview.postMessage({ type: 'AI_SUMMARY_TOKEN_WARNING', payload: { isOverLimit } });
+  panel.webview.postMessage({ type: 'AI_SUMMARY_STARTED', payload: { provider } });
 
   const prompt = buildCommitSummaryPrompt(commitHash, fullDiff);
 
@@ -97,14 +100,14 @@ case 'generateCommitSummary': {
     prompt,
     onChunk: chunk => {
       fullContent += chunk;
-      panel.webview.postMessage({ command: 'summaryChunk', chunk });
+      panel.webview.postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } });
     },
     onComplete: () => {
-      saveCommitSummary(savePath, commitHash, fullContent);
-      panel.webview.postMessage({ command: 'summaryComplete' });
+      const savedPath = saveCommitSummary(savePath, commitHash, fullContent);
+      panel.webview.postMessage({ type: 'AI_SUMMARY_DONE', payload: { content: fullContent, savedPath, provider } });
     },
     onError: err => {
-      panel.webview.postMessage({ command: 'summaryError', error: err });
+      panel.webview.postMessage({ type: 'AI_SUMMARY_ERROR', payload: { message: err } });
     },
   });
   break;
@@ -152,16 +155,14 @@ useEffect(() => {
       return;
     }
     // 새로 생성
-    window.vscode.postMessage({
-      command: 'generateCommitSummary',
+    postMessage('START_AI_SUMMARY_COMMIT', {
       commitHash: selectedCommit.hash,
       provider: activeAIProvider,
       savePath,
     });
   } else {
     // F05 파일 요약 로직 (기존)
-    window.vscode.postMessage({
-      command: 'generateFileSummary',
+    postMessage('START_AI_SUMMARY_FILE', {
       commitHash: selectedCommit.hash,
       filePath: selectedFile!.path,
       provider: activeAIProvider,

@@ -133,7 +133,7 @@ it('[취소] 클릭 시 cancelBatch 액션이 호출된다', ...);
 ### 대상
 
 - `gitService.ts`: `git log`, `git diff` 실행 결과 파싱
-- `summaryStorage.ts`: 파일 존재 여부 확인, 저장, 읽기
+- `summaryFileService.ts`: 파일 존재 여부 확인, 저장, 읽기
 - `cliDetector.ts`: `--version` 실행으로 CLI 감지
 
 ### 실행 방법

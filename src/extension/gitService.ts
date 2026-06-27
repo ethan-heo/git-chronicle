@@ -1,6 +1,5 @@
 import simpleGit from 'simple-git';
-import * as fs from 'fs';
-import * as path from 'path';
+import { hasSavedSummary } from './summaryFileService';
 
 export interface Commit {
   hash: string;
@@ -169,12 +168,4 @@ function normalizeStatus(rawStatus: string): FileStatus | null {
   }
 
   return null;
-}
-
-function hasSavedSummary(savePath: string | null, commitHash: string, filePath: string): boolean {
-  if (!savePath) {
-    return false;
-  }
-
-  return fs.existsSync(path.join(savePath, commitHash, `${filePath}.md`));
 }

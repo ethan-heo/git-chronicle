@@ -8,11 +8,19 @@ AI 정리 결과(마크다운)를 표시하는 뷰어 컴포넌트. 스트리밍
 
 ```typescript
 interface AISummaryViewerProps {
-  content: string;              // 현재까지 누적된 마크다운 텍스트
-  isStreaming: boolean;         // true: 스트리밍 중, false: 완료 또는 저장본 표시
-  error: string | null;        // 에러 메시지. null이면 정상
-  isLoading: boolean;           // 저장본 파일 읽기 중 로딩 상태
-  onRegenerate: () => void;     // [재생성] 버튼 클릭 콜백
+  content: string;                 // 현재까지 누적된 마크다운 텍스트
+  error: string | null;            // 에러 메시지. null이면 정상
+  isLoading: boolean;              // 설정/저장본 확인 중 로딩 상태
+  isGenerating: boolean;           // true: AI stdout 스트리밍 중
+  hasSavedSummary: boolean;        // 저장본 또는 저장 완료본 여부
+  hasAIProvider: boolean;          // activeAIProvider 존재 여부
+  hasSavePath: boolean;            // savePath 존재 여부
+  savedPath: string | null;        // 현재 저장 파일 경로
+  providerLabel: string | null;    // 표시할 provider 이름
+  summaryMode: "file" | "commit";
+  onGoToSettings: () => void;
+  onRegenerate: () => void;        // [재생성] 버튼 클릭 콜백
+  onRetry: () => void;
 }
 ```
 
@@ -22,13 +30,17 @@ interface AISummaryViewerProps {
 
 ```
 AISummaryViewer
+├── [hasAIProvider = false] → EmptyState ("AI가 설정되지 않았습니다" + "설정으로 이동")
+├── [hasSavePath = false]   → EmptyState ("저장 경로를 먼저 설정해주세요" + "설정으로 이동")
 ├── [isLoading = true]      → LoadingState ("AI 정리를 불러오는 중...")
 ├── [error !== null]        → ErrorState (에러 메시지 + [재시도] 버튼)
-├── [content === '' && !isStreaming] → EmptyState (AI 정리가 없음)
+├── [content === '' && !isGenerating] → EmptyState (AI 정리가 없음)
 └── [content 있음]          → 마크다운 렌더링 영역
-    ├── [isStreaming = true]  → StreamingTextRenderer (타이핑 커서 표시)
-    └── [isStreaming = false] → ReactMarkdown 렌더링 (완성본)
+    ├── [isGenerating = true]  → StreamingTextRenderer (타이핑 커서 표시)
+    └── [isGenerating = false] → ReactMarkdown 렌더링 (완성본)
 ```
+
+상단 action bar에는 provider/source tag를 표시한다. [재생성] 버튼은 `hasSavedSummary && content !== "" && !isGenerating`일 때만 노출한다.
 
 ---
 
@@ -37,11 +49,11 @@ AISummaryViewer
 `StreamingTextRenderer`는 `content`를 `<pre>` 태그로 표시하고 끝에 깜빡이는 커서(`|`)를 추가한다.
 
 ```tsx
-const StreamingTextRenderer: React.FC<{ content: string }> = ({ content }) => (
-  <pre className="streaming-text">
-    {content}
-    <span className="streaming-cursor" aria-hidden="true">|</span>
-  </pre>
+const StreamingTextRenderer: React.FC<{ content: string; isStreaming: boolean }> = ({ content, isStreaming }) => (
+  <div className="streaming-text-renderer">
+    <pre className="streaming-content">{content || 'AI 정리를 생성하는 중입니다...'}</pre>
+    {isStreaming ? <span className="streaming-cursor" aria-hidden="true" /> : null}
+  </div>
 );
 ```
 
@@ -52,10 +64,12 @@ const StreamingTextRenderer: React.FC<{ content: string }> = ({ content }) => (
 | 상태 | 조건 | 표시 |
 |------|------|------|
 | `loading` | `isLoading = true` | LoadingState |
-| `streaming` | `isStreaming = true`, `content` 증가 중 | 타이핑 커서 표시 |
-| `complete` | `isStreaming = false`, `content` 완성 | react-markdown 렌더링 |
+| `streaming` | `isGenerating = true`, `content` 증가 중 | 타이핑 커서 표시 |
+| `complete` | `isGenerating = false`, `content` 완성 | react-markdown 렌더링 |
 | `error` | `error !== null` | ErrorState + [재시도] |
-| `empty` | `content === ''`, `!isStreaming`, `!isLoading`, `!error` | EmptyState |
+| `empty` | `content === ''`, `!isGenerating`, `!isLoading`, `!error` | EmptyState |
+| `noAI` | `hasAIProvider = false` | EmptyState + 설정 CTA |
+| `noPath` | `hasSavePath = false` | EmptyState + 설정 CTA |
 
 ---
 

@@ -38,25 +38,18 @@ src/extension/
 ├── gitService.ts                     # simple-git 기반 Git 조회 서비스
 │   - fetchCommits(filter, page)      # git log 실행
 │   - GitRepositoryNotFoundError      # Git 저장소 미감지 오류 타입
-├── git/                              # 향후 Git 관련 모듈 확장 위치
-│   └── gitTypes.ts                   # Commit, ChangedFile, CommitFilter 타입 (예정)
-├── ai/
-│   ├── aiRunner.ts                   # child_process.spawn 기반 AI CLI 실행
-│   │   - run(provider, prompt)       # 스트리밍 실행. 120초 타임아웃
-│   ├── aiTypes.ts                    # AIProvider, AIProviderName, AIRunOptions
-│   └── cliDetector.ts               # {cli} --version 실행으로 CLI 존재 확인
-├── storage/
-│   ├── summaryStorage.ts             # AI 정리 파일 읽기/쓰기
-│   │   - exists(savePath, hash, file) → boolean
-│   │   - read(savePath, hash, file)  → string
-│   │   - write(savePath, hash, file, content)
-│   │   - getFolderName(commitMessage) → 앞 50자 + 특수문자 치환
-│   └── settingsStorage.ts            # ExtensionContext.globalState 래퍼
-│       - getSavePath() / setSavePath()
-│       - getProviders() / setProviders()
-└── dependency/
-    └── dependencyAnalyzer.ts         # dependency-cruiser 실행·그래프 결과 파싱
-        - analyze(repoPath, files[])  → { nodes[], edges[] }
+├── dependencyService.ts              # dependency-cruiser 실행·그래프 결과 파싱
+│   - analyzeDependencies(repoPath, files[]) → DependencyEdge[]
+├── aiService.ts                      # child_process.spawn 기반 AI CLI 스트리밍 실행
+│   - streamAISummary(options)        # stdout chunk 전달, 120초 타임아웃, 취소 함수 반환
+├── aiTypes.ts                        # AIProviderName 타입 ('claude' | 'gemini' | 'codex')
+├── prompts.ts                        # AI 정리 프롬프트 빌더
+│   - buildFileSummaryPrompt(filePath, diff)
+└── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인
+    - loadSummary(savePath, hash, file) → { content, savedPath } | null
+    - saveSummary(savePath, hash, file, content) → savedPath
+    - hasSavedSummary(savePath, hash, file) → boolean
+    - 파일명 규칙: filePath의 / 또는 \ 를 __로 치환 후 .md 추가
 ```
 
 ---
@@ -102,16 +95,23 @@ src/webview/
 │   │   ├── highlightDiff.ts          # Shiki lazy highlighter
 │   │   ├── types.ts                  # DiffLineData, FileDiffPayload 타입
 │   │   └── index.ts                  # F03 barrel export
-│   ├── F04_dependency_canvas/
-│   │   ├── DependencyCanvasFeature.tsx
+│   ├── F04/
+│   │   ├── S05_DependencyCanvasScreen.tsx # S05 화면 조합, 의존성 메시지 구독
 │   │   ├── DependencyGraph.tsx       # React Flow 캔버스 루트
 │   │   ├── FileNode.tsx              # React Flow 커스텀 노드
 │   │   ├── DependencyEdge.tsx        # React Flow 커스텀 엣지
-│   │   └── useDependencyCanvas.ts
-│   ├── F05_ai_summary_file/
-│   │   ├── AISummaryFileFeature.tsx
-│   │   ├── AISummaryViewer.tsx       # 마크다운 렌더링 + 스트리밍 타이핑 효과
-│   │   └── useAISummaryFile.ts
+│   │   ├── CanvasControls.tsx        # 줌/맞춤 컨트롤
+│   │   ├── LegendPanel.tsx           # 캔버스 범례
+│   │   ├── graph.ts                  # ChangedFile[] + DependencyEdge[] → 그래프 데이터
+│   │   └── index.ts                  # F04 barrel export
+│   ├── F05/
+│   │   ├── S04_AISummaryViewerScreen.tsx # S04 화면 조합, AI 요약 메시지 구독
+│   │   ├── AISummaryViewer.tsx       # 상태 분기 + 마크다운 렌더링
+│   │   ├── StreamingTextRenderer.tsx # 실시간 스트리밍 텍스트 + 커서
+│   │   ├── RegenerateButton.tsx      # 저장본 재생성 버튼
+│   │   ├── TokenLimitWarning.tsx     # 대용량 diff 경고 + 접기
+│   │   ├── OverwriteConfirmDialog.tsx # 저장본 덮어쓰기 확인 모달
+│   │   └── index.ts                  # F05 barrel export
 │   ├── F05b_ai_summary_commit/
 │   │   ├── AISummaryCommitFeature.tsx
 │   │   └── useAISummaryCommit.ts
@@ -128,12 +128,7 @@ src/webview/
 │       ├── BatchProgressBar.tsx      # 상단 고정 프로그레스 바
 │       └── useBatchAISummary.ts
 ├── screens/                          # 향후 독립 Screen 컴포넌트 확장 위치
-│   ├── S01_CommitListScreen.tsx      # 현재 F01/S01_CommitListScreen.tsx에서 구현
-│   ├── S02_HistoryViewScreen.tsx
-│   ├── S03_CodeViewerScreen.tsx
-│   ├── S04_AISummaryViewerScreen.tsx
-│   ├── S05_DependencyCanvasScreen.tsx
-│   └── S06_SettingsScreen.tsx
+│   └── 현재 화면 컴포넌트는 각 feature 디렉터리에서 구현
 └── shared/
     ├── design/
     │   └── tokens.ts                 # --gae-* 디자인 토큰의 TypeScript 참조 상수
@@ -226,11 +221,9 @@ docs/
 ```
 tests/
 ├── unit/
-│   ├── utils/
-│   │   ├── folderName.test.ts
-│   │   └── fileStatus.test.ts
-│   └── store/
-│       └── useAppStore.test.ts
+│   ├── smoke.test.ts
+│   ├── parseDiff.test.ts
+│   └── dependencyGraph.test.ts
 ├── component/
 │   ├── CommitListItem.test.tsx
 │   ├── FileTreeNode.test.tsx
@@ -238,7 +231,7 @@ tests/
 │   └── BatchProgressBar.test.tsx
 └── extension/
     ├── gitService.test.ts
-    ├── summaryStorage.test.ts
+    ├── summaryFileService.test.ts
     └── cliDetector.test.ts
 ```
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { isVSCodeRuntime, postMessage } from '../bridge/vscodeApi';
-import type { ChangedFile, Commit, DependencyEdge, FilterState, ScreenID, SummaryMode } from '../types/commit';
+import type { AIProviderName, ChangedFile, Commit, DependencyEdge, FilterState, ScreenID, SummaryMode } from '../types/commit';
 
 const PAGE_SIZE = 200;
 const DEMO_PAGE_SIZE = 12;
@@ -24,7 +24,15 @@ interface AppState extends FilterState {
   isLoadingDependencies: boolean;
   dependenciesError: string | null;
   savePath: string | null;
+  activeAIProvider: AIProviderName | null;
   summaryMode: SummaryMode;
+  currentSummaryContent: string;
+  isLoadingSummary: boolean;
+  isGeneratingSummary: boolean;
+  summaryError: string | null;
+  summarySavedPath: string | null;
+  hasCurrentSavedSummary: boolean;
+  isSummaryTokenLimitExceeded: boolean;
   isBatchRunning: boolean;
   batchTotal: number;
   batchCurrent: number;
@@ -53,6 +61,15 @@ interface AppState extends FilterState {
   goToSettingsView: () => void;
   startBatchAISummary: () => void;
   openRepository: () => void;
+  setAISummarySettings: (settings: { savePath?: string | null; activeAIProvider?: AIProviderName | null }) => void;
+  resetAISummary: () => void;
+  startAISummaryLoading: () => void;
+  startAISummaryGeneration: () => void;
+  appendAISummaryChunk: (chunk: string) => void;
+  completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
+  loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
+  failAISummary: (message?: string) => void;
+  setSummaryTokenWarning: (isOverLimit: boolean) => void;
   handleCommitsLoaded: (payload: CommitsLoadedPayload) => void;
   handleRepositoryNotFound: () => void;
   handleCommitsLoadFailed: (message?: string) => void;
@@ -74,8 +91,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   dependencyEdges: [],
   isLoadingDependencies: false,
   dependenciesError: null,
-  savePath: null,
+  savePath: isVSCodeRuntime() ? null : '.git-author',
+  activeAIProvider: isVSCodeRuntime() ? null : 'claude',
   summaryMode: 'file',
+  currentSummaryContent: '',
+  isLoadingSummary: false,
+  isGeneratingSummary: false,
+  summaryError: null,
+  summarySavedPath: null,
+  hasCurrentSavedSummary: false,
+  isSummaryTokenLimitExceeded: false,
   isBatchRunning: false,
   batchTotal: 0,
   batchCurrent: 0,
@@ -205,6 +230,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       dependencyEdges: [],
       dependenciesError: null,
       isLoadingDependencies: false,
+      currentSummaryContent: '',
+      isLoadingSummary: false,
+      isGeneratingSummary: false,
+      summaryError: null,
+      summarySavedPath: null,
+      hasCurrentSavedSummary: false,
+      isSummaryTokenLimitExceeded: false,
       currentScreen: 'S02',
       previousScreen: null,
     });
@@ -249,6 +281,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       selectedFile: file,
       summaryMode: 'file',
+      currentSummaryContent: '',
+      isLoadingSummary: false,
+      isGeneratingSummary: false,
+      summaryError: null,
+      summarySavedPath: null,
+      hasCurrentSavedSummary: file.hasSavedSummary,
+      isSummaryTokenLimitExceeded: false,
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S04',
     });
@@ -258,6 +297,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       selectedFile: null,
       summaryMode: 'commit',
+      currentSummaryContent: '',
+      isLoadingSummary: false,
+      isGeneratingSummary: false,
+      summaryError: null,
+      summarySavedPath: null,
+      hasCurrentSavedSummary: false,
+      isSummaryTokenLimitExceeded: false,
       previousScreen: 'S02',
       currentScreen: 'S04',
     });
@@ -299,6 +345,101 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   openRepository: () => postMessage('OPEN_REPOSITORY'),
+
+  setAISummarySettings: (settings) => {
+    set({
+      ...(settings.savePath !== undefined ? { savePath: settings.savePath } : {}),
+      ...(settings.activeAIProvider !== undefined ? { activeAIProvider: settings.activeAIProvider } : {}),
+    });
+  },
+
+  resetAISummary: () => {
+    set({
+      currentSummaryContent: '',
+      isLoadingSummary: false,
+      isGeneratingSummary: false,
+      summaryError: null,
+      summarySavedPath: null,
+      hasCurrentSavedSummary: false,
+      isSummaryTokenLimitExceeded: false,
+    });
+  },
+
+  startAISummaryLoading: () => {
+    set({
+      currentSummaryContent: '',
+      isLoadingSummary: true,
+      isGeneratingSummary: false,
+      summaryError: null,
+      summarySavedPath: null,
+      hasCurrentSavedSummary: false,
+    });
+  },
+
+  startAISummaryGeneration: () => {
+    set({
+      currentSummaryContent: '',
+      isLoadingSummary: false,
+      isGeneratingSummary: true,
+      summaryError: null,
+      summarySavedPath: null,
+      hasCurrentSavedSummary: false,
+    });
+  },
+
+  appendAISummaryChunk: (chunk) => {
+    set((state) => ({
+      currentSummaryContent: `${state.currentSummaryContent}${chunk}`,
+      isLoadingSummary: false,
+      isGeneratingSummary: true,
+      summaryError: null,
+    }));
+  },
+
+  completeAISummary: ({ content, savedPath, provider }) => {
+    const state = get();
+    const selectedPath = state.selectedFile?.path;
+
+    set({
+      currentSummaryContent: content ?? state.currentSummaryContent,
+      isLoadingSummary: false,
+      isGeneratingSummary: false,
+      summaryError: null,
+      summarySavedPath: savedPath ?? null,
+      hasCurrentSavedSummary: true,
+      ...(provider ? { activeAIProvider: provider } : {}),
+      changedFiles: selectedPath
+        ? state.changedFiles.map((file) => (file.path === selectedPath ? { ...file, hasSavedSummary: true } : file))
+        : state.changedFiles,
+    });
+  },
+
+  loadSavedAISummary: ({ content, savedPath, provider }) => {
+    set({
+      currentSummaryContent: content,
+      isLoadingSummary: false,
+      isGeneratingSummary: false,
+      summaryError: null,
+      summarySavedPath: savedPath ?? null,
+      hasCurrentSavedSummary: true,
+      isSummaryTokenLimitExceeded: false,
+      ...(provider ? { activeAIProvider: provider } : {}),
+    });
+  },
+
+  failAISummary: (message = '생성에 실패했습니다') => {
+    set({
+      isLoadingSummary: false,
+      isGeneratingSummary: false,
+      summaryError: message,
+    });
+  },
+
+  setSummaryTokenWarning: (isOverLimit) => {
+    set({
+      isSummaryTokenLimitExceeded: isOverLimit,
+    });
+  },
 
   handleCommitsLoaded: ({ commits, page, pageSize }) => {
     const current = get();

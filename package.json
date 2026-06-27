@@ -31,6 +31,17 @@
           "type": "string",
           "default": "",
           "description": "Default path for saved AI summaries."
+        },
+        "gitAuthorExplorer.activeAIProvider": {
+          "type": "string",
+          "enum": [
+            "",
+            "claude",
+            "gemini",
+            "codex"
+          ],
+          "default": "",
+          "description": "Active AI CLI provider for summaries."
         }
       }
     }
