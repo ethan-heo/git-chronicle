@@ -24,6 +24,7 @@ interface AppState extends FilterState {
   isLoadingDependencies: boolean;
   dependenciesError: string | null;
   savePath: string | null;
+  registeredProviders: AIProviderName[];
   activeAIProvider: AIProviderName | null;
   summaryMode: SummaryMode;
   currentSummaryContent: string;
@@ -61,7 +62,7 @@ interface AppState extends FilterState {
   goToSettingsView: () => void;
   startBatchAISummary: () => void;
   openRepository: () => void;
-  setAISummarySettings: (settings: { savePath?: string | null; activeAIProvider?: AIProviderName | null }) => void;
+  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null }) => void;
   resetAISummary: () => void;
   startAISummaryLoading: (options?: { preserveSavedSummary?: boolean }) => void;
   startAISummaryGeneration: (options?: { preserveSavedSummary?: boolean }) => void;
@@ -92,6 +93,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isLoadingDependencies: false,
   dependenciesError: null,
   savePath: isVSCodeRuntime() ? null : '.git-author',
+  registeredProviders: isVSCodeRuntime() ? [] : ['claude', 'gemini'],
   activeAIProvider: isVSCodeRuntime() ? null : 'claude',
   summaryMode: 'file',
   currentSummaryContent: '',
@@ -257,7 +259,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   goBackFromDetail: () => {
-    const previousScreen = get().previousScreen ?? 'S02';
+    const state = get();
+    const previousScreen = state.previousScreen ?? (state.currentScreen === 'S06' ? 'S01' : 'S02');
 
     set({
       currentScreen: previousScreen,
@@ -317,9 +320,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   goToSettingsView: () => {
-    set({
+    set((state) => ({
       currentScreen: 'S06',
-    });
+      previousScreen: state.currentScreen === 'S06' ? state.previousScreen : state.currentScreen,
+    }));
   },
 
   startBatchAISummary: () => {
@@ -349,6 +353,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setAISummarySettings: (settings) => {
     set({
       ...(settings.savePath !== undefined ? { savePath: settings.savePath } : {}),
+      ...(settings.registeredProviders !== undefined ? { registeredProviders: settings.registeredProviders } : {}),
       ...(settings.activeAIProvider !== undefined ? { activeAIProvider: settings.activeAIProvider } : {}),
     });
   },

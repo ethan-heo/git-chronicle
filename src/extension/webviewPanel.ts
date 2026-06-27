@@ -6,16 +6,16 @@ export class GitAuthorExplorerPanel {
   private readonly panel: vscode.WebviewPanel;
   private readonly disposables: vscode.Disposable[] = [];
 
-  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+  private constructor(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
     this.panel = panel;
-    this.panel.webview.html = this.getHtmlForWebview(extensionUri);
+    this.panel.webview.html = this.getHtmlForWebview(context.extensionUri);
 
-    registerMessageHandler(this.panel);
+    registerMessageHandler(this.panel, context);
 
     this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
   }
 
-  public static createOrShow(extensionUri: vscode.Uri): void {
+  public static createOrShow(context: vscode.ExtensionContext): void {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
     if (GitAuthorExplorerPanel.currentPanel) {
@@ -29,11 +29,11 @@ export class GitAuthorExplorerPanel {
       column,
       {
         enableScripts: true,
-        localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'dist', 'webview')],
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview')],
       },
     );
 
-    GitAuthorExplorerPanel.currentPanel = new GitAuthorExplorerPanel(panel, extensionUri);
+    GitAuthorExplorerPanel.currentPanel = new GitAuthorExplorerPanel(panel, context);
   }
 
   public static disposeCurrent(): void {

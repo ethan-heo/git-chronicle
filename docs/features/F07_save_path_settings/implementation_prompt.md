@@ -15,12 +15,10 @@
 
 | 파일 | 역할 |
 |------|------|
-| `src/extension/savePathService.ts` | 경로 선택 다이얼로그 및 영속성 |
-| `src/webview/features/F07/SavePathSection.tsx` | 저장 경로 설정 섹션 |
-| `src/webview/features/F07/SavePathSelector.tsx` | 클릭 가능 경로 선택 영역 |
-| `src/webview/features/F07/SavePathDisplay.tsx` | 경로 텍스트 표시 |
-| `src/webview/features/F07/SavePathDeleteButton.tsx` | 경로 삭제 버튼 |
-| `src/webview/screens/S06_SettingsScreen.tsx` | S06 화면에 SavePathSection 추가 |
+| `src/extension/aiProviderService.ts` | `savePath` 영속성 (`setSavePath`, `loadAISettingsState`) |
+| `src/extension/messageHandler.ts` | 경로 선택 다이얼로그 및 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시지 처리 |
+| `src/webview/features/F06/SavePathSection.tsx` | 저장 경로 설정 섹션 |
+| `src/webview/features/F06/S06_SettingsScreen.tsx` | S06 화면에 SavePathSection 추가 |
 
 ---
 
@@ -51,10 +49,10 @@ interface SavePathDeleteButtonProps {
 
 ## Extension Host Implementation
 
-### `src/extension/savePathService.ts`
+### `src/extension/messageHandler.ts` + `src/extension/aiProviderService.ts`
 
 ```typescript
-export async function selectSavePath(): Promise<string | undefined> {
+async function handleSetSavePath(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): Promise<void> {
   const result = await vscode.window.showOpenDialog({
     canSelectFiles: false,
     canSelectFolders: true,
@@ -62,36 +60,35 @@ export async function selectSavePath(): Promise<string | undefined> {
     title: 'AI 정리 저장 폴더 선택',
     openLabel: '이 폴더에 저장',
   });
-  return result?.[0]?.fsPath;
+
+  const selectedPath = result?.[0]?.fsPath;
+  if (!selectedPath) return;
+
+  const state = await setSavePath(context, selectedPath);
+  panel.webview.postMessage({ type: 'SAVE_PATH_SET', payload: state });
 }
 
-export function persistSavePath(
-  context: vscode.ExtensionContext,
-  savePath: string | null
-): void {
-  context.globalState.update('savePath', savePath);
+async function handleClearSavePath(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): Promise<void> {
+  const state = await setSavePath(context, null);
+  panel.webview.postMessage({ type: 'SAVE_PATH_CLEARED', payload: state });
 }
 
-export function loadSavePath(context: vscode.ExtensionContext): string | null {
-  return context.globalState.get('savePath', null);
+export async function setSavePath(context: vscode.ExtensionContext, savePath: string | null): Promise<AISettingsState> {
+  await context.globalState.update('gitAuthorExplorer.savePath', savePath ?? undefined);
+  return loadAISettingsState(context);
 }
 ```
 
 ### 메시지 핸들러
 
 ```typescript
-case 'selectSavePath': {
-  const selectedPath = await selectSavePath();
-  if (selectedPath) {
-    persistSavePath(context, selectedPath);
-    panel.webview.postMessage({ command: 'savePathUpdated', savePath: selectedPath });
-  }
+case 'SET_SAVE_PATH': {
+  await handleSetSavePath(panel, context);
   break;
 }
 
-case 'deleteSavePath': {
-  persistSavePath(context, null);
-  panel.webview.postMessage({ command: 'savePathUpdated', savePath: null });
+case 'CLEAR_SAVE_PATH': {
+  await handleClearSavePath(panel, context);
   break;
 }
 ```
@@ -170,17 +167,18 @@ export const SavePathDeleteButton: React.FC<SavePathDeleteButtonProps> = ({ onCl
 
 ```typescript
 // S06_SettingsScreen.tsx
-const handleSelectPath = () => {
-  window.vscode.postMessage({ command: 'selectSavePath' });
-};
+const handleSelectPath = () => postMessage('SET_SAVE_PATH');
 
-const handleDeletePath = () => {
-  window.vscode.postMessage({ command: 'deleteSavePath' });
-};
+const handleDeletePath = () => postMessage('CLEAR_SAVE_PATH');
 
 // Extension Host 응답 처리
-case 'savePathUpdated': {
-  setSavePath(data.savePath);  // Zustand 전역 상태 업데이트
+case 'SAVE_PATH_SET':
+case 'SAVE_PATH_CLEARED': {
+  setAISummarySettings({
+    savePath: data.payload.savePath,
+    registeredProviders: data.payload.registeredProviders,
+    activeAIProvider: data.payload.activeAIProvider,
+  });
   break;
 }
 ```

@@ -151,6 +151,7 @@ export const S04AISummaryViewerScreen: FC = () => {
         type: string;
         payload?: {
           activeAIProvider?: AIProviderName | null;
+          registeredProviders?: AIProviderName[];
           savePath?: string | null;
           isOverLimit?: boolean;
           chunk?: string;
@@ -164,6 +165,7 @@ export const S04AISummaryViewerScreen: FC = () => {
       if (event.data.type === 'AI_SUMMARY_SETTINGS_LOADED') {
         setAISummarySettings({
           savePath: event.data.payload?.savePath ?? null,
+          registeredProviders: event.data.payload?.registeredProviders ?? [],
           activeAIProvider: event.data.payload?.activeAIProvider ?? null,
         });
         setHasLoadedSettings(true);

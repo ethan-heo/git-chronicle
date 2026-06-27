@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { AI_PROVIDERS, loadAISettingsState, registerAIProvider, setActiveAIProvider, setSavePath } from './aiProviderService';
 import { streamAISummary } from './aiService';
 import type { AIProviderName } from './aiTypes';
 import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
@@ -8,7 +9,15 @@ import { loadCommitSummary, loadSummary, saveCommitSummary, saveSummary } from '
 
 interface WebviewMessage {
   type: string;
-  payload?: FetchCommitsPayload | FetchChangedFilesPayload | FetchFileDiffPayload | AnalyzeDependenciesPayload | StartAISummaryFilePayload | StartAISummaryCommitPayload;
+  payload?:
+    | FetchCommitsPayload
+    | FetchChangedFilesPayload
+    | FetchFileDiffPayload
+    | AnalyzeDependenciesPayload
+    | StartAISummaryFilePayload
+    | StartAISummaryCommitPayload
+    | AIProviderPayload
+    | OpenExternalUrlPayload;
 }
 
 interface FetchCommitsPayload {
@@ -49,10 +58,19 @@ interface StartAISummaryCommitPayload {
   forceRegenerate?: boolean;
 }
 
+interface AIProviderPayload {
+  name?: AIProviderName;
+  providerName?: AIProviderName;
+}
+
+interface OpenExternalUrlPayload {
+  url?: string;
+}
+
 const FILE_TOKEN_LIMIT_CHARS = 12_000;
 const COMMIT_TOKEN_LIMIT_CHARS = 20_000;
 
-export function registerMessageHandler(panel: vscode.WebviewPanel): void {
+export function registerMessageHandler(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): void {
   panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
     switch (message.type) {
       case 'PING':
@@ -67,7 +85,7 @@ export function registerMessageHandler(panel: vscode.WebviewPanel): void {
         await handleFetchCommits(panel, message.payload as FetchCommitsPayload);
         break;
       case 'FETCH_CHANGED_FILES':
-        await handleFetchChangedFiles(panel, message.payload as FetchChangedFilesPayload);
+        await handleFetchChangedFiles(panel, context, message.payload as FetchChangedFilesPayload);
         break;
       case 'FETCH_FILE_DIFF':
         await handleFetchFileDiff(panel, message.payload as FetchFileDiffPayload);
@@ -76,13 +94,29 @@ export function registerMessageHandler(panel: vscode.WebviewPanel): void {
         await handleAnalyzeDependencies(panel, message.payload as AnalyzeDependenciesPayload);
         break;
       case 'FETCH_AI_SUMMARY_SETTINGS':
-        await handleFetchAISummarySettings(panel);
+        await handleFetchAISummarySettings(panel, context);
+        break;
+      case 'REGISTER_AI_PROVIDER':
+        await handleRegisterAIProvider(panel, context, message.payload as AIProviderPayload);
+        break;
+      case 'ACTIVATE_AI_PROVIDER':
+      case 'SET_ACTIVE_AI_PROVIDER':
+        await handleSetActiveAIProvider(panel, context, message.payload as AIProviderPayload);
+        break;
+      case 'OPEN_EXTERNAL_URL':
+        await handleOpenExternalUrl(message.payload as OpenExternalUrlPayload);
+        break;
+      case 'SET_SAVE_PATH':
+        await handleSetSavePath(panel, context);
+        break;
+      case 'CLEAR_SAVE_PATH':
+        await handleClearSavePath(panel, context);
         break;
       case 'START_AI_SUMMARY_FILE':
-        await handleStartAISummaryFile(panel, message.payload as StartAISummaryFilePayload);
+        await handleStartAISummaryFile(panel, context, message.payload as StartAISummaryFilePayload);
         break;
       case 'START_AI_SUMMARY_COMMIT':
-        await handleStartAISummaryCommit(panel, message.payload as StartAISummaryCommitPayload);
+        await handleStartAISummaryCommit(panel, context, message.payload as StartAISummaryCommitPayload);
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
@@ -98,15 +132,105 @@ export function registerMessageHandler(panel: vscode.WebviewPanel): void {
   });
 }
 
-async function handleFetchAISummarySettings(panel: vscode.WebviewPanel): Promise<void> {
-  const configuration = vscode.workspace.getConfiguration('gitAuthorExplorer');
+async function handleFetchAISummarySettings(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): Promise<void> {
+  const state = loadAISettingsState(context);
 
   await panel.webview.postMessage({
     type: 'AI_SUMMARY_SETTINGS_LOADED',
     payload: {
-      savePath: configuration.get<string>('savePath') || null,
-      activeAIProvider: configuration.get<AIProviderName>('activeAIProvider') || null,
+      ...state,
     },
+  });
+}
+
+async function handleRegisterAIProvider(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: AIProviderPayload = {}): Promise<void> {
+  const providerName = payload.providerName ?? payload.name;
+
+  if (!providerName) {
+    await postAISettingsError(panel, '선택된 AI 제공자가 없습니다');
+    return;
+  }
+
+  try {
+    const state = await registerAIProvider(context, providerName);
+
+    await panel.webview.postMessage({
+      type: 'AI_PROVIDER_REGISTERED',
+      payload: {
+        ...state,
+        providerName,
+      },
+    });
+  } catch (error) {
+    const provider = AI_PROVIDERS.find((candidate) => candidate.name === providerName);
+
+    await panel.webview.postMessage({
+      type: 'AI_PROVIDER_REGISTRATION_FAILED',
+      payload: {
+        providerName,
+        installUrl: provider?.installUrl,
+        message: error instanceof Error ? error.message : '연동에 실패했습니다',
+      },
+    });
+  }
+}
+
+async function handleSetActiveAIProvider(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: AIProviderPayload = {}): Promise<void> {
+  const providerName = payload.providerName ?? payload.name;
+
+  if (!providerName) {
+    await postAISettingsError(panel, '선택된 AI 제공자가 없습니다');
+    return;
+  }
+
+  const state = await setActiveAIProvider(context, providerName);
+
+  await panel.webview.postMessage({
+    type: 'AI_PROVIDER_STATE_UPDATED',
+    payload: {
+      ...state,
+      providerName,
+    },
+  });
+}
+
+async function handleOpenExternalUrl(payload: OpenExternalUrlPayload = {}): Promise<void> {
+  if (!payload.url) {
+    return;
+  }
+
+  await vscode.env.openExternal(vscode.Uri.parse(payload.url));
+}
+
+async function handleSetSavePath(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): Promise<void> {
+  const selected = await vscode.window.showOpenDialog({
+    canSelectFiles: false,
+    canSelectFolders: true,
+    canSelectMany: false,
+    openLabel: '저장 경로 선택',
+    title: 'AI 정리 저장 경로 선택',
+  });
+
+  const selectedPath = selected?.[0]?.fsPath;
+
+  if (!selectedPath) {
+    return;
+  }
+
+  const state = await setSavePath(context, selectedPath);
+
+  await panel.webview.postMessage({
+    type: 'SAVE_PATH_SET',
+    payload: state,
+  });
+}
+
+async function handleClearSavePath(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): Promise<void> {
+  const state = await setSavePath(context, null);
+
+  await panel.webview.postMessage({
+    type: 'SAVE_PATH_CLEARED',
+    payload: state,
   });
 }
 
@@ -203,7 +327,7 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
   }
 }
 
-async function handleFetchChangedFiles(panel: vscode.WebviewPanel, payload: FetchChangedFilesPayload = {}): Promise<void> {
+async function handleFetchChangedFiles(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: FetchChangedFilesPayload = {}): Promise<void> {
   const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
   if (!repoPath) {
@@ -227,8 +351,8 @@ async function handleFetchChangedFiles(panel: vscode.WebviewPanel, payload: Fetc
   }
 
   try {
-    const configuredSavePath = vscode.workspace.getConfiguration('gitAuthorExplorer').get<string>('savePath') || null;
-    const changedFiles = await fetchChangedFiles(repoPath, payload.commitHash, payload.savePath ?? configuredSavePath);
+    const settings = loadAISettingsState(context);
+    const changedFiles = await fetchChangedFiles(repoPath, payload.commitHash, payload.savePath ?? settings.savePath);
 
     await panel.webview.postMessage({
       type: 'CHANGED_FILES_LOADED',
@@ -286,11 +410,11 @@ async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: FetchFil
   }
 }
 
-async function handleStartAISummaryFile(panel: vscode.WebviewPanel, payload: StartAISummaryFilePayload = {}): Promise<void> {
+async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: StartAISummaryFilePayload = {}): Promise<void> {
   const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const configuration = vscode.workspace.getConfiguration('gitAuthorExplorer');
-  const provider = payload.provider ?? configuration.get<AIProviderName>('activeAIProvider') ?? null;
-  const savePath = payload.savePath ?? configuration.get<string>('savePath') ?? null;
+  const settings = loadAISettingsState(context);
+  const provider = payload.provider ?? settings.activeAIProvider;
+  const savePath = payload.savePath ?? settings.savePath;
 
   if (!repoPath) {
     await postAISummaryError(panel, 'Git 저장소가 감지되지 않았습니다');
@@ -386,11 +510,11 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, payload: Sta
   }
 }
 
-async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, payload: StartAISummaryCommitPayload = {}): Promise<void> {
+async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: StartAISummaryCommitPayload = {}): Promise<void> {
   const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const configuration = vscode.workspace.getConfiguration('gitAuthorExplorer');
-  const provider = payload.provider ?? configuration.get<AIProviderName>('activeAIProvider') ?? null;
-  const savePath = payload.savePath ?? configuration.get<string>('savePath') ?? null;
+  const settings = loadAISettingsState(context);
+  const provider = payload.provider ?? settings.activeAIProvider;
+  const savePath = payload.savePath ?? settings.savePath;
 
   if (!repoPath) {
     await postAISummaryError(panel, 'Git 저장소가 감지되지 않았습니다');
@@ -484,6 +608,15 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, payload: S
 async function postAISummaryError(panel: vscode.WebviewPanel, message: string): Promise<void> {
   await panel.webview.postMessage({
     type: 'AI_SUMMARY_ERROR',
+    payload: {
+      message,
+    },
+  });
+}
+
+async function postAISettingsError(panel: vscode.WebviewPanel, message: string): Promise<void> {
+  await panel.webview.postMessage({
+    type: 'AI_SETTINGS_ERROR',
     payload: {
       message,
     },

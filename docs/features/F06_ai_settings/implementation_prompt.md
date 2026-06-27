@@ -19,7 +19,9 @@
 | `src/webview/features/F06/AIProviderSection.tsx` | AI 등록 섹션 컨테이너 |
 | `src/webview/features/F06/AIProviderButton.tsx` | 개별 AI 제공자 버튼 |
 | `src/webview/features/F06/CLIInstallLink.tsx` | 설치 링크 컴포넌트 |
-| `src/webview/screens/S06_SettingsScreen.tsx` | S06 화면 조합 컴포넌트 |
+| `src/webview/features/F06/providers.ts` | Webview 표시용 AI provider 메타데이터 |
+| `src/webview/features/F06/SavePathSection.tsx` | S06 저장 경로 섹션 (F07 UI 포함) |
+| `src/webview/features/F06/S06_SettingsScreen.tsx` | S06 화면 조합 컴포넌트 |
 
 ---
 
@@ -29,23 +31,34 @@
 type AIProviderName = 'claude' | 'gemini' | 'codex';
 type AIProviderButtonState = 'unregistered' | 'registering' | 'active' | 'inactive' | 'error';
 
-interface AIProvider {
+interface AIProviderDefinition {
   name: AIProviderName;
   label: string;
   installUrl: string;
-  checkCommand: string;   // 버전 확인 명령 (예: 'claude --version')
+  checkCommand: string;
+}
+
+interface WebviewAIProvider {
+  name: AIProviderName;
+  label: string;
+  cli: string;
+  installUrl: string;
+  brandColor: string;
 }
 
 interface AIProviderButtonProps {
-  provider: AIProvider;
+  provider: WebviewAIProvider;
   state: AIProviderButtonState;
   errorMessage?: string;
-  onClick: () => void;
+  onToggle: () => void;
+  onOpenInstall: (url: string) => void;
 }
 
 interface CLIInstallLinkProps {
   url: string;
   label: string;
+  ariaLabel: string;
+  onOpen: (url: string) => void;
 }
 ```
 
@@ -56,24 +69,24 @@ interface CLIInstallLinkProps {
 ```typescript
 // src/extension/aiProviderService.ts
 
-const AI_PROVIDERS: AIProvider[] = [
+const AI_PROVIDERS: AIProviderDefinition[] = [
   {
     name: 'claude',
-    label: 'Claude (Anthropic)',
+    label: 'Claude',
     installUrl: 'https://docs.anthropic.com/claude-code',
     checkCommand: 'claude --version',
   },
   {
     name: 'gemini',
-    label: 'Gemini (Google)',
-    installUrl: 'https://ai.google.dev/gemini-api/docs',
+    label: 'Gemini',
+    installUrl: 'https://github.com/google-gemini/gemini-cli',
     checkCommand: 'gemini --version',
   },
   {
     name: 'codex',
-    label: 'Codex (OpenAI)',
-    installUrl: 'https://platform.openai.com/docs/guides/code',
-    checkCommand: 'openai --version',
+    label: 'Codex',
+    installUrl: 'https://github.com/openai/codex',
+    checkCommand: 'codex --version',
   },
 ];
 ```
@@ -113,8 +126,8 @@ export function persistProviderState(
   registeredProviders: AIProviderName[],
   activeAIProvider: AIProviderName | null
 ): void {
-  context.globalState.update('registeredProviders', registeredProviders);
-  context.globalState.update('activeAIProvider', activeAIProvider);
+  context.globalState.update('gitAuthorExplorer.registeredProviders', registeredProviders);
+  context.globalState.update('gitAuthorExplorer.activeAIProvider', activeAIProvider ?? undefined);
 }
 
 export function loadProviderState(context: vscode.ExtensionContext): {
@@ -122,8 +135,8 @@ export function loadProviderState(context: vscode.ExtensionContext): {
   activeAIProvider: AIProviderName | null;
 } {
   return {
-    registeredProviders: context.globalState.get('registeredProviders', []),
-    activeAIProvider: context.globalState.get('activeAIProvider', null),
+    registeredProviders: context.globalState.get('gitAuthorExplorer.registeredProviders', []),
+    activeAIProvider: context.globalState.get('gitAuthorExplorer.activeAIProvider', null),
   };
 }
 ```
@@ -131,20 +144,17 @@ export function loadProviderState(context: vscode.ExtensionContext): {
 ### 메시지 핸들러
 
 ```typescript
-case 'checkAIProvider': {
-  const { providerName } = message;
-  const result = await checkCLIInstalled(providerName);
-  panel.webview.postMessage({ command: 'aiProviderChecked', providerName, ...result });
+case 'REGISTER_AI_PROVIDER': {
+  const { name } = message.payload;
+  const result = await registerAIProvider(context, name);
+  panel.webview.postMessage({ type: 'AI_PROVIDER_REGISTERED', payload: { ...result, providerName: name } });
   break;
 }
 
-case 'setActiveAIProvider': {
-  const { providerName } = message;
-  const state = loadProviderState(context);
-  // 이미 활성이면 비활성화, 아니면 활성화
-  const newActive = state.activeAIProvider === providerName ? null : providerName;
-  persistProviderState(context, state.registeredProviders, newActive);
-  panel.webview.postMessage({ command: 'activeProviderUpdated', activeAIProvider: newActive });
+case 'ACTIVATE_AI_PROVIDER': {
+  const { name } = message.payload;
+  const result = await setActiveAIProvider(context, name);
+  panel.webview.postMessage({ type: 'AI_PROVIDER_STATE_UPDATED', payload: { ...result, providerName: name } });
   break;
 }
 ```
@@ -196,7 +206,7 @@ export const AIProviderButton: React.FC<AIProviderButtonProps> = ({
 
 ```tsx
 export const AIProviderSection: React.FC<AIProviderSectionProps> = ({
-  registeredProviders, activeAIProvider, providerStates, onProviderClick
+  registeredProviders, activeAIProvider, registeringProvider, providerErrors, onProviderClick
 }) => (
   <section className="ai-provider-section">
     <h3 className="section-title">AI 등록</h3>
@@ -204,8 +214,8 @@ export const AIProviderSection: React.FC<AIProviderSectionProps> = ({
       <AIProviderButton
         key={provider.name}
         provider={provider}
-        state={providerStates[provider.name] ?? 'unregistered'}
-        onClick={() => onProviderClick(provider.name)}
+        state={getProviderState(provider.name, registeredProviders, activeAIProvider, registeringProvider, providerErrors)}
+        onToggle={() => onProviderClick(provider.name)}
       />
     ))}
   </section>
@@ -221,35 +231,28 @@ const handleProviderClick = (providerName: AIProviderName) => {
   if (currentState === 'unregistered' || currentState === 'error') {
     // CLI 확인 요청
     setProviderStates(prev => ({ ...prev, [providerName]: 'registering' }));
-    window.vscode.postMessage({ command: 'checkAIProvider', providerName });
+    postMessage('REGISTER_AI_PROVIDER', { name: providerName });
   } else if (currentState === 'active') {
     // 비활성화
-    window.vscode.postMessage({ command: 'setActiveAIProvider', providerName });
+    postMessage('ACTIVATE_AI_PROVIDER', { name: providerName });
   } else if (currentState === 'inactive') {
     // 활성화
-    window.vscode.postMessage({ command: 'setActiveAIProvider', providerName });
+    postMessage('ACTIVATE_AI_PROVIDER', { name: providerName });
   }
 };
 
 // Extension Host 응답 처리
-case 'aiProviderChecked': {
-  const { providerName, installed, error } = data;
-  if (installed) {
-    // 등록 성공 + 자동 활성화
-    setProviderStates(prev => ({
-      ...prev,
-      [providerName]: 'active',
-      // 나머지는 inactive로
-      ...Object.fromEntries(
-        AI_PROVIDERS
-          .filter(p => p.name !== providerName)
-          .map(p => [p.name, prev[p.name] === 'unregistered' ? 'unregistered' : 'inactive'])
-      ),
-    }));
-  } else {
-    setProviderStates(prev => ({ ...prev, [providerName]: 'error' }));
-    setProviderErrors(prev => ({ ...prev, [providerName]: error }));
-  }
+case 'AI_PROVIDER_REGISTERED': {
+  setAISummarySettings({
+    savePath: data.payload.savePath,
+    registeredProviders: data.payload.registeredProviders,
+    activeAIProvider: data.payload.activeAIProvider,
+  });
+  break;
+}
+
+case 'AI_PROVIDER_REGISTRATION_FAILED': {
+  setProviderErrors(prev => ({ ...prev, [data.payload.providerName]: data.payload.message }));
   break;
 }
 ```

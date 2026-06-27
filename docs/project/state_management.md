@@ -68,7 +68,7 @@ interface AppState {
 
   // === AI Providers ===
   activeAIProvider: AIProviderName | null;
-  registeredProviders: AIProvider[];
+  registeredProviders: AIProviderName[];
 
   // === Save Path ===
   savePath: string | null;
@@ -92,7 +92,7 @@ interface AppState {
   startBatchAISummary: () => void;
   handleChangedFilesLoaded: (files: ChangedFile[]) => void;
   handleChangedFilesLoadFailed: (message?: string) => void;
-  setAISummarySettings: (settings: { savePath?: string | null; activeAIProvider?: AIProviderName | null }) => void;
+  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null }) => void;
   resetAISummary: () => void;
   startAISummaryLoading: () => void;
   startAISummaryGeneration: () => void;
@@ -221,11 +221,14 @@ goToCanvasView: () => set({
 }),
 
 goBackFromDetail: () => set({
-  currentScreen: previousScreen ?? 'S02',
+  currentScreen: previousScreen ?? (currentScreen === 'S06' ? 'S01' : 'S02'),
   previousScreen: null,
 }),
 
-goToSettingsView: () => set({ currentScreen: 'S06' }),
+goToSettingsView: () => set((state) => ({
+  currentScreen: 'S06',
+  previousScreen: state.currentScreen === 'S06' ? state.previousScreen : state.currentScreen,
+})),
 ```
 
 S03 자체의 diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 읽기 전용 화면의 로컬 상태로 관리한다. Extension Host 메시지는 `features/F03/S03_CodeViewerScreen.tsx`에서 직접 구독한다.
@@ -237,8 +240,9 @@ S05 의존성 캔버스는 전역 상태의 `dependencyEdges`, `isLoadingDepende
 S04 파일 단위 AI 정리 화면은 전역 상태로 저장본 로딩, AI 생성, 스트리밍 청크, 저장 완료, 에러 상태를 구분한다. Extension Host 메시지는 `features/F05/S04_AISummaryViewerScreen.tsx`에서 직접 구독한다.
 
 ```typescript
-setAISummarySettings: ({ savePath, activeAIProvider }) => set({
+setAISummarySettings: ({ savePath, registeredProviders, activeAIProvider }) => set({
   ...(savePath !== undefined ? { savePath } : {}),
+  ...(registeredProviders !== undefined ? { registeredProviders } : {}),
   ...(activeAIProvider !== undefined ? { activeAIProvider } : {}),
 }),
 
@@ -305,7 +309,7 @@ setSummaryTokenWarning: (isOverLimit) => set({
 }),
 ```
 
-S04 진입 시 파일 단위 정리는 `FETCH_AI_SUMMARY_SETTINGS`로 VSCode 설정값을 먼저 복원하고, `activeAIProvider`와 `savePath`가 모두 있으면 `START_AI_SUMMARY_FILE`을 보낸다. 커밋 단위 정리는 `summaryMode = 'commit'`일 때 동일한 설정 복원 후 `START_AI_SUMMARY_COMMIT`을 보낸다. 저장본 확인 중에는 `isLoadingSummary = true`, AI stdout 청크가 시작되면 `isGeneratingSummary = true`로 전환된다.
+S04 진입 시 파일 단위 정리는 `FETCH_AI_SUMMARY_SETTINGS`로 Extension Host의 `globalState` 설정값을 먼저 복원하고, `activeAIProvider`와 `savePath`가 모두 있으면 `START_AI_SUMMARY_FILE`을 보낸다. 커밋 단위 정리는 `summaryMode = 'commit'`일 때 동일한 설정 복원 후 `START_AI_SUMMARY_COMMIT`을 보낸다. 설정 응답에는 `savePath`, `registeredProviders`, `activeAIProvider`가 포함된다. 저장본 확인 중에는 `isLoadingSummary = true`, AI stdout 청크가 시작되면 `isGeneratingSummary = true`로 전환된다.
 
 ### startBatchAISummary
 
@@ -319,20 +323,22 @@ startBatchAISummary: () => set({
 }),
 ```
 
-### setActiveAIProvider
+### F06/F07 설정 액션
 
-F06 구현 범위에서 하나를 활성화하면 나머지를 자동 비활성화하는 액션을 추가한다. 현재 F05 구현은 VSCode 설정 `gitAuthorExplorer.activeAIProvider`를 `FETCH_AI_SUMMARY_SETTINGS` 응답으로 읽어 `setAISummarySettings`에 반영한다.
+F06 구현은 `REGISTER_AI_PROVIDER`로 CLI 버전 확인과 등록을 요청하고, 등록된 제공자는 `ACTIVATE_AI_PROVIDER`로 활성/비활성을 토글한다. 하나를 활성화하면 나머지는 자동으로 비활성 상태가 되며, F05/F05b는 `FETCH_AI_SUMMARY_SETTINGS` 응답의 `registeredProviders`, `activeAIProvider`, `savePath`를 `setAISummarySettings`에 반영한다.
+
+F07 저장 경로 설정은 S06에서 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시지로 Extension Host에 요청한다. 경로 선택은 `vscode.window.showOpenDialog({ canSelectFolders: true })`로 처리하며, 선택/삭제 결과는 `SAVE_PATH_SET` / `SAVE_PATH_CLEARED` 응답으로 Webview에 전달된다.
 
 ---
 
 ## ExtensionContext.globalState (영속 설정)
 
-Extension Host 재시작 후에도 유지해야 하는 설정은 F06/F07 구현에서 `ExtensionContext.globalState`에 저장한다. 현재 F05는 VSCode 설정(`workspace.getConfiguration('gitAuthorExplorer')`)의 `savePath`, `activeAIProvider`를 읽어 사용한다.
+Extension Host 재시작 후에도 유지해야 하는 설정은 F06/F07 구현에서 `ExtensionContext.globalState`에 저장한다. `loadAISettingsState()`는 `globalState`를 우선 사용하고, 기존 VSCode configuration의 `gitAuthorExplorer.savePath`, `gitAuthorExplorer.activeAIProvider`는 fallback으로만 읽는다.
 
 | 키 | 타입 | 설명 |
 |---|------|------|
 | `gitAuthorExplorer.savePath` | `string \| undefined` | AI 정리 저장 경로 |
-| `gitAuthorExplorer.registeredProviders` | `AIProvider[]` | 등록된 AI CLI 목록 |
+| `gitAuthorExplorer.registeredProviders` | `AIProviderName[]` | 등록된 AI CLI 목록 |
 | `gitAuthorExplorer.activeAIProvider` | `AIProviderName \| undefined` | 활성화된 AI CLI |
 
 Extension 활성화 시 `globalState`에서 값을 읽어 Webview에 초기 상태로 전달한다.

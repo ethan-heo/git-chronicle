@@ -14,7 +14,7 @@ Claude/Gemini/Codex CLI의 등록·활성화·비활성화를 관리하는 UI를
 
 ## Inputs
 
-- `registeredProviders: AIProvider[]` — 전역 상태
+- `registeredProviders: AIProviderName[]` — 전역 상태
 - `activeAIProvider: AIProviderName | null` — 전역 상태
 
 ---
@@ -42,14 +42,16 @@ Claude/Gemini/Codex CLI의 등록·활성화·비활성화를 관리하는 UI를
 AI 등록 영역 전체를 묶는 섹션. 제목과 세 개의 `AIProviderButton`을 포함한다.
 
 #### Data
-- `registeredProviders: AIProvider[]`
+- `registeredProviders: AIProviderName[]`
 - `activeAIProvider: AIProviderName | null`
 
 #### Props
 ```typescript
 interface AIProviderSectionProps {
-  registeredProviders: AIProvider[];
+  registeredProviders: AIProviderName[];
   activeAIProvider: AIProviderName | null;
+  registeringProvider: AIProviderName | null;
+  providerErrors: Partial<Record<AIProviderName, string>>;
   onToggle: (provider: AIProviderName) => void;
 }
 ```
@@ -80,7 +82,10 @@ F06_AISettings 전용. S06_SettingsScreen에서만 사용.
 ```typescript
 interface AIProviderButtonProps {
   provider: AIProvider;
-  onToggle: (name: AIProviderName) => void;
+  state: AIProviderButtonState;
+  errorMessage?: string;
+  onToggle: () => void;
+  onOpenInstall: (url: string) => void;
 }
 ```
 
@@ -117,8 +122,10 @@ CLI가 설치되어 있지 않을 때 설치 페이지로 이동하는 링크를
 #### Props
 ```typescript
 interface CLIInstallLinkProps {
-  provider: AIProviderName;
-  installUrl: string;
+  url: string;
+  label: string;
+  ariaLabel: string;
+  onOpen: (url: string) => void;
 }
 ```
 

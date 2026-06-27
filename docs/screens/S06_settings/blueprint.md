@@ -112,3 +112,14 @@ S06_SettingsScreen
 
 - `AIProviderButton` 세 개는 세로 방향으로 배치
 - `SavePathDisplay`는 긴 경로 말줄임표 처리 + 툴팁
+
+---
+
+## Current Implementation Notes
+
+- 화면 구현 파일은 `src/webview/features/F06/S06_SettingsScreen.tsx`이다.
+- AI 등록 UI는 `AIProviderSection`, `AIProviderButton`, `CLIInstallLink`, `providers.ts`로 구성된다.
+- 저장 경로 UI는 `src/webview/features/F06/SavePathSection.tsx`에 구현되어 있으며, F07 기능을 S06 화면 안에서 함께 제공한다.
+- S06 진입은 `useAppStore.goToSettingsView()`가 현재 화면을 `previousScreen`에 저장한 뒤 `currentScreen = "S06"`으로 전환한다.
+- S06의 `BackButton`은 공통 `goBackFromDetail()`을 사용해 `previousScreen`으로 복귀한다.
+- Extension Host 메시지 응답은 S06 화면에서 직접 구독하며, `setAISummarySettings()`로 `savePath`, `registeredProviders`, `activeAIProvider`를 전역 상태에 반영한다.

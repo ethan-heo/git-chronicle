@@ -18,6 +18,7 @@ export const S02HistoryViewScreen: FC = () => {
     selectFileForAI,
     goToCommitAISummary,
     goToCanvasView,
+    goToSettingsView,
     startBatchAISummary,
     handleChangedFilesLoaded,
     handleChangedFilesLoadFailed,
@@ -60,7 +61,7 @@ export const S02HistoryViewScreen: FC = () => {
 
   return (
     <main className="app-shell commit-log-shell history-view-shell">
-      <TopHeader title={selectedCommit.message} context={`${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`} showBackButton onBackClick={goToCommitList} showSettingsIcon />
+      <TopHeader title={selectedCommit.message} context={`${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`} showBackButton onBackClick={goToCommitList} showSettingsIcon onSettingsClick={goToSettingsView} />
       <CommitActionBar
         selectedCommit={selectedCommit}
         isBatchRunning={isBatchRunning}

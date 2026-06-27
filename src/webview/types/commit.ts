@@ -34,4 +34,14 @@ export type SummaryMode = 'file' | 'commit';
 
 export type AIProviderName = 'claude' | 'gemini' | 'codex';
 
+export type AIProviderButtonState = 'unregistered' | 'registering' | 'active' | 'inactive' | 'error';
+
+export interface AIProvider {
+  name: AIProviderName;
+  label: string;
+  cli: string;
+  installUrl: string;
+  brandColor: string;
+}
+
 export type ScreenID = 'S01' | 'S02' | 'S03' | 'S04' | 'S05' | 'S06';

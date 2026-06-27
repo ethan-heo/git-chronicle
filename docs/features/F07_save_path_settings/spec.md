@@ -90,3 +90,13 @@ AI 정리 결과가 저장될 폴더를 지정하여 정리 파일을 원하는 
 | `savePath` 전역 상태 업데이트 | 경로 선택 / 삭제 | 모든 AI 정리 저장 로직이 이 값을 참조 |
 | VSCode ExtensionContext 영속 저장 | `savePath` 변경 시 | `context.globalState.update`로 재시작 후 복원 |
 | `fs.mkdirSync({ recursive: true })` | AI 정리 첫 저장 시 | 저장 경로가 존재하지 않을 경우 자동 생성 (이 Feature가 아닌 F05/F05b/F08에서 실행) |
+
+---
+
+## Current Implementation Notes
+
+- 저장 경로 UI는 `src/webview/features/F06/SavePathSection.tsx`에 구현되어 S06 설정 화면에 포함된다.
+- Extension Host의 경로 선택/삭제는 `src/extension/messageHandler.ts`에서 `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지로 처리한다.
+- 경로 영속 저장은 `src/extension/aiProviderService.ts`의 `setSavePath()`가 `gitAuthorExplorer.savePath` 키로 `ExtensionContext.globalState`에 저장한다.
+- 경로 선택 취소 시 기존 경로는 유지되며 Webview에는 별도 변경 이벤트를 보내지 않는다.
+- 저장 파일 생성 시점의 디렉토리 자동 생성은 `src/extension/summaryFileService.ts`의 `saveSummary()` / `saveCommitSummary()`가 담당한다.

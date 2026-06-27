@@ -222,6 +222,15 @@ S06_SettingsScreen
 
 ---
 
+## Current Implementation Notes
+
+- 현재 저장 경로 UI는 별도 `features/F07` 디렉토리가 아니라 `src/webview/features/F06/SavePathSection.tsx`에 구현되어 S06 설정 화면에서 사용된다.
+- `SavePathSelector`, `SavePathDisplay`, `SavePathDeleteButton`은 문서상 하위 컴포넌트 개념이며, 현재 코드는 `SavePathSection.tsx` 내부에서 함께 렌더링한다.
+- Extension Host 요청 메시지는 `SET_SAVE_PATH`, `CLEAR_SAVE_PATH`이고 응답 메시지는 `SAVE_PATH_SET`, `SAVE_PATH_CLEARED`이다.
+- Webview 브라우저 dev fallback에서는 실제 파일 다이얼로그 대신 데모 경로를 설정한다.
+
+---
+
 ## MCP Optimization Rules
 
 - `SavePathSection`은 독립 Frame으로 분리 (저장 경로 영역)

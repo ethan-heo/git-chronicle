@@ -23,6 +23,7 @@ export const S01CommitListScreen: FC = () => {
     setFilter,
     clearFilters,
     selectCommit,
+    goToSettingsView,
     openRepository,
   } = useAppStore();
   const isFilterActive = Boolean(filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim());
@@ -73,7 +74,7 @@ export const S01CommitListScreen: FC = () => {
 
   return (
     <main className="app-shell commit-log-shell">
-      <TopHeader title="Git Author Explorer" context="커밋 목록" showSettingsIcon />
+      <TopHeader title="Git Author Explorer" context="커밋 목록" showSettingsIcon onSettingsClick={goToSettingsView} />
       <CommitFilterPanel
         filterDateStart={filterDateStart}
         filterDateEnd={filterDateEnd}

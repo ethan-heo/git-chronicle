@@ -3,7 +3,7 @@ import { GitAuthorExplorerPanel } from './webviewPanel';
 
 export function activate(context: vscode.ExtensionContext): void {
   const openCommand = vscode.commands.registerCommand('gitAuthorExplorer.open', () => {
-    GitAuthorExplorerPanel.createOrShow(context.extensionUri);
+    GitAuthorExplorerPanel.createOrShow(context);
   });
 
   context.subscriptions.push(openCommand);
