@@ -32,6 +32,15 @@ describe('summaryFileService', () => {
   it('커밋 단위 AI 정리는 커밋 해시 폴더 아래 _commit_summary.md로 저장한다', () => {
     expect(getCommitSummaryFilePath('/tmp/gae', 'abc123')).toBe('/tmp/gae/abc123/_commit_summary.md');
   });
+
+  it('저장 디렉토리가 없으면 자동 생성한다', () => {
+    const savedPath = saveSummary(tempPath, 'abc123', 'src/App.tsx', '# Summary');
+    expect(fs.existsSync(savedPath)).toBe(true);
+  });
+
+  it('저장 경로를 생성할 수 없으면 SummarySaveError를 던진다', () => {
+    expect(() => saveCommitSummary(fileSavePath, 'abc123', '# Summary')).toThrow(SummarySaveError);
+  });
 });
 ```
 

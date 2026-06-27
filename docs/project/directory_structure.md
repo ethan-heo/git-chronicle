@@ -46,8 +46,11 @@ src/extension/
 ├── prompts.ts                        # AI 정리 프롬프트 빌더
 │   - buildFileSummaryPrompt(filePath, diff)
 └── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인
+    - SummarySaveError                # 저장 경로 생성/쓰기 실패 전용 오류
     - loadSummary(savePath, hash, file) → { content, savedPath } | null
     - saveSummary(savePath, hash, file, content) → savedPath
+    - loadCommitSummary(savePath, hash) → { content, savedPath } | null
+    - saveCommitSummary(savePath, hash, content) → savedPath
     - hasSavedSummary(savePath, hash, file) → boolean
     - 파일명 규칙: filePath의 / 또는 \ 를 __로 치환 후 .md 추가
 ```
@@ -112,17 +115,13 @@ src/webview/
 │   │   ├── TokenLimitWarning.tsx     # 대용량 diff 경고 + 접기
 │   │   ├── OverwriteConfirmDialog.tsx # 저장본 덮어쓰기 확인 모달
 │   │   └── index.ts                  # F05 barrel export
-│   ├── F05b_ai_summary_commit/
-│   │   ├── AISummaryCommitFeature.tsx
-│   │   └── useAISummaryCommit.ts
-│   ├── F06_ai_settings/
-│   │   ├── AISettingsFeature.tsx
-│   │   ├── AIProviderButton.tsx      # Claude/Gemini/Codex 등록·활성화 버튼
-│   │   └── useAISettings.ts
-│   ├── F07_save_path_settings/
-│   │   ├── SavePathSettingsFeature.tsx
-│   │   ├── SavePathSelector.tsx      # 경로 표시 + [변경] / [삭제] 버튼
-│   │   └── useSavePath.ts
+│   ├── F06/
+│   │   ├── S06_SettingsScreen.tsx    # S06 설정 화면 조합, 설정 메시지 구독
+│   │   ├── AIProviderSection.tsx     # Claude/Gemini/Codex 등록·활성화 영역
+│   │   ├── AIProviderButton.tsx      # AI CLI 등록·활성화 버튼
+│   │   ├── SavePathSection.tsx       # F07 저장 경로 표시·선택·삭제 UI
+│   │   ├── providers.ts              # AI provider UI 메타데이터
+│   │   └── index.ts                  # F06 barrel export
 │   └── F08_batch_ai_summary/
 │       ├── BatchAISummaryFeature.tsx
 │       ├── BatchProgressBar.tsx      # 상단 고정 프로그레스 바
@@ -188,7 +187,7 @@ docs/
 │   ├── F05_ai_summary_file/
 │   ├── F05b_ai_summary_commit/
 │   ├── F06_ai_settings/
-│   ├── F07_save_path_settings/
+│   ├── F07_save_path_settings/      # 문서 전용. 실제 UI는 src/webview/features/F06/SavePathSection.tsx
 │   └── F08_batch_ai_summary/
 ├── screens/
 │   ├── S01_commit_list/blueprint.md
@@ -222,16 +221,9 @@ tests/
 ├── unit/
 │   ├── smoke.test.ts
 │   ├── parseDiff.test.ts
-│   └── dependencyGraph.test.ts
-├── component/
-│   ├── CommitListItem.test.tsx
-│   ├── FileTreeNode.test.tsx
-│   ├── AISummaryViewer.test.tsx
-│   └── BatchProgressBar.test.tsx
-└── extension/
-    ├── gitService.test.ts
-    ├── summaryFileService.test.ts
-    └── cliDetector.test.ts
+│   ├── dependencyGraph.test.ts
+│   └── summaryFileService.test.ts
+└── setup.ts
 ```
 
 ---

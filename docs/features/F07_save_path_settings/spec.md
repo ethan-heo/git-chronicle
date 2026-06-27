@@ -36,7 +36,7 @@ AI 정리 결과가 저장될 폴더를 지정하여 정리 파일을 원하는 
 | 설정 방법 | 디렉토리 선택 다이얼로그 |
 | 저장 구조 | 파일 단위 `{루트경로}/{커밋해시}/{파일명}.md`, 커밋 단위 `{루트경로}/{커밋해시}/_commit_summary.md` |
 | 커밋해시 규칙 | 선택된 커밋의 전체 hash를 디렉토리명으로 사용 |
-| 미설정 시 동작 | AI 정리 시도 시 "저장 경로를 먼저 설정해주세요" 토스트 + 설정(⚙) 화면 자동 진입 |
+| 미설정 시 동작 | AI 정리 화면에서 `EmptyState`: "저장 경로를 먼저 설정해주세요" + "설정으로 이동" CTA |
 | 경로 자동 생성 | 지정된 경로가 존재하지 않으면 `fs.mkdirSync({ recursive: true })`로 자동 생성 |
 | 삭제 동작 | 삭제 버튼 클릭 시 경로 초기화. **기존 저장 파일은 삭제하지 않음** |
 
@@ -46,8 +46,8 @@ AI 정리 결과가 저장될 폴더를 지정하여 정리 파일을 원하는 
 
 | 상황 | 처리 |
 |------|------|
-| 저장 경로 미설정 | AI 정리 시도 시 `Toast` (error): "저장 경로를 먼저 설정해주세요" (AI 정리 Feature에서 처리) |
-| 경로 자동 생성 실패 | `Toast` (error): "저장 경로를 생성할 수 없습니다. 권한을 확인하세요" |
+| 저장 경로 미설정 | AI 정리 화면에서 `EmptyState`: "저장 경로를 먼저 설정해주세요" + "설정으로 이동" CTA (AI 정리 Feature에서 처리) |
+| 경로 자동 생성 실패 | Extension Host가 `AI_SUMMARY_ERROR`를 보내고 AI 정리 화면의 `ErrorState`에 "저장 경로를 생성할 수 없습니다. 권한을 확인하세요" 표시 |
 
 ---
 
@@ -100,3 +100,5 @@ AI 정리 결과가 저장될 폴더를 지정하여 정리 파일을 원하는 
 - 경로 영속 저장은 `src/extension/aiProviderService.ts`의 `setSavePath()`가 `gitAuthorExplorer.savePath` 키로 `ExtensionContext.globalState`에 저장한다.
 - 경로 선택 취소 시 기존 경로는 유지되며 Webview에는 별도 변경 이벤트를 보내지 않는다.
 - 저장 파일 생성 시점의 디렉토리 자동 생성은 `src/extension/summaryFileService.ts`의 `saveSummary()` / `saveCommitSummary()`가 담당한다.
+- 저장 디렉토리 생성 또는 파일 쓰기에 실패하면 `SummarySaveError`가 발생하고, `src/extension/messageHandler.ts`가 F05/F05b에 `AI_SUMMARY_ERROR`로 전달한다.
+- Webview 브라우저 dev fallback에서는 실제 파일 다이얼로그 대신 데모 경로를 설정한다. 실제 경로 선택 다이얼로그는 VSCode Extension Host 런타임에서만 열린다.

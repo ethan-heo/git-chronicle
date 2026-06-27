@@ -1945,6 +1945,7 @@ button:focus-visible,
 }
 
 .save-path-selector-unset {
+  flex-wrap: wrap;
   border-style: dashed;
   cursor: pointer;
   text-align: left;
@@ -1969,11 +1970,15 @@ button:focus-visible,
 
 .save-path-empty-label {
   flex-shrink: 0;
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-round);
   color: var(--gae-color-text-secondary);
   font-size: 11px;
+  padding: 2px 8px;
 }
 
 .save-path-selector-set {
+  flex-wrap: wrap;
   padding: 0;
 }
 
@@ -1996,16 +2001,30 @@ button:focus-visible,
 }
 
 .save-path-display {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
   min-width: 0;
   flex: 1;
   overflow: hidden;
   color: var(--gae-color-text-primary);
   font-family: var(--gae-font-family-mono);
   font-size: 11.5px;
-  text-overflow: ellipsis;
   white-space: nowrap;
-  direction: rtl;
-  text-align: left;
+}
+
+.save-path-display-head {
+  min-width: 0;
+  overflow: hidden;
+  flex-shrink: 1;
+  color: var(--gae-color-text-secondary);
+  text-overflow: ellipsis;
+}
+
+.save-path-display-tail {
+  flex-shrink: 0;
+  color: var(--gae-color-text-primary);
+  font-weight: var(--gae-font-weight-medium);
 }
 
 .save-path-change-label {
@@ -2036,6 +2055,32 @@ button:focus-visible,
   border-color: color-mix(in srgb, var(--gae-color-semantic-error) 44%, transparent);
   background: color-mix(in srgb, var(--gae-color-semantic-error) 12%, transparent);
   color: var(--gae-color-semantic-error);
+}
+
+.save-path-helper {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 5px;
+  margin: 1px 2px 0 27px;
+  color: var(--gae-color-text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.save-path-helper-set {
+  margin: -1px 11px 10px 37px;
+}
+
+.save-path-helper-set svg {
+  flex-shrink: 0;
+  color: var(--gae-color-status-renamed);
+}
+
+.save-path-helper code {
+  color: var(--gae-color-text-primary);
+  font-family: var(--gae-font-family-mono);
+  font-size: 10.5px;
 }
 
 .settings-toast {

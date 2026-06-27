@@ -154,7 +154,7 @@ export const S06SettingsScreen: FC = () => {
     }
 
     setAISummarySettings({ savePath: null });
-    setStatusMessage('저장 경로 설정이 삭제되었습니다');
+    setStatusMessage('저장 경로 설정을 삭제했습니다 · 기존 파일은 유지됩니다');
   };
 
   return (
@@ -198,7 +198,7 @@ function getSuccessMessage(type: string, providerName: AIProviderName | undefine
   }
 
   if (type === 'SAVE_PATH_CLEARED') {
-    return '저장 경로 설정이 삭제되었습니다';
+    return '저장 경로 설정을 삭제했습니다 · 기존 파일은 유지됩니다';
   }
 
   return null;

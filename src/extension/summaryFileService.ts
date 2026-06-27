@@ -6,6 +6,16 @@ export interface SummaryFileResult {
   savedPath: string;
 }
 
+export class SummarySaveError extends Error {
+  constructor(
+    message = '저장 경로를 생성할 수 없습니다. 권한을 확인하세요',
+    public readonly cause?: unknown,
+  ) {
+    super(message);
+    this.name = 'SummarySaveError';
+  }
+}
+
 export function getSummaryFilePath(savePath: string, commitHash: string, filePath: string): string {
   return path.join(savePath, commitHash, `${toSummaryFileName(filePath)}.md`);
 }
@@ -29,8 +39,7 @@ export function loadSummary(savePath: string, commitHash: string, filePath: stri
 
 export function saveSummary(savePath: string, commitHash: string, filePath: string, content: string): string {
   const savedPath = getSummaryFilePath(savePath, commitHash, filePath);
-  fs.mkdirSync(path.dirname(savedPath), { recursive: true });
-  fs.writeFileSync(savedPath, content, 'utf8');
+  writeSummaryFile(savedPath, content);
   return savedPath;
 }
 
@@ -49,8 +58,7 @@ export function loadCommitSummary(savePath: string, commitHash: string): Summary
 
 export function saveCommitSummary(savePath: string, commitHash: string, content: string): string {
   const savedPath = getCommitSummaryFilePath(savePath, commitHash);
-  fs.mkdirSync(path.dirname(savedPath), { recursive: true });
-  fs.writeFileSync(savedPath, content, 'utf8');
+  writeSummaryFile(savedPath, content);
   return savedPath;
 }
 
@@ -64,4 +72,13 @@ export function hasSavedSummary(savePath: string | null, commitHash: string, fil
 
 function toSummaryFileName(filePath: string): string {
   return filePath.replace(/[\\/]/g, '__');
+}
+
+function writeSummaryFile(savedPath: string, content: string): void {
+  try {
+    fs.mkdirSync(path.dirname(savedPath), { recursive: true });
+    fs.writeFileSync(savedPath, content, 'utf8');
+  } catch (error) {
+    throw new SummarySaveError(undefined, error);
+  }
 }

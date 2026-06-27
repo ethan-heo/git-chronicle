@@ -19,6 +19,7 @@
 | `src/extension/messageHandler.ts` | 경로 선택 다이얼로그 및 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시지 처리 |
 | `src/webview/features/F06/SavePathSection.tsx` | 저장 경로 설정 섹션 |
 | `src/webview/features/F06/S06_SettingsScreen.tsx` | S06 화면에 SavePathSection 추가 |
+| `src/extension/summaryFileService.ts` | 저장 디렉토리 자동 생성 및 `SummarySaveError` 처리 |
 
 ---
 
@@ -27,8 +28,8 @@
 ```typescript
 interface SavePathSectionProps {
   savePath: string | null;
-  onSelectPath: () => void;
-  onDeletePath: () => void;
+  onPathSelect: () => void;
+  onPathDelete: () => void;
 }
 
 interface SavePathSelectorProps {
@@ -118,15 +119,14 @@ export const SavePathSelector: React.FC<SavePathSelectorProps> = ({ savePath, on
 
 ```tsx
 export const SavePathDisplay: React.FC<SavePathDisplayProps> = ({ path }) => {
-  // 긴 경로는 마지막 2개 세그먼트만 표시
-  const parts = path.split('/');
-  const displayPath = parts.length > 2
-    ? `/.../${parts.slice(-2).join('/')}`
-    : path;
+  const parts = path.replace(/\\/g, '/').split('/').filter(Boolean);
+  const tail = parts.at(-1) ?? path;
+  const head = path.slice(0, Math.max(0, path.length - tail.length));
 
   return (
-    <span className="save-path-display" title={path}>
-      {displayPath}
+    <span className="save-path-display" aria-label={`현재 저장 경로: ${path}`}>
+      <span className="save-path-display-head">{head}</span>
+      <span className="save-path-display-tail">{tail}</span>
     </span>
   );
 };
@@ -136,14 +136,15 @@ export const SavePathDisplay: React.FC<SavePathDisplayProps> = ({ path }) => {
 
 ```tsx
 export const SavePathSection: React.FC<SavePathSectionProps> = ({
-  savePath, onSelectPath, onDeletePath
+  savePath, onPathSelect, onPathDelete
 }) => (
-  <section className="save-path-section">
-    <h3 className="section-title">저장 경로</h3>
-    <div className="save-path-row">
-      <SavePathSelector savePath={savePath} onClick={onSelectPath} />
-      {savePath && <SavePathDeleteButton onClick={onDeletePath} />}
+  <section className="save-path-section" role="group" aria-label="저장 경로 설정">
+    <div className="settings-section-heading">
+      <h2>저장 경로</h2>
+      <p>AI 정리 결과(.md)가 저장될 로컬 폴더입니다.</p>
     </div>
+    <SavePathSelector savePath={savePath} onClick={onPathSelect} />
+    {savePath ? <SavePathDeleteButton onClick={onPathDelete} /> : null}
   </section>
 );
 ```
@@ -155,8 +156,8 @@ export const SavePathDeleteButton: React.FC<SavePathDeleteButtonProps> = ({ onCl
   <button
     className="save-path-delete-btn"
     onClick={onClick}
-    aria-label="저장 경로 삭제"
-    title="경로 삭제"
+    aria-label="저장 경로 삭제 (기존 파일은 삭제되지 않음)"
+    title="경로 설정 삭제 (저장된 파일은 유지)"
   >
     ×
   </button>
@@ -188,10 +189,12 @@ case 'SAVE_PATH_CLEARED': {
 ## Business Rules
 
 1. 경로 선택은 항상 VSCode 다이얼로그 사용 (Webview에서 직접 파일시스템 접근 불가)
-2. 선택 다이얼로그 취소 시 기존 경로 유지 (아무 변화 없음)
-3. 삭제 후 즉시 `unset` 상태 전환 (확인 다이얼로그 없음)
-4. 경로 자체는 저장 시점에 디렉토리를 자동 생성하지 않음 (F05/F08에서 처리)
-5. 경로 설정 후 `hasSavedSummary` 재계산은 다음 S02 진입 시 수행
+2. 브라우저 dev fallback에서는 실제 파일 다이얼로그 대신 데모 경로를 설정
+3. 선택 다이얼로그 취소 시 기존 경로 유지 (아무 변화 없음)
+4. 삭제 후 즉시 `unset` 상태 전환 (확인 다이얼로그 없음)
+5. 경로 자체는 설정 시점에 디렉토리를 자동 생성하지 않음 (F05/F05b/F08 저장 시점에서 처리)
+6. 경로 설정 후 `hasSavedSummary` 재계산은 다음 S02 진입 시 수행
+7. 저장 디렉토리 생성 또는 파일 쓰기 실패 시 `SummarySaveError`를 `AI_SUMMARY_ERROR`로 전달하고 "저장 경로를 생성할 수 없습니다. 권한을 확인하세요"를 표시
 
 ---
 

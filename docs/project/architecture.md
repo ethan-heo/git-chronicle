@@ -81,17 +81,13 @@ src/
     │   │   ├── TokenLimitWarning.tsx
     │   │   ├── OverwriteConfirmDialog.tsx
     │   │   └── index.ts
-    │   ├── F05b_ai_summary_commit/
-    │   │   ├── AISummaryCommitFeature.tsx
-    │   │   └── useAISummaryCommit.ts
-    │   ├── F06_ai_settings/
-    │   │   ├── AISettingsFeature.tsx
+    │   ├── F06/
+    │   │   ├── S06_SettingsScreen.tsx
+    │   │   ├── AIProviderSection.tsx
     │   │   ├── AIProviderButton.tsx
-    │   │   └── useAISettings.ts
-    │   ├── F07_save_path_settings/
-    │   │   ├── SavePathSettingsFeature.tsx
-    │   │   ├── SavePathSelector.tsx
-    │   │   └── useSavePath.ts
+    │   │   ├── SavePathSection.tsx
+    │   │   ├── providers.ts
+    │   │   └── index.ts
     │   └── F08_batch_ai_summary/
     │       ├── BatchAISummaryFeature.tsx
     │       ├── BatchProgressBar.tsx
@@ -206,6 +202,7 @@ type ExtensionToWebviewMessage =
 - `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
 - 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록과 F02 변경 파일 트리용 데모 데이터를 사용해 UI를 확인할 수 있게 한다.
 - 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF`, F05/F05b가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` / `START_AI_SUMMARY_COMMIT` 메시지를 보낸다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
+- Browser dev fallback에서는 VSCode 파일 다이얼로그를 열 수 없으므로 S06 저장 경로 선택이 데모 경로를 설정한다. 실제 디렉토리 선택은 Extension Host의 `vscode.window.showOpenDialog()`에서만 동작한다.
 
 ### child_process (Extension Host 전용)
 
@@ -232,7 +229,8 @@ Extension Host (messageHandler.ts)
                  └─ aiService.streamAISummary(provider, prompt)
                       ├─ [stdout chunk] → postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } })
                       └─ [close]        → summaryFileService.saveSummary(...)
-                                          → postMessage({ type: 'AI_SUMMARY_DONE', payload: { content, savedPath, provider } })
+                                          ├─ [성공] → postMessage({ type: 'AI_SUMMARY_DONE', payload: { content, savedPath, provider } })
+                                          └─ [저장 실패] → postMessage({ type: 'AI_SUMMARY_ERROR', payload: { message: '저장 경로를 생성할 수 없습니다. 권한을 확인하세요' } })
 ```
 
 ## Data Flow Example: AI 정리 커밋 단위 생성
@@ -252,7 +250,8 @@ Extension Host (messageHandler.ts)
                  └─ aiService.streamAISummary(provider, prompt)
                       ├─ [stdout chunk] → postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } })
                       └─ [close]        → summaryFileService.saveCommitSummary(...)
-                                          → postMessage({ type: 'AI_SUMMARY_DONE', payload: { content, savedPath, provider } })
+                                          ├─ [성공] → postMessage({ type: 'AI_SUMMARY_DONE', payload: { content, savedPath, provider } })
+                                          └─ [저장 실패] → postMessage({ type: 'AI_SUMMARY_ERROR', payload: { message: '저장 경로를 생성할 수 없습니다. 권한을 확인하세요' } })
 ```
 
 ---

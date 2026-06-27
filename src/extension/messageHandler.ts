@@ -5,7 +5,7 @@ import type { AIProviderName } from './aiTypes';
 import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
 import { fetchChangedFiles, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
 import { buildCommitSummaryPrompt, buildFileSummaryPrompt } from './prompts';
-import { loadCommitSummary, loadSummary, saveCommitSummary, saveSummary } from './summaryFileService';
+import { loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from './summaryFileService';
 
 interface WebviewMessage {
   type: string;
@@ -207,8 +207,8 @@ async function handleSetSavePath(panel: vscode.WebviewPanel, context: vscode.Ext
     canSelectFiles: false,
     canSelectFolders: true,
     canSelectMany: false,
-    openLabel: '저장 경로 선택',
-    title: 'AI 정리 저장 경로 선택',
+    openLabel: '이 폴더에 저장',
+    title: 'AI 정리 저장 폴더 선택',
   });
 
   const selectedPath = selected?.[0]?.fsPath;
@@ -491,15 +491,19 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vsc
         });
       },
       onComplete: () => {
-        const savedPath = saveSummary(savePath, payload.commitHash ?? '', payload.filePath ?? '', content);
-        void panel.webview.postMessage({
-          type: 'AI_SUMMARY_DONE',
-          payload: {
-            content,
-            savedPath,
-            provider,
-          },
-        });
+        try {
+          const savedPath = saveSummary(savePath, payload.commitHash ?? '', payload.filePath ?? '', content);
+          void panel.webview.postMessage({
+            type: 'AI_SUMMARY_DONE',
+            payload: {
+              content,
+              savedPath,
+              provider,
+            },
+          });
+        } catch (error) {
+          void postAISummaryError(panel, getSummarySaveErrorMessage(error));
+        }
       },
       onError: (message) => {
         void postAISummaryError(panel, message);
@@ -586,15 +590,19 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
         });
       },
       onComplete: () => {
-        const savedPath = saveCommitSummary(savePath, payload.commitHash ?? '', content);
-        void panel.webview.postMessage({
-          type: 'AI_SUMMARY_DONE',
-          payload: {
-            content,
-            savedPath,
-            provider,
-          },
-        });
+        try {
+          const savedPath = saveCommitSummary(savePath, payload.commitHash ?? '', content);
+          void panel.webview.postMessage({
+            type: 'AI_SUMMARY_DONE',
+            payload: {
+              content,
+              savedPath,
+              provider,
+            },
+          });
+        } catch (error) {
+          void postAISummaryError(panel, getSummarySaveErrorMessage(error));
+        }
       },
       onError: (message) => {
         void postAISummaryError(panel, message);
@@ -612,6 +620,14 @@ async function postAISummaryError(panel: vscode.WebviewPanel, message: string): 
       message,
     },
   });
+}
+
+function getSummarySaveErrorMessage(error: unknown): string {
+  if (error instanceof SummarySaveError) {
+    return error.message;
+  }
+
+  return error instanceof Error ? error.message : '생성에 실패했습니다';
 }
 
 async function postAISettingsError(panel: vscode.WebviewPanel, message: string): Promise<void> {

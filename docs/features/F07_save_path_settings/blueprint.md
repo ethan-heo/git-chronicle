@@ -198,7 +198,7 @@ S06_SettingsScreen
 
 ## Error States
 
-- 경로 자동 생성 실패: `Toast` (error): "저장 경로를 생성할 수 없습니다. 권한을 확인하세요"
+- 경로 자동 생성/파일 쓰기 실패: Extension Host가 `AI_SUMMARY_ERROR`를 보내고 AI 정리 화면의 `ErrorState`에 "저장 경로를 생성할 수 없습니다. 권한을 확인하세요" 표시
 
 ---
 
@@ -227,6 +227,7 @@ S06_SettingsScreen
 - 현재 저장 경로 UI는 별도 `features/F07` 디렉토리가 아니라 `src/webview/features/F06/SavePathSection.tsx`에 구현되어 S06 설정 화면에서 사용된다.
 - `SavePathSelector`, `SavePathDisplay`, `SavePathDeleteButton`은 문서상 하위 컴포넌트 개념이며, 현재 코드는 `SavePathSection.tsx` 내부에서 함께 렌더링한다.
 - Extension Host 요청 메시지는 `SET_SAVE_PATH`, `CLEAR_SAVE_PATH`이고 응답 메시지는 `SAVE_PATH_SET`, `SAVE_PATH_CLEARED`이다.
+- 저장 실패는 `src/extension/summaryFileService.ts`의 `SummarySaveError`로 표준화되며, `src/extension/messageHandler.ts`에서 `AI_SUMMARY_ERROR`로 Webview에 전달된다.
 - Webview 브라우저 dev fallback에서는 실제 파일 다이얼로그 대신 데모 경로를 설정한다.
 
 ---
