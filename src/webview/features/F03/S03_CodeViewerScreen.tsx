@@ -25,7 +25,7 @@ const initialDiffState: FileDiffState = {
 export const S03CodeViewerScreen: FC = () => {
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const selectedFile = useAppStore((state) => state.selectedFile);
-  const goToHistoryView = useAppStore((state) => state.goToHistoryView);
+  const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const goToSettingsView = useAppStore((state) => state.goToSettingsView);
   const [diffState, setDiffState] = useState<FileDiffState>(initialDiffState);
 
@@ -127,7 +127,7 @@ export const S03CodeViewerScreen: FC = () => {
         title={selectedCommit.message}
         context={`${selectedCommit.shortHash} > ${selectedFile.path}`}
         showBackButton
-        onBackClick={goToHistoryView}
+        onBackClick={goBackFromDetail}
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />

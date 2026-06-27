@@ -22,6 +22,14 @@ export interface ChangedFile {
   hasSavedSummary: boolean;
 }
 
+export type DependencyKind = 'import' | 'require';
+
+export interface DependencyEdge {
+  from: string;
+  to: string;
+  kind: DependencyKind;
+}
+
 export type SummaryMode = 'file' | 'commit';
 
 export type ScreenID = 'S01' | 'S02' | 'S03' | 'S04' | 'S05' | 'S06';

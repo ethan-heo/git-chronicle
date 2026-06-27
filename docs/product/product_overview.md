@@ -81,7 +81,7 @@ Git Author Explorer는 VSCode Extension으로, 개발자가 자신의 Git 커밋
 | [F01_CommitLog](../features/F01_commit_log/spec.md) | 커밋 로그 조회 | 전체 커밋 이력 목록 표시. 기간·작성자·키워드 필터, 무한 스크롤 | [S01](../screens/S01_commit_list/blueprint.md) |
 | [F02_ChangedFileTree](../features/F02_changed_file_tree/spec.md) | 변경 파일 트리 | 커밋 선택 시 변경 파일을 디렉토리 트리로 표시. 상태 뱃지·저장됨 뱃지 포함 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F03_CodeViewer](../features/F03_code_viewer/spec.md) | 코드 변경이력 | 파일 단위 unified diff 뷰어. Shiki 신텍스 하이라이팅 | [S03](../screens/S03_code_viewer/blueprint.md) |
-| [F04_DependencyCanvas](../features/F04_dependency_canvas/spec.md) | 의존 관계 캔버스 | 변경 파일 간 의존 관계를 노드-엣지 그래프로 시각화. React Flow 기반 | [S05](../screens/S05_dependency_canvas/blueprint.md) |
+| [F04_DependencyCanvas](../features/F04_dependency_canvas/spec.md) | 의존 관계 캔버스 | 변경 파일 간 의존 관계를 노드-엣지 그래프로 시각화. React Flow 기반 | [S05](../screens/S04_dependency_canvas/blueprint.md) |
 | [F05_AISummaryFile](../features/F05_ai_summary_file/spec.md) | AI 정리 (파일 단위) | 파일 diff를 AI가 마크다운으로 요약. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S04_ai_summary_viewer/blueprint.md) |
 | [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S04_ai_summary_viewer/blueprint.md) |
 | [F06_AISettings](../features/F06_ai_settings/spec.md) | AI 설정 | Claude/Gemini/Codex CLI 등록·활성화·비활성화 | [S06](../screens/S06_settings/blueprint.md) |
@@ -96,7 +96,7 @@ Git Author Explorer는 VSCode Extension으로, 개발자가 자신의 Git 커밋
 - [S-02: 이력 조회](#s-02) → [screens/S02_history_view/blueprint.md](../screens/S02_history_view/blueprint.md)
 - [S-03: 코드 뷰어](#s-03) → [screens/S03_code_viewer/blueprint.md](../screens/S03_code_viewer/blueprint.md)
 - [S-04: AI 정리 뷰어](#s-04) → [screens/S04_ai_summary_viewer/blueprint.md](../screens/S04_ai_summary_viewer/blueprint.md)
-- [S-05: 캔버스](#s-05) → [screens/S05_dependency_canvas/blueprint.md](../screens/S05_dependency_canvas/blueprint.md)
+- [S-05: 캔버스](#s-05) → [screens/S04_dependency_canvas/blueprint.md](../screens/S04_dependency_canvas/blueprint.md)
 - [S-06: 설정](#s-06) → [screens/S06_settings/blueprint.md](../screens/S06_settings/blueprint.md)
 - [F-01: 커밋 로그 조회](#f-01) → [features/F01_commit_log/spec.md](../features/F01_commit_log/spec.md)
 - [F-02: 변경 파일 트리](#f-02) → [features/F02_changed_file_tree/spec.md](../features/F02_changed_file_tree/spec.md)

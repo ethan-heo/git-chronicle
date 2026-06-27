@@ -34,7 +34,7 @@
    - **[전체 파일 AI 정리]** → `isBatchRunning = true`, `batchTotal = changedFiles.length` 설정 후 F-08 메시지 전송
    - **[캔버스 보기]** → S-05로 전환
 
-> 현재 S-03/S-04/S-05는 후속 기능 화면이 구현되기 전까지 placeholder 화면으로 렌더링된다.
+> 현재 S-03은 코드 뷰어, S-05는 의존성 캔버스로 구현되어 실제 화면으로 전환된다. S-04 AI 요약 화면은 후속 기능 구현 전까지 placeholder 화면으로 렌더링된다.
 
 ---
 
@@ -114,4 +114,4 @@
 | 메시지 요청 | Webview → Extension: `FETCH_CHANGED_FILES` |
 | 메시지 응답 | Extension → Webview: `CHANGED_FILES_LOADED`, `CHANGED_FILES_LOAD_FAILED` |
 | 브라우저 개발 모드 | VSCode API가 없으면 `appStore.ts`의 `demoChangedFiles`를 사용 |
-| 후속 화면 | S03은 실제 코드 뷰어로 이동. S04/S05는 현재 placeholder 화면으로 이동 |
+| 후속 화면 | S03은 실제 코드 뷰어로 이동. S05는 실제 의존성 캔버스로 이동. S04는 현재 placeholder 화면으로 이동 |

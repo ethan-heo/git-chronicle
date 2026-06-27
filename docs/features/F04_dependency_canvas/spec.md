@@ -25,7 +25,8 @@
 
 1. 이력 조회 화면에서 [캔버스 보기] 버튼을 클릭하면 캔버스 화면이 활성화된다.
 2. 변경 파일이 **노드(Node)** 로 표시되고, 파일 간 의존 관계가 **엣지(Edge)** 로 연결된다.
-3. 노드에 마우스를 호버링하면 두 개의 액션 버튼이 활성화된다.
+3. 변경 파일 로딩이 끝나기 전에는 [캔버스 보기] 버튼이 로딩 상태로 표시되어 조기 진입을 방지한다.
+4. 노드에 마우스를 호버링하면 두 개의 액션 버튼이 활성화되고, 연결된 엣지가 강조된다.
    - **[코드 보기]** → 코드 뷰어(S-03) 활성화
    - **[AI 정리 보기]** → AI 정리 뷰어(S-04) 활성화
 
@@ -41,8 +42,9 @@
 | 엣지 | 변경 파일 간 import / require 의존 관계 |
 | 고립 노드 | 의존 관계가 없는 변경 파일도 노드로 표시 (엣지 없이 단독 노드) |
 | JS/TS 외 파일 | 노드로 표시하되 엣지 없음. 노드에 "의존 관계 분석 불가" 툴팁 표시 |
-| 레이아웃 | 자동 배치 (force-directed) |
-| 인터랙션 | 노드 호버 → [코드 보기] / [AI 정리 보기] 버튼 활성화 |
+| 레이아웃 | deterministic force-directed 자동 배치 |
+| 인터랙션 | 노드 호버 → [코드 보기] / [AI 정리 보기] 버튼 활성화 + 연결 엣지 강조 |
+| 화면 맞춤 | 초기 렌더링 및 캔버스 크기 변경 시 `fitView()` 자동 적용 |
 
 ---
 
@@ -51,6 +53,7 @@
 | 상황 | 처리 |
 |------|------|
 | 의존 관계 분석 실패 | `ErrorState`: "의존 관계를 분석하지 못했습니다" + [재시도] 버튼 |
+| dependency-cruiser 실행 파일 없음 | `ErrorState`: "dependency-cruiser가 설치되지 않았습니다. pnpm install 후 다시 시도해주세요." + [재시도] 버튼 |
 | 변경 파일 없음 | `EmptyState`: "변경된 파일이 없습니다" |
 | JS/TS 외 파일 | 노드로 표시 + "의존 관계 분석 불가" 툴팁 |
 
@@ -66,7 +69,7 @@
 
 ## Related Screens
 
-- [S05_DependencyCanvasScreen](../../screens/S05_dependency_canvas/blueprint.md)
+- [S05_DependencyCanvasScreen](../../screens/S04_dependency_canvas/blueprint.md)
 
 ---
 
@@ -76,6 +79,7 @@
 |------|------|------|
 | `changedFiles` | `ChangedFile[]` | 전역 상태. 노드로 변환될 변경 파일 목록 |
 | `selectedCommit` | `Commit` | 전역 상태. 의존 관계 분석 컨텍스트 및 헤더 표시 |
+| `previousScreen` | `ScreenID \| null` | S05에서 S03/S04로 진입한 뒤 뒤로가기 목적지 보존 |
 | dependency-cruiser | CLI 실행 결과 | Extension Host에서 변경 파일 경로를 인자로 의존 관계 분석 실행 |
 
 ---
@@ -95,3 +99,4 @@
 | `selectedFile` 전역 상태 업데이트 | 노드 액션 버튼 클릭 | 선택된 파일 설정 후 화면 전환 |
 | S-03 화면 전환 | [코드 보기] 클릭 | `currentScreen = "S03"`, `previousScreen = "S05"` |
 | S-04 화면 전환 | [AI 정리 보기] 클릭 | `currentScreen = "S04"`, `summaryMode = "file"`, `previousScreen = "S05"` |
+| S-05 화면 복귀 | S03/S04 뒤로가기 | `currentScreen = previousScreen`, 이후 `previousScreen = null` |

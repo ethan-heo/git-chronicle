@@ -10,8 +10,8 @@ React Flow 캔버스(S05_DependencyCanvasScreen)에서 변경 파일 간 import/
 import { EdgeProps } from '@xyflow/react';
 
 interface DependencyEdgeData {
-  // 의존 관계 타입 (미래 확장용)
-  dependencyType?: 'import' | 'require' | 'dynamic';
+  kind: 'import' | 'require';
+  highlighted: boolean;
 }
 
 type DependencyEdgeProps = EdgeProps<DependencyEdgeData>;
@@ -22,30 +22,28 @@ type DependencyEdgeProps = EdgeProps<DependencyEdgeData>;
 ## 렌더링
 
 - 방향: source(의존하는 파일) → target(의존 대상 파일). 화살표 끝에 arrowhead 표시.
-- 스타일: 직선 또는 베지어 곡선 (`smoothstep` 타입).
-- 색상: `var(--vscode-charts-lines)` 기본. 선택 시 `var(--vscode-focusBorder)`.
+- 스타일: 직선 엣지. `require` 관계는 dashed stroke로 표시.
+- 색상: 기본은 보조 텍스트 색상, 연결 노드 호버 시 링크 색상으로 강조.
 
 ```tsx
 export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
   id, sourceX, sourceY, targetX, targetY,
-  sourcePosition, targetPosition, selected,
+  markerEnd, data,
 }) => {
-  const [edgePath] = getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition });
+  const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY });
 
   return (
-    <g>
+    <>
       <BaseEdge
         id={id}
         path={edgePath}
-        style={{
-          stroke: selected ? 'var(--vscode-focusBorder)' : 'var(--vscode-charts-lines)',
-          strokeWidth: selected ? 2 : 1,
-        }}
+        markerEnd={markerEnd}
+        className={`dependency-edge dependency-edge-${data.kind}${data.highlighted ? ' dependency-edge-highlighted' : ''}`}
       />
       <EdgeLabelRenderer>
-        {/* 레이블 없음 (현재 설계) */}
+        <span className="dependency-edge-label">{data.kind}</span>
       </EdgeLabelRenderer>
-    </g>
+    </>
   );
 };
 ```
@@ -65,7 +63,7 @@ export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
 | 상태 | 조건 | 시각 표현 |
 |------|------|---------|
 | `default` | 기본 | 회색 선, 얇은 두께 |
-| `selected` | 연결된 노드 선택 또는 엣지 클릭 | 파란색 강조, 두꺼운 두께 |
+| `highlighted` | 연결된 노드 호버 | 파란색 강조, 두꺼운 두께 |
 
 ---
 

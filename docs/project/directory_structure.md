@@ -201,7 +201,7 @@ docs/
 │   ├── S02_history_view/blueprint.md
 │   ├── S03_code_viewer/blueprint.md
 │   ├── S04_ai_summary_viewer/blueprint.md
-│   ├── S05_dependency_canvas/blueprint.md
+│   ├── S04_dependency_canvas/blueprint.md
 │   └── S06_settings/blueprint.md
 └── components/
     ├── TopHeader.md

@@ -29,7 +29,7 @@ S01_CommitListScreen에서 커밋 항목 클릭 시 진입. `selectedCommit` 전
 
 - [S03_CodeViewerScreen](../S03_code_viewer/blueprint.md) — 파일 [코드 보기] 클릭 시
 - [S04_AISummaryViewerScreen](../S04_ai_summary_viewer/blueprint.md) — 파일 [AI 정리 보기] 또는 [커밋 AI 정리] 클릭 시
-- [S05_DependencyCanvasScreen](../S05_dependency_canvas/blueprint.md) — [캔버스 보기] 클릭 시
+- [S05_DependencyCanvasScreen](../S04_dependency_canvas/blueprint.md) — [캔버스 보기] 클릭 시
 
 ---
 
@@ -43,7 +43,7 @@ S02_HistoryViewScreen
 ├─ CommitActionBar
 │   ├─ PrimaryButton [커밋 AI 정리] → S04 placeholder
 │   ├─ PrimaryButton [전체 파일 AI 정리] → F08 시작 상태 설정
-│   └─ PrimaryButton [캔버스 보기] → S05 placeholder
+│   └─ PrimaryButton [캔버스 보기] → S05 dependency canvas
 └─ FileTree (스크롤 영역)
     ├─ DirectoryNode
     │   └─ FileTreeNode
@@ -94,11 +94,11 @@ S02_HistoryViewScreen
     → changedFiles 로드
     → FileTree 표시
         → 파일 호버 → FileActionButtons 표시
-            → [코드 보기] → S03 placeholder
+            → [코드 보기] → S03 code viewer
             → [AI 정리 보기] → S04 placeholder
         → [커밋 AI 정리] → S04 placeholder
         → [전체 파일 AI 정리] → isBatchRunning true, START_BATCH_AI_SUMMARY 전송
-        → [캔버스 보기] → S05 placeholder
+        → [캔버스 보기] → S05 dependency canvas
     → BackButton → S01
     → ⚙ → S06
 ```

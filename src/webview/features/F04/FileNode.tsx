@@ -1,0 +1,35 @@
+import { Handle, Position, type NodeProps } from '@xyflow/react';
+import type { FC } from 'react';
+import { FileActionButtons, FileStatusBadge, SavedBadge } from '../../shared/components';
+import type { FileNodeType } from './graph';
+
+export const FileNode: FC<NodeProps<FileNodeType>> = ({ data }) => {
+  const title = data.canAnalyze ? `${data.directory}${data.label}` : '의존 관계 분석 불가 (JS/TS 외 파일)';
+
+  return (
+    <div
+      className={`dependency-file-node${data.canAnalyze ? '' : ' dependency-file-node-no-analysis'}${data.file.status === 'D' ? ' dependency-file-node-deleted' : ''}`}
+      role="button"
+      aria-label={`${data.label} 노드`}
+      title={title}
+      tabIndex={0}
+    >
+      <Handle className="dependency-node-handle" type="target" position={Position.Left} />
+      <div className="dependency-file-node-main">
+        <FileStatusBadge status={data.file.status} />
+        <div className="dependency-file-node-text">
+          <span className="dependency-file-node-name">{data.label}</span>
+          <span className="dependency-file-node-dir">{data.directory}</span>
+        </div>
+      </div>
+      <div className="dependency-file-node-meta">
+        {data.file.hasSavedSummary ? <SavedBadge /> : null}
+        {!data.canAnalyze ? <span className="dependency-no-analysis-label">분석 불가</span> : null}
+      </div>
+      <div className="dependency-file-node-actions">
+        <FileActionButtons onCodeView={() => data.onCodeView(data.file)} onAISummary={() => data.onAISummary(data.file)} />
+      </div>
+      <Handle className="dependency-node-handle" type="source" position={Position.Right} />
+    </div>
+  );
+};

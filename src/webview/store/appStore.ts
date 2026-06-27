@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { isVSCodeRuntime, postMessage } from '../bridge/vscodeApi';
-import type { ChangedFile, Commit, FilterState, ScreenID, SummaryMode } from '../types/commit';
+import type { ChangedFile, Commit, DependencyEdge, FilterState, ScreenID, SummaryMode } from '../types/commit';
 
 const PAGE_SIZE = 200;
 const DEMO_PAGE_SIZE = 12;
@@ -19,6 +19,10 @@ interface AppState extends FilterState {
   selectedFile: ChangedFile | null;
   isLoadingChangedFiles: boolean;
   changedFilesError: string | null;
+  hasLoadedChangedFiles: boolean;
+  dependencyEdges: DependencyEdge[];
+  isLoadingDependencies: boolean;
+  dependenciesError: string | null;
   savePath: string | null;
   summaryMode: SummaryMode;
   isBatchRunning: boolean;
@@ -29,16 +33,19 @@ interface AppState extends FilterState {
   isLoadingCommits: boolean;
   isGitRepoDetected: boolean;
   currentScreen: ScreenID;
+  previousScreen: ScreenID | null;
   commitLoadError: string | null;
   loadMoreError: string | null;
   hasLoadedCommits: boolean;
   loadCommits: (reset?: boolean) => void;
   loadChangedFiles: () => void;
+  loadDependencies: () => void;
   setFilter: (filter: Partial<FilterState>) => void;
   clearFilters: () => void;
   selectCommit: (commit: Commit) => void;
   goToCommitList: () => void;
   goToHistoryView: () => void;
+  goBackFromDetail: () => void;
   selectFileForCode: (file: ChangedFile) => void;
   selectFileForAI: (file: ChangedFile) => void;
   goToCommitAISummary: () => void;
@@ -51,6 +58,8 @@ interface AppState extends FilterState {
   handleCommitsLoadFailed: (message?: string) => void;
   handleChangedFilesLoaded: (files: ChangedFile[]) => void;
   handleChangedFilesLoadFailed: (message?: string) => void;
+  handleDependenciesLoaded: (edges: DependencyEdge[]) => void;
+  handleDependenciesLoadFailed: (message?: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -61,6 +70,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedFile: null,
   isLoadingChangedFiles: false,
   changedFilesError: null,
+  hasLoadedChangedFiles: false,
+  dependencyEdges: [],
+  isLoadingDependencies: false,
+  dependenciesError: null,
   savePath: null,
   summaryMode: 'file',
   isBatchRunning: false,
@@ -71,6 +84,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isLoadingCommits: false,
   isGitRepoDetected: true,
   currentScreen: 'S01',
+  previousScreen: null,
   commitLoadError: null,
   loadMoreError: null,
   hasLoadedCommits: false,
@@ -125,6 +139,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       isLoadingChangedFiles: true,
       changedFilesError: null,
+      hasLoadedChangedFiles: false,
     });
 
     if (!isVSCodeRuntime()) {
@@ -137,6 +152,30 @@ export const useAppStore = create<AppState>((set, get) => ({
     postMessage('FETCH_CHANGED_FILES', {
       commitHash: state.selectedCommit.hash,
       savePath: state.savePath,
+    });
+  },
+
+  loadDependencies: () => {
+    const state = get();
+
+    if (state.changedFiles.length === 0 || state.isLoadingDependencies) {
+      return;
+    }
+
+    set({
+      isLoadingDependencies: true,
+      dependenciesError: null,
+    });
+
+    if (!isVSCodeRuntime()) {
+      window.setTimeout(() => {
+        get().handleDependenciesLoaded(demoDependencyEdges);
+      }, 260);
+      return;
+    }
+
+    postMessage('ANALYZE_DEPENDENCIES', {
+      filePaths: state.changedFiles.map((file) => file.path),
     });
   },
 
@@ -162,33 +201,55 @@ export const useAppStore = create<AppState>((set, get) => ({
       changedFiles: [],
       changedFilesError: null,
       isLoadingChangedFiles: false,
+      hasLoadedChangedFiles: false,
+      dependencyEdges: [],
+      dependenciesError: null,
+      isLoadingDependencies: false,
       currentScreen: 'S02',
+      previousScreen: null,
     });
   },
 
   goToCommitList: () => {
     set({
       currentScreen: 'S01',
+      previousScreen: null,
     });
   },
 
   goToHistoryView: () => {
     set({
       currentScreen: 'S02',
+      previousScreen: null,
+    });
+  },
+
+  goBackFromDetail: () => {
+    const previousScreen = get().previousScreen ?? 'S02';
+
+    set({
+      currentScreen: previousScreen,
+      previousScreen: null,
     });
   },
 
   selectFileForCode: (file) => {
+    const state = get();
+
     set({
       selectedFile: file,
+      previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S03',
     });
   },
 
   selectFileForAI: (file) => {
+    const state = get();
+
     set({
       selectedFile: file,
       summaryMode: 'file',
+      previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S04',
     });
   },
@@ -197,6 +258,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       selectedFile: null,
       summaryMode: 'commit',
+      previousScreen: 'S02',
       currentScreen: 'S04',
     });
   },
@@ -204,6 +266,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   goToCanvasView: () => {
     set({
       currentScreen: 'S05',
+      previousScreen: 'S02',
     });
   },
 
@@ -284,6 +347,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       changedFiles: files,
       isLoadingChangedFiles: false,
       changedFilesError: null,
+      hasLoadedChangedFiles: true,
+      dependencyEdges: [],
+      dependenciesError: null,
+      isLoadingDependencies: false,
     });
   },
 
@@ -292,6 +359,26 @@ export const useAppStore = create<AppState>((set, get) => ({
       changedFiles: [],
       isLoadingChangedFiles: false,
       changedFilesError: message,
+      hasLoadedChangedFiles: true,
+      dependencyEdges: [],
+      dependenciesError: null,
+      isLoadingDependencies: false,
+    });
+  },
+
+  handleDependenciesLoaded: (edges) => {
+    set({
+      dependencyEdges: edges,
+      isLoadingDependencies: false,
+      dependenciesError: null,
+    });
+  },
+
+  handleDependenciesLoadFailed: (message = '의존 관계를 분석하지 못했습니다') => {
+    set({
+      dependencyEdges: [],
+      isLoadingDependencies: false,
+      dependenciesError: message,
     });
   },
 }));
@@ -364,4 +451,15 @@ const demoChangedFiles: ChangedFile[] = [
   { path: 'src/types/commit.ts', oldPath: 'src/types/git.ts', status: 'R', hasSavedSummary: false },
   { path: 'tests/CommitList.test.tsx', status: 'M', hasSavedSummary: false },
   { path: 'docs/F01_blueprint.md', status: 'M', hasSavedSummary: false },
+];
+
+const demoDependencyEdges: DependencyEdge[] = [
+  { from: 'tests/CommitList.test.tsx', to: 'src/components/CommitList/CommitList.tsx', kind: 'import' },
+  { from: 'src/components/CommitList/CommitList.tsx', to: 'src/components/CommitList/CommitListItem.tsx', kind: 'import' },
+  { from: 'src/components/CommitList/CommitList.tsx', to: 'src/components/CommitList/useInfiniteScroll.ts', kind: 'import' },
+  { from: 'src/components/CommitList/CommitList.tsx', to: 'src/utils/pagination.ts', kind: 'import' },
+  { from: 'src/components/CommitList/CommitListItem.tsx', to: 'src/types/commit.ts', kind: 'import' },
+  { from: 'src/components/CommitFilter/CommitFilterPanel.tsx', to: 'src/types/commit.ts', kind: 'import' },
+  { from: 'src/components/CommitList/useInfiniteScroll.ts', to: 'src/hooks/useIntersectionObserver.ts', kind: 'import' },
+  { from: 'src/utils/pagination.ts', to: 'src/types/commit.ts', kind: 'require' },
 ];

@@ -282,7 +282,7 @@ S02_HistoryViewScreen
 | [캔버스 보기] | 버튼 클릭 | S-05 진입 |
 | 디렉토리 클릭 | `DirectoryNode` 클릭 | 펼침/접힘 토글 |
 
-> 현재 S-03/S-04/S-05는 placeholder 화면으로 라우팅되며, 실제 Diff/AI/Canvas 로딩은 각 후속 Feature 구현에서 연결한다.
+> 현재 S-03은 코드 뷰어로, S-05는 의존성 캔버스로 라우팅된다. S-04 AI 요약 화면은 placeholder 화면으로 유지되며 실제 AI 로딩은 후속 Feature 구현에서 연결한다.
 
 ---
 

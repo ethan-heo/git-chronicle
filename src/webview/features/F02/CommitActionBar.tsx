@@ -5,6 +5,7 @@ import type { Commit } from '../../types/commit';
 interface CommitActionBarProps {
   selectedCommit: Commit;
   isBatchRunning: boolean;
+  isLoadingChangedFiles: boolean;
   onCommitAISummary: () => void;
   onBatchAISummary: () => void;
   onCanvasView: () => void;
@@ -13,6 +14,7 @@ interface CommitActionBarProps {
 export const CommitActionBar: FC<CommitActionBarProps> = ({
   selectedCommit,
   isBatchRunning,
+  isLoadingChangedFiles,
   onCommitAISummary,
   onBatchAISummary,
   onCanvasView,
@@ -25,8 +27,8 @@ export const CommitActionBar: FC<CommitActionBarProps> = ({
       <PrimaryButton className="primary-button-secondary" aria-label="전체 파일 AI 정리" disabled={isBatchRunning} onClick={onBatchAISummary}>
         {isBatchRunning ? '일괄 생성 중' : '전체 파일 AI 정리'}
       </PrimaryButton>
-      <PrimaryButton className="primary-button-secondary" aria-label="의존성 캔버스 보기" onClick={onCanvasView}>
-        캔버스 보기
+      <PrimaryButton className="primary-button-secondary" aria-label="의존성 캔버스 보기" isLoading={isLoadingChangedFiles} onClick={onCanvasView}>
+        {isLoadingChangedFiles ? '파일 불러오는 중' : '캔버스 보기'}
       </PrimaryButton>
     </div>
   );

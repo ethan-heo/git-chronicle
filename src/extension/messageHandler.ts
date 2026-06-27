@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
+import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
 import { fetchChangedFiles, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
 
 interface WebviewMessage {
   type: string;
-  payload?: FetchCommitsPayload | FetchChangedFilesPayload | FetchFileDiffPayload;
+  payload?: FetchCommitsPayload | FetchChangedFilesPayload | FetchFileDiffPayload | AnalyzeDependenciesPayload;
 }
 
 interface FetchCommitsPayload {
@@ -23,6 +24,10 @@ interface FetchChangedFilesPayload {
 interface FetchFileDiffPayload {
   commitHash?: string;
   filePath?: string;
+}
+
+interface AnalyzeDependenciesPayload {
+  filePaths?: string[];
 }
 
 export function registerMessageHandler(panel: vscode.WebviewPanel): void {
@@ -45,6 +50,9 @@ export function registerMessageHandler(panel: vscode.WebviewPanel): void {
       case 'FETCH_FILE_DIFF':
         await handleFetchFileDiff(panel, message.payload as FetchFileDiffPayload);
         break;
+      case 'ANALYZE_DEPENDENCIES':
+        await handleAnalyzeDependencies(panel, message.payload as AnalyzeDependenciesPayload);
+        break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
         break;
@@ -57,6 +65,45 @@ export function registerMessageHandler(panel: vscode.WebviewPanel): void {
         });
     }
   });
+}
+
+async function handleAnalyzeDependencies(panel: vscode.WebviewPanel, payload: AnalyzeDependenciesPayload = {}): Promise<void> {
+  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+  if (!repoPath) {
+    await panel.webview.postMessage({
+      type: 'DEPENDENCIES_LOAD_FAILED',
+      payload: {
+        message: 'Git 저장소가 감지되지 않았습니다',
+      },
+    });
+    return;
+  }
+
+  try {
+    const edges = await analyzeDependencies(repoPath, payload.filePaths ?? []);
+
+    await panel.webview.postMessage({
+      type: 'DEPENDENCIES_LOADED',
+      payload: {
+        edges,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof DependencyCruiserNotFoundError
+        ? 'dependency-cruiser가 설치되지 않았습니다. pnpm install 후 다시 시도해주세요.'
+        : error instanceof Error
+          ? error.message
+          : '의존 관계를 분석하지 못했습니다';
+
+    await panel.webview.postMessage({
+      type: 'DEPENDENCIES_LOAD_FAILED',
+      payload: {
+        message,
+      },
+    });
+  }
 }
 
 async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchCommitsPayload = {}): Promise<void> {

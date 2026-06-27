@@ -7,8 +7,8 @@
 ## Technical Context
 
 - **의존성 분석**: Extension Host에서 `dependency-cruiser` CLI를 `child_process.execFile`로 실행, JSON 결과 파싱
-- **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. force-directed 레이아웃은 `d3-force` 또는 `dagre`로 계산
-- **대상 파일**: JS/TS 파일만 분석 가능 (`.js`, `.ts`, `.jsx`, `.tsx`)
+- **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 레이아웃은 deterministic force-directed 계산으로 자동 배치
+- **대상 파일**: JS/TS 파일만 분석 가능 (`.mjs`, `.cjs`, `.js`, `.jsx`, `.mts`, `.cts`, `.ts`, `.tsx`)
 
 ---
 
@@ -22,7 +22,9 @@
 | `src/webview/features/F04/DependencyEdge.tsx` | React Flow 커스텀 엣지 |
 | `src/webview/features/F04/LegendPanel.tsx` | 범례 패널 |
 | `src/webview/features/F04/CanvasControls.tsx` | 줌 컨트롤 버튼 |
-| `src/webview/screens/S05_DependencyCanvasScreen.tsx` | S05 화면 조합 컴포넌트 |
+| `src/webview/features/F04/S05_DependencyCanvasScreen.tsx` | S05 화면 조합 컴포넌트 |
+| `src/webview/features/F04/graph.ts` | 변경 파일/의존 관계를 React Flow 노드·엣지로 변환하고 force-directed 좌표 계산 |
+| `tests/unit/dependencyGraph.test.ts` | 노드/엣지 필터링과 분석 불가 파일 규칙 단위 테스트 |
 
 ---
 
@@ -34,18 +36,23 @@ import { Node, Edge } from '@xyflow/react';
 interface FileNodeData {
   file: ChangedFile;
   label: string;       // 파일명 (경로 마지막 부분)
+  directory: string;   // 상위 경로
   canAnalyze: boolean; // JS/TS 파일 여부
+  onCodeView: (file: ChangedFile) => void;
+  onAISummary: (file: ChangedFile) => void;
 }
 
 type FileNodeType = Node<FileNodeData, 'fileNode'>;
-type DependencyEdgeType = Edge<{ highlighted: boolean }>;
+type DependencyEdgeType = Edge<{ kind: 'import' | 'require'; highlighted: boolean }>;
 
 interface DependencyGraphProps {
-  nodes: FileNodeType[];
-  edges: DependencyEdgeType[];
+  files: ChangedFile[];
+  dependencyEdges: DependencyEdge[];
   isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
   onFileCodeView: (file: ChangedFile) => void;
-  onFileAIView: (file: ChangedFile) => void;
+  onFileAISummary: (file: ChangedFile) => void;
 }
 ```
 
@@ -64,6 +71,7 @@ const execFileAsync = promisify(execFile);
 interface DepEdge {
   from: string;
   to: string;
+  kind: 'import' | 'require';
 }
 
 export async function analyzeDependencies(
@@ -72,18 +80,18 @@ export async function analyzeDependencies(
 ): Promise<DepEdge[]> {
   // JS/TS 파일만 필터
   const analyzable = filePaths.filter(p =>
-    /\.(js|ts|jsx|tsx)$/.test(p)
+    /\.(mjs|cjs|js|jsx|mts|cts|ts|tsx)$/.test(p)
   );
   if (analyzable.length === 0) return [];
 
   const args = [
-    'depcruise',
     '--output-type', 'json',
-    '--include-only', analyzable.join('|'),
+    '--no-config',
+    '--ts-pre-compilation-deps',
     ...analyzable,
   ];
 
-  const { stdout } = await execFileAsync('npx', args, { cwd: repoPath });
+  const { stdout } = await execFileAsync(process.execPath, [analyzerPath, ...args], { cwd: repoPath });
   const result = JSON.parse(stdout);
 
   const edges: DepEdge[] = [];
@@ -100,9 +108,9 @@ export async function analyzeDependencies(
 
 Extension Host 메시지 핸들러:
 ```typescript
-case 'analyzeDependencies': {
-  const edges = await analyzeDependencies(repoPath, message.filePaths);
-  panel.webview.postMessage({ command: 'dependenciesLoaded', edges });
+case 'ANALYZE_DEPENDENCIES': {
+  const edges = await analyzeDependencies(repoPath, message.payload.filePaths);
+  panel.webview.postMessage({ type: 'DEPENDENCIES_LOADED', payload: { edges } });
   break;
 }
 ```
@@ -114,32 +122,30 @@ case 'analyzeDependencies': {
 ### 노드/엣지 생성 유틸리티
 
 ```typescript
-// src/webview/utils/buildGraphData.ts
-import dagre from 'dagre';
+// src/webview/features/F04/graph.ts
 
 export function buildGraphData(
   files: ChangedFile[],
-  depEdges: DepEdge[]
+  depEdges: DependencyEdge[],
+  handlers: { onCodeView: (file: ChangedFile) => void; onAISummary: (file: ChangedFile) => void }
 ): { nodes: FileNodeType[]; edges: DependencyEdgeType[] } {
-  const g = new dagre.graphlib.Graph();
-  g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: 'LR', nodesep: 60, ranksep: 100 });
-
-  files.forEach(f => g.setNode(f.path, { width: 160, height: 60 }));
-  depEdges.forEach(e => g.setEdge(e.from, e.to));
-  dagre.layout(g);
+  const changedFileSet = new Set(files.map((file) => file.path));
+  const validEdges = depEdges.filter((edge) => changedFileSet.has(edge.from) && changedFileSet.has(edge.to));
+  const positions = layoutFiles(files, validEdges);
 
   const nodes: FileNodeType[] = files.map(f => {
-    const { x, y } = g.node(f.path) ?? { x: 0, y: 0 };
-    const canAnalyze = /\.(js|ts|jsx|tsx)$/.test(f.path);
+    const position = positions.get(f.path) ?? { x: 0, y: 0 };
+    const canAnalyze = /\.(mjs|cjs|js|jsx|mts|cts|ts|tsx)$/.test(f.path);
     return {
       id: f.path,
       type: 'fileNode',
-      position: { x, y },
+      position,
       data: {
         file: f,
         label: f.path.split('/').pop() ?? f.path,
         canAnalyze,
+        onCodeView: handlers.onCodeView,
+        onAISummary: handlers.onAISummary,
       },
     };
   });
@@ -149,7 +155,7 @@ export function buildGraphData(
     source: e.from,
     target: e.to,
     type: 'dependencyEdge',
-    data: { highlighted: false },
+    data: { kind: e.kind, highlighted: false },
   }));
 
   return { nodes, edges };
@@ -226,11 +232,13 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 
 ## Business Rules
 
-1. JS/TS 파일(`.js`, `.ts`, `.jsx`, `.tsx`)만 `dependency-cruiser`로 분석
+1. JS/TS 파일(`.mjs`, `.cjs`, `.js`, `.jsx`, `.mts`, `.cts`, `.ts`, `.tsx`)만 `dependency-cruiser`로 분석
 2. 분석 불가 파일(`canAnalyze = false`)은 노드로 표시하되 점선 테두리 적용, 엣지 없음
 3. `fitView`는 초기 렌더링 및 패널 크기 변경 시 자동 호출
 4. 줌 범위: 0.3x ~ 2.0x
-5. `dependency-cruiser`가 설치되지 않은 경우 `ErrorState` + 설치 안내 표시
+5. `dependency-cruiser` 실행 파일이 없는 경우 `ErrorState` + `pnpm install` 안내 표시
+6. S05에서 S03/S04로 진입할 때 `previousScreen = "S05"`를 저장하고 뒤로가기 시 S05로 복귀
+7. S02에서 변경 파일 로딩 중에는 [캔버스 보기] 버튼을 로딩 상태로 표시하며, S05도 변경 파일 로딩 메시지를 처리할 수 있어야 함
 
 ---
 
@@ -238,7 +246,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 
 | 상황 | 처리 |
 |------|------|
-| `dependency-cruiser` 없음 | `ErrorState`: "dependency-cruiser가 설치되지 않았습니다" + 설치 명령 안내 |
+| `dependency-cruiser` 없음 | `ErrorState`: "dependency-cruiser가 설치되지 않았습니다. pnpm install 후 다시 시도해주세요." |
 | 분석 실패 | `ErrorState` + [재시도] 버튼 |
 | 변경 파일 없음 | `EmptyState` |
 | JS/TS 파일 없음 (모두 분석 불가) | 노드 표시, 엣지 없음, 안내 메시지 |
@@ -263,8 +271,8 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 ## Dependencies
 
 ```bash
-npm install @xyflow/react dagre
-# 분석 실행은 dependency-cruiser CLI를 npx로 호출 (별도 설치 불필요)
+pnpm install
+# dependency-cruiser는 package.json 의존성 및 bundledDependencies에 포함
 ```
 
 ---

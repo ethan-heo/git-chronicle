@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { S01CommitListScreen } from './features/F01';
 import { S02HistoryViewScreen } from './features/F02';
 import { S03CodeViewerScreen } from './features/F03';
+import { S05DependencyCanvasScreen } from './features/F04';
 import { TopHeader } from './shared/components';
 import { useAppStore } from './store/appStore';
 
@@ -10,7 +11,7 @@ export const App: FC = () => {
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const selectedFile = useAppStore((state) => state.selectedFile);
   const summaryMode = useAppStore((state) => state.summaryMode);
-  const goToHistoryView = useAppStore((state) => state.goToHistoryView);
+  const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
 
   if (currentScreen === 'S02') {
     return <S02HistoryViewScreen />;
@@ -20,10 +21,14 @@ export const App: FC = () => {
     return <S03CodeViewerScreen />;
   }
 
-  if (currentScreen === 'S04' || currentScreen === 'S05' || currentScreen === 'S06') {
+  if (currentScreen === 'S05') {
+    return <S05DependencyCanvasScreen />;
+  }
+
+  if (currentScreen === 'S04' || currentScreen === 'S06') {
     return (
       <main className="app-shell commit-log-shell pending-screen-shell">
-        <TopHeader title={getPendingTitle(currentScreen, summaryMode)} context={selectedFile?.path ?? selectedCommit?.shortHash ?? '준비 중'} showBackButton onBackClick={goToHistoryView} />
+        <TopHeader title={getPendingTitle(currentScreen, summaryMode)} context={selectedFile?.path ?? selectedCommit?.shortHash ?? '준비 중'} showBackButton onBackClick={goBackFromDetail} />
         <section className="history-view-state">
           <div className="pending-screen-message">
             <strong>{getPendingTitle(currentScreen, summaryMode)}</strong>

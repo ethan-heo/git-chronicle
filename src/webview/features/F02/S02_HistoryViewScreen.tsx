@@ -64,6 +64,7 @@ export const S02HistoryViewScreen: FC = () => {
       <CommitActionBar
         selectedCommit={selectedCommit}
         isBatchRunning={isBatchRunning}
+        isLoadingChangedFiles={isLoadingChangedFiles}
         onCommitAISummary={goToCommitAISummary}
         onBatchAISummary={startBatchAISummary}
         onCanvasView={goToCanvasView}

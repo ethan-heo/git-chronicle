@@ -177,34 +177,47 @@ handleChangedFilesLoaded: (files) => set({
 }),
 ```
 
-### F02/F03 화면 전환 액션
+### F02/F03/F04 화면 전환 액션
 
-F02에서 후속 화면으로 전환한다. S03은 구현되어 `selectedFile`과 `selectedCommit`을 기준으로 diff를 로드한다. S04/S05는 placeholder 화면이며, 실제 데이터 로딩은 후속 Feature 구현에서 연결한다.
+F02와 S05에서 후속 화면으로 전환한다. S03은 `selectedFile`과 `selectedCommit`을 기준으로 diff를 로드한다. S05 의존성 캔버스에서 S03/S04로 진입할 때는 `previousScreen = "S05"`를 저장해 뒤로가기 시 캔버스로 복귀한다.
 
 ```typescript
 selectFileForCode: (file) => set({
   selectedFile: file,
+  previousScreen: currentScreen === 'S05' ? 'S05' : 'S02',
   currentScreen: 'S03',
 }),
 
 selectFileForAI: (file) => set({
   selectedFile: file,
   summaryMode: 'file',
+  previousScreen: currentScreen === 'S05' ? 'S05' : 'S02',
   currentScreen: 'S04',
 }),
 
 goToCommitAISummary: () => set({
   selectedFile: null,
   summaryMode: 'commit',
+  previousScreen: 'S02',
   currentScreen: 'S04',
 }),
 
-goToCanvasView: () => set({ currentScreen: 'S05' }),
+goToCanvasView: () => set({
+  currentScreen: 'S05',
+  previousScreen: 'S02',
+}),
+
+goBackFromDetail: () => set({
+  currentScreen: previousScreen ?? 'S02',
+  previousScreen: null,
+}),
 
 goToSettingsView: () => set({ currentScreen: 'S06' }),
 ```
 
 S03 자체의 diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 읽기 전용 화면의 로컬 상태로 관리한다. Extension Host 메시지는 `features/F03/S03_CodeViewerScreen.tsx`에서 직접 구독한다.
+
+S05 의존성 캔버스는 전역 상태의 `dependencyEdges`, `isLoadingDependencies`, `dependenciesError`를 사용한다. 변경 파일 로딩 중 S05로 진입하는 상황에 대비해 `hasLoadedChangedFiles`로 빈 커밋과 아직 로드 전 상태를 구분한다.
 
 ### startBatchAISummary
 

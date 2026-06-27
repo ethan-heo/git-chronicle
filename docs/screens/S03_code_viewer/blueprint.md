@@ -17,14 +17,14 @@
 다음 화면에서 [코드 보기] 버튼 클릭 시 진입. `selectedFile` 전역 상태 설정 후 진입.
 
 - [S02_HistoryViewScreen](../S02_history_view/blueprint.md) — 파일 트리 노드 호버 → [코드 보기]
-- [S05_DependencyCanvasScreen](../S05_dependency_canvas/blueprint.md) — 캔버스 노드 호버 → [코드 보기]
+- [S05_DependencyCanvasScreen](../S04_dependency_canvas/blueprint.md) — 캔버스 노드 호버 → [코드 보기]
 
 ---
 
 ## Parent Screen
 
 - [S02_HistoryViewScreen](../S02_history_view/blueprint.md) (주 진입 경로)
-- [S05_DependencyCanvasScreen](../S05_dependency_canvas/blueprint.md) (보조 진입 경로)
+- [S05_DependencyCanvasScreen](../S04_dependency_canvas/blueprint.md) (보조 진입 경로)
 
 ---
 

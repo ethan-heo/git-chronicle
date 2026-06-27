@@ -26,7 +26,7 @@
 | `src/webview/features/F02/tree.ts` | 트리 구성 유틸리티 |
 | `src/webview/shared/components/FileStatusBadge.tsx` | A/M/D/R 상태 뱃지 |
 | `src/webview/features/F02/S02_HistoryViewScreen.tsx` | S02 화면 조합 컴포넌트 |
-| `src/webview/App.tsx` | S02 라우팅 및 S03/S04/S05 placeholder |
+| `src/webview/App.tsx` | S02 라우팅 및 후속 화면 전환 |
 
 ---
 
@@ -249,7 +249,7 @@ goToCommitAISummary: () => set({
 }),
 ```
 
-현재 S-03은 `features/F03/S03_CodeViewerScreen.tsx`에서 실제 코드 뷰어로 렌더링된다. S-04/S-05는 `App.tsx`에서 placeholder 화면으로 렌더링되며, 실제 `START_AI_SUMMARY_FILE`, `LOAD_DEPENDENCY_GRAPH` 연결은 F05/F04 구현 범위에서 추가한다.
+현재 S-03은 `features/F03/S03_CodeViewerScreen.tsx`에서 실제 코드 뷰어로 렌더링된다. S-05는 `features/F04/S05_DependencyCanvasScreen.tsx`에서 실제 의존성 캔버스로 렌더링된다. S-04는 `App.tsx`에서 placeholder 화면으로 렌더링되며, 실제 `START_AI_SUMMARY_FILE` 연결은 F05 구현 범위에서 추가한다.
 
 ---
 

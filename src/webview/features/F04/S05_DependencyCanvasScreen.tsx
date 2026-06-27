@@ -1,0 +1,114 @@
+import { ReactFlowProvider } from '@xyflow/react';
+import { useCallback, useEffect, type FC } from 'react';
+import { TopHeader } from '../../shared/components';
+import { useAppStore } from '../../store/appStore';
+import type { ChangedFile, DependencyEdge } from '../../types/commit';
+import { DependencyGraph } from './DependencyGraph';
+
+export const S05DependencyCanvasScreen: FC = () => {
+  const {
+    selectedCommit,
+    changedFiles,
+    isLoadingChangedFiles,
+    changedFilesError,
+    hasLoadedChangedFiles,
+    dependencyEdges,
+    isLoadingDependencies,
+    dependenciesError,
+    goToHistoryView,
+    goToSettingsView,
+    loadChangedFiles,
+    loadDependencies,
+    selectFileForCode,
+    selectFileForAI,
+    handleChangedFilesLoaded,
+    handleChangedFilesLoadFailed,
+    handleDependenciesLoaded,
+    handleDependenciesLoadFailed,
+  } = useAppStore();
+
+  useEffect(() => {
+    if (!hasLoadedChangedFiles && changedFiles.length === 0 && !changedFilesError) {
+      loadChangedFiles();
+    }
+  }, [changedFiles.length, changedFilesError, hasLoadedChangedFiles, loadChangedFiles, selectedCommit?.hash]);
+
+  useEffect(() => {
+    const handler = (
+      event: MessageEvent<{
+        type: string;
+        payload?: {
+          files?: ChangedFile[];
+          edges?: DependencyEdge[];
+          message?: string;
+        };
+      }>,
+    ): void => {
+      if (event.data.type === 'CHANGED_FILES_LOADED') {
+        handleChangedFilesLoaded(event.data.payload?.files ?? []);
+        return;
+      }
+
+      if (event.data.type === 'CHANGED_FILES_LOAD_FAILED') {
+        handleChangedFilesLoadFailed(event.data.payload?.message);
+        return;
+      }
+
+      if (event.data.type === 'DEPENDENCIES_LOADED') {
+        handleDependenciesLoaded(event.data.payload?.edges ?? []);
+        return;
+      }
+
+      if (event.data.type === 'DEPENDENCIES_LOAD_FAILED') {
+        handleDependenciesLoadFailed(event.data.payload?.message);
+      }
+    };
+
+    window.addEventListener('message', handler);
+
+    return () => window.removeEventListener('message', handler);
+  }, [handleChangedFilesLoaded, handleChangedFilesLoadFailed, handleDependenciesLoaded, handleDependenciesLoadFailed]);
+
+  useEffect(() => {
+    if (changedFiles.length > 0 && !isLoadingChangedFiles && !changedFilesError) {
+      loadDependencies();
+    }
+  }, [changedFiles.length, changedFilesError, isLoadingChangedFiles, loadDependencies]);
+
+  const retry = useCallback(() => {
+    if (changedFilesError || changedFiles.length === 0) {
+      loadChangedFiles();
+      return;
+    }
+
+    loadDependencies();
+  }, [changedFiles.length, changedFilesError, loadChangedFiles, loadDependencies]);
+
+  if (!selectedCommit) {
+    return null;
+  }
+
+  return (
+    <main className="app-shell commit-log-shell dependency-canvas-shell">
+      <TopHeader
+        title={selectedCommit.message}
+        context={`${selectedCommit.shortHash} · 변경 파일 ${changedFiles.length}개 · 의존 ${dependencyEdges.length}개`}
+        showBackButton
+        onBackClick={goToHistoryView}
+        showSettingsIcon
+        onSettingsClick={goToSettingsView}
+      />
+      <ReactFlowProvider>
+        <DependencyGraph
+          files={changedFiles}
+          dependencyEdges={dependencyEdges}
+          isLoading={isLoadingChangedFiles || isLoadingDependencies}
+          error={changedFilesError ?? dependenciesError}
+          onRetry={retry}
+          onFileCodeView={selectFileForCode}
+          onFileAISummary={selectFileForAI}
+        />
+      </ReactFlowProvider>
+    </main>
+  );
+};
