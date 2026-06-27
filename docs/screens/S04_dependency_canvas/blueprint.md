@@ -39,7 +39,7 @@ S05_DependencyCanvasScreen
 │   ├─ BackButton → S02
 │   └─ SettingsIcon (⚙) → S06
 ├─ DependencyGraph (전체 캔버스 영역)
-│   ├─ FileNode × N (force-directed 자동 배치)
+│   ├─ FileNode × N (확장자 그룹 기반 배치)
 │   │   ├─ FileStatusBadge
 │   │   ├─ SavedBadge (조건부)
 │   │   └─ FileActionButtons (호버 시)
@@ -91,6 +91,7 @@ S05_DependencyCanvasScreen
         → 노드 호버 → FileActionButtons 표시
             → [코드 보기] → S03
             → [AI 정리 보기] → S04
+        → 노드 드래그 → 위치 직접 조정 + 가장 가까운 면으로 엣지 재연결
         → S03/S04 뒤로가기 → previousScreen이 S05이면 S05 복귀
         → 마우스 휠 → 줌
         → 빈 영역 드래그 → 패닝

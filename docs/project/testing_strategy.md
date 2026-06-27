@@ -122,6 +122,9 @@ it('hunk가 없는 plain content를 context 라인으로 처리한다', ...);
 ```typescript
 it('변경 파일은 모두 노드로 유지하고 미변경 파일과의 엣지는 제외한다', ...);
 it('JS/TS 외 파일은 canAnalyze=false 노드로 표시한다', ...);
+it('확장자 그룹은 수평으로, 같은 확장자 파일은 수직으로 배치한다', ...);
+it('긴 파일명 노드는 파일명이 끝까지 보이도록 폭을 확장한다', ...);
+it('의존 관계 엣지는 가장 가까운 노드 면의 핸들로 연결한다', ...);
 ```
 
 #### AISummaryViewer
@@ -165,7 +168,7 @@ VSCode Extension Test Runner가 실제 VSCode 프로세스를 시작하여 Exten
 | 항목 | 이유 |
 |------|------|
 | Shiki 렌더링 결과 | 외부 라이브러리 내부 로직. 스냅샷 테스트로 대체 |
-| React Flow 캔버스 렌더링 | 실제 pan/zoom/edge 렌더링은 브라우저 기반 시각 검증이 필요. 단, `buildGraphData`의 노드·엣지 필터링과 좌표 유효성은 Vitest로 검증 |
+| React Flow 캔버스 렌더링 | 실제 pan/zoom/drag/edge 렌더링은 브라우저 기반 시각 검증이 필요. 단, `buildGraphData`의 노드·엣지 필터링, 확장자 그룹 배치, 긴 파일명 노드 폭, 가까운 면 핸들 선택은 Vitest로 검증 |
 | child_process.spawn 실제 AI 호출 | CI 환경에 CLI 설치 불가. Mock 사용 |
 
 ---

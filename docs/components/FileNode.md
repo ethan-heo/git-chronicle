@@ -29,7 +29,7 @@ type FileNodeProps = NodeProps<FileNodeData>;
 
 ```
 FileNode (React Flow NodeWrapper)
-├── Handle (target - 들어오는 엣지 연결점)
+├── Handle × 4 (target - top/right/bottom/left)
 ├── FileStatusBadge  (A/M/D/R)
 ├── 파일명 텍스트
 ├── SavedBadge (hasSavedSummary = true 시)
@@ -37,7 +37,7 @@ FileNode (React Flow NodeWrapper)
 └── FileActionButtons (호버 시만 표시)
     ├── [코드 보기]
     └── [AI 정리 보기]
-└── Handle (source - 나가는 엣지 연결점)
+└── Handle × 4 (source - top/right/bottom/left)
 ```
 
 ---
@@ -56,32 +56,28 @@ FileNode (React Flow NodeWrapper)
 ## CSS
 
 ```css
-.file-node {
-  background: var(--vscode-editor-background);
-  border: 1px solid var(--vscode-panel-border);
-  border-radius: 6px;
-  padding: 8px 12px;
-  min-width: 120px;
-  max-width: 200px;
+.dependency-file-node {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 62px;
   position: relative;
 }
-.file-node.selected {
-  border-color: var(--vscode-focusBorder);
-  box-shadow: 0 0 0 1px var(--vscode-focusBorder);
-}
-.file-node.not-analyzable {
-  border-color: var(--vscode-disabledForeground);
-  opacity: 0.7;
-}
-.file-node-name {
+.dependency-file-node-name {
   font-size: 12px;
-  font-family: var(--vscode-editor-font-family, monospace);
-  color: var(--vscode-editor-foreground);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.dependency-file-node-actions {
+  z-index: 10;
 }
 ```
+
+## Interaction
+
+- 노드 본문은 React Flow `nodesDraggable`에 의해 드래그 이동 가능하다.
+- `FileActionButtons` 영역은 `nodrag nopan`으로 지정해 버튼 클릭이 노드 드래그와 충돌하지 않도록 한다.
+- 상/하/좌/우 source/target 핸들은 엣지 연결 계산용이며 화면에서는 투명하게 처리한다.
 
 ---
 

@@ -1,7 +1,14 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { FC } from 'react';
 import { FileActionButtons, FileStatusBadge, SavedBadge } from '../../shared/components';
-import type { FileNodeType } from './graph';
+import { getSourceHandleId, getTargetHandleId, type FileNodeType } from './graph';
+
+const handlePositions = [
+  { face: 'top', position: Position.Top },
+  { face: 'right', position: Position.Right },
+  { face: 'bottom', position: Position.Bottom },
+  { face: 'left', position: Position.Left },
+] as const;
 
 export const FileNode: FC<NodeProps<FileNodeType>> = ({ data }) => {
   const title = data.canAnalyze ? `${data.directory}${data.label}` : '의존 관계 분석 불가 (JS/TS 외 파일)';
@@ -14,7 +21,9 @@ export const FileNode: FC<NodeProps<FileNodeType>> = ({ data }) => {
       title={title}
       tabIndex={0}
     >
-      <Handle className="dependency-node-handle" type="target" position={Position.Left} />
+      {handlePositions.map(({ face, position }) => (
+        <Handle key={getTargetHandleId(face)} id={getTargetHandleId(face)} className="dependency-node-handle" type="target" position={position} />
+      ))}
       <div className="dependency-file-node-main">
         <FileStatusBadge status={data.file.status} />
         <div className="dependency-file-node-text">
@@ -26,10 +35,12 @@ export const FileNode: FC<NodeProps<FileNodeType>> = ({ data }) => {
         {data.file.hasSavedSummary ? <SavedBadge /> : null}
         {!data.canAnalyze ? <span className="dependency-no-analysis-label">분석 불가</span> : null}
       </div>
-      <div className="dependency-file-node-actions">
+      <div className="dependency-file-node-actions nodrag nopan">
         <FileActionButtons onCodeView={() => data.onCodeView(data.file)} onAISummary={() => data.onAISummary(data.file)} />
       </div>
-      <Handle className="dependency-node-handle" type="source" position={Position.Right} />
+      {handlePositions.map(({ face, position }) => (
+        <Handle key={getSourceHandleId(face)} id={getSourceHandleId(face)} className="dependency-node-handle" type="source" position={position} />
+      ))}
     </div>
   );
 };

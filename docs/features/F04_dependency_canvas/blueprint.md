@@ -40,7 +40,7 @@
 ### Component: DependencyGraph
 
 #### Purpose
-React Flow를 기반으로 노드와 엣지 데이터를 받아 인터랙티브 그래프를 렌더링한다. 줌·패닝·자동 레이아웃을 처리한다.
+React Flow를 기반으로 노드와 엣지 데이터를 받아 인터랙티브 그래프를 렌더링한다. 줌·패닝·노드 드래그·확장자 그룹 기반 자동 레이아웃을 처리한다.
 
 #### Data
 - `nodes: FileNode[]`
@@ -62,8 +62,10 @@ interface DependencyGraphProps {
 #### Interaction
 - 줌: 마우스 휠
 - 패닝: 빈 영역 드래그
+- 노드 드래그: 노드 위치 직접 조정
 - 노드 호버: `FileNode`의 `FileActionButtons` 표시
 - 노드 호버: 연결된 `DependencyEdge` 강조
+- 노드 드래그 후: 현재 노드 위치 기준으로 `DependencyEdge` 연결 면 재계산
 - 캔버스 리사이즈: `fitView()` 재적용
 
 #### States
@@ -102,6 +104,7 @@ interface FileNodeProps {
 
 #### Interaction
 - 호버: `FileActionButtons` 표시
+- 드래그: 노드 위치 이동
 - [코드 보기] 클릭: S-03 진입
 - [AI 정리 보기] 클릭: S-04 진입
 
@@ -143,7 +146,8 @@ interface DependencyEdgeProps {
 ```
 
 #### Interaction
-없음 (표시 전용)
+- 직접 조작 없음 (표시 전용)
+- 노드 위치 변경 시 source/target 노드의 가장 가까운 면으로 연결 핸들이 갱신됨
 
 #### States
 - `default`: 기본 엣지
@@ -257,13 +261,16 @@ F04_DependencyCanvas
 S05_DependencyCanvasScreen
 ├─ TopHeader ({커밋 메시지})
 ├─ DependencyGraph (전체 영역)
-│   ├─ FileNode × N (force-directed 자동 배치)
+│   ├─ FileNode × N (확장자 그룹 기반 배치)
 │   └─ DependencyEdge × M
 ├─ LegendPanel (우측 하단 고정)
 └─ CanvasControls (우측 상단 고정)
 ```
 
 - `DependencyGraph`는 화면 전체를 채우는 캔버스 영역.
+- `FileNode`는 확장자 그룹별 수평 컬럼에 배치되며, 같은 확장자 그룹 안에서는 왼쪽 면을 맞춰 수직으로 정렬된다.
+- 같은 확장자 그룹 내부의 기본 수직 간격은 `190px`이다.
+- 긴 파일명은 노드 폭을 확장하거나 줄바꿈하여 끝까지 표시한다.
 - `LegendPanel`과 `CanvasControls`는 캔버스 위에 오버레이로 고정 배치.
 
 ---
@@ -274,6 +281,7 @@ S05_DependencyCanvasScreen
 |---------|--------|------|
 | 노드 호버 | `FileNode` 마우스 진입 | `FileActionButtons` 표시 + 연결 엣지 강조 |
 | 노드 호버 해제 | 마우스 이탈 | `FileActionButtons` 숨김 + 엣지 강조 해제 |
+| 노드 드래그 | `FileNode` 드래그 | 노드 위치 이동 + 엣지 연결 면 재계산 |
 | [코드 보기] | 버튼 클릭 | S-03 진입, `previousScreen = "S05"` |
 | [AI 정리 보기] | 버튼 클릭 | S-04 진입, `summaryMode = "file"`, `previousScreen = "S05"` |
 | 줌 | 마우스 휠 | 캔버스 줌 (React Flow 내장) |
@@ -341,9 +349,9 @@ S05_DependencyCanvasScreen
 - `DependencyGraph`는 독립 Frame으로 분리 (React Flow 캔버스 전체 영역)
 - `LegendPanel`과 `CanvasControls`는 캔버스 위 오버레이 — position absolute Frame
 - `FileNode`는 재사용 Component로 등록 (default/hover/noAnalysis/saved Variant)
-- `DependencyEdge`는 React Flow 커스텀 엣지 — Figma에서는 Arrow 컴포넌트로 표현
+- `DependencyEdge`는 React Flow 커스텀 직선 엣지 — Figma에서는 Arrow 컴포넌트로 표현
 - `FileActionButtons`, `SavedBadge`, `FileStatusBadge`는 전역 Component 참조
-- React Flow 내 노드 드래그는 v1.0에서 비활성화 (force-directed 고정 배치)
+- React Flow 내 노드 드래그는 활성화. 액션 버튼 영역은 `nodrag nopan`으로 드래그에서 제외
 
 ---
 

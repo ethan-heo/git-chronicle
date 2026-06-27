@@ -7,7 +7,7 @@
 ## Technical Context
 
 - **의존성 분석**: Extension Host에서 `dependency-cruiser` CLI를 `child_process.execFile`로 실행, JSON 결과 파싱
-- **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 레이아웃은 deterministic force-directed 계산으로 자동 배치
+- **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 레이아웃은 확장자 그룹 기반 고정 앵커 배치
 - **대상 파일**: JS/TS 파일만 분석 가능 (`.mjs`, `.cjs`, `.js`, `.jsx`, `.mts`, `.cts`, `.ts`, `.tsx`)
 
 ---
@@ -23,8 +23,8 @@
 | `src/webview/features/F04/LegendPanel.tsx` | 범례 패널 |
 | `src/webview/features/F04/CanvasControls.tsx` | 줌 컨트롤 버튼 |
 | `src/webview/features/F04/S05_DependencyCanvasScreen.tsx` | S05 화면 조합 컴포넌트 |
-| `src/webview/features/F04/graph.ts` | 변경 파일/의존 관계를 React Flow 노드·엣지로 변환하고 force-directed 좌표 계산 |
-| `tests/unit/dependencyGraph.test.ts` | 노드/엣지 필터링과 분석 불가 파일 규칙 단위 테스트 |
+| `src/webview/features/F04/graph.ts` | 변경 파일/의존 관계를 React Flow 노드·엣지로 변환, 확장자 그룹 좌표 계산, 가장 가까운 면 핸들 선택 |
+| `tests/unit/dependencyGraph.test.ts` | 노드/엣지 필터링, 확장자 그룹 배치, 긴 파일명 노드 폭, 가까운 면 핸들 선택 단위 테스트 |
 
 ---
 
@@ -136,10 +136,13 @@ export function buildGraphData(
   const nodes: FileNodeType[] = files.map(f => {
     const position = positions.get(f.path) ?? { x: 0, y: 0 };
     const canAnalyze = /\.(mjs|cjs|js|jsx|mts|cts|ts|tsx)$/.test(f.path);
+    const nodeWidth = getNodeWidth(f.path);
+
     return {
       id: f.path,
       type: 'fileNode',
       position,
+      style: { width: nodeWidth },
       data: {
         file: f,
         label: f.path.split('/').pop() ?? f.path,
@@ -150,13 +153,19 @@ export function buildGraphData(
     };
   });
 
-  const edges: DependencyEdgeType[] = depEdges.map((e, i) => ({
-    id: `e-${i}`,
-    source: e.from,
-    target: e.to,
-    type: 'dependencyEdge',
-    data: { kind: e.kind, highlighted: false },
-  }));
+  const edges: DependencyEdgeType[] = depEdges.map((e, i) => {
+    const handles = getNearestHandles(geometryByPath.get(e.from), geometryByPath.get(e.to));
+
+    return {
+      id: `e-${i}`,
+      source: e.from,
+      target: e.to,
+      sourceHandle: handles.sourceHandle,
+      targetHandle: handles.targetHandle,
+      type: 'dependencyEdge',
+      data: { kind: e.kind, highlighted: false },
+    };
+  });
 
   return { nodes, edges };
 }
@@ -166,6 +175,13 @@ export function buildGraphData(
 
 ```tsx
 import { Handle, Position } from '@xyflow/react';
+
+const handlePositions = [
+  { face: 'top', position: Position.Top },
+  { face: 'right', position: Position.Right },
+  { face: 'bottom', position: Position.Bottom },
+  { face: 'left', position: Position.Left },
+] as const;
 
 export const FileNode: React.FC<{ data: FileNodeData }> = ({ data }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -178,7 +194,9 @@ export const FileNode: React.FC<{ data: FileNodeData }> = ({ data }) => {
       onMouseLeave={() => setIsHovered(false)}
       title={!canAnalyze ? '의존 관계 분석 불가 (JS/TS 파일만 지원)' : undefined}
     >
-      <Handle type="target" position={Position.Left} />
+      {handlePositions.map(({ face, position }) => (
+        <Handle key={`target-${face}`} id={`target-${face}`} type="target" position={position} />
+      ))}
       <FileStatusBadge status={file.status} />
       <span className="file-node-label">{label}</span>
       {file.hasSavedSummary && <SavedBadge />}
@@ -188,7 +206,9 @@ export const FileNode: React.FC<{ data: FileNodeData }> = ({ data }) => {
           onAIView={() => data.onAIView?.(file)}
         />
       )}
-      <Handle type="source" position={Position.Right} />
+      {handlePositions.map(({ face, position }) => (
+        <Handle key={`source-${face}`} id={`source-${face}`} type="source" position={position} />
+      ))}
     </div>
   );
 };
@@ -197,7 +217,7 @@ export const FileNode: React.FC<{ data: FileNodeData }> = ({ data }) => {
 ### `DependencyGraph.tsx`
 
 ```tsx
-import { ReactFlow, useNodesState, useEdgesState, Controls, Background } from '@xyflow/react';
+import { ReactFlow, useNodesState, Controls, Background } from '@xyflow/react';
 
 const nodeTypes = { fileNode: FileNode };
 const edgeTypes = { dependencyEdge: DependencyEdge };
@@ -206,7 +226,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
   nodes: initialNodes, edges: initialEdges, isLoading
 }) => {
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const edges = useMemo(() => updateEdgeHandles(initialEdges, nodes), [initialEdges, nodes]);
 
   if (isLoading) return <LoadingState />;
 
@@ -217,7 +237,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
+      nodesDraggable
       fitView
       minZoom={0.3}
       maxZoom={2.0}
@@ -239,6 +259,9 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 5. `dependency-cruiser` 실행 파일이 없는 경우 `ErrorState` + `pnpm install` 안내 표시
 6. S05에서 S03/S04로 진입할 때 `previousScreen = "S05"`를 저장하고 뒤로가기 시 S05로 복귀
 7. S02에서 변경 파일 로딩 중에는 [캔버스 보기] 버튼을 로딩 상태로 표시하며, S05도 변경 파일 로딩 메시지를 처리할 수 있어야 함
+8. 같은 확장자 파일은 왼쪽 면을 맞춰 수직으로 배치하고, 다른 확장자 그룹은 수평으로 배치
+9. 긴 파일명은 노드 폭 확장 및 줄바꿈으로 전체 표시
+10. 노드는 드래그로 위치 조정 가능하며, 엣지는 현재 위치에서 가장 가까운 상/하/좌/우 핸들에 연결
 
 ---
 
@@ -256,14 +279,17 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 ## CSS Variables to Use
 
 ```css
-.file-node {
-  background: var(--vscode-editorWidget-background);
-  border: 1px solid var(--vscode-panel-border);
-  border-radius: 6px;
-  padding: 8px 12px;
+.dependency-file-node {
+  width: 100%;
+  min-height: 62px;
+  box-sizing: border-box;
 }
-.file-node--no-analysis { border-style: dashed; opacity: 0.7; }
-.file-node:hover { border-color: var(--vscode-focusBorder); }
+.dependency-file-node-name {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.dependency-file-node-actions { z-index: 10; }
+.dependency-node-handle { opacity: 0; pointer-events: none; }
 ```
 
 ---

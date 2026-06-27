@@ -21,8 +21,9 @@ export interface DependencyEdgeData extends Record<string, unknown> {
 
 export type DependencyEdgeType = Edge<DependencyEdgeData, 'dependencyEdge'>;
 
-interface LayoutNode {
-  id: string;
+type NodeFace = 'top' | 'right' | 'bottom' | 'left';
+
+interface NodeGeometry {
   x: number;
   y: number;
   width: number;
@@ -37,16 +38,34 @@ export function buildGraphData(
   const changedFileSet = new Set(files.map((file) => file.path));
   const validEdges = dependencyEdges.filter((edge) => changedFileSet.has(edge.from) && changedFileSet.has(edge.to));
   const positions = layoutFiles(files, validEdges);
+  const geometryByPath = new Map(
+    files.map((file) => {
+      const position = positions.get(file.path) ?? { x: 0, y: 0 };
+
+      return [
+        file.path,
+        {
+          ...position,
+          width: getNodeWidth(file.path),
+          height: getNodeHeight(file.path),
+        },
+      ];
+    }),
+  );
 
   return {
     nodes: files.map((file) => {
       const position = positions.get(file.path) ?? { x: 0, y: 0 };
       const label = getFileName(file.path);
+      const nodeWidth = getNodeWidth(file.path);
 
       return {
         id: file.path,
         type: 'fileNode',
         position,
+        style: {
+          width: nodeWidth,
+        },
         data: {
           file,
           label,
@@ -57,141 +76,142 @@ export function buildGraphData(
         },
       };
     }),
-    edges: validEdges.map((edge, index) => ({
-      id: `dependency-${index}-${edge.from}-${edge.to}`,
-      source: edge.from,
-      target: edge.to,
-      type: 'dependencyEdge',
-      animated: false,
-      data: {
-        kind: edge.kind,
-        highlighted: false,
-      },
-    })),
+    edges: validEdges.map((edge, index) => {
+      const handles = getNearestHandles(geometryByPath.get(edge.from), geometryByPath.get(edge.to));
+
+      return {
+        id: `dependency-${index}-${edge.from}-${edge.to}`,
+        source: edge.from,
+        target: edge.to,
+        sourceHandle: handles.sourceHandle,
+        targetHandle: handles.targetHandle,
+        type: 'dependencyEdge',
+        animated: false,
+        data: {
+          kind: edge.kind,
+          highlighted: false,
+        },
+      };
+    }),
   };
 }
 
 function layoutFiles(files: ChangedFile[], edges: DependencyEdge[]): Map<string, { x: number; y: number }> {
-  const centerX = 440;
-  const centerY = 280;
-  const nodes: LayoutNode[] = files.map((file, index) => {
-    const angle = (index / Math.max(files.length, 1)) * Math.PI * 2;
-    const radius = 170 + seededNumber(file.path) * 80;
+  void edges;
 
-    return {
-      id: file.path,
-      x: centerX + Math.cos(angle) * radius,
-      y: centerY + Math.sin(angle) * radius,
-      width: getNodeWidth(file.path),
-      height: 58,
-    };
-  });
-  const indexById = new Map(nodes.map((node, index) => [node.id, index]));
-  const forceEdges = edges
-    .map((edge) => {
-      const source = indexById.get(edge.from);
-      const target = indexById.get(edge.to);
-
-      return source === undefined || target === undefined ? null : { source, target };
-    })
-    .filter((edge): edge is { source: number; target: number } => Boolean(edge));
-
-  for (let iteration = 0; iteration < 360; iteration += 1) {
-    const temperature = 1 - iteration / 360;
-
-    for (let i = 0; i < nodes.length; i += 1) {
-      for (let j = i + 1; j < nodes.length; j += 1) {
-        const first = nodes[i];
-        const second = nodes[j];
-        let dx = second.x - first.x;
-        let dy = second.y - first.y;
-        let distanceSquared = dx * dx + dy * dy;
-
-        if (distanceSquared < 1) {
-          dx = seededNumber(`${first.id}:${second.id}`) - 0.5;
-          dy = seededNumber(`${second.id}:${first.id}`) - 0.5;
-          distanceSquared = 1;
-        }
-
-        const distance = Math.sqrt(distanceSquared);
-        const force = 42000 / distanceSquared;
-        const moveX = (dx / distance) * force;
-        const moveY = (dy / distance) * force;
-
-        first.x -= moveX * temperature;
-        first.y -= moveY * temperature;
-        second.x += moveX * temperature;
-        second.y += moveY * temperature;
-      }
-    }
-
-    for (const edge of forceEdges) {
-      const source = nodes[edge.source];
-      const target = nodes[edge.target];
-      const dx = target.x - source.x;
-      const dy = target.y - source.y;
-      const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-      const preferredDistance = 230;
-      const force = (distance - preferredDistance) * 0.035;
-      const moveX = (dx / distance) * force;
-      const moveY = (dy / distance) * force;
-
-      source.x += moveX;
-      source.y += moveY;
-      target.x -= moveX;
-      target.y -= moveY;
-    }
-
-    for (const node of nodes) {
-      node.x += (centerX - node.x) * 0.018;
-      node.y += (centerY - node.y) * 0.018;
-    }
+  if (files.length === 0) {
+    return new Map();
   }
 
-  for (let pass = 0; pass < 70; pass += 1) {
-    for (let i = 0; i < nodes.length; i += 1) {
-      for (let j = i + 1; j < nodes.length; j += 1) {
-        const first = nodes[i];
-        const second = nodes[j];
-        const minX = (first.width + second.width) / 2 + 34;
-        const minY = (first.height + second.height) / 2 + 34;
-        const dx = second.x - first.x;
-        const dy = second.y - first.y;
-        const overlapX = minX - Math.abs(dx);
-        const overlapY = minY - Math.abs(dy);
+  const centerX = 520;
+  const centerY = 340;
+  const horizontalGap = 160;
+  const verticalGap = 190;
+  const anchoredPositions = buildExtensionLayoutAnchors(files, centerX, centerY, horizontalGap, verticalGap);
+  const positionList = [...anchoredPositions.values()];
+  const minX = Math.min(...positionList.map((position) => position.x));
+  const minY = Math.min(...positionList.map((position) => position.y));
+  const margin = 100;
 
-        if (overlapX > 0 && overlapY > 0) {
-          if (overlapX < overlapY) {
-            const offset = ((dx < 0 ? -1 : 1) * overlapX) / 2;
-            first.x -= offset;
-            second.x += offset;
-          } else {
-            const offset = ((dy < 0 ? -1 : 1) * overlapY) / 2;
-            first.y -= offset;
-            second.y += offset;
-          }
-        }
-      }
-    }
-  }
+  return new Map(
+    [...anchoredPositions.entries()].map(([filePath, position]) => [
+      filePath,
+      {
+        x: position.x - minX + margin,
+        y: position.y - minY + margin,
+      },
+    ]),
+  );
+}
 
-  const positions = new Map<string, { x: number; y: number }>();
-  const minX = Math.min(...nodes.map((node) => node.x - node.width / 2));
-  const minY = Math.min(...nodes.map((node) => node.y - node.height / 2));
-  const margin = 60;
+interface ExtensionLayoutGroup {
+  extension: string;
+  files: ChangedFile[];
+  width: number;
+  height: number;
+}
 
-  nodes.forEach((node) => {
-    positions.set(node.id, {
-      x: node.x - node.width / 2 - minX + margin,
-      y: node.y - node.height / 2 - minY + margin,
+function buildExtensionLayoutAnchors(
+  files: ChangedFile[],
+  centerX: number,
+  centerY: number,
+  horizontalGap: number,
+  verticalGap: number,
+): Map<string, { x: number; y: number }> {
+  const groups = buildExtensionGroups(files, verticalGap);
+  const totalWidth = groups.reduce((sum, group, index) => sum + group.width + (index === 0 ? 0 : horizontalGap), 0);
+  const startX = centerX - totalWidth / 2;
+  const anchors = new Map<string, { x: number; y: number }>();
+  let groupLeft = startX;
+
+  for (const group of groups) {
+    const groupTop = centerY - group.height / 2;
+
+    group.files.forEach((file, row) => {
+      anchors.set(file.path, {
+        x: groupLeft,
+        y: groupTop + row * verticalGap,
+      });
     });
-  });
 
-  return positions;
+    groupLeft += group.width + horizontalGap;
+  }
+
+  return anchors;
 }
 
 function getNodeWidth(filePath: string): number {
-  return Math.max(170, Math.min(240, getFileName(filePath).length * 8 + 70));
+  return Math.max(220, Math.min(520, getFileName(filePath).length * 8 + 96));
+}
+
+export function getNodeHeight(filePath: string): number {
+  const fileName = getFileName(filePath);
+  const contentWidth = getNodeWidth(filePath) - 78;
+  const estimatedLines = Math.max(1, Math.ceil((fileName.length * 8) / contentWidth));
+
+  return 62 + (estimatedLines - 1) * 17;
+}
+
+export function getNearestHandles(
+  source: NodeGeometry | undefined,
+  target: NodeGeometry | undefined,
+): { sourceHandle: string; targetHandle: string } {
+  if (!source || !target) {
+    return {
+      sourceHandle: getSourceHandleId('right'),
+      targetHandle: getTargetHandleId('left'),
+    };
+  }
+
+  const sourceCenterX = source.x + source.width / 2;
+  const sourceCenterY = source.y + source.height / 2;
+  const targetCenterX = target.x + target.width / 2;
+  const targetCenterY = target.y + target.height / 2;
+  const dx = targetCenterX - sourceCenterX;
+  const dy = targetCenterY - sourceCenterY;
+  let sourceFace: NodeFace;
+  let targetFace: NodeFace;
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    sourceFace = dx >= 0 ? 'right' : 'left';
+    targetFace = dx >= 0 ? 'left' : 'right';
+  } else {
+    sourceFace = dy >= 0 ? 'bottom' : 'top';
+    targetFace = dy >= 0 ? 'top' : 'bottom';
+  }
+
+  return {
+    sourceHandle: getSourceHandleId(sourceFace),
+    targetHandle: getTargetHandleId(targetFace),
+  };
+}
+
+export function getSourceHandleId(face: NodeFace): string {
+  return `source-${face}`;
+}
+
+export function getTargetHandleId(face: NodeFace): string {
+  return `target-${face}`;
 }
 
 function getFileName(filePath: string): string {
@@ -204,13 +224,46 @@ function getDirectoryName(filePath: string): string {
   return parts.length > 0 ? `${parts.join('/')}/` : '';
 }
 
-function seededNumber(input: string): number {
-  let hash = 2166136261;
+function buildExtensionGroups(files: ChangedFile[], verticalGap: number): ExtensionLayoutGroup[] {
+  const extensionGroups = new Map<string, ChangedFile[]>();
 
-  for (let index = 0; index < input.length; index += 1) {
-    hash ^= input.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
+  for (const file of files) {
+    const extension = getExtensionName(file.path);
+    const group = extensionGroups.get(extension) ?? [];
+
+    group.push(file);
+    extensionGroups.set(extension, group);
   }
 
-  return (hash >>> 0) / 4294967295;
+  return [...extensionGroups.entries()]
+    .sort(([firstExtension], [secondExtension]) => firstExtension.localeCompare(secondExtension))
+    .map(([extension, groupFiles]) => {
+      const sortedFiles = [...groupFiles].sort((first, second) => compareFilePathForLayout(first.path, second.path));
+
+      return {
+        extension,
+        files: sortedFiles,
+        width: Math.max(...sortedFiles.map((file) => getNodeWidth(file.path))),
+        height: (sortedFiles.length - 1) * verticalGap + Math.max(...sortedFiles.map((file) => getNodeHeight(file.path))),
+      };
+    });
+}
+
+function getExtensionName(filePath: string): string {
+  const fileName = getFileName(filePath);
+  const extensionIndex = fileName.lastIndexOf('.');
+
+  return extensionIndex > 0 ? fileName.slice(extensionIndex).toLowerCase() : '[no extension]';
+}
+
+function compareFilePathForLayout(firstPath: string, secondPath: string): number {
+  const firstDirectory = getDirectoryName(firstPath);
+  const secondDirectory = getDirectoryName(secondPath);
+  const directoryOrder = firstDirectory.localeCompare(secondDirectory);
+
+  if (directoryOrder !== 0) {
+    return directoryOrder;
+  }
+
+  return getFileName(firstPath).localeCompare(getFileName(secondPath));
 }

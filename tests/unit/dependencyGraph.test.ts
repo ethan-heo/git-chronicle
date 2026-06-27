@@ -32,4 +32,68 @@ describe('buildGraphData', () => {
     expect(graph.nodes.find((node) => node.id === 'docs/spec.md')?.data.canAnalyze).toBe(false);
     expect(graph.nodes.every((node) => Number.isFinite(node.position.x) && Number.isFinite(node.position.y))).toBe(true);
   });
+
+  it('places extension groups horizontally and files in the same extension vertically', () => {
+    const files: ChangedFile[] = [
+      { path: 'src/zeta.ts', status: 'M', hasSavedSummary: false },
+      { path: 'docs/spec.md', status: 'M', hasSavedSummary: false },
+      { path: 'src/alpha.ts', status: 'A', hasSavedSummary: false },
+      { path: 'src/view.tsx', status: 'M', hasSavedSummary: false },
+    ];
+
+    const graph = buildGraphData(files, [], {
+      onCodeView: () => undefined,
+      onAISummary: () => undefined,
+    });
+    const positions = new Map(graph.nodes.map((node) => [node.id, node.position]));
+    const zetaPosition = positions.get('src/zeta.ts');
+    const alphaPosition = positions.get('src/alpha.ts');
+    const specPosition = positions.get('docs/spec.md');
+    const viewPosition = positions.get('src/view.tsx');
+
+    expect(alphaPosition?.x).toBe(zetaPosition?.x);
+    expect(Math.abs((zetaPosition?.y ?? 0) - (alphaPosition?.y ?? 0))).toBe(190);
+    expect(specPosition?.x).toBeLessThan(alphaPosition?.x ?? 0);
+    expect(viewPosition?.x).toBeGreaterThan(alphaPosition?.x ?? 0);
+  });
+
+  it('expands long file-name nodes so the label can be shown completely', () => {
+    const graph = buildGraphData(
+      [{ path: 'src/components/ExtremelyLongDependencyCanvasNodeFileName.tsx', status: 'M', hasSavedSummary: false }],
+      [],
+      {
+        onCodeView: () => undefined,
+        onAISummary: () => undefined,
+      },
+    );
+
+    expect(graph.nodes[0].style?.width).toBeGreaterThan(240);
+  });
+
+  it('connects dependency edges from the nearest node faces', () => {
+    const graph = buildGraphData(
+      [
+        { path: 'src/alpha.ts', status: 'M', hasSavedSummary: false },
+        { path: 'src/beta.ts', status: 'M', hasSavedSummary: false },
+        { path: 'src/view.tsx', status: 'M', hasSavedSummary: false },
+      ],
+      [
+        { from: 'src/alpha.ts', to: 'src/beta.ts', kind: 'import' },
+        { from: 'src/beta.ts', to: 'src/view.tsx', kind: 'import' },
+      ],
+      {
+        onCodeView: () => undefined,
+        onAISummary: () => undefined,
+      },
+    );
+
+    expect(graph.edges[0]).toMatchObject({
+      sourceHandle: 'source-bottom',
+      targetHandle: 'target-top',
+    });
+    expect(graph.edges[1]).toMatchObject({
+      sourceHandle: 'source-right',
+      targetHandle: 'target-left',
+    });
+  });
 });

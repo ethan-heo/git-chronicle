@@ -22,7 +22,7 @@ Git Author Explorer VSCode Extension. 이력 조회 화면(S02)에서 [캔버스
 S05_DependencyCanvasScreen
 ├─ TopHeader ({커밋 메시지} + BackButton + ⚙)
 ├─ DependencyGraph (전체 캔버스 영역)
-│   ├─ FileNode × N (force-directed 자동 배치)
+│   ├─ FileNode × N (확장자 그룹 기반 배치)
 │   │   ├─ FileStatusBadge
 │   │   ├─ SavedBadge (조건부)
 │   │   └─ FileActionButtons (호버 시)
@@ -35,7 +35,7 @@ S05_DependencyCanvasScreen
 
 ## Component Tree
 
-- `DependencyGraph`: React Flow 캔버스 전체 영역. 줌·패닝 내장.
+- `DependencyGraph`: React Flow 캔버스 전체 영역. 줌·패닝·노드 드래그 내장.
   - `FileNode`: 파일 하나를 나타내는 카드형 노드
     - `FileStatusBadge`: A/M/D/R 상태 표시
     - `SavedBadge`: AI 정리 저장본 있을 때
@@ -51,6 +51,7 @@ S05_DependencyCanvasScreen
 | 트리거 | 동작 |
 |--------|------|
 | `FileNode` 호버 | `FileActionButtons` 노출 |
+| `FileNode` 드래그 | 노드 위치 이동, 엣지는 현재 위치에서 가장 가까운 면으로 재연결 |
 | [코드 보기] 클릭 | S03 코드 뷰어로 전환 |
 | [AI 정리 보기] 클릭 | S04 AI 정리 뷰어로 전환 |
 | 마우스 휠 (캔버스 위) | 줌 인/아웃 (최소 0.3x, 최대 2.0x) |
@@ -88,8 +89,12 @@ S05_DependencyCanvasScreen
 
 - 캔버스 배경: `var(--vscode-editor-background)` + 미세한 점 패턴 (선택적)
 - `FileNode` 카드: 테두리 `var(--vscode-panel-border)`, 배경 `var(--vscode-editorWidget-background)`, 모서리 radius `border.radius.md` (6px)
-- `FileNode` 크기: 최소 120px × 60px, 파일명 길이에 따라 가변
+- `FileNode` 크기: 최소 220px × 62px, 최대 520px 폭까지 파일명 길이에 따라 가변
+- 긴 파일명은 말줄임 대신 줄바꿈하여 전체 표시
+- 같은 확장자 노드는 같은 수직 컬럼에 배치하고 왼쪽 면을 맞춘다
+- 다른 확장자 그룹은 수평 방향으로 분리한다
 - `DependencyEdge`: 회색 실선 화살표, 연결된 노드 호버 시 `color.accent.primary`
+- `DependencyEdge`: source/target 노드의 상/하/좌/우 중 가장 가까운 면에서 시작/종료
 - JS/TS 외 파일 노드: 점선 테두리 또는 회색 스타일로 구분
 - `LegendPanel`은 반투명 배경 (`backdrop-filter: blur`)
 - `CanvasControls`는 세로 배치 소형 버튼 그룹

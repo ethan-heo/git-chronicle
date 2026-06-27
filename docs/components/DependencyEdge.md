@@ -23,6 +23,7 @@ type DependencyEdgeProps = EdgeProps<DependencyEdgeData>;
 
 - 방향: source(의존하는 파일) → target(의존 대상 파일). 화살표 끝에 arrowhead 표시.
 - 스타일: 직선 엣지. `require` 관계는 dashed stroke로 표시.
+- 연결점: source/target 노드의 상/하/좌/우 핸들 중 현재 위치에서 가장 가까운 면을 선택.
 - 색상: 기본은 보조 텍스트 색상, 연결 노드 호버 시 링크 색상으로 강조.
 
 ```tsx
@@ -55,6 +56,7 @@ export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
 - 엣지는 **변경 파일 간 의존 관계만** 표시한다. 미변경 파일과의 관계는 엣지 생성 안 함.
 - JS/TS 외 파일(분석 불가)은 엣지의 source 또는 target이 될 수 없다.
 - 동일한 source-target 쌍의 중복 엣지는 하나로 합친다.
+- 노드를 드래그하면 `DependencyGraph`가 현재 노드 위치를 기준으로 `sourceHandle`/`targetHandle`을 다시 계산한다.
 
 ---
 
