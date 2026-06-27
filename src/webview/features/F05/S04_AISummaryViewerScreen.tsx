@@ -98,6 +98,7 @@ export const S04AISummaryViewerScreen: FC = () => {
           forceRegenerate,
           summaryMode,
           commitHash: selectedCommit.shortHash,
+          commitMessage: selectedCommit.message,
           filePath: selectedFile?.path ?? null,
           appendChunk: appendAISummaryChunk,
           complete: completeAISummary,
@@ -110,6 +111,7 @@ export const S04AISummaryViewerScreen: FC = () => {
       if (summaryMode === 'commit') {
         postMessage('START_AI_SUMMARY_COMMIT', {
           commitHash: selectedCommit.hash,
+          commitMessage: selectedCommit.message,
           provider: activeAIProvider,
           savePath,
           forceRegenerate,
@@ -119,6 +121,7 @@ export const S04AISummaryViewerScreen: FC = () => {
 
       postMessage('START_AI_SUMMARY_FILE', {
         commitHash: selectedCommit.hash,
+        commitMessage: selectedCommit.message,
         filePath: selectedFile?.path,
         provider: activeAIProvider,
         savePath,
@@ -248,7 +251,7 @@ export const S04AISummaryViewerScreen: FC = () => {
     if (!isVSCodeRuntime() && summaryMode === 'file' && selectedFile?.hasSavedSummary) {
       loadSavedAISummary({
         content: DEMO_SUMMARY,
-        savedPath: `${savePath}/${selectedCommit?.shortHash}/${selectedFile.path.replace(/[\\/]/g, '__')}.md`,
+        savedPath: `${savePath}/${toDemoCommitDirName(selectedCommit?.shortHash ?? '', selectedCommit?.message ?? '')}/${selectedFile.path.replace(/[\\/]/g, '__')}.md`,
         provider: activeAIProvider,
       });
       return;
@@ -313,15 +316,28 @@ interface StreamDemoSummaryOptions {
   forceRegenerate: boolean;
   summaryMode: 'file' | 'commit';
   commitHash: string;
+  commitMessage: string;
   filePath: string | null;
   appendChunk: (chunk: string) => void;
   complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
+}
+
+function toDemoCommitDirName(shortHash: string, commitMessage: string): string {
+  const sanitized = commitMessage
+    .replace(/[^A-Za-z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+  return `${shortHash}_${sanitized || 'commit'}`;
 }
 
 function streamDemoSummary(options: StreamDemoSummaryOptions): void {
   let index = 0;
   const summary = options.summaryMode === 'commit' ? DEMO_COMMIT_SUMMARY : DEMO_SUMMARY;
   const content = options.forceRegenerate ? `${summary}\n` : summary;
+  const commitDirName = toDemoCommitDirName(options.commitHash, options.commitMessage);
   const timer = window.setInterval(() => {
     const next = content.slice(index, index + 8);
     index += next.length;
@@ -333,8 +349,8 @@ function streamDemoSummary(options: StreamDemoSummaryOptions): void {
         content,
         savedPath:
           options.summaryMode === 'commit'
-            ? `.git-author/${options.commitHash}/_commit_summary.md`
-            : `.git-author/${options.commitHash}/${options.filePath?.replace(/[\\/]/g, '__') ?? 'summary'}.md`,
+            ? `.git-author/${commitDirName}/전체_파일_정리.md`
+            : `.git-author/${commitDirName}/${options.filePath?.replace(/[\\/]/g, '__') ?? 'summary'}.md`,
         provider: 'claude',
       });
     }

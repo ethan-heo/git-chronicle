@@ -88,7 +88,7 @@ export async function fetchChangedFiles(
       path: filePath,
       oldPath: status === 'R' ? firstPath : undefined,
       status,
-      hasSavedSummary: hasSavedSummary(savePath, commitHash, filePath),
+      hasSavedSummary: hasSavedSummary(savePath, commitHash, filePath, commitMessage),
     };
   });
 }
@@ -97,7 +97,7 @@ export async function fetchChangedFiles(
 Extension Host 메시지 핸들러:
 ```typescript
 case 'FETCH_CHANGED_FILES': {
-  const files = await fetchChangedFiles(repoPath, message.payload.commitHash, message.payload.savePath);
+  const files = await fetchChangedFiles(repoPath, message.payload.commitHash, message.payload.savePath, message.payload.commitMessage);
   panel.webview.postMessage({ type: 'CHANGED_FILES_LOADED', payload: { files } });
   break;
 }

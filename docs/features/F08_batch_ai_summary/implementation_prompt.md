@@ -64,11 +64,12 @@ export async function runBatchAISummary(options: {
   provider: AIProviderName;
   savePath: string;
   commitHash: string;
+  commitMessage?: string;
   onProgress: (completed: number, failed: number, filePath: string) => void;
   onComplete: (completed: number, failed: number) => void;
   isCancelled: () => boolean;
 }): Promise<void> {
-  const { files, provider, savePath, commitHash, onProgress, onComplete, isCancelled } = options;
+  const { files, provider, savePath, commitHash, commitMessage, onProgress, onComplete, isCancelled } = options;
 
   let completed = 0;
   let failed = 0;
@@ -87,7 +88,7 @@ export async function runBatchAISummary(options: {
       const diff = await fetchFileDiff(options.repoPath, commitHash, file.path);
       const prompt = buildFileSummaryPrompt(file.path, diff.rawDiff);
       const content = await streamAISummarySync(provider, prompt);
-      saveSummary(savePath, commitHash, file.path, content);
+      saveSummary(savePath, commitHash, file.path, content, commitMessage);
       completed++;
     } catch {
       failed++;
@@ -125,7 +126,7 @@ let activeBatchRun: { id: number; cancelled: boolean } | null = null;
 let nextBatchRunId = 1;
 
 case 'START_BATCH_AI_SUMMARY': {
-  const { files, provider, savePath, commitHash } = message;
+  const { files, provider, savePath, commitHash, commitMessage } = message.payload;
 
   if (!provider) {
     panel.webview.postMessage({
@@ -158,6 +159,7 @@ case 'START_BATCH_AI_SUMMARY': {
       provider,
       savePath,
       commitHash,
+      commitMessage,
       isCancelled: () => batchRun.cancelled,
       onProgress: (progress) => {
         panel.webview.postMessage({

@@ -24,7 +24,7 @@
 ## Outputs
 
 - `currentSummaryContent: string` — 스트리밍 누적 텍스트 (전역 상태)
-- 저장 파일: `{savePath}/{commitHash}/{normalizedFilePath}.md`
+- 저장 파일: `{savePath}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md`
 - `changedFiles[].hasSavedSummary` 업데이트 — 저장 완료 시
 
 `normalizedFilePath`는 파일 경로의 `/` 또는 `\`를 `__`로 치환한 값이다.

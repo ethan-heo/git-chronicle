@@ -25,12 +25,16 @@ Git Author Explorer의 테스트는 세 계층으로 구분한다.
 ```typescript
 // summaryFileService.test.ts
 describe('summaryFileService', () => {
-  it('파일 단위 AI 정리는 커밋 해시 폴더 아래 파일 경로 기반 md로 저장한다', () => {
-    expect(getSummaryFilePath('/tmp/gae', 'abc123', 'src/App.tsx')).toBe('/tmp/gae/abc123/src__App.tsx.md');
+  it('파일 단위 AI 정리는 단축 해시와 커밋 메시지 폴더 아래 파일 경로 기반 md로 저장한다', () => {
+    expect(getSummaryFilePath('/tmp/gae', 'abc123456789', 'src/App.tsx', 'feat: add batch AI summary')).toBe(
+      '/tmp/gae/abc1234_feat-add-batch-AI-summary/src__App.tsx.md',
+    );
   });
 
-  it('커밋 단위 AI 정리는 커밋 해시 폴더 아래 _commit_summary.md로 저장한다', () => {
-    expect(getCommitSummaryFilePath('/tmp/gae', 'abc123')).toBe('/tmp/gae/abc123/_commit_summary.md');
+  it('커밋 단위 AI 정리는 한글 파일명으로 저장한다', () => {
+    expect(getCommitSummaryFilePath('/tmp/gae', 'abc123456789', 'feat: add batch AI summary')).toBe(
+      '/tmp/gae/abc1234_feat-add-batch-AI-summary/전체_파일_정리.md',
+    );
   });
 
   it('저장 디렉토리가 없으면 자동 생성한다', () => {

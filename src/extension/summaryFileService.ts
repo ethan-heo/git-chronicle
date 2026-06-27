@@ -16,18 +16,32 @@ export class SummarySaveError extends Error {
   }
 }
 
-export function getSummaryFilePath(savePath: string, commitHash: string, filePath: string): string {
-  return path.join(savePath, commitHash, `${toSummaryFileName(filePath)}.md`);
+const COMMIT_SUMMARY_FILENAME = '전체_파일_정리.md';
+const COMMIT_SUMMARY_FILENAME_LEGACY = '_commit_summary.md';
+
+export function toCommitDirName(shortHash: string, commitMessage: string): string {
+  const sanitized = commitMessage
+    .replace(/[^A-Za-z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+
+  return `${shortHash}_${sanitized || 'commit'}`;
 }
 
-export function getCommitSummaryFilePath(savePath: string, commitHash: string): string {
-  return path.join(savePath, commitHash, '_commit_summary.md');
+export function getSummaryFilePath(savePath: string, commitHash: string, filePath: string, commitMessage?: string): string {
+  return path.join(savePath, getCommitDirName(commitHash, commitMessage), `${toSummaryFileName(filePath)}.md`);
 }
 
-export function loadSummary(savePath: string, commitHash: string, filePath: string): SummaryFileResult | null {
-  const savedPath = getSummaryFilePath(savePath, commitHash, filePath);
+export function getCommitSummaryFilePath(savePath: string, commitHash: string, commitMessage?: string): string {
+  return path.join(savePath, getCommitDirName(commitHash, commitMessage), commitMessage ? COMMIT_SUMMARY_FILENAME : COMMIT_SUMMARY_FILENAME_LEGACY);
+}
 
-  if (!fs.existsSync(savedPath)) {
+export function loadSummary(savePath: string, commitHash: string, filePath: string, commitMessage?: string): SummaryFileResult | null {
+  const savedPath = findExistingPath(getSummaryFilePathCandidates(savePath, commitHash, filePath, commitMessage));
+
+  if (!savedPath) {
     return null;
   }
 
@@ -37,16 +51,16 @@ export function loadSummary(savePath: string, commitHash: string, filePath: stri
   };
 }
 
-export function saveSummary(savePath: string, commitHash: string, filePath: string, content: string): string {
-  const savedPath = getSummaryFilePath(savePath, commitHash, filePath);
+export function saveSummary(savePath: string, commitHash: string, filePath: string, content: string, commitMessage?: string): string {
+  const savedPath = getSummaryFilePath(savePath, commitHash, filePath, commitMessage);
   writeSummaryFile(savedPath, content);
   return savedPath;
 }
 
-export function loadCommitSummary(savePath: string, commitHash: string): SummaryFileResult | null {
-  const savedPath = getCommitSummaryFilePath(savePath, commitHash);
+export function loadCommitSummary(savePath: string, commitHash: string, commitMessage?: string): SummaryFileResult | null {
+  const savedPath = findExistingPath(getCommitSummaryFilePathCandidates(savePath, commitHash, commitMessage));
 
-  if (!fs.existsSync(savedPath)) {
+  if (!savedPath) {
     return null;
   }
 
@@ -56,22 +70,52 @@ export function loadCommitSummary(savePath: string, commitHash: string): Summary
   };
 }
 
-export function saveCommitSummary(savePath: string, commitHash: string, content: string): string {
-  const savedPath = getCommitSummaryFilePath(savePath, commitHash);
+export function saveCommitSummary(savePath: string, commitHash: string, content: string, commitMessage?: string): string {
+  const savedPath = getCommitSummaryFilePath(savePath, commitHash, commitMessage);
   writeSummaryFile(savedPath, content);
   return savedPath;
 }
 
-export function hasSavedSummary(savePath: string | null, commitHash: string, filePath: string): boolean {
+export function hasSavedSummary(savePath: string | null, commitHash: string, filePath: string, commitMessage?: string): boolean {
   if (!savePath) {
     return false;
   }
 
-  return fs.existsSync(getSummaryFilePath(savePath, commitHash, filePath));
+  return Boolean(findExistingPath(getSummaryFilePathCandidates(savePath, commitHash, filePath, commitMessage)));
 }
 
 function toSummaryFileName(filePath: string): string {
   return filePath.replace(/[\\/]/g, '__');
+}
+
+function getCommitDirName(commitHash: string, commitMessage?: string): string {
+  if (!commitMessage) {
+    return commitHash;
+  }
+
+  return toCommitDirName(commitHash.slice(0, 7), commitMessage);
+}
+
+function getSummaryFilePathCandidates(savePath: string, commitHash: string, filePath: string, commitMessage?: string): string[] {
+  return [getSummaryFilePath(savePath, commitHash, filePath, commitMessage), getSummaryFilePath(savePath, commitHash, filePath)];
+}
+
+function getCommitSummaryFilePathCandidates(savePath: string, commitHash: string, commitMessage?: string): string[] {
+  if (!commitMessage) {
+    return [getCommitSummaryFilePath(savePath, commitHash)];
+  }
+
+  const nextDir = getCommitDirName(commitHash, commitMessage);
+
+  return [
+    path.join(savePath, nextDir, COMMIT_SUMMARY_FILENAME),
+    path.join(savePath, nextDir, COMMIT_SUMMARY_FILENAME_LEGACY),
+    getCommitSummaryFilePath(savePath, commitHash),
+  ];
+}
+
+function findExistingPath(candidates: string[]): string | null {
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
 }
 
 function writeSummaryFile(savedPath: string, content: string): void {

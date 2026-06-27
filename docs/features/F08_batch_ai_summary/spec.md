@@ -39,6 +39,7 @@
 | 진입 | S-02(이력 조회)의 [전체 파일 AI 정리] 버튼 |
 | 동작 | 변경 파일 트리의 모든 파일에 대해 파일 단위 AI 정리를 순차적으로 생성 |
 | 중복 처리 | 이미 저장본이 존재하는 파일은 건너뜀 (스킵) |
+| 저장 | F05와 동일하게 `{savePath}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md`로 저장. 저장 경로 계산을 위해 선택 커밋의 `commitMessage`를 Extension Host로 함께 전달 |
 | 에러 처리 | 개별 파일 실패 시 해당 파일을 건너뛰고 계속 진행. 완료 후 "실패 N개" 요약 Toast 표시 |
 | 취소 | 상단 고정 프로그레스 바의 [취소] 버튼으로 중단 가능. 취소 시 완료된 파일의 저장본은 유지 |
 | 진행 표시 | "n / 전체" 형태의 진행 상태 표시. 화면 이동 시에도 상단 고정 프로그레스 바로 계속 표시 |
@@ -78,6 +79,7 @@
 
 | 소스 | 타입 | 설명 |
 |------|------|------|
+| `selectedCommit` | `Commit` | 전역 상태. `hash`와 `message`를 일괄 저장 경로 계산에 사용 |
 | `changedFiles` | `ChangedFile[]` | 전역 상태. 일괄 처리 대상 파일 목록 |
 | `activeAIProvider` | `AIProviderName \| null` | 전역 상태. 사전 검증 후 AI 호출 |
 | `savePath` | `string \| null` | 전역 상태. 사전 검증 후 저장 경로 |

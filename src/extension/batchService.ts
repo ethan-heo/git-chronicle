@@ -11,6 +11,7 @@ interface RunBatchAISummaryOptions {
   provider: AIProviderName;
   savePath: string;
   commitHash: string;
+  commitMessage?: string;
   onProgress: (progress: BatchAISummaryProgress) => void;
   isCancelled: () => boolean;
 }
@@ -39,7 +40,7 @@ export async function runBatchAISummary(options: RunBatchAISummaryOptions): Prom
       break;
     }
 
-    const alreadySaved = file.hasSavedSummary || hasSavedSummary(options.savePath, options.commitHash, file.path);
+    const alreadySaved = file.hasSavedSummary || hasSavedSummary(options.savePath, options.commitHash, file.path, options.commitMessage);
 
     if (alreadySaved) {
       completed += 1;
@@ -60,7 +61,7 @@ export async function runBatchAISummary(options: RunBatchAISummaryOptions): Prom
         prompt,
       });
 
-      saveSummary(options.savePath, options.commitHash, file.path, content);
+      saveSummary(options.savePath, options.commitHash, file.path, content, options.commitMessage);
       completed += 1;
       options.onProgress({ completed, failed, filePath: file.path, saved: true });
     } catch {

@@ -9,7 +9,7 @@
 F05_AISummaryFile과 거의 동일한 구현. `summaryMode = 'commit'`으로 분기하며, 아래 두 가지 차이만 있다:
 
 1. **diff 범위**: 단일 파일이 아닌 커밋 전체 diff (`git show {hash}`)
-2. **저장 파일명**: `_commit_summary.md` (파일 경로 기반 이름 아님)
+2. **저장 파일명**: `전체_파일_정리.md` (파일 경로 기반 이름 아님)
 
 ---
 
@@ -60,20 +60,23 @@ export async function fetchCommitFullDiff(
 export function saveCommitSummary(
   savePath: string,
   commitHash: string,
-  content: string
-): void {
-  const dir = path.join(savePath, commitHash);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, '_commit_summary.md'), content, 'utf-8');
+  content: string,
+  commitMessage?: string
+): string {
+  const savedPath = getCommitSummaryFilePath(savePath, commitHash, commitMessage);
+  fs.mkdirSync(path.dirname(savedPath), { recursive: true });
+  fs.writeFileSync(savedPath, content, 'utf-8');
+  return savedPath;
 }
 
 export function loadCommitSummary(
   savePath: string,
-  commitHash: string
-): string | null {
-  const mdPath = path.join(savePath, commitHash, '_commit_summary.md');
-  if (!fs.existsSync(mdPath)) return null;
-  return fs.readFileSync(mdPath, 'utf-8');
+  commitHash: string,
+  commitMessage?: string
+): { content: string; savedPath: string } | null {
+  const savedPath = findExistingPath(getCommitSummaryFilePathCandidates(savePath, commitHash, commitMessage));
+  if (!savedPath) return null;
+  return { content: fs.readFileSync(savedPath, 'utf-8'), savedPath };
 }
 ```
 
@@ -83,7 +86,7 @@ F05와 동일하게 `{ type, payload }` 메시지 프로토콜과 `AI_SUMMARY_*`
 
 ```typescript
 case 'START_AI_SUMMARY_COMMIT': {
-  const { commitHash, provider, savePath, forceRegenerate } = message.payload;
+  const { commitHash, commitMessage, provider, savePath, forceRegenerate } = message.payload;
 
   const fullDiff = await fetchCommitFullDiff(repoPath, commitHash);
   const TOKEN_LIMIT_CHARS = 20000;  // 커밋 전체 diff는 더 넉넉하게
@@ -157,6 +160,7 @@ useEffect(() => {
     // 새로 생성
     postMessage('START_AI_SUMMARY_COMMIT', {
       commitHash: selectedCommit.hash,
+      commitMessage: selectedCommit.message,
       provider: activeAIProvider,
       savePath,
     });
@@ -164,6 +168,7 @@ useEffect(() => {
     // F05 파일 요약 로직 (기존)
     postMessage('START_AI_SUMMARY_FILE', {
       commitHash: selectedCommit.hash,
+      commitMessage: selectedCommit.message,
       filePath: selectedFile!.path,
       provider: activeAIProvider,
       savePath,
@@ -181,7 +186,7 @@ const breadcrumb = summaryMode === 'commit'
 
 ## Business Rules
 
-1. 저장 파일명은 항상 `_commit_summary.md`이며 `{savePath}/{commitHash}/_commit_summary.md`에 저장한다.
+1. 저장 파일명은 `전체_파일_정리.md`이며 `{savePath}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md`에 저장한다. 기존 `{savePath}/{commitHash}/_commit_summary.md`는 읽기 폴백으로 유지한다.
 2. F05의 `hasSavedSummary`는 `ChangedFile` 단위이고, 커밋 요약은 별도 상태로 관리
 3. `OverwriteConfirmDialog`, `RegenerateButton`, `StreamingTextRenderer`는 F05와 동일 컴포넌트 재사용
 4. `summaryMode`는 Zustand 전역 상태에서 관리

@@ -43,7 +43,7 @@
 | 항목 | 내용 |
 |------|------|
 | 파일 상태 표시 | 파일명 앞 뱃지 레터로 구분: `A` 추가 / `M` 수정 / `D` 삭제 / `R` 이름 변경 |
-| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, `{savePath}/{commitHash}/{normalizedFilePath}.md` 저장본이 존재할 때만 표시. `normalizedFilePath`는 파일 경로의 `/` 또는 `\`를 `__`로 치환 |
+| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, `{savePath}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md` 저장본이 존재할 때만 표시. 구 형식 `{savePath}/{commitHash}/{normalizedFilePath}.md`도 폴백으로 인정한다. `normalizedFilePath`는 파일 경로의 `/` 또는 `\`를 `__`로 치환 |
 | 대용량 커밋 처리 | 변경 파일 수 무관하게 전체 렌더링. 성능 문제 발생 시 추후 가상 리스트(react-window) 적용 검토 |
 | 트리 구조 | 디렉토리 경로 기준으로 계층 분리. 디렉토리 노드는 토글 가능 |
 
@@ -79,7 +79,7 @@
 | `selectedCommit` | `Commit` | 전역 상태. 변경 파일 조회 기준 커밋 |
 | `savePath` | `string \| null` | 전역 상태. 저장본 존재 여부 판단용 |
 | simple-git `diff-tree --name-status --root` | `ChangedFile[]` | Extension Host에서 해당 커밋의 변경 파일 목록 추출 |
-| 로컬 파일시스템 | `boolean` | `{savePath}/{commitHash}/{normalizedFilePath}.md` 존재 여부로 `hasSavedSummary` 설정 |
+| 로컬 파일시스템 | `boolean` | 신규 저장 경로 또는 구 형식 저장 경로 존재 여부로 `hasSavedSummary` 설정 |
 
 ---
 

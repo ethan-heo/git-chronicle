@@ -15,7 +15,7 @@ F05_AISummaryFile과 동일한 S04_AISummaryViewerScreen을 공유한다. `summa
 F05_AISummaryFile의 디자인을 그대로 사용하되, 아래 두 가지 차이점만 반영한 Variant를 추가한다:
 
 1. TopHeader breadcrumb: `{커밋 메시지} > 커밋 전체 요약`
-2. 저장 경로: 저장본 또는 생성 완료 상태에서 `{savePath}/{커밋해시}/_commit_summary.md`를 액션바에 표시
+2. 저장 경로: 저장본 또는 생성 완료 상태에서 `{savePath}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md`를 액션바에 표시
 
 ---
 

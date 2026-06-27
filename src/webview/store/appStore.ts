@@ -208,6 +208,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     postMessage('FETCH_CHANGED_FILES', {
       commitHash: state.selectedCommit.hash,
+      commitMessage: state.selectedCommit.message,
       savePath: state.savePath,
     });
   },
@@ -383,6 +384,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (isVSCodeRuntime()) {
       postMessage('START_BATCH_AI_SUMMARY', {
         commitHash: state.selectedCommit?.hash,
+        commitMessage: state.selectedCommit?.message,
         provider: state.activeAIProvider,
         savePath: state.savePath,
         files: state.changedFiles,

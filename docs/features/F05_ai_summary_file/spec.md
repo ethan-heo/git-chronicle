@@ -40,8 +40,8 @@
 | 입력 | 파일 diff (변경 전/후 코드) |
 | 처리 | 설정된 AI CLI에 기본 프롬프트 + diff 전달 (`child_process.spawn` 스트리밍) |
 | 출력 | 마크다운 형식의 작업 내용 요약 (스트리밍 타이핑 효과로 실시간 표시) |
-| 저장 | `{설정경로}/{commitHash}/{normalizedFilePath}.md` 로컬 저장. `normalizedFilePath`는 파일 경로의 `/` 또는 `\`를 `__`로 치환 |
-| 기존 저장본 | 저장본이 존재하면 AI 호출 없이 파일을 즉시 표시 |
+| 저장 | `{설정경로}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md` 로컬 저장. 상세 디렉토리 생성 규칙은 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming)을 따른다. `normalizedFilePath`는 파일 경로의 `/` 또는 `\`를 `__`로 치환 |
+| 기존 저장본 | 신규 경로를 먼저 확인하고, 없으면 기존 `{설정경로}/{commitHash}/{normalizedFilePath}.md` 경로를 폴백으로 읽어 AI 호출 없이 표시 |
 | 재생성 | [재생성] 버튼 클릭 → 덮어쓰기 확인 다이얼로그 → 확인 시 동일 입력으로 재처리 |
 | 토큰 한계 초과 | "diff가 큽니다. AI가 일부를 생략할 수 있습니다" 안내 표시 후 그대로 호출 |
 | 실패 / 타임아웃 | 타임아웃 120초. 실패 시 "생성에 실패했습니다" 오류 메시지 + [재시도] 버튼 표시 |
@@ -116,7 +116,7 @@
 | `activeAIProvider` | `AIProviderName \| null` | 전역 상태. 사용할 AI CLI 결정 |
 | `savePath` | `string \| null` | 전역 상태. 저장본 파일 위치 결정 |
 | simple-git diff | `string` | Extension Host에서 해당 파일의 변경 전/후 코드 추출 |
-| 로컬 저장본 | `string` | `{savePath}/{commitHash}/{normalizedFilePath}.md` 파일 존재 시 즉시 읽어 표시 |
+| 로컬 저장본 | `string` | `{savePath}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md` 파일 존재 시 즉시 읽어 표시. 구 형식 `{savePath}/{commitHash}/{normalizedFilePath}.md`도 폴백으로 읽음 |
 
 ---
 
@@ -125,7 +125,7 @@
 | 출력 | 타입 | 설명 |
 |------|------|------|
 | `currentSummaryContent` | `string` | 전역 상태. AI 스트리밍 텍스트 누적 |
-| 저장 파일 | `.md` | `{savePath}/{commitHash}/{normalizedFilePath}.md` 로컬 파일 생성 |
+| 저장 파일 | `.md` | `{savePath}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md` 로컬 파일 생성 |
 
 ---
 

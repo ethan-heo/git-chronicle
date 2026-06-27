@@ -33,6 +33,7 @@ interface FetchCommitsPayload {
 
 interface FetchChangedFilesPayload {
   commitHash?: string;
+  commitMessage?: string;
   savePath?: string | null;
 }
 
@@ -47,6 +48,7 @@ interface AnalyzeDependenciesPayload {
 
 interface StartAISummaryFilePayload {
   commitHash?: string;
+  commitMessage?: string;
   filePath?: string;
   provider?: AIProviderName | null;
   savePath?: string | null;
@@ -55,6 +57,7 @@ interface StartAISummaryFilePayload {
 
 interface StartAISummaryCommitPayload {
   commitHash?: string;
+  commitMessage?: string;
   provider?: AIProviderName | null;
   savePath?: string | null;
   forceRegenerate?: boolean;
@@ -62,6 +65,7 @@ interface StartAISummaryCommitPayload {
 
 interface StartBatchAISummaryPayload {
   commitHash?: string;
+  commitMessage?: string;
   files?: ChangedFile[];
   provider?: AIProviderName | null;
   savePath?: string | null;
@@ -380,7 +384,7 @@ async function handleFetchChangedFiles(panel: vscode.WebviewPanel, context: vsco
 
   try {
     const settings = loadAISettingsState(context);
-    const changedFiles = await fetchChangedFiles(repoPath, payload.commitHash, payload.savePath ?? settings.savePath);
+    const changedFiles = await fetchChangedFiles(repoPath, payload.commitHash, payload.savePath ?? settings.savePath, payload.commitMessage);
 
     await panel.webview.postMessage({
       type: 'CHANGED_FILES_LOADED',
@@ -466,7 +470,7 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vsc
 
   try {
     if (!payload.forceRegenerate) {
-      const savedSummary = loadSummary(savePath, payload.commitHash, payload.filePath);
+      const savedSummary = loadSummary(savePath, payload.commitHash, payload.filePath, payload.commitMessage);
 
       if (savedSummary) {
         await panel.webview.postMessage({
@@ -520,7 +524,7 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vsc
       },
       onComplete: () => {
         try {
-          const savedPath = saveSummary(savePath, payload.commitHash ?? '', payload.filePath ?? '', content);
+          const savedPath = saveSummary(savePath, payload.commitHash ?? '', payload.filePath ?? '', content, payload.commitMessage);
           void panel.webview.postMessage({
             type: 'AI_SUMMARY_DONE',
             payload: {
@@ -570,7 +574,7 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
 
   try {
     if (!payload.forceRegenerate) {
-      const savedSummary = loadCommitSummary(savePath, payload.commitHash);
+      const savedSummary = loadCommitSummary(savePath, payload.commitHash, payload.commitMessage);
 
       if (savedSummary) {
         await panel.webview.postMessage({
@@ -619,7 +623,7 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
       },
       onComplete: () => {
         try {
-          const savedPath = saveCommitSummary(savePath, payload.commitHash ?? '', content);
+          const savedPath = saveCommitSummary(savePath, payload.commitHash ?? '', content, payload.commitMessage);
           void panel.webview.postMessage({
             type: 'AI_SUMMARY_DONE',
             payload: {
@@ -698,6 +702,7 @@ async function handleStartBatchAISummary(panel: vscode.WebviewPanel, context: vs
       provider,
       savePath,
       commitHash: payload.commitHash,
+      commitMessage: payload.commitMessage,
       isCancelled: () => batchRun.cancelled,
       onProgress: (progress) => {
         if (activeBatchRun?.id !== batchRun.id) {

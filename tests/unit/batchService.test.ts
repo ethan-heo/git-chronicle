@@ -53,13 +53,14 @@ describe('batchService', () => {
       provider: 'claude',
       savePath,
       commitHash: 'abc123',
+      commitMessage: 'feat: add batch AI summary',
       isCancelled: () => false,
       onProgress: (event) => progress.push(event),
     });
 
     expect(result).toEqual({ completed: 2, failed: 0, cancelled: false });
     expect(fetchFileDiffMock).toHaveBeenCalledTimes(1);
-    expect(fs.readFileSync(getSummaryFilePath(savePath, 'abc123', 'src/new.ts'), 'utf8')).toBe('# Generated');
+    expect(fs.readFileSync(getSummaryFilePath(savePath, 'abc123', 'src/new.ts', 'feat: add batch AI summary'), 'utf8')).toBe('# Generated');
     expect(progress).toEqual([
       { completed: 1, failed: 0, filePath: 'src/saved.ts', saved: true },
       { completed: 2, failed: 0, filePath: 'src/new.ts', saved: true },

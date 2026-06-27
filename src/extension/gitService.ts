@@ -97,7 +97,7 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
     });
 }
 
-export async function fetchChangedFiles(repoPath: string, commitHash: string, savePath: string | null): Promise<ChangedFile[]> {
+export async function fetchChangedFiles(repoPath: string, commitHash: string, savePath: string | null, commitMessage?: string): Promise<ChangedFile[]> {
   const git = simpleGit(repoPath);
   const isRepo = await git.checkIsRepo();
 
@@ -109,7 +109,7 @@ export async function fetchChangedFiles(repoPath: string, commitHash: string, sa
 
   return output
     .split('\n')
-    .map((line) => parseChangedFileLine(line, commitHash, savePath))
+    .map((line) => parseChangedFileLine(line, commitHash, savePath, commitMessage))
     .filter((file): file is ChangedFile => Boolean(file));
 }
 
@@ -143,7 +143,7 @@ export async function fetchCommitFullDiff(repoPath: string, commitHash: string):
   return git.show([commitHash, '--stat', '-p', '--find-renames', '--unified=3']);
 }
 
-function parseChangedFileLine(line: string, commitHash: string, savePath: string | null): ChangedFile | null {
+function parseChangedFileLine(line: string, commitHash: string, savePath: string | null, commitMessage?: string): ChangedFile | null {
   const trimmed = line.trim();
 
   if (!trimmed) {
@@ -167,7 +167,7 @@ function parseChangedFileLine(line: string, commitHash: string, savePath: string
     path: filePath,
     oldPath: status === 'R' ? firstPath : undefined,
     status,
-    hasSavedSummary: hasSavedSummary(savePath, commitHash, filePath),
+    hasSavedSummary: hasSavedSummary(savePath, commitHash, filePath, commitMessage),
   };
 }
 

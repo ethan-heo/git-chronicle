@@ -122,9 +122,10 @@ export function saveSummary(
   savePath: string,
   commitHash: string,
   filePath: string,
-  content: string
+  content: string,
+  commitMessage?: string
 ): string {
-  const savedPath = path.join(savePath, commitHash, `${filePath.replace(/[\\/]/g, '__')}.md`);
+  const savedPath = getSummaryFilePath(savePath, commitHash, filePath, commitMessage);
   fs.mkdirSync(path.dirname(savedPath), { recursive: true });
   fs.writeFileSync(savedPath, content, 'utf-8');
   return savedPath;
@@ -133,10 +134,14 @@ export function saveSummary(
 export function loadSummary(
   savePath: string,
   commitHash: string,
-  filePath: string
+  filePath: string,
+  commitMessage?: string
 ): { content: string; savedPath: string } | null {
-  const mdPath = path.join(savePath, commitHash, `${filePath.replace(/[\\/]/g, '__')}.md`);
-  if (!fs.existsSync(mdPath)) return null;
+  const mdPath = findExistingPath([
+    getSummaryFilePath(savePath, commitHash, filePath, commitMessage),
+    getSummaryFilePath(savePath, commitHash, filePath),
+  ]);
+  if (!mdPath) return null;
   return { content: fs.readFileSync(mdPath, 'utf-8'), savedPath: mdPath };
 }
 ```
@@ -156,9 +161,9 @@ case 'FETCH_AI_SUMMARY_SETTINGS': {
 }
 
 case 'START_AI_SUMMARY_FILE': {
-  const { commitHash, filePath, provider, savePath, forceRegenerate } = message.payload;
+  const { commitHash, commitMessage, filePath, provider, savePath, forceRegenerate } = message.payload;
 
-  const saved = loadSummary(savePath, commitHash, filePath);
+  const saved = loadSummary(savePath, commitHash, filePath, commitMessage);
   if (saved && !forceRegenerate) {
     panel.webview.postMessage({
       type: 'AI_SUMMARY_LOADED',
@@ -186,7 +191,7 @@ case 'START_AI_SUMMARY_FILE': {
       panel.webview.postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } });
     },
     onComplete: () => {
-      const savedPath = saveSummary(savePath, commitHash, filePath, fullContent);
+      const savedPath = saveSummary(savePath, commitHash, filePath, fullContent, commitMessage);
       panel.webview.postMessage({ type: 'AI_SUMMARY_DONE', payload: { content: fullContent, savedPath, provider } });
     },
     onError: err => {
@@ -319,7 +324,7 @@ export const OverwriteConfirmDialog: React.FC<{
 
 1. diff 크기 > 12,000자: `TokenLimitWarning` 배너 표시 (생성은 계속 진행)
 2. `currentSummaryContent`는 청크 누적으로 스트리밍 표시
-3. 완료 후 `fs.writeFileSync`로 `{savePath}/{commitHash}/{normalizedFilePath}.md` 저장 → `hasSavedSummary = true`
+3. 완료 후 `fs.writeFileSync`로 `{savePath}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md` 저장 → `hasSavedSummary = true`
 4. 저장 시 디렉토리는 `fs.mkdirSync({ recursive: true })`로 자동 생성
 5. 에러 발생 시 `ErrorState` + [재시도] 표시
 

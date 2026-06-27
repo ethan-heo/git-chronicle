@@ -46,7 +46,7 @@ export const SavePathSection: FC<SavePathSectionProps> = ({ savePath, onPathSele
           <p className="save-path-helper save-path-helper-set">
             <CheckIcon />
             <span>
-              커밋 단위 정리는 <code>_commit_summary.md</code>로 저장됩니다.
+              커밋 단위 정리는 <code>전체_파일_정리.md</code>로 저장됩니다.
             </span>
           </p>
         </div>
