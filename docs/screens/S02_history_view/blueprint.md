@@ -59,7 +59,7 @@ S02_HistoryViewScreen
 
 | 컴포넌트 | 출처 |
 |---------|------|
-| `BatchProgressBar` | [F08 blueprint](../../features/F08_batch_ai_summary/blueprint.md) — F08 구현 시 추가 |
+| `BatchProgressBar` | [F08 blueprint](../../features/F08_batch_ai_summary/blueprint.md) — App 전역 상단 진행 표시 |
 | `TopHeader` | [global_components](../../core/global_components.md#topheader) |
 | `BackButton` | [global_components](../../core/global_components.md#backbutton) |
 | `CommitActionBar` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md) |
@@ -83,7 +83,7 @@ S02_HistoryViewScreen
 | `empty` | `changedFiles.length === 0` | `EmptyState`: "변경된 파일이 없습니다" |
 | `populated` | `changedFiles.length > 0` | `FileTree` + `CommitActionBar` |
 | `error` | 로드 실패 | `ErrorState` |
-| `batchRunning` | `isBatchRunning === true` | [전체 파일 AI 정리] 버튼 비활성화 (`BatchProgressBar`는 F08 구현 시 추가) |
+| `batchRunning` | `isBatchRunning === true` | [전체 파일 AI 정리] 버튼 비활성화 + App 전역 `BatchProgressBar` 표시 |
 
 ---
 
@@ -108,4 +108,4 @@ S02_HistoryViewScreen
 ## Responsive Rules
 
 - 현재 구현은 `CommitActionBar` 텍스트 버튼을 유지한다.
-- `BatchProgressBar`는 F08 구현 시 추가한다.
+- `BatchProgressBar`는 S02 내부가 아니라 App 전역에 마운트되어 화면 이동 후에도 유지된다.

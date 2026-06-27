@@ -43,6 +43,8 @@ src/extension/
 ├── aiService.ts                      # child_process.spawn 기반 AI CLI 스트리밍 실행
 │   - streamAISummary(options)        # stdout chunk 전달, 120초 타임아웃, 취소 함수 반환
 ├── aiTypes.ts                        # AIProviderName 타입 ('claude' | 'gemini' | 'codex')
+├── batchService.ts                   # 파일 단위 AI 정리 일괄 순차 실행
+│   - runBatchAISummary(options)      # 저장본 스킵, 실패 계속 진행, 취소 플래그 확인
 ├── prompts.ts                        # AI 정리 프롬프트 빌더
 │   - buildFileSummaryPrompt(filePath, diff)
 └── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인

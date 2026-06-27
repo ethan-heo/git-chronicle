@@ -59,7 +59,7 @@ describe('useAppStore', () => {
     // ...
   });
 
-  it('startBatch 후 completeBatch 시 batchCurrent가 0으로 초기화된다', () => {
+  it('배치 진행 메시지 수신 시 batchCompleted와 batchFailedCount가 갱신된다', () => {
     // ...
   });
 });
@@ -125,7 +125,7 @@ it('저장본 로드 완료 후 react-markdown으로 렌더링된다', ...);
 ```typescript
 it('isBatchRunning = false 시 렌더링되지 않는다', ...);
 it('진행 상태가 "n / 전체" 형식으로 표시된다', ...);
-it('[취소] 클릭 시 cancelBatch 액션이 호출된다', ...);
+it('[취소] 클릭 시 cancelBatchAISummary 액션이 호출된다', ...);
 ```
 
 ---

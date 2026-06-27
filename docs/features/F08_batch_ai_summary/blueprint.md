@@ -47,6 +47,7 @@
 - `batchTotal: number`
 - `batchCompleted: number`
 - `isBatchRunning: boolean`
+- `isBatchCancelling: boolean`
 
 #### Props
 ```typescript
@@ -54,6 +55,7 @@ interface BatchProgressBarProps {
   batchTotal: number;
   batchCompleted: number;
   isBatchRunning: boolean;
+  isCancelling: boolean;
   onCancel: () => void;
 }
 ```
@@ -63,6 +65,7 @@ interface BatchProgressBarProps {
 
 #### States
 - `running`: 진행 중 (progress bar 애니메이션)
+- `cancelling`: 취소 요청됨 (현재 파일 완료 후 중단 안내, 취소 버튼 비활성)
 - `hidden`: `isBatchRunning === false`
 
 #### Accessibility
@@ -90,7 +93,7 @@ interface BatchCancelButtonProps {
 ```
 
 #### Interaction
-- 클릭 시 `batchCancelled = true` → 다음 파일 처리 중단 (현재 처리 중인 파일은 완료까지 기다림)
+- 클릭 시 `isBatchCancelling = true` → Extension Host의 현재 배치 실행에 취소 플래그 설정, 다음 파일 처리 중단 (현재 처리 중인 파일은 완료까지 기다림)
 - 취소 후 완료된 파일 수 Toast 표시
 
 #### States
@@ -155,7 +158,7 @@ CommitActionBar
 | 파일 완료 | 개별 파일 AI 정리 완료 | `batchCompleted++`, `hasSavedSummary` 업데이트, `SavedBadge` 표시 |
 | 파일 실패 | 개별 파일 AI 정리 실패 | `batchFailedCount++`, 다음 파일로 진행 |
 | 파일 스킵 | `hasSavedSummary === true` | 처리 없이 `batchCompleted++` |
-| 취소 | `BatchCancelButton` 클릭 | `batchCancelled = true`, 다음 처리 중단 |
+| 취소 | `BatchCancelButton` 클릭 | `isBatchCancelling = true`, Extension Host의 현재 배치 실행에 취소 플래그 설정, 다음 처리 중단 |
 | 전체 완료 | `batchCompleted === batchTotal` | `isBatchRunning = false`, Toast 표시 |
 | 취소 완료 | 취소 후 현재 파일 처리 완료 | `isBatchRunning = false`, Toast 표시 |
 
@@ -167,7 +170,7 @@ CommitActionBar
 |------|------|-----|
 | `idle` | `isBatchRunning === false` | `BatchProgressBar` 숨김 |
 | `running` | `isBatchRunning === true` | `BatchProgressBar` 표시 |
-| `cancelled` | `batchCancelled === true` | 취소 중 (`BatchProgressBar` 유지) |
+| `cancelled` | `isBatchCancelling === true` | 취소 중 (`BatchProgressBar` 유지) |
 
 ---
 

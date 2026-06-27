@@ -157,7 +157,7 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_AI_SUMMARY_SETTINGS' }
   | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; filePath: string; provider?: AIProviderName | null; savePath?: string | null; forceRegenerate?: boolean } }
   | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string; provider?: AIProviderName | null; savePath?: string | null; forceRegenerate?: boolean } }
-  | { type: 'START_BATCH_AI_SUMMARY'; payload: { commitHash: string; files: string[] } }
+  | { type: 'START_BATCH_AI_SUMMARY'; payload: { commitHash: string; provider: AIProviderName; savePath: string; files: ChangedFile[] } }
   | { type: 'CANCEL_BATCH_AI_SUMMARY' }
   | { type: 'LOAD_DEPENDENCY_GRAPH'; payload: { commitHash: string } }
   | { type: 'REGISTER_AI_PROVIDER'; payload: { name: AIProviderName } }
@@ -181,8 +181,12 @@ type ExtensionToWebviewMessage =
   | { type: 'AI_SUMMARY_CHUNK'; payload: { chunk: string } }
   | { type: 'AI_SUMMARY_DONE'; payload: { content: string; savedPath: string; provider: AIProviderName } }
   | { type: 'AI_SUMMARY_ERROR'; payload: { message: string } }
-  | { type: 'BATCH_PROGRESS'; payload: { current: number; total: number } }
-  | { type: 'BATCH_DONE'; payload: { failedCount: number } }
+  | { type: 'BATCH_AI_SUMMARY_STARTED'; payload: { batchTotal: number } }
+  | { type: 'BATCH_AI_SUMMARY_PROGRESS'; payload: { batchCompleted: number; batchFailedCount: number; completedFilePath: string; hasSavedSummary: boolean } }
+  | { type: 'BATCH_AI_SUMMARY_CANCELLING' }
+  | { type: 'BATCH_AI_SUMMARY_DONE'; payload: { batchCompleted: number; batchFailedCount: number } }
+  | { type: 'BATCH_AI_SUMMARY_CANCELLED'; payload: { batchCompleted: number; batchFailedCount: number } }
+  | { type: 'BATCH_AI_SUMMARY_ERROR'; payload: { message: string } }
   | { type: 'DEPENDENCY_GRAPH_LOADED'; payload: { nodes: GraphNode[]; edges: GraphEdge[] } }
   | { type: 'AI_PROVIDER_REGISTERED'; payload: { registeredProviders: AIProviderName[]; activeAIProvider: AIProviderName | null; providerName: AIProviderName } }
   | { type: 'AI_PROVIDER_REGISTRATION_FAILED'; payload: { providerName: AIProviderName; message: string; installUrl?: string } }
@@ -194,14 +198,14 @@ type ExtensionToWebviewMessage =
 ### Zustand 상태 관리 (Webview 전용)
 
 - Webview 내 전역 상태는 Zustand 단일 스토어(`useAppStore`, 구현 파일: `src/webview/store/appStore.ts`)에서 관리한다.
-- Extension에서 받은 메시지는 현재 `features/F01/S01_CommitListScreen.tsx`, `features/F02/S02_HistoryViewScreen.tsx`, `features/F03/S03_CodeViewerScreen.tsx`, `features/F05/S04_AISummaryViewerScreen.tsx`, `features/F06/S06_SettingsScreen.tsx`에서 구독하여 화면 또는 Zustand 상태를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
+- Extension에서 받은 메시지는 현재 `App.tsx`(AI 설정 초기화, F08 전역 배치 상태), `features/F01/S01_CommitListScreen.tsx`, `features/F02/S02_HistoryViewScreen.tsx`, `features/F03/S03_CodeViewerScreen.tsx`, `features/F05/S04_AISummaryViewerScreen.tsx`, `features/F06/S06_SettingsScreen.tsx`에서 구독하여 화면 또는 Zustand 상태를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
 - 화면 전환(`currentScreen`)도 Zustand 상태로 관리한다. `react-router`는 사용하지 않는다.
 
 ### Browser Dev Fallback
 
 - `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
 - 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록과 F02 변경 파일 트리용 데모 데이터를 사용해 UI를 확인할 수 있게 한다.
-- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF`, F05/F05b가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` / `START_AI_SUMMARY_COMMIT` 메시지를 보낸다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
+- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES` / `START_BATCH_AI_SUMMARY`, F03이 `FETCH_FILE_DIFF`, F05/F05b가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` / `START_AI_SUMMARY_COMMIT` 메시지를 보낸다. F08 취소는 App 전역 `BatchProgressBar`에서 `CANCEL_BATCH_AI_SUMMARY`로 요청한다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
 - Browser dev fallback에서는 VSCode 파일 다이얼로그를 열 수 없으므로 S06 저장 경로 선택이 데모 경로를 설정한다. 실제 디렉토리 선택은 Extension Host의 `vscode.window.showOpenDialog()`에서만 동작한다.
 
 ### child_process (Extension Host 전용)

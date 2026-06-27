@@ -8,7 +8,7 @@
 
 - **순차 실행**: Extension Host에서 `changedFiles`를 순차 처리 (async/await loop)
 - **스킵 조건**: `hasSavedSummary === true`인 파일은 건너뜀
-- **취소**: `batchCancelled` 플래그로 다음 반복 중단 (현재 파일은 완료까지 대기)
+- **취소**: Extension Host의 현재 배치 실행 객체(`activeBatchRun.cancelled`)로 다음 반복 중단 (현재 파일은 완료까지 대기)
 - **전역 UI**: `BatchProgressBar`는 모든 화면에서 항상 표시 (Zustand 전역 상태 구독)
 
 ---
@@ -31,10 +31,12 @@ interface BatchProgressBarProps {
   batchTotal: number;
   batchCompleted: number;
   isBatchRunning: boolean;
+  isCancelling: boolean;
   onCancel: () => void;
 }
 
 interface BatchCancelButtonProps {
+  disabled: boolean;
   onCancel: () => void;
 }
 
@@ -42,6 +44,7 @@ interface BatchCancelButtonProps {
 interface AppState {
   // ... 기존 상태
   isBatchRunning: boolean;
+  isBatchCancelling: boolean;
   batchTotal: number;
   batchCompleted: number;
   batchFailedCount: number;
@@ -118,60 +121,75 @@ async function streamAISummarySync(
 ### 메시지 핸들러
 
 ```typescript
-let batchCancelled = false;
+let activeBatchRun: { id: number; cancelled: boolean } | null = null;
+let nextBatchRunId = 1;
 
-case 'startBatchSummary': {
+case 'START_BATCH_AI_SUMMARY': {
   const { files, provider, savePath, commitHash } = message;
 
   if (!provider) {
     panel.webview.postMessage({
-      command: 'batchError',
-      error: 'AI가 설정되지 않았습니다',
+      type: 'BATCH_AI_SUMMARY_ERROR',
+      payload: { message: 'AI가 설정되지 않았습니다' },
     });
     break;
   }
   if (!savePath) {
     panel.webview.postMessage({
-      command: 'batchError',
-      error: '저장 경로를 먼저 설정해주세요',
+      type: 'BATCH_AI_SUMMARY_ERROR',
+      payload: { message: '저장 경로를 먼저 설정해주세요' },
     });
     break;
   }
 
-  batchCancelled = false;
+  if (activeBatchRun) break;
+
+  const batchRun = { id: nextBatchRunId++, cancelled: false };
+  activeBatchRun = batchRun;
   panel.webview.postMessage({
-    command: 'batchStarted',
-    batchTotal: files.length,
+    type: 'BATCH_AI_SUMMARY_STARTED',
+    payload: { batchTotal: files.length },
   });
 
-  await runBatchAISummary({
-    repoPath,
-    files,
-    provider,
-    savePath,
-    commitHash,
-    isCancelled: () => batchCancelled,
-    onProgress: (completed, failed, filePath) => {
-      panel.webview.postMessage({
-        command: 'batchProgress',
-        batchCompleted: completed,
-        batchFailedCount: failed,
-        completedFilePath: filePath,
-      });
-    },
-    onComplete: (completed, failed) => {
-      panel.webview.postMessage({
-        command: 'batchComplete',
-        batchCompleted: completed,
-        batchFailedCount: failed,
-      });
-    },
-  });
+  try {
+    const result = await runBatchAISummary({
+      repoPath,
+      files,
+      provider,
+      savePath,
+      commitHash,
+      isCancelled: () => batchRun.cancelled,
+      onProgress: (progress) => {
+        panel.webview.postMessage({
+          type: 'BATCH_AI_SUMMARY_PROGRESS',
+          payload: {
+            batchCompleted: progress.completed,
+            batchFailedCount: progress.failed,
+            completedFilePath: progress.filePath,
+            hasSavedSummary: progress.saved,
+          },
+        });
+      },
+    });
+
+    panel.webview.postMessage({
+      type: result.cancelled ? 'BATCH_AI_SUMMARY_CANCELLED' : 'BATCH_AI_SUMMARY_DONE',
+      payload: {
+        batchCompleted: result.completed,
+        batchFailedCount: result.failed,
+      },
+    });
+  } finally {
+    if (activeBatchRun?.id === batchRun.id) activeBatchRun = null;
+  }
   break;
 }
 
-case 'cancelBatch': {
-  batchCancelled = true;
+case 'CANCEL_BATCH_AI_SUMMARY': {
+  if (activeBatchRun) {
+    activeBatchRun.cancelled = true;
+    panel.webview.postMessage({ type: 'BATCH_AI_SUMMARY_CANCELLING' });
+  }
   break;
 }
 ```
@@ -184,7 +202,7 @@ case 'cancelBatch': {
 
 ```tsx
 export const BatchProgressBar: React.FC<BatchProgressBarProps> = ({
-  batchTotal, batchCompleted, isBatchRunning, onCancel
+  batchTotal, batchCompleted, isBatchRunning, isCancelling, onCancel
 }) => {
   if (!isBatchRunning) return null;
 
@@ -197,7 +215,7 @@ export const BatchProgressBar: React.FC<BatchProgressBarProps> = ({
       aria-valuemin={0}
       aria-valuemax={batchTotal}
       aria-valuenow={batchCompleted}
-      aria-label="AI 정리 일괄 생성 진행 중"
+      aria-label={isCancelling ? 'AI 정리 일괄 생성 취소 중' : 'AI 정리 일괄 생성 진행 중'}
     >
       <div
         className="batch-progress-fill"
@@ -206,7 +224,7 @@ export const BatchProgressBar: React.FC<BatchProgressBarProps> = ({
       <span className="batch-progress-text">
         {batchCompleted} / {batchTotal}
       </span>
-      <BatchCancelButton onCancel={onCancel} />
+      <BatchCancelButton disabled={isCancelling} onCancel={onCancel} />
     </div>
   );
 };
@@ -215,13 +233,14 @@ export const BatchProgressBar: React.FC<BatchProgressBarProps> = ({
 ### `BatchCancelButton.tsx`
 
 ```tsx
-export const BatchCancelButton: React.FC<BatchCancelButtonProps> = ({ onCancel }) => (
+export const BatchCancelButton: React.FC<BatchCancelButtonProps> = ({ disabled, onCancel }) => (
   <button
-    className="batch-cancel-btn"
+    className="batch-cancel-button"
+    disabled={disabled}
     onClick={onCancel}
     aria-label="AI 정리 일괄 생성 취소"
   >
-    취소
+    {disabled ? '취소 중' : '취소'}
   </button>
 );
 ```
@@ -230,16 +249,17 @@ export const BatchCancelButton: React.FC<BatchCancelButtonProps> = ({ onCancel }
 
 ```tsx
 export const App: React.FC = () => {
-  const { isBatchRunning, batchTotal, batchCompleted } = useAppStore();
+  const { isBatchRunning, isBatchCancelling, batchTotal, batchCompleted } = useAppStore();
 
   const handleCancel = () => {
-    window.vscode.postMessage({ command: 'cancelBatch' });
+    window.vscode.postMessage({ type: 'CANCEL_BATCH_AI_SUMMARY' });
   };
 
   return (
     <div className="app">
       <BatchProgressBar
         isBatchRunning={isBatchRunning}
+        isCancelling={isBatchCancelling}
         batchTotal={batchTotal}
         batchCompleted={batchCompleted}
         onCancel={handleCancel}
@@ -253,11 +273,11 @@ export const App: React.FC = () => {
 ### Webview 메시지 처리
 
 ```typescript
-case 'batchStarted':
-  set({ isBatchRunning: true, batchTotal: data.batchTotal, batchCompleted: 0, batchFailedCount: 0 });
+case 'BATCH_AI_SUMMARY_STARTED':
+  set({ isBatchRunning: true, isBatchCancelling: false, batchTotal: data.batchTotal, batchCompleted: 0, batchFailedCount: 0 });
   break;
 
-case 'batchProgress':
+case 'BATCH_AI_SUMMARY_PROGRESS':
   set({
     batchCompleted: data.batchCompleted,
     batchFailedCount: data.batchFailedCount,
@@ -270,8 +290,13 @@ case 'batchProgress':
   }));
   break;
 
-case 'batchComplete':
-  set({ isBatchRunning: false });
+case 'BATCH_AI_SUMMARY_CANCELLING':
+  set({ isBatchCancelling: true });
+  break;
+
+case 'BATCH_AI_SUMMARY_DONE':
+case 'BATCH_AI_SUMMARY_CANCELLED':
+  set({ isBatchRunning: false, isBatchCancelling: false });
   const { batchCompleted, batchFailedCount } = data;
   showToast(
     batchFailedCount > 0
@@ -281,8 +306,9 @@ case 'batchComplete':
   );
   break;
 
-case 'batchError':
-  showToast(data.error, 'error');
+case 'BATCH_AI_SUMMARY_ERROR':
+  set({ isBatchRunning: false, isBatchCancelling: false });
+  showToast(data.message, 'error');
   break;
 ```
 
@@ -292,7 +318,7 @@ case 'batchError':
 
 1. `hasSavedSummary === true`인 파일은 처리 없이 `batchCompleted++` (스킵)
 2. 개별 파일 실패 시 `batchFailedCount++` 후 다음 파일로 계속 진행
-3. 취소 시 현재 처리 중인 파일 완료 후 중단 (`batchCancelled` 플래그 기반)
+3. 취소 시 현재 처리 중인 파일 완료 후 중단 (`activeBatchRun.cancelled` 플래그 기반)
 4. AI 미설정 / 경로 미설정 시 시작 전 `Toast (error)` 표시, 배치 시작 안 함
 5. `BatchProgressBar`는 `isBatchRunning === false`이면 DOM에서 완전히 제거 (`return null`)
 6. 완료 Toast: 실패 없음 → `success`, 실패 있음 → `warning`
@@ -327,7 +353,7 @@ case 'batchError':
   flex: 1;
   text-align: center;
 }
-.batch-cancel-btn {
+.batch-cancel-button {
   color: var(--vscode-descriptionForeground);
   background: none;
   border: none;

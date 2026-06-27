@@ -2,8 +2,9 @@ import * as vscode from 'vscode';
 import { AI_PROVIDERS, loadAISettingsState, registerAIProvider, setActiveAIProvider, setSavePath } from './aiProviderService';
 import { streamAISummary } from './aiService';
 import type { AIProviderName } from './aiTypes';
+import { runBatchAISummary } from './batchService';
 import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
-import { fetchChangedFiles, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
+import { fetchChangedFiles, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError, type ChangedFile } from './gitService';
 import { buildCommitSummaryPrompt, buildFileSummaryPrompt } from './prompts';
 import { loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from './summaryFileService';
 
@@ -16,6 +17,7 @@ interface WebviewMessage {
     | AnalyzeDependenciesPayload
     | StartAISummaryFilePayload
     | StartAISummaryCommitPayload
+    | StartBatchAISummaryPayload
     | AIProviderPayload
     | OpenExternalUrlPayload;
 }
@@ -58,6 +60,13 @@ interface StartAISummaryCommitPayload {
   forceRegenerate?: boolean;
 }
 
+interface StartBatchAISummaryPayload {
+  commitHash?: string;
+  files?: ChangedFile[];
+  provider?: AIProviderName | null;
+  savePath?: string | null;
+}
+
 interface AIProviderPayload {
   name?: AIProviderName;
   providerName?: AIProviderName;
@@ -69,6 +78,14 @@ interface OpenExternalUrlPayload {
 
 const FILE_TOKEN_LIMIT_CHARS = 12_000;
 const COMMIT_TOKEN_LIMIT_CHARS = 20_000;
+
+interface ActiveBatchRun {
+  id: number;
+  cancelled: boolean;
+}
+
+let activeBatchRun: ActiveBatchRun | null = null;
+let nextBatchRunId = 1;
 
 export function registerMessageHandler(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): void {
   panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
@@ -117,6 +134,17 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'START_AI_SUMMARY_COMMIT':
         await handleStartAISummaryCommit(panel, context, message.payload as StartAISummaryCommitPayload);
+        break;
+      case 'START_BATCH_AI_SUMMARY':
+        await handleStartBatchAISummary(panel, context, message.payload as StartBatchAISummaryPayload);
+        break;
+      case 'CANCEL_BATCH_AI_SUMMARY':
+        if (activeBatchRun) {
+          activeBatchRun.cancelled = true;
+          await panel.webview.postMessage({
+            type: 'BATCH_AI_SUMMARY_CANCELLING',
+          });
+        }
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
@@ -613,9 +641,111 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
   }
 }
 
+async function handleStartBatchAISummary(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: StartBatchAISummaryPayload = {}): Promise<void> {
+  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const settings = loadAISettingsState(context);
+  const provider = payload.provider ?? settings.activeAIProvider;
+  const savePath = payload.savePath ?? settings.savePath;
+  const files = payload.files ?? [];
+
+  if (!repoPath) {
+    await postBatchError(panel, 'Git 저장소가 감지되지 않았습니다');
+    return;
+  }
+
+  if (!payload.commitHash) {
+    await postBatchError(panel, '선택된 커밋이 없습니다');
+    return;
+  }
+
+  if (!provider) {
+    await postBatchError(panel, 'AI가 설정되지 않았습니다');
+    return;
+  }
+
+  if (!savePath) {
+    await postBatchError(panel, '저장 경로를 먼저 설정해주세요');
+    return;
+  }
+
+  if (files.length === 0) {
+    await postBatchError(panel, '변경 파일이 없습니다');
+    return;
+  }
+
+  if (activeBatchRun) {
+    return;
+  }
+
+  const batchRun: ActiveBatchRun = {
+    id: nextBatchRunId,
+    cancelled: false,
+  };
+  nextBatchRunId += 1;
+  activeBatchRun = batchRun;
+
+  await panel.webview.postMessage({
+    type: 'BATCH_AI_SUMMARY_STARTED',
+    payload: {
+      batchTotal: files.length,
+    },
+  });
+
+  try {
+    const result = await runBatchAISummary({
+      repoPath,
+      files,
+      provider,
+      savePath,
+      commitHash: payload.commitHash,
+      isCancelled: () => batchRun.cancelled,
+      onProgress: (progress) => {
+        if (activeBatchRun?.id !== batchRun.id) {
+          return;
+        }
+
+        void panel.webview.postMessage({
+          type: 'BATCH_AI_SUMMARY_PROGRESS',
+          payload: {
+            batchCompleted: progress.completed,
+            batchFailedCount: progress.failed,
+            completedFilePath: progress.filePath,
+            hasSavedSummary: progress.saved,
+          },
+        });
+      },
+    });
+
+    if (activeBatchRun?.id === batchRun.id) {
+      await panel.webview.postMessage({
+        type: result.cancelled ? 'BATCH_AI_SUMMARY_CANCELLED' : 'BATCH_AI_SUMMARY_DONE',
+        payload: {
+          batchCompleted: result.completed,
+          batchFailedCount: result.failed,
+        },
+      });
+    }
+  } catch (error) {
+    await postBatchError(panel, error instanceof Error ? error.message : '일괄 생성을 완료하지 못했습니다');
+  } finally {
+    if (activeBatchRun?.id === batchRun.id) {
+      activeBatchRun = null;
+    }
+  }
+}
+
 async function postAISummaryError(panel: vscode.WebviewPanel, message: string): Promise<void> {
   await panel.webview.postMessage({
     type: 'AI_SUMMARY_ERROR',
+    payload: {
+      message,
+    },
+  });
+}
+
+async function postBatchError(panel: vscode.WebviewPanel, message: string): Promise<void> {
+  await panel.webview.postMessage({
+    type: 'BATCH_AI_SUMMARY_ERROR',
     payload: {
       message,
     },

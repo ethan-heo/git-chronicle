@@ -90,6 +90,7 @@
 | 출력 | 타입 | 설명 |
 |------|------|------|
 | `isBatchRunning` | `boolean` | 전역 상태. 일괄 생성 진행 여부 |
+| `isBatchCancelling` | `boolean` | 전역 상태. 취소 요청 후 현재 파일 완료 대기 여부 |
 | `batchCompleted` | `number` | 전역 상태. 완료 파일 수 |
 | `batchFailedCount` | `number` | 전역 상태. 실패 파일 수 |
 | `changedFiles[].hasSavedSummary` | `boolean` | 전역 상태. 파일별 완료 시 `true`로 업데이트 |
@@ -102,7 +103,8 @@
 | 효과 | 트리거 | 설명 |
 |------|--------|------|
 | `isBatchRunning = true` | [전체 파일 AI 정리] 클릭 | BatchProgressBar 표시 트리거 |
-| `isBatchRunning = false` | 전체 완료 / 취소 완료 | BatchProgressBar 숨김 + 상태 초기화 |
+| `isBatchCancelling = true` | [취소] 클릭 | BatchProgressBar에서 취소 중 상태 표시 |
+| `isBatchRunning = false` | 전체 완료 / 취소 완료 | BatchProgressBar 숨김 + 취소 중 상태 초기화 |
 | `batchCompleted` / `batchFailedCount` 업데이트 | 파일 단위 완료/실패 시 | 실시간 프로그레스 바 업데이트 |
 | F05_AISummaryFile 로직 순차 실행 | 파일마다 | 로컬 `.md` 파일 다수 생성 (파일시스템 쓰기) |
 | `changedFiles[].hasSavedSummary` 업데이트 | 파일 저장 완료 시 | 트리 노드 "저장됨" 뱃지 실시간 반영 |

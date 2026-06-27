@@ -71,10 +71,10 @@
 | 상태 키 | 타입 | 초기값 | 설명 |
 |---------|------|--------|------|
 | `isBatchRunning` | `boolean` | `false` | 일괄 AI 정리 생성 진행 중 여부 |
+| `isBatchCancelling` | `boolean` | `false` | 취소 요청 후 현재 파일 완료를 기다리는 중인지 여부 |
 | `batchTotal` | `number` | `0` | 일괄 생성 대상 파일 수 |
 | `batchCompleted` | `number` | `0` | 일괄 생성 완료 파일 수 |
 | `batchFailedCount` | `number` | `0` | 일괄 생성 실패 파일 수 |
-| `batchCancelled` | `boolean` | `false` | 일괄 생성 취소 여부 |
 
 ---
 
@@ -139,5 +139,5 @@ interface AIProvider {
 
 - `selectedCommit` 변경 시: `selectedFile`, `changedFiles`, 의존성 상태, `currentSummaryContent`, `isLoadingSummary`, `isGeneratingSummary`, `summaryError`, `summarySavedPath`, `hasCurrentSavedSummary`, `isSummaryTokenLimitExceeded` 초기화.
 - `savePath` null 설정 시: `isGeneratingSummary`가 true이면 진행 중인 생성을 중단하지 않음 (이미 시작된 작업은 완료 후 저장 불가 토스트 표시).
-- `isBatchRunning` false 전환 시: `batchTotal`, `batchCompleted`, `batchFailedCount`, `batchCancelled` 초기화.
+- `isBatchRunning` false 전환 시: `isBatchCancelling`을 false로 되돌린다. 마지막 `batchTotal`, `batchCompleted`, `batchFailedCount` 값은 완료/취소 Toast 계산을 위해 유지한다.
 - 확장 프로그램 재활성화 시: 네비게이션 상태는 S-01로 리셋. AI 프로바이더·저장 경로 상태는 VSCode ExtensionContext에서 복원.

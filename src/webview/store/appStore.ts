@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { ToastItem, ToastType } from '../shared/components/Toast';
 import { isVSCodeRuntime, postMessage } from '../bridge/vscodeApi';
 import type { AIProviderName, ChangedFile, Commit, DependencyEdge, FilterState, ScreenID, SummaryMode } from '../types/commit';
 
@@ -35,8 +36,11 @@ interface AppState extends FilterState {
   hasCurrentSavedSummary: boolean;
   isSummaryTokenLimitExceeded: boolean;
   isBatchRunning: boolean;
+  isBatchCancelling: boolean;
   batchTotal: number;
-  batchCurrent: number;
+  batchCompleted: number;
+  batchFailedCount: number;
+  toasts: ToastItem[];
   commitPage: number;
   hasMoreCommits: boolean;
   isLoadingCommits: boolean;
@@ -61,6 +65,15 @@ interface AppState extends FilterState {
   goToCanvasView: () => void;
   goToSettingsView: () => void;
   startBatchAISummary: () => void;
+  cancelBatchAISummary: () => void;
+  handleBatchStarted: (payload: { batchTotal: number }) => void;
+  handleBatchProgress: (payload: { batchCompleted?: number; batchFailedCount?: number; completedFilePath?: string; hasSavedSummary?: boolean }) => void;
+  handleBatchCancelling: () => void;
+  handleBatchComplete: (payload: { batchCompleted?: number; batchFailedCount?: number }) => void;
+  handleBatchCancelled: (payload: { batchCompleted?: number; batchFailedCount?: number }) => void;
+  handleBatchError: (message?: string) => void;
+  pushToast: (message: string, type: ToastType) => void;
+  dismissToast: (id: string) => void;
   openRepository: () => void;
   setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null }) => void;
   resetAISummary: () => void;
@@ -104,8 +117,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   hasCurrentSavedSummary: false,
   isSummaryTokenLimitExceeded: false,
   isBatchRunning: false,
+  isBatchCancelling: false,
   batchTotal: 0,
-  batchCurrent: 0,
+  batchCompleted: 0,
+  batchFailedCount: 0,
+  toasts: [],
   commitPage: 0,
   hasMoreCommits: true,
   isLoadingCommits: false,
@@ -327,25 +343,138 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   startBatchAISummary: () => {
-    const total = get().changedFiles.length;
+    const state = get();
+    const total = state.changedFiles.length;
 
     if (total === 0) {
       return;
     }
 
-    set({
-      isBatchRunning: true,
-      batchTotal: total,
-      batchCurrent: 0,
-    });
+    if (!state.activeAIProvider) {
+      get().pushToast('AI가 설정되지 않았습니다', 'error');
+      return;
+    }
+
+    if (!state.savePath) {
+      get().pushToast('저장 경로를 먼저 설정해주세요', 'error');
+      return;
+    }
 
     if (isVSCodeRuntime()) {
-      const state = get();
       postMessage('START_BATCH_AI_SUMMARY', {
         commitHash: state.selectedCommit?.hash,
-        files: state.changedFiles.map((file) => file.path),
+        provider: state.activeAIProvider,
+        savePath: state.savePath,
+        files: state.changedFiles,
+      });
+      return;
+    }
+
+    set({
+      isBatchRunning: true,
+      isBatchCancelling: false,
+      batchTotal: total,
+      batchCompleted: 0,
+      batchFailedCount: 0,
+    });
+
+    simulateDemoBatchAISummary();
+  },
+
+  cancelBatchAISummary: () => {
+    if (!get().isBatchRunning) {
+      return;
+    }
+
+    if (isVSCodeRuntime()) {
+      set({
+        isBatchCancelling: true,
+      });
+      postMessage('CANCEL_BATCH_AI_SUMMARY');
+    } else {
+      get().handleBatchCancelled({
+        batchCompleted: get().batchCompleted,
+        batchFailedCount: get().batchFailedCount,
       });
     }
+  },
+
+  handleBatchStarted: ({ batchTotal }) => {
+    set({
+      isBatchRunning: true,
+      isBatchCancelling: false,
+      batchTotal,
+      batchCompleted: 0,
+      batchFailedCount: 0,
+    });
+  },
+
+  handleBatchProgress: ({ batchCompleted = 0, batchFailedCount = 0, completedFilePath, hasSavedSummary }) => {
+    set((state) => ({
+      isBatchRunning: true,
+      batchCompleted,
+      batchFailedCount,
+      changedFiles:
+        completedFilePath && hasSavedSummary
+          ? state.changedFiles.map((file) => (file.path === completedFilePath ? { ...file, hasSavedSummary: true } : file))
+          : state.changedFiles,
+      selectedFile:
+        completedFilePath && hasSavedSummary && state.selectedFile?.path === completedFilePath
+          ? { ...state.selectedFile, hasSavedSummary: true }
+          : state.selectedFile,
+      hasCurrentSavedSummary:
+        completedFilePath && hasSavedSummary && state.selectedFile?.path === completedFilePath ? true : state.hasCurrentSavedSummary,
+    }));
+  },
+
+  handleBatchCancelling: () => {
+    set({
+      isBatchCancelling: true,
+    });
+  },
+
+  handleBatchComplete: ({ batchCompleted = get().batchCompleted, batchFailedCount = get().batchFailedCount }) => {
+    set({
+      isBatchRunning: false,
+      isBatchCancelling: false,
+      batchCompleted,
+      batchFailedCount,
+    });
+
+    get().pushToast(batchFailedCount > 0 ? `완료되었습니다. 실패 ${batchFailedCount}개` : '파일 AI 정리가 완료되었습니다', batchFailedCount > 0 ? 'warning' : 'success');
+  },
+
+  handleBatchCancelled: ({ batchCompleted = get().batchCompleted, batchFailedCount = get().batchFailedCount }) => {
+    set({
+      isBatchRunning: false,
+      isBatchCancelling: false,
+      batchCompleted,
+      batchFailedCount,
+    });
+
+    get().pushToast(`${batchCompleted - batchFailedCount}개 파일이 저장되었습니다`, 'success');
+  },
+
+  handleBatchError: (message = '일괄 생성을 완료하지 못했습니다') => {
+    set({
+      isBatchRunning: false,
+      isBatchCancelling: false,
+    });
+    get().pushToast(message, 'error');
+  },
+
+  pushToast: (message, type) => {
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    set((state) => ({
+      toasts: [...state.toasts, { id, message, type }],
+    }));
+  },
+
+  dismissToast: (id) => {
+    set((state) => ({
+      toasts: state.toasts.filter((toast) => toast.id !== id),
+    }));
   },
 
   openRepository: () => postMessage('OPEN_REPOSITORY'),
@@ -531,6 +660,44 @@ export const useAppStore = create<AppState>((set, get) => ({
 
 function extractAuthors(commits: Commit[]): string[] {
   return [...new Set(commits.map((commit) => commit.author).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+}
+
+function simulateDemoBatchAISummary(): void {
+  const runNext = (index: number, completed: number, failed: number): void => {
+    const state = useAppStore.getState();
+
+    if (!state.isBatchRunning) {
+      return;
+    }
+
+    const file = state.changedFiles[index];
+
+    if (!file) {
+      state.handleBatchComplete({ batchCompleted: completed, batchFailedCount: failed });
+      return;
+    }
+
+    window.setTimeout(
+      () => {
+        const latest = useAppStore.getState();
+
+        if (!latest.isBatchRunning) {
+          return;
+        }
+
+        latest.handleBatchProgress({
+          batchCompleted: completed + 1,
+          batchFailedCount: failed,
+          completedFilePath: file.path,
+          hasSavedSummary: true,
+        });
+        runNext(index + 1, completed + 1, failed);
+      },
+      file.hasSavedSummary ? 120 : 420,
+    );
+  };
+
+  runNext(0, 0, 0);
 }
 
 function filterDemoCommits(state: FilterState): Commit[] {
