@@ -37,7 +37,7 @@ src/
     ├── types/
     │   └── commit.ts                 # Commit, FilterState, ScreenID, RouteTransitionDirection 타입
     ├── bridge/
-    │   └── vscodeApi.ts              # acquireVsCodeApi() 래퍼, postMessage 헬퍼
+    │   └── vscodeApi.ts              # acquireVsCodeApi() 래퍼, postMessage/Webview State 헬퍼
     ├── features/
     │   ├── F01/
     │   │   ├── S01_CommitListScreen.tsx
@@ -153,6 +153,19 @@ src/
 ---
 
 ## Communication Rules
+
+### Webview API 래퍼
+
+`src/webview/bridge/vscodeApi.ts`는 VSCode 런타임 API 접근을 한 곳으로 모은다. Webview에서 Extension Host로 요청을 보낼 때는 `postMessage()`를 사용하고, 웹뷰 재생성 후 복원해야 하는 최소 UI 상태는 `getWebviewState()` / `setWebviewState()`로 읽고 쓴다.
+
+```typescript
+export function postMessage(type: string, payload?: unknown): void;
+export function isVSCodeRuntime(): boolean;
+export function getWebviewState<T>(): T | undefined;
+export function setWebviewState<T>(state: T): void;
+```
+
+브라우저 개발 모드에서는 `acquireVsCodeApi()`가 없으므로 `isVSCodeRuntime()`이 false가 되고, Webview State 읽기/쓰기는 no-op으로 동작한다.
 
 ### Extension ↔ Webview 메시지 프로토콜
 

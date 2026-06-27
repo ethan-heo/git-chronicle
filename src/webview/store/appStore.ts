@@ -1,10 +1,20 @@
 import { create } from 'zustand';
 import type { ToastItem, ToastType } from '../shared/components/Toast';
-import { isVSCodeRuntime, postMessage } from '../bridge/vscodeApi';
+import { getWebviewState, isVSCodeRuntime, postMessage, setWebviewState } from '../bridge/vscodeApi';
 import type { AIProviderName, ChangedFile, Commit, DependencyEdge, FilterState, RouteTransitionDirection, ScreenID, SummaryMode } from '../types/commit';
 
 const PAGE_SIZE = 200;
 const DEMO_PAGE_SIZE = 12;
+const DEFAULT_FILTER_STATE: FilterState = {
+  filterDateStart: null,
+  filterDateEnd: null,
+  filterAuthor: null,
+  filterKeyword: '',
+};
+
+interface PersistedWebviewState {
+  filter?: Partial<FilterState>;
+}
 
 interface CommitsLoadedPayload {
   commits: Commit[];
@@ -94,6 +104,11 @@ interface AppState extends FilterState {
   handleDependenciesLoadFailed: (message?: string) => void;
 }
 
+const initialFilterState: FilterState = {
+  ...DEFAULT_FILTER_STATE,
+  ...getWebviewState<PersistedWebviewState>()?.filter,
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   commitList: [],
   authorList: [],
@@ -133,10 +148,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   commitLoadError: null,
   loadMoreError: null,
   hasLoadedCommits: false,
-  filterDateStart: null,
-  filterDateEnd: null,
-  filterAuthor: null,
-  filterKeyword: '',
+  ...initialFilterState,
 
   loadCommits: (reset = false) => {
     const state = get();
@@ -226,16 +238,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setFilter: (filter) => {
     set(filter);
+    persistFilterState(get());
     get().loadCommits(true);
   },
 
   clearFilters: () => {
-    set({
-      filterDateStart: null,
-      filterDateEnd: null,
-      filterAuthor: null,
-      filterKeyword: '',
-    });
+    set(DEFAULT_FILTER_STATE);
+    persistFilterState(get());
     get().loadCommits(true);
   },
 
@@ -668,6 +677,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 }));
+
+function persistFilterState(state: FilterState): void {
+  setWebviewState<PersistedWebviewState>({
+    filter: {
+      filterDateStart: state.filterDateStart,
+      filterDateEnd: state.filterDateEnd,
+      filterAuthor: state.filterAuthor,
+      filterKeyword: state.filterKeyword,
+    },
+  });
+}
 
 function extractAuthors(commits: Commit[]): string[] {
   return [...new Set(commits.map((commit) => commit.author).filter(Boolean))].sort((a, b) => a.localeCompare(b));

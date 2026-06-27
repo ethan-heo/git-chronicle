@@ -47,8 +47,16 @@ describe('summaryFileService', () => {
 #### Zustand 스토어 액션
 
 ```typescript
-// useAppStore.test.ts
+// appStorePersistence.test.ts
 describe('useAppStore', () => {
+  it('VSCode Webview State에서 필터 초기값을 복원한다', () => {
+    // window.acquireVsCodeApi().getState() mock
+  });
+
+  it('setFilter / clearFilters 호출 시 필터 값을 Webview State에 저장한다', () => {
+    // window.acquireVsCodeApi().setState() mock
+  });
+
   it('selectCommit 시 selectedFile이 초기화된다', () => {
     const { selectCommit } = useAppStore.getState();
     selectCommit(mockCommit);

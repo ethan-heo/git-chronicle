@@ -46,6 +46,7 @@ CommitFilterPanel
 | 키워드 필터 | `--grep` git 옵션. 입력 후 300ms 디바운싱 후 콜백 호출 |
 | 조합 방식 | AND 고정 (세 조건 동시 적용) |
 | 초기화 | 각 필드 독립적으로 초기화 가능 |
+| 상태 복원 | 필터 변경/초기화 시 Zustand 액션이 VSCode Webview State에 필터 값만 동기화 |
 
 ---
 
@@ -56,6 +57,18 @@ CommitFilterPanel
 | `idle` | 필터 미적용 | 기본 입력창 표시 |
 | `active` | 하나 이상 필터 적용 | 해당 필드 강조 표시 |
 | `collapsed` | 좁은 패널 너비 (< 320px) | 토글 버튼으로 접힘/펼침 |
+
+---
+
+## Persistence
+
+`CommitFilterPanel` 자체는 저장소 API를 직접 호출하지 않는다. S01에서 전달받은 `onFilterChange` / `onClearFilters` 콜백이 `useAppStore`의 `setFilter` / `clearFilters`로 연결되고, 스토어 액션이 다음 작업을 함께 수행한다.
+
+- Zustand 필터 상태 업데이트
+- VSCode Webview State에 `{ filter }` 저장
+- 커밋 목록 첫 페이지부터 재로드
+
+따라서 패널 숨김으로 Webview 런타임이 재생성되어도 S01 마운트 시 복원된 필터 값이 입력 UI에 다시 표시된다.
 
 ---
 
