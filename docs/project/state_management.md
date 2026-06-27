@@ -24,6 +24,8 @@ Git Author Explorer의 상태는 두 레이어에 분리하여 관리한다.
 interface AppState {
   // === Navigation ===
   currentScreen: ScreenID;
+  previousScreen: ScreenID | null;
+  transitionDirection: RouteTransitionDirection;
 
   // === Git Repository ===
   isGitRepoDetected: boolean;
@@ -87,6 +89,7 @@ interface AppState {
   selectCommit: (commit: Commit) => void;
   goToCommitList: () => void;
   goToHistoryView: () => void;
+  goBackFromDetail: () => void;
   setFilter: (filter: Partial<FilterState>) => void;
   clearFilters: () => void;
   openRepository: () => void;
@@ -94,6 +97,7 @@ interface AppState {
   selectFileForAI: (file: ChangedFile) => void;
   goToCommitAISummary: () => void;
   goToCanvasView: () => void;
+  goToSettingsView: () => void;
   startBatchAISummary: () => void;
   cancelBatchAISummary: () => void;
   handleBatchStarted: (payload: { batchTotal: number }) => void;
@@ -160,6 +164,18 @@ handleCommitsLoaded: ({ commits, page, pageSize }) => set((state) => {
 }),
 ```
 
+### 화면 전환 상태
+
+화면 전환은 `currentScreen`, `previousScreen`, `transitionDirection` 세 필드로 관리한다.
+
+| 상태 | 설명 |
+|------|------|
+| `currentScreen` | 현재 active 화면 |
+| `previousScreen` | S03/S04/S06에서 뒤로가기 대상 화면. S05에서 S03/S04로 진입하면 `"S05"`를 저장한다. |
+| `transitionDirection` | 라우트 전환 애니메이션 방향. `'forward'` 또는 `'back'` |
+
+`App.tsx`는 `transitionDirection`을 읽어 incoming/outgoing 라우트 슬롯에 CSS animation class를 적용한다. `transitionDirection`은 화면 전환 동작의 시각적 방향만 표현하며, 데이터 로딩 상태를 직접 변경하지 않는다.
+
 ### selectCommit
 
 커밋 선택 시 선택 커밋을 저장하고 S02로 전환한다.
@@ -172,10 +188,21 @@ selectCommit: (commit) => set({
   changedFilesError: null,
   isLoadingChangedFiles: false,
   currentScreen: 'S02',
+  previousScreen: null,
+  transitionDirection: 'forward',
 }),
 
-goToCommitList: () => set({ currentScreen: 'S01' }),
-goToHistoryView: () => set({ currentScreen: 'S02' }),
+goToCommitList: () => set({
+  currentScreen: 'S01',
+  previousScreen: null,
+  transitionDirection: 'back',
+}),
+
+goToHistoryView: () => set({
+  currentScreen: 'S02',
+  previousScreen: null,
+  transitionDirection: 'back',
+}),
 ```
 
 현재 구현은 `selectCommit`에서 `selectedFile`, `changedFiles`, `changedFilesError`, `isLoadingChangedFiles`, `dependencyEdges`, `dependenciesError`, `currentSummaryContent`, `isLoadingSummary`, `isGeneratingSummary`, `summaryError`, `summarySavedPath`, `hasCurrentSavedSummary`, `isSummaryTokenLimitExceeded`를 함께 초기화한다.
@@ -213,6 +240,7 @@ selectFileForCode: (file) => set({
   selectedFile: file,
   previousScreen: currentScreen === 'S05' ? 'S05' : 'S02',
   currentScreen: 'S03',
+  transitionDirection: 'forward',
 }),
 
 selectFileForAI: (file) => set({
@@ -220,6 +248,7 @@ selectFileForAI: (file) => set({
   summaryMode: 'file',
   previousScreen: currentScreen === 'S05' ? 'S05' : 'S02',
   currentScreen: 'S04',
+  transitionDirection: 'forward',
 }),
 
 goToCommitAISummary: () => set({
@@ -227,27 +256,33 @@ goToCommitAISummary: () => set({
   summaryMode: 'commit',
   previousScreen: 'S02',
   currentScreen: 'S04',
+  transitionDirection: 'forward',
 }),
 
 goToCanvasView: () => set({
   currentScreen: 'S05',
   previousScreen: 'S02',
+  transitionDirection: 'forward',
 }),
 
 goBackFromDetail: () => set({
   currentScreen: previousScreen ?? (currentScreen === 'S06' ? 'S01' : 'S02'),
   previousScreen: null,
+  transitionDirection: 'back',
 }),
 
 goToSettingsView: () => set((state) => ({
   currentScreen: 'S06',
   previousScreen: state.currentScreen === 'S06' ? state.previousScreen : state.currentScreen,
+  transitionDirection: 'forward',
 })),
 ```
 
 S03 자체의 diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 읽기 전용 화면의 로컬 상태로 관리한다. Extension Host 메시지는 `features/F03/S03_CodeViewerScreen.tsx`에서 직접 구독한다.
 
 S05 의존성 캔버스는 전역 상태의 `dependencyEdges`, `isLoadingDependencies`, `dependenciesError`를 사용한다. 변경 파일 로딩 중 S05로 진입하는 상황에 대비해 `hasLoadedChangedFiles`로 빈 커밋과 아직 로드 전 상태를 구분한다.
+
+전환 애니메이션 중 outgoing 화면도 잠시 mount되므로, 각 최상위 화면은 `shared/route/RouteSlotContext.tsx`의 `useRouteSlotActive()`를 확인한다. inactive 슬롯에서는 초기 데이터 로딩 effect와 Extension 메시지 listener를 실행하지 않는다.
 
 ### F05 AI 정리 액션
 

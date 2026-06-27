@@ -1,6 +1,7 @@
 import { ReactFlowProvider } from '@xyflow/react';
 import { useCallback, useEffect, type FC } from 'react';
 import { TopHeader } from '../../shared/components';
+import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import type { ChangedFile, DependencyEdge } from '../../types/commit';
 import { DependencyGraph } from './DependencyGraph';
@@ -26,14 +27,23 @@ export const S05DependencyCanvasScreen: FC = () => {
     handleDependenciesLoaded,
     handleDependenciesLoadFailed,
   } = useAppStore();
+  const isRouteSlotActive = useRouteSlotActive();
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     if (!hasLoadedChangedFiles && changedFiles.length === 0 && !changedFilesError) {
       loadChangedFiles();
     }
-  }, [changedFiles.length, changedFilesError, hasLoadedChangedFiles, loadChangedFiles, selectedCommit?.hash]);
+  }, [changedFiles.length, changedFilesError, hasLoadedChangedFiles, isRouteSlotActive, loadChangedFiles, selectedCommit?.hash]);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     const handler = (
       event: MessageEvent<{
         type: string;
@@ -67,13 +77,17 @@ export const S05DependencyCanvasScreen: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [handleChangedFilesLoaded, handleChangedFilesLoadFailed, handleDependenciesLoaded, handleDependenciesLoadFailed]);
+  }, [handleChangedFilesLoaded, handleChangedFilesLoadFailed, handleDependenciesLoaded, handleDependenciesLoadFailed, isRouteSlotActive]);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     if (changedFiles.length > 0 && !isLoadingChangedFiles && !changedFilesError) {
       loadDependencies();
     }
-  }, [changedFiles.length, changedFilesError, isLoadingChangedFiles, loadDependencies]);
+  }, [changedFiles.length, changedFilesError, isLoadingChangedFiles, isRouteSlotActive, loadDependencies]);
 
   const retry = useCallback(() => {
     if (changedFilesError || changedFiles.length === 0) {

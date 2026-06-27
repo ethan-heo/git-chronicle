@@ -1,6 +1,7 @@
 import { useEffect, useState, type FC } from 'react';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { TopHeader } from '../../shared/components';
+import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import type { AIProviderName } from '../../types/commit';
 import { AIProviderSection } from './AIProviderSection';
@@ -22,17 +23,26 @@ export const S06SettingsScreen: FC = () => {
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
   const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const setAISummarySettings = useAppStore((state) => state.setAISummarySettings);
+  const isRouteSlotActive = useRouteSlotActive();
   const [registeringProvider, setRegisteringProvider] = useState<AIProviderName | null>(null);
   const [providerErrors, setProviderErrors] = useState<ProviderErrors>({});
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     if (isVSCodeRuntime()) {
       postMessage('FETCH_AI_SUMMARY_SETTINGS');
     }
-  }, []);
+  }, [isRouteSlotActive]);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     const handler = (event: MessageEvent<{ type: string; payload?: AISettingsPayload }>): void => {
       const { type, payload } = event.data;
 
@@ -75,7 +85,7 @@ export const S06SettingsScreen: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [setAISummarySettings]);
+  }, [isRouteSlotActive, setAISummarySettings]);
 
   const handleProviderClick = (providerName: AIProviderName): void => {
     if (registeringProvider) {

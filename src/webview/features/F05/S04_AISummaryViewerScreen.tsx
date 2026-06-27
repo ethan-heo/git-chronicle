@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { TopHeader } from '../../shared/components';
+import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import type { AIProviderName } from '../../types/commit';
 import { AISummaryViewer } from './AISummaryViewer';
@@ -59,6 +60,7 @@ export const S04AISummaryViewerScreen: FC = () => {
   const loadSavedAISummary = useAppStore((state) => state.loadSavedAISummary);
   const failAISummary = useAppStore((state) => state.failAISummary);
   const setSummaryTokenWarning = useAppStore((state) => state.setSummaryTokenWarning);
+  const isRouteSlotActive = useRouteSlotActive();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTokenWarningDismissed, setIsTokenWarningDismissed] = useState(false);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(!isVSCodeRuntime());
@@ -79,7 +81,7 @@ export const S04AISummaryViewerScreen: FC = () => {
 
   const startSummary = useCallback(
     (forceRegenerate = false): void => {
-      if (!selectedCommit || !activeAIProvider || !savePath) {
+      if (!isRouteSlotActive || !selectedCommit || !activeAIProvider || !savePath) {
         return;
       }
 
@@ -127,6 +129,7 @@ export const S04AISummaryViewerScreen: FC = () => {
       activeAIProvider,
       appendAISummaryChunk,
       completeAISummary,
+      isRouteSlotActive,
       savePath,
       selectedCommit,
       selectedFile,
@@ -138,14 +141,22 @@ export const S04AISummaryViewerScreen: FC = () => {
   );
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     if (!isVSCodeRuntime()) {
       return;
     }
 
     postMessage('FETCH_AI_SUMMARY_SETTINGS');
-  }, []);
+  }, [isRouteSlotActive]);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     const handler = (
       event: MessageEvent<{
         type: string;
@@ -218,6 +229,7 @@ export const S04AISummaryViewerScreen: FC = () => {
     completeAISummary,
     failAISummary,
     hasCurrentSavedSummary,
+    isRouteSlotActive,
     loadSavedAISummary,
     setAISummarySettings,
     setSummaryTokenWarning,
@@ -225,6 +237,10 @@ export const S04AISummaryViewerScreen: FC = () => {
   ]);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     if (!hasLoadedSettings || !canStartSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) {
       return;
     }
@@ -246,6 +262,7 @@ export const S04AISummaryViewerScreen: FC = () => {
     hasLoadedSettings,
     isLoadingSummary,
     isGeneratingSummary,
+    isRouteSlotActive,
     loadSavedAISummary,
     savePath,
     selectedCommit?.shortHash,

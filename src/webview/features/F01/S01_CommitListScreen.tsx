@@ -1,5 +1,6 @@
 import { useCallback, useEffect, type FC } from 'react';
 import { TopHeader } from '../../shared/components';
+import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import type { Commit } from '../../types/commit';
 import { CommitFilterPanel } from './CommitFilterPanel';
@@ -26,13 +27,22 @@ export const S01CommitListScreen: FC = () => {
     goToSettingsView,
     openRepository,
   } = useAppStore();
+  const isRouteSlotActive = useRouteSlotActive();
   const isFilterActive = Boolean(filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim());
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     loadCommits(true);
-  }, [loadCommits]);
+  }, [isRouteSlotActive, loadCommits]);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     const handler = (
       event: MessageEvent<{
         type: string;
@@ -68,7 +78,7 @@ export const S01CommitListScreen: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [isRouteSlotActive]);
 
   const retry = useCallback(() => loadCommits(commitList.length === 0), [commitList.length, loadCommits]);
 

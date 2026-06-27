@@ -31,11 +31,11 @@ src/
 │
 └── webview/                          # Webview SPA (React + TypeScript)
     ├── main.tsx                      # React 진입점 (ReactDOM.createRoot)
-    ├── App.tsx                       # 화면 라우터 (currentScreen 기반 조건부 렌더링)
+    ├── App.tsx                       # 화면 라우터 (currentScreen 기반 라우트 슬롯 렌더링)
     ├── store/
     │   └── appStore.ts               # Zustand 전역 상태 스토어
     ├── types/
-    │   └── commit.ts                 # Commit, FilterState, ScreenID 타입
+    │   └── commit.ts                 # Commit, FilterState, ScreenID, RouteTransitionDirection 타입
     ├── bridge/
     │   └── vscodeApi.ts              # acquireVsCodeApi() 래퍼, postMessage 헬퍼
     ├── features/
@@ -113,6 +113,8 @@ src/
         │   └── ActionButton.tsx
         ├── hooks/
         │   └── useVSCodeMessage.ts   # Extension → Webview 메시지 구독 훅
+        ├── route/
+        │   └── RouteSlotContext.tsx  # active/inactive 라우트 슬롯 컨텍스트
         └── utils/
             └── fileStatus.ts         # 파일 상태 코드(A/M/D/R) 레이블 변환
 ```
@@ -138,6 +140,15 @@ src/
 - 비즈니스 로직(git 호출, AI 실행, 파일 I/O)은 Extension Host에서만 실행한다.
 - Webview 커스텀 훅(`useXxx.ts`)은 상태 관리와 postMessage 전송만 담당한다.
 - `child_process`, `fs`, `path` 등 Node.js 전용 모듈은 Extension Host 코드에서만 import한다.
+
+### Route Slot Rule (화면 전환 슬롯 규칙)
+
+- Webview 라우팅은 `react-router` 없이 Zustand의 `currentScreen`, `previousScreen`, `transitionDirection`으로 관리한다.
+- `App.tsx`는 화면 전환 시 incoming 화면과 outgoing 화면을 `.screen-container` 내부의 두 `.screen-slot`으로 200ms 동안 동시에 렌더링한다.
+- `transitionDirection = 'forward'`이면 incoming 화면은 오른쪽에서 들어오고 outgoing 화면은 왼쪽으로 나간다. `transitionDirection = 'back'`이면 incoming 화면은 왼쪽에서 들어오고 outgoing 화면은 오른쪽으로 나간다.
+- outgoing 슬롯은 `aria-hidden="true"`와 `RouteSlotProvider isActive={false}`를 사용한다. 최상위 화면 컴포넌트는 `useRouteSlotActive()`가 false일 때 초기 데이터 로딩 effect와 Extension 메시지 listener 등록을 건너뛴다.
+- 라우트 전환 animation은 `styles.css`의 `--gae-motion-duration-base`와 `App.tsx`의 `ROUTE_TRANSITION_DURATION_MS`가 같은 200ms 값으로 동작한다.
+- `BatchProgressBar`와 `ToastContainer`는 라우트 슬롯 밖에 렌더링해 화면 전환 중에도 전역 피드백을 유지한다.
 
 ---
 

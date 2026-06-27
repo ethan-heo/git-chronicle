@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { ToastItem, ToastType } from '../shared/components/Toast';
 import { isVSCodeRuntime, postMessage } from '../bridge/vscodeApi';
-import type { AIProviderName, ChangedFile, Commit, DependencyEdge, FilterState, ScreenID, SummaryMode } from '../types/commit';
+import type { AIProviderName, ChangedFile, Commit, DependencyEdge, FilterState, RouteTransitionDirection, ScreenID, SummaryMode } from '../types/commit';
 
 const PAGE_SIZE = 200;
 const DEMO_PAGE_SIZE = 12;
@@ -47,6 +47,7 @@ interface AppState extends FilterState {
   isGitRepoDetected: boolean;
   currentScreen: ScreenID;
   previousScreen: ScreenID | null;
+  transitionDirection: RouteTransitionDirection;
   commitLoadError: string | null;
   loadMoreError: string | null;
   hasLoadedCommits: boolean;
@@ -128,6 +129,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isGitRepoDetected: true,
   currentScreen: 'S01',
   previousScreen: null,
+  transitionDirection: 'forward',
   commitLoadError: null,
   loadMoreError: null,
   hasLoadedCommits: false,
@@ -257,6 +259,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       isSummaryTokenLimitExceeded: false,
       currentScreen: 'S02',
       previousScreen: null,
+      transitionDirection: 'forward',
     });
   },
 
@@ -264,6 +267,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       currentScreen: 'S01',
       previousScreen: null,
+      transitionDirection: 'back',
     });
   },
 
@@ -271,6 +275,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       currentScreen: 'S02',
       previousScreen: null,
+      transitionDirection: 'back',
     });
   },
 
@@ -281,6 +286,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       currentScreen: previousScreen,
       previousScreen: null,
+      transitionDirection: 'back',
     });
   },
 
@@ -291,6 +297,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       selectedFile: file,
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S03',
+      transitionDirection: 'forward',
     });
   },
 
@@ -309,6 +316,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       isSummaryTokenLimitExceeded: false,
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S04',
+      transitionDirection: 'forward',
     });
   },
 
@@ -325,6 +333,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       isSummaryTokenLimitExceeded: false,
       previousScreen: 'S02',
       currentScreen: 'S04',
+      transitionDirection: 'forward',
     });
   },
 
@@ -332,6 +341,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       currentScreen: 'S05',
       previousScreen: 'S02',
+      transitionDirection: 'forward',
     });
   },
 
@@ -339,6 +349,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       currentScreen: 'S06',
       previousScreen: state.currentScreen === 'S06' ? state.previousScreen : state.currentScreen,
+      transitionDirection: 'forward',
     }));
   },
 

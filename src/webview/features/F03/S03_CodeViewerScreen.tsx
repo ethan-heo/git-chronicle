@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FC } from 'react';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { TopHeader } from '../../shared/components';
+import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { DiffViewer } from './DiffViewer';
 import { parseDiff } from './parseDiff';
@@ -27,6 +28,7 @@ export const S03CodeViewerScreen: FC = () => {
   const selectedFile = useAppStore((state) => state.selectedFile);
   const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const goToSettingsView = useAppStore((state) => state.goToSettingsView);
+  const isRouteSlotActive = useRouteSlotActive();
   const [diffState, setDiffState] = useState<FileDiffState>(initialDiffState);
 
   const applyLoadedDiff = useCallback(async (payload: FileDiffPayload, filePath: string): Promise<void> => {
@@ -52,7 +54,7 @@ export const S03CodeViewerScreen: FC = () => {
   }, []);
 
   const loadFileDiff = useCallback((): void => {
-    if (!selectedCommit || !selectedFile) {
+    if (!isRouteSlotActive || !selectedCommit || !selectedFile) {
       return;
     }
 
@@ -72,13 +74,17 @@ export const S03CodeViewerScreen: FC = () => {
       commitHash: selectedCommit.hash,
       filePath: selectedFile.path,
     });
-  }, [applyLoadedDiff, selectedCommit, selectedFile]);
+  }, [applyLoadedDiff, isRouteSlotActive, selectedCommit, selectedFile]);
 
   useEffect(() => {
     loadFileDiff();
   }, [loadFileDiff]);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     const handler = (
       event: MessageEvent<{
         type: string;
@@ -115,7 +121,7 @@ export const S03CodeViewerScreen: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [applyLoadedDiff, selectedFile]);
+  }, [applyLoadedDiff, isRouteSlotActive, selectedFile]);
 
   if (!selectedCommit || !selectedFile) {
     return null;

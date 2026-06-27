@@ -21,6 +21,15 @@
 - **결과:** 즉각적인 화면 전환 또는 액션 실행
 - **규칙:** 클릭 후 UI 피드백(로딩 스피너 또는 화면 전환)이 200ms 이내에 시작되어야 한다.
 
+### RouteTransition
+
+- **트리거:** `currentScreen` 변경
+- **적용 대상:** S01~S06 전체 화면 전환
+- **결과:** incoming 화면과 outgoing 화면을 200ms 동안 동시에 렌더링하고, `transitionDirection`에 따라 슬라이드 애니메이션 적용
+- **규칙:** forward 전환은 새 화면이 오른쪽에서 들어오고 이전 화면이 왼쪽으로 나간다. back 전환은 새 화면이 왼쪽에서 들어오고 이전 화면이 오른쪽으로 나간다.
+- **접근성:** `prefers-reduced-motion: reduce` 환경에서는 전환 animation을 제거한다.
+- **부수 효과:** outgoing 슬롯은 `RouteSlotProvider isActive={false}`로 렌더링하며, 데이터 로딩 effect와 Extension 메시지 listener를 실행하지 않는다.
+
 ### DoubleClick
 
 - **트리거:** 마우스 더블 클릭
@@ -99,3 +108,4 @@
 3. **진행 상태 표시:** 2초 이상 걸리는 작업(AI 정리 생성, 커밋 로드)은 반드시 `LoadingState`를 표시한다.
 4. **취소 가능성:** 일괄 생성처럼 오래 걸리는 작업은 항상 취소 수단을 제공한다.
 5. **비파괴 취소:** 취소 시 이미 완료된 결과는 항상 보존한다.
+6. **전환 중 안정성:** 화면 전환 애니메이션을 위해 outgoing 화면을 렌더링하더라도 네트워크성 요청, git 요청, AI 요청, 메시지 listener는 active 슬롯에서만 실행한다.

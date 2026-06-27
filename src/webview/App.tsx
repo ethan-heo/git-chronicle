@@ -1,4 +1,4 @@
-import { useEffect, type FC, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type FC, type ReactElement } from 'react';
 import { S01CommitListScreen } from './features/F01';
 import { S02HistoryViewScreen } from './features/F02';
 import { S03CodeViewerScreen } from './features/F03';
@@ -8,11 +8,15 @@ import { S06SettingsScreen } from './features/F06';
 import { BatchProgressBar } from './features/F08/BatchProgressBar';
 import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
+import { RouteSlotProvider } from './shared/route/RouteSlotContext';
 import { useAppStore } from './store/appStore';
-import type { AIProviderName, ScreenID } from './types/commit';
+import type { AIProviderName, RouteTransitionDirection, ScreenID } from './types/commit';
+
+const ROUTE_TRANSITION_DURATION_MS = 200;
 
 export const App: FC = () => {
   const currentScreen = useAppStore((state) => state.currentScreen);
+  const transitionDirection = useAppStore((state) => state.transitionDirection);
   const isBatchRunning = useAppStore((state) => state.isBatchRunning);
   const isBatchCancelling = useAppStore((state) => state.isBatchCancelling);
   const batchTotal = useAppStore((state) => state.batchTotal);
@@ -27,6 +31,11 @@ export const App: FC = () => {
   const handleBatchCancelled = useAppStore((state) => state.handleBatchCancelled);
   const handleBatchError = useAppStore((state) => state.handleBatchError);
   const dismissToast = useAppStore((state) => state.dismissToast);
+  const [outgoingScreen, setOutgoingScreen] = useState<{
+    screen: ScreenID;
+    direction: RouteTransitionDirection;
+  } | null>(null);
+  const previousScreenRef = useRef<ScreenID>(currentScreen);
 
   useEffect(() => {
     if (isVSCodeRuntime()) {
@@ -104,10 +113,37 @@ export const App: FC = () => {
     return () => window.removeEventListener('message', handler);
   }, [handleBatchCancelled, handleBatchCancelling, handleBatchComplete, handleBatchError, handleBatchProgress, handleBatchStarted, setAISummarySettings]);
 
+  useEffect(() => {
+    if (previousScreenRef.current === currentScreen) {
+      return;
+    }
+
+    setOutgoingScreen({
+      screen: previousScreenRef.current,
+      direction: transitionDirection,
+    });
+    previousScreenRef.current = currentScreen;
+
+    const timer = window.setTimeout(() => {
+      setOutgoingScreen(null);
+    }, ROUTE_TRANSITION_DURATION_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [currentScreen, transitionDirection]);
+
   return (
     <>
       <BatchProgressBar batchTotal={batchTotal} batchCompleted={batchCompleted} isBatchRunning={isBatchRunning} isCancelling={isBatchCancelling} onCancel={cancelBatchAISummary} />
-      {renderScreen(currentScreen)}
+      <div className="screen-container">
+        {outgoingScreen && (
+          <div className={`screen-slot screen-slot-exiting-${outgoingScreen.direction}`} aria-hidden="true">
+            <RouteSlotProvider isActive={false}>{renderScreen(outgoingScreen.screen)}</RouteSlotProvider>
+          </div>
+        )}
+        <div className={`screen-slot ${outgoingScreen ? `screen-slot-entering-${outgoingScreen.direction}` : ''}`}>
+          <RouteSlotProvider isActive>{renderScreen(currentScreen)}</RouteSlotProvider>
+        </div>
+      </div>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );

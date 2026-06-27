@@ -1,5 +1,6 @@
 import { useCallback, useEffect, type FC } from 'react';
 import { TopHeader } from '../../shared/components';
+import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import type { ChangedFile } from '../../types/commit';
 import { CommitActionBar } from './CommitActionBar';
@@ -23,12 +24,21 @@ export const S02HistoryViewScreen: FC = () => {
     handleChangedFilesLoaded,
     handleChangedFilesLoadFailed,
   } = useAppStore();
+  const isRouteSlotActive = useRouteSlotActive();
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     loadChangedFiles();
-  }, [loadChangedFiles, selectedCommit?.hash]);
+  }, [isRouteSlotActive, loadChangedFiles, selectedCommit?.hash]);
 
   useEffect(() => {
+    if (!isRouteSlotActive) {
+      return;
+    }
+
     const handler = (
       event: MessageEvent<{
         type: string;
@@ -51,7 +61,7 @@ export const S02HistoryViewScreen: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [handleChangedFilesLoaded, handleChangedFilesLoadFailed]);
+  }, [handleChangedFilesLoaded, handleChangedFilesLoadFailed, isRouteSlotActive]);
 
   const retry = useCallback(() => loadChangedFiles(), [loadChangedFiles]);
 

@@ -64,11 +64,11 @@ src/extension/
 ```
 src/webview/
 ├── main.tsx                          # ReactDOM.createRoot 진입점
-├── App.tsx                           # currentScreen에 따라 Screen 렌더링
+├── App.tsx                           # currentScreen에 따라 Screen 렌더링 + 라우트 전환 슬롯 관리
 ├── store/
 │   └── appStore.ts                   # Zustand 전역 스토어 (상태 + 액션 정의)
 ├── types/
-│   └── commit.ts                     # Commit, FilterState, ScreenID 타입
+│   └── commit.ts                     # Commit, FilterState, ScreenID, RouteTransitionDirection 타입
 ├── bridge/
 │   └── vscodeApi.ts                  # acquireVsCodeApi() 래퍼
 │       - postMessage(type, payload)
@@ -151,6 +151,8 @@ src/webview/
     ├── hooks/
     │   ├── useVSCodeMessage.ts       # Extension → Webview 메시지 구독
     │   └── useDebounce.ts            # 300ms 디바운싱 훅
+    ├── route/
+    │   └── RouteSlotContext.tsx      # active/inactive 라우트 슬롯 컨텍스트
     └── utils/
         ├── fileStatus.ts             # getStatusLabel(status) → 'A' | 'M' | 'D' | 'R'
         └── formatDate.ts             # ISO 8601 → 'YYYY.MM.DD' 포매터
