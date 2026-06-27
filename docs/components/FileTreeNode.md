@@ -11,7 +11,7 @@ interface FileTreeNodeProps {
   node: TreeNode;
   depth: number;               // 들여쓰기 깊이 (0부터 시작)
   savePath: string | null;     // 저장됨 뱃지 표시 여부 판단에 사용
-  commitHash: string;          // 저장됨 뱃지 판단 시 폴더명 생성에 사용
+  commitHash: string;          // 저장됨 뱃지 판단 시 커밋 해시 경로 확인에 사용
   onCodeView: (file: ChangedFile) => void;
   onAIView: (file: ChangedFile) => void;
 }

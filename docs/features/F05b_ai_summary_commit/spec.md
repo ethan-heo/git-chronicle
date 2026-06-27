@@ -40,7 +40,7 @@
 | 입력 | 커밋 내 전체 파일 diff 합산 |
 | 처리 | 설정된 AI CLI에 커밋 단위 프롬프트 + 전체 diff 전달 (`child_process.spawn` 스트리밍) |
 | 출력 | 마크다운 형식의 커밋 종합 요약 (스트리밍 타이핑 효과로 실시간 표시) |
-| 저장 | `{설정경로}/{폴더명}/_commit_summary.md` 로컬 저장 |
+| 저장 | `{설정경로}/{커밋해시}/_commit_summary.md` 로컬 저장 |
 | 기존 저장본 | 저장본이 존재하면 AI 호출 없이 파일을 즉시 표시 |
 | 재생성 | [재생성] 버튼 클릭 → 덮어쓰기 확인 다이얼로그 → 확인 시 동일 입력으로 재처리 |
 | 토큰 한계 초과 | "diff가 큽니다. AI가 일부를 생략할 수 있습니다" 안내 표시 후 그대로 호출 |
@@ -118,7 +118,7 @@ F05_AISummaryFile과 동일한 오류 정책을 따른다.
 | `activeAIProvider` | `AIProviderName \| null` | 전역 상태. 사용할 AI CLI 결정 |
 | `savePath` | `string \| null` | 전역 상태. 저장본 파일 위치 결정 |
 | simple-git diff (전체) | `string` | Extension Host에서 커밋 내 전체 파일 diff 합산 추출 |
-| 로컬 저장본 | `string` | `{savePath}/{폴더명}/_commit_summary.md` 파일 존재 시 즉시 읽어 표시 |
+| 로컬 저장본 | `string` | `{savePath}/{커밋해시}/_commit_summary.md` 파일 존재 시 즉시 읽어 표시 |
 
 ---
 
@@ -127,7 +127,7 @@ F05_AISummaryFile과 동일한 오류 정책을 따른다.
 | 출력 | 타입 | 설명 |
 |------|------|------|
 | `currentSummaryContent` | `string` | 전역 상태. AI 스트리밍 텍스트 누적 |
-| 저장 파일 | `.md` | `{savePath}/{커밋폴더명}/_commit_summary.md` 로컬 파일 생성 |
+| 저장 파일 | `.md` | `{savePath}/{커밋해시}/_commit_summary.md` 로컬 파일 생성 |
 
 ---
 

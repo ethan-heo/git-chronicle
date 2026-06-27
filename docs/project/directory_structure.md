@@ -151,7 +151,6 @@ src/webview/
     │   ├── useVSCodeMessage.ts       # Extension → Webview 메시지 구독
     │   └── useDebounce.ts            # 300ms 디바운싱 훅
     └── utils/
-        ├── folderName.ts             # getFolderName(message) → 파일시스템 안전 문자열
         ├── fileStatus.ts             # getStatusLabel(status) → 'A' | 'M' | 'D' | 'R'
         └── formatDate.ts             # ISO 8601 → 'YYYY.MM.DD' 포매터
 ```

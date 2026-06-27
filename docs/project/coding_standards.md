@@ -52,7 +52,7 @@ export const MyComponent: React.FC<MyComponentProps> = ({ value, onChange }) => 
 
 - 컴포넌트: PascalCase (`CommitFilterPanel`, `FileTreeNode`)
 - 훅: `use` 접두사 + PascalCase (`useCommitLog`, `useAISummaryFile`)
-- 유틸 함수: camelCase (`getFolderName`, `sanitizeFileName`)
+- 유틸 함수: camelCase (`formatDate`, `sanitizeFileName`)
 - 상수: UPPER_SNAKE_CASE (`DEBOUNCE_DELAY_MS`, `INITIAL_COMMIT_COUNT`)
 - CSS 클래스: kebab-case (`commit-list-item`, `file-tree-node`)
 

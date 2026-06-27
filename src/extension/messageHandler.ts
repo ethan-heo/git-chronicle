@@ -2,13 +2,13 @@ import * as vscode from 'vscode';
 import { streamAISummary } from './aiService';
 import type { AIProviderName } from './aiTypes';
 import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
-import { fetchChangedFiles, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
-import { buildFileSummaryPrompt } from './prompts';
-import { loadSummary, saveSummary } from './summaryFileService';
+import { fetchChangedFiles, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
+import { buildCommitSummaryPrompt, buildFileSummaryPrompt } from './prompts';
+import { loadCommitSummary, loadSummary, saveCommitSummary, saveSummary } from './summaryFileService';
 
 interface WebviewMessage {
   type: string;
-  payload?: FetchCommitsPayload | FetchChangedFilesPayload | FetchFileDiffPayload | AnalyzeDependenciesPayload | StartAISummaryFilePayload;
+  payload?: FetchCommitsPayload | FetchChangedFilesPayload | FetchFileDiffPayload | AnalyzeDependenciesPayload | StartAISummaryFilePayload | StartAISummaryCommitPayload;
 }
 
 interface FetchCommitsPayload {
@@ -42,7 +42,15 @@ interface StartAISummaryFilePayload {
   forceRegenerate?: boolean;
 }
 
-const TOKEN_LIMIT_CHARS = 12_000;
+interface StartAISummaryCommitPayload {
+  commitHash?: string;
+  provider?: AIProviderName | null;
+  savePath?: string | null;
+  forceRegenerate?: boolean;
+}
+
+const FILE_TOKEN_LIMIT_CHARS = 12_000;
+const COMMIT_TOKEN_LIMIT_CHARS = 20_000;
 
 export function registerMessageHandler(panel: vscode.WebviewPanel): void {
   panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
@@ -72,6 +80,9 @@ export function registerMessageHandler(panel: vscode.WebviewPanel): void {
         break;
       case 'START_AI_SUMMARY_FILE':
         await handleStartAISummaryFile(panel, message.payload as StartAISummaryFilePayload);
+        break;
+      case 'START_AI_SUMMARY_COMMIT':
+        await handleStartAISummaryCommit(panel, message.payload as StartAISummaryCommitPayload);
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
@@ -329,7 +340,7 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, payload: Sta
     await panel.webview.postMessage({
       type: 'AI_SUMMARY_TOKEN_WARNING',
       payload: {
-        isOverLimit: diff.rawDiff.length > TOKEN_LIMIT_CHARS,
+        isOverLimit: diff.rawDiff.length > FILE_TOKEN_LIMIT_CHARS,
       },
     });
 
@@ -357,6 +368,101 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, payload: Sta
       },
       onComplete: () => {
         const savedPath = saveSummary(savePath, payload.commitHash ?? '', payload.filePath ?? '', content);
+        void panel.webview.postMessage({
+          type: 'AI_SUMMARY_DONE',
+          payload: {
+            content,
+            savedPath,
+            provider,
+          },
+        });
+      },
+      onError: (message) => {
+        void postAISummaryError(panel, message);
+      },
+    });
+  } catch (error) {
+    await postAISummaryError(panel, error instanceof Error ? error.message : '생성에 실패했습니다');
+  }
+}
+
+async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, payload: StartAISummaryCommitPayload = {}): Promise<void> {
+  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const configuration = vscode.workspace.getConfiguration('gitAuthorExplorer');
+  const provider = payload.provider ?? configuration.get<AIProviderName>('activeAIProvider') ?? null;
+  const savePath = payload.savePath ?? configuration.get<string>('savePath') ?? null;
+
+  if (!repoPath) {
+    await postAISummaryError(panel, 'Git 저장소가 감지되지 않았습니다');
+    return;
+  }
+
+  if (!payload.commitHash) {
+    await postAISummaryError(panel, '선택된 커밋이 없습니다');
+    return;
+  }
+
+  if (!provider) {
+    await postAISummaryError(panel, 'AI가 설정되지 않았습니다');
+    return;
+  }
+
+  if (!savePath) {
+    await postAISummaryError(panel, '저장 경로를 먼저 설정해주세요');
+    return;
+  }
+
+  try {
+    if (!payload.forceRegenerate) {
+      const savedSummary = loadCommitSummary(savePath, payload.commitHash);
+
+      if (savedSummary) {
+        await panel.webview.postMessage({
+          type: 'AI_SUMMARY_LOADED',
+          payload: {
+            content: savedSummary.content,
+            savedPath: savedSummary.savedPath,
+            provider,
+            fromSaved: true,
+          },
+        });
+        return;
+      }
+    }
+
+    const diff = await fetchCommitFullDiff(repoPath, payload.commitHash);
+
+    await panel.webview.postMessage({
+      type: 'AI_SUMMARY_TOKEN_WARNING',
+      payload: {
+        isOverLimit: diff.length > COMMIT_TOKEN_LIMIT_CHARS,
+      },
+    });
+
+    await panel.webview.postMessage({
+      type: 'AI_SUMMARY_STARTED',
+      payload: {
+        provider,
+      },
+    });
+
+    const prompt = buildCommitSummaryPrompt(payload.commitHash, diff);
+    let content = '';
+
+    streamAISummary({
+      provider,
+      prompt,
+      onChunk: (chunk) => {
+        content += chunk;
+        void panel.webview.postMessage({
+          type: 'AI_SUMMARY_CHUNK',
+          payload: {
+            chunk,
+          },
+        });
+      },
+      onComplete: () => {
+        const savedPath = saveCommitSummary(savePath, payload.commitHash ?? '', content);
         void panel.webview.postMessage({
           type: 'AI_SUMMARY_DONE',
           payload: {

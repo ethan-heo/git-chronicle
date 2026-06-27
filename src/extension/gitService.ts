@@ -132,6 +132,17 @@ export async function fetchFileDiff(repoPath: string, commitHash: string, filePa
   };
 }
 
+export async function fetchCommitFullDiff(repoPath: string, commitHash: string): Promise<string> {
+  const git = simpleGit(repoPath);
+  const isRepo = await git.checkIsRepo();
+
+  if (!isRepo) {
+    throw new GitRepositoryNotFoundError(repoPath);
+  }
+
+  return git.show([commitHash, '--stat', '-p', '--find-renames', '--unified=3']);
+}
+
 function parseChangedFileLine(line: string, commitHash: string, savePath: string | null): ChangedFile | null {
   const trimmed = line.trim();
 

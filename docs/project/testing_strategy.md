@@ -20,24 +20,17 @@ Git Author Explorer의 테스트는 세 계층으로 구분한다.
 
 ### 대상
 
-#### 유틸 함수 (`src/webview/shared/utils/`)
+#### Extension 서비스 함수 (`src/extension/`)
 
 ```typescript
-// folderName.test.ts
-describe('getFolderName', () => {
-  it('커밋 메시지 앞 50자만 사용한다', () => {
-    const long = 'a'.repeat(60);
-    expect(getFolderName(long)).toHaveLength(50);
+// summaryFileService.test.ts
+describe('summaryFileService', () => {
+  it('파일 단위 AI 정리는 커밋 해시 폴더 아래 파일 경로 기반 md로 저장한다', () => {
+    expect(getSummaryFilePath('/tmp/gae', 'abc123', 'src/App.tsx')).toBe('/tmp/gae/abc123/src__App.tsx.md');
   });
 
-  it('파일시스템 불가 문자를 _로 치환한다', () => {
-    expect(getFolderName('fix: resolve /path/issue')).toBe('fix_ resolve _path_issue');
-  });
-
-  it('모든 금지 문자(/ \\ : * ? " < > |)를 치환한다', () => {
-    const input = '/:*?"<>|\\';
-    const result = getFolderName(input);
-    expect(result).not.toMatch(/[\/\\:*?"<>|]/);
+  it('커밋 단위 AI 정리는 커밋 해시 폴더 아래 _commit_summary.md로 저장한다', () => {
+    expect(getCommitSummaryFilePath('/tmp/gae', 'abc123')).toBe('/tmp/gae/abc123/_commit_summary.md');
   });
 });
 ```

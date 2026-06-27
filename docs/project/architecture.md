@@ -118,7 +118,6 @@ src/
         ├── hooks/
         │   └── useVSCodeMessage.ts   # Extension → Webview 메시지 구독 훅
         └── utils/
-            ├── folderName.ts         # 커밋 메시지 → 폴더명 변환 (50자 + 특수문자 치환)
             └── fileStatus.ts         # 파일 상태 코드(A/M/D/R) 레이블 변환
 ```
 
@@ -161,7 +160,7 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_FILE_DIFF'; payload: { commitHash: string; filePath: string } }
   | { type: 'FETCH_AI_SUMMARY_SETTINGS' }
   | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; filePath: string; provider?: AIProviderName | null; savePath?: string | null; forceRegenerate?: boolean } }
-  | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string } }
+  | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string; provider?: AIProviderName | null; savePath?: string | null; forceRegenerate?: boolean } }
   | { type: 'START_BATCH_AI_SUMMARY'; payload: { commitHash: string; files: string[] } }
   | { type: 'CANCEL_BATCH_AI_SUMMARY' }
   | { type: 'LOAD_DEPENDENCY_GRAPH'; payload: { commitHash: string } }
@@ -203,7 +202,7 @@ type ExtensionToWebviewMessage =
 
 - `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
 - 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록과 F02 변경 파일 트리용 데모 데이터를 사용해 UI를 확인할 수 있게 한다.
-- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF`, F05가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
+- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF`, F05/F05b가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` / `START_AI_SUMMARY_COMMIT` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
 
 ### child_process (Extension Host 전용)
 
@@ -230,6 +229,26 @@ Extension Host (messageHandler.ts)
                  └─ aiService.streamAISummary(provider, prompt)
                       ├─ [stdout chunk] → postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } })
                       └─ [close]        → summaryFileService.saveSummary(...)
+                                          → postMessage({ type: 'AI_SUMMARY_DONE', payload: { content, savedPath, provider } })
+```
+
+## Data Flow Example: AI 정리 커밋 단위 생성
+
+```
+Webview (F05b_AISummaryCommit)
+  └─ [커밋 AI 정리 클릭]
+       └─ postMessage({ type: 'START_AI_SUMMARY_COMMIT', payload: { commitHash, provider, savePath } })
+            ↓
+Extension Host (messageHandler.ts)
+  └─ summaryFileService.loadCommitSummary(savePath, commitHash)
+       ├─ [존재 시] → postMessage({ type: 'AI_SUMMARY_LOADED', payload: { content, savedPath, provider, fromSaved: true } })
+       └─ [없을 시]
+            └─ gitService.fetchCommitFullDiff(repoPath, commitHash)
+                 ├─ postMessage({ type: 'AI_SUMMARY_TOKEN_WARNING', payload: { isOverLimit } })
+                 ├─ postMessage({ type: 'AI_SUMMARY_STARTED', payload: { provider } })
+                 └─ aiService.streamAISummary(provider, prompt)
+                      ├─ [stdout chunk] → postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } })
+                      └─ [close]        → summaryFileService.saveCommitSummary(...)
                                           → postMessage({ type: 'AI_SUMMARY_DONE', payload: { content, savedPath, provider } })
 ```
 

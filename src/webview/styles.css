@@ -1516,13 +1516,30 @@ button:focus-visible,
   background: var(--gae-color-surface-secondary);
 }
 
-.ai-summary-source-tag {
+.ai-summary-source-group {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--gae-spacing-sm);
+}
+
+.ai-summary-source-tag,
+.ai-summary-saved-path {
   min-width: 0;
   overflow: hidden;
   color: var(--gae-color-text-secondary);
   font-size: var(--gae-font-size-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ai-summary-source-tag {
+  flex-shrink: 0;
+}
+
+.ai-summary-saved-path {
+  font-family: var(--gae-font-family-mono);
+  direction: rtl;
 }
 
 .ai-summary-regenerate-button {

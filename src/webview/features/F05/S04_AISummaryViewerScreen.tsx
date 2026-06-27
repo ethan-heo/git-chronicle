@@ -22,6 +22,20 @@ const DEMO_SUMMARY = `### 한 줄 요약
 ### 기술적 판단 근거
 scroll 대신 IntersectionObserver를 택한 것은 메인 스레드 부하를 줄이려는 의도로 추정됨.`;
 
+const DEMO_COMMIT_SUMMARY = `### 한 줄 요약
+무한 스크롤 로직을 옵저버 기반으로 전환하고 관련 훅과 테스트를 정리한 커밋.
+
+### 변경 목적
+**성능 개선 / 리팩터링.** 스크롤 이벤트의 동기 실행으로 인한 프레임 드랍을 해소하기 위해 무한 스크롤 구현 전반을 IntersectionObserver로 통일한 것으로 보임.
+
+### 주요 변경 파일 및 포인트
+- useInfiniteScroll.ts: 스크롤 핸들러 대신 IntersectionObserver 기반 감시 로직으로 재작성
+- CommitList.tsx: 리스트 하단 센티넬 요소를 렌더링하도록 구조 수정
+- useInfiniteScroll.test.ts: 옵저버 모킹 방식으로 테스트 갱신
+
+### 기술적 판단 근거
+훅 삭제와 신규 구현을 한 커밋에 묶은 것은 동작 동등성을 보장한 채 교체를 끝내려는 의도로 추정됨.`;
+
 export const S04AISummaryViewerScreen: FC = () => {
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const selectedFile = useAppStore((state) => state.selectedFile);
@@ -49,7 +63,7 @@ export const S04AISummaryViewerScreen: FC = () => {
   const [isTokenWarningDismissed, setIsTokenWarningDismissed] = useState(false);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(!isVSCodeRuntime());
 
-  const canStartFileSummary = summaryMode === 'file' && Boolean(selectedCommit && selectedFile && activeAIProvider && savePath);
+  const canStartSummary = Boolean(selectedCommit && activeAIProvider && savePath && (summaryMode === 'commit' || selectedFile));
 
   const headerContext = useMemo(() => {
     if (!selectedCommit) {
@@ -57,15 +71,19 @@ export const S04AISummaryViewerScreen: FC = () => {
     }
 
     if (summaryMode === 'commit') {
-      return '커밋 전체 요약';
+      return ['커밋 전체 요약', 'AI 정리', activeAIProvider, hasCurrentSavedSummary ? '저장됨' : null].filter(Boolean).join(' · ');
     }
 
     return selectedFile?.path ?? '파일 선택 없음';
-  }, [selectedCommit, selectedFile, summaryMode]);
+  }, [activeAIProvider, hasCurrentSavedSummary, selectedCommit, selectedFile, summaryMode]);
 
   const startSummary = useCallback(
     (forceRegenerate = false): void => {
-      if (!selectedCommit || !selectedFile || !activeAIProvider || !savePath || summaryMode !== 'file') {
+      if (!selectedCommit || !activeAIProvider || !savePath) {
+        return;
+      }
+
+      if (summaryMode === 'file' && !selectedFile) {
         return;
       }
 
@@ -73,15 +91,33 @@ export const S04AISummaryViewerScreen: FC = () => {
       setIsTokenWarningDismissed(false);
 
       if (!isVSCodeRuntime()) {
-        startAISummaryGeneration();
-        streamDemoSummary(forceRegenerate, appendAISummaryChunk, completeAISummary);
+        startAISummaryGeneration({ preserveSavedSummary: forceRegenerate });
+        streamDemoSummary({
+          forceRegenerate,
+          summaryMode,
+          commitHash: selectedCommit.shortHash,
+          filePath: selectedFile?.path ?? null,
+          appendChunk: appendAISummaryChunk,
+          complete: completeAISummary,
+        });
         return;
       }
 
-      startAISummaryLoading();
+      startAISummaryLoading({ preserveSavedSummary: forceRegenerate });
+
+      if (summaryMode === 'commit') {
+        postMessage('START_AI_SUMMARY_COMMIT', {
+          commitHash: selectedCommit.hash,
+          provider: activeAIProvider,
+          savePath,
+          forceRegenerate,
+        });
+        return;
+      }
+
       postMessage('START_AI_SUMMARY_FILE', {
         commitHash: selectedCommit.hash,
-        filePath: selectedFile.path,
+        filePath: selectedFile?.path,
         provider: activeAIProvider,
         savePath,
         forceRegenerate,
@@ -135,7 +171,7 @@ export const S04AISummaryViewerScreen: FC = () => {
       }
 
       if (event.data.type === 'AI_SUMMARY_STARTED') {
-        startAISummaryGeneration();
+        startAISummaryGeneration({ preserveSavedSummary: hasCurrentSavedSummary });
         return;
       }
 
@@ -175,14 +211,23 @@ export const S04AISummaryViewerScreen: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [appendAISummaryChunk, completeAISummary, failAISummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration]);
+  }, [
+    appendAISummaryChunk,
+    completeAISummary,
+    failAISummary,
+    hasCurrentSavedSummary,
+    loadSavedAISummary,
+    setAISummarySettings,
+    setSummaryTokenWarning,
+    startAISummaryGeneration,
+  ]);
 
   useEffect(() => {
-    if (!hasLoadedSettings || !canStartFileSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) {
+    if (!hasLoadedSettings || !canStartSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) {
       return;
     }
 
-    if (!isVSCodeRuntime() && selectedFile?.hasSavedSummary) {
+    if (!isVSCodeRuntime() && summaryMode === 'file' && selectedFile?.hasSavedSummary) {
       loadSavedAISummary({
         content: DEMO_SUMMARY,
         savedPath: `${savePath}/${selectedCommit?.shortHash}/${selectedFile.path.replace(/[\\/]/g, '__')}.md`,
@@ -194,7 +239,7 @@ export const S04AISummaryViewerScreen: FC = () => {
     startSummary(false);
   }, [
     activeAIProvider,
-    canStartFileSummary,
+    canStartSummary,
     currentSummaryContent,
     hasLoadedSettings,
     isLoadingSummary,
@@ -205,6 +250,7 @@ export const S04AISummaryViewerScreen: FC = () => {
     selectedFile,
     startSummary,
     summaryError,
+    summaryMode,
   ]);
 
   if (!selectedCommit || (summaryMode === 'file' && !selectedFile)) {
@@ -244,23 +290,32 @@ export const S04AISummaryViewerScreen: FC = () => {
   );
 };
 
-function streamDemoSummary(
-  forceRegenerate: boolean,
-  appendChunk: (chunk: string) => void,
-  complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void,
-): void {
+interface StreamDemoSummaryOptions {
+  forceRegenerate: boolean;
+  summaryMode: 'file' | 'commit';
+  commitHash: string;
+  filePath: string | null;
+  appendChunk: (chunk: string) => void;
+  complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
+}
+
+function streamDemoSummary(options: StreamDemoSummaryOptions): void {
   let index = 0;
-  const content = forceRegenerate ? `${DEMO_SUMMARY}\n` : DEMO_SUMMARY;
+  const summary = options.summaryMode === 'commit' ? DEMO_COMMIT_SUMMARY : DEMO_SUMMARY;
+  const content = options.forceRegenerate ? `${summary}\n` : summary;
   const timer = window.setInterval(() => {
     const next = content.slice(index, index + 8);
     index += next.length;
-    appendChunk(next);
+    options.appendChunk(next);
 
     if (index >= content.length) {
       window.clearInterval(timer);
-      complete({
+      options.complete({
         content,
-        savedPath: '.git-author/a1b2c3d/src__components__CommitList__useInfiniteScroll.ts.md',
+        savedPath:
+          options.summaryMode === 'commit'
+            ? `.git-author/${options.commitHash}/_commit_summary.md`
+            : `.git-author/${options.commitHash}/${options.filePath?.replace(/[\\/]/g, '__') ?? 'summary'}.md`,
         provider: 'claude',
       });
     }

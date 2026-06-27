@@ -63,8 +63,8 @@ interface AppState extends FilterState {
   openRepository: () => void;
   setAISummarySettings: (settings: { savePath?: string | null; activeAIProvider?: AIProviderName | null }) => void;
   resetAISummary: () => void;
-  startAISummaryLoading: () => void;
-  startAISummaryGeneration: () => void;
+  startAISummaryLoading: (options?: { preserveSavedSummary?: boolean }) => void;
+  startAISummaryGeneration: (options?: { preserveSavedSummary?: boolean }) => void;
   appendAISummaryChunk: (chunk: string) => void;
   completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
   loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
@@ -365,26 +365,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  startAISummaryLoading: () => {
-    set({
+  startAISummaryLoading: (options = {}) => {
+    set((state) => ({
       currentSummaryContent: '',
       isLoadingSummary: true,
       isGeneratingSummary: false,
       summaryError: null,
-      summarySavedPath: null,
-      hasCurrentSavedSummary: false,
-    });
+      summarySavedPath: options.preserveSavedSummary ? state.summarySavedPath : null,
+      hasCurrentSavedSummary: options.preserveSavedSummary ? state.hasCurrentSavedSummary : false,
+    }));
   },
 
-  startAISummaryGeneration: () => {
-    set({
+  startAISummaryGeneration: (options = {}) => {
+    set((state) => ({
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: true,
       summaryError: null,
-      summarySavedPath: null,
-      hasCurrentSavedSummary: false,
-    });
+      summarySavedPath: options.preserveSavedSummary ? state.summarySavedPath : null,
+      hasCurrentSavedSummary: options.preserveSavedSummary ? state.hasCurrentSavedSummary : false,
+    }));
   },
 
   appendAISummaryChunk: (chunk) => {

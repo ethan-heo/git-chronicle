@@ -23,7 +23,7 @@
 ## Outputs
 
 - `currentSummaryContent: string` — 스트리밍 누적 텍스트 (전역 상태)
-- 저장 파일: `{savePath}/{커밋폴더명}/_commit_summary.md`
+- 저장 파일: `{savePath}/{커밋해시}/_commit_summary.md`
 
 ---
 

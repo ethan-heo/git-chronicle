@@ -52,13 +52,21 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
     return <ErrorState message={error} onRetry={onRetry} />;
   }
 
-  const canRegenerate = hasSavedSummary && Boolean(content) && !isGenerating;
+  const showRegenerate = hasSavedSummary && (Boolean(content) || isGenerating);
+  const showSavedPath = hasSavedSummary && Boolean(savedPath);
 
   return (
     <section className="ai-summary-viewer" role="region" aria-label="AI 정리 결과" aria-live={isGenerating ? 'polite' : undefined}>
       <div className="ai-summary-action-bar">
-        <span className="ai-summary-source-tag">{formatSourceTag(hasSavedSummary, isGenerating, providerLabel, savedPath)}</span>
-        {canRegenerate ? <RegenerateButton disabled={isGenerating} onClick={onRegenerate} /> : null}
+        <div className="ai-summary-source-group">
+          <span className="ai-summary-source-tag">{formatSourceTag(hasSavedSummary, isGenerating, providerLabel, savedPath)}</span>
+          {showSavedPath ? (
+            <span className="ai-summary-saved-path" title={savedPath ?? undefined}>
+              {savedPath}
+            </span>
+          ) : null}
+        </div>
+        {showRegenerate ? <RegenerateButton disabled={isGenerating} onClick={onRegenerate} /> : null}
       </div>
 
       <div className="ai-summary-content">

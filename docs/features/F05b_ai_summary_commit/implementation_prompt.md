@@ -181,7 +181,7 @@ const breadcrumb = summaryMode === 'commit'
 
 ## Business Rules
 
-1. 저장 파일명은 항상 `_commit_summary.md` (하이픈으로 시작 → 파일 정렬 시 상단 노출)
+1. 저장 파일명은 항상 `_commit_summary.md`이며 `{savePath}/{commitHash}/_commit_summary.md`에 저장한다.
 2. F05의 `hasSavedSummary`는 `ChangedFile` 단위이고, 커밋 요약은 별도 상태로 관리
 3. `OverwriteConfirmDialog`, `RegenerateButton`, `StreamingTextRenderer`는 F05와 동일 컴포넌트 재사용
 4. `summaryMode`는 Zustand 전역 상태에서 관리

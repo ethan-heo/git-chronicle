@@ -10,6 +10,10 @@ export function getSummaryFilePath(savePath: string, commitHash: string, filePat
   return path.join(savePath, commitHash, `${toSummaryFileName(filePath)}.md`);
 }
 
+export function getCommitSummaryFilePath(savePath: string, commitHash: string): string {
+  return path.join(savePath, commitHash, '_commit_summary.md');
+}
+
 export function loadSummary(savePath: string, commitHash: string, filePath: string): SummaryFileResult | null {
   const savedPath = getSummaryFilePath(savePath, commitHash, filePath);
 
@@ -25,6 +29,26 @@ export function loadSummary(savePath: string, commitHash: string, filePath: stri
 
 export function saveSummary(savePath: string, commitHash: string, filePath: string, content: string): string {
   const savedPath = getSummaryFilePath(savePath, commitHash, filePath);
+  fs.mkdirSync(path.dirname(savedPath), { recursive: true });
+  fs.writeFileSync(savedPath, content, 'utf8');
+  return savedPath;
+}
+
+export function loadCommitSummary(savePath: string, commitHash: string): SummaryFileResult | null {
+  const savedPath = getCommitSummaryFilePath(savePath, commitHash);
+
+  if (!fs.existsSync(savedPath)) {
+    return null;
+  }
+
+  return {
+    content: fs.readFileSync(savedPath, 'utf8'),
+    savedPath,
+  };
+}
+
+export function saveCommitSummary(savePath: string, commitHash: string, content: string): string {
+  const savedPath = getCommitSummaryFilePath(savePath, commitHash);
   fs.mkdirSync(path.dirname(savedPath), { recursive: true });
   fs.writeFileSync(savedPath, content, 'utf8');
   return savedPath;
