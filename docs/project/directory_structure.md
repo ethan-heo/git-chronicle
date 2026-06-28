@@ -38,8 +38,9 @@ src/extension/
 ├── gitService.ts                     # simple-git 기반 Git 조회 서비스
 │   - fetchCommits(filter, page)      # git log 실행
 │   - GitRepositoryNotFoundError      # Git 저장소 미감지 오류 타입
-├── dependencyService.ts              # dependency-cruiser 실행·그래프 결과 파싱
+├── dependencyService.ts              # 언어별 의존 관계 분석 서비스
 │   - analyzeDependencies(repoPath, files[]) → DependencyEdge[]
+│   - JS/TS/CJS/ESM은 dependency-cruiser, Python/Go는 텍스트 파싱 사용
 ├── aiService.ts                      # child_process.spawn 기반 AI CLI 스트리밍 실행
 │   - streamAISummary(options)        # stdout chunk 전달, 120초 타임아웃, 취소 함수 반환
 ├── aiTypes.ts                        # AIProviderName 타입 ('claude' | 'gemini' | 'codex')

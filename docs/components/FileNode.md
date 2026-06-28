@@ -33,7 +33,7 @@ FileNode (React Flow NodeWrapper)
 ├── FileStatusBadge  (A/M/D/R)
 ├── 파일명 텍스트
 ├── SavedBadge (hasSavedSummary = true 시)
-├── [분석 불가] 툴팁 (isAnalyzable = false 시)
+├── [분석 불가] 툴팁 (지원 언어 외 파일 시)
 └── FileActionButtons (호버 시만 표시)
     ├── [코드 보기]
     └── [AI 정리 보기]
@@ -84,7 +84,7 @@ FileNode (React Flow NodeWrapper)
 ## Accessibility
 
 - `aria-label="{파일명} 노드. 상태: {status 레이블}"`.
-- `canAnalyze = false` 시 `title="의존 관계 분석 불가 (JS/TS 외 파일)"` 툴팁.
+- `canAnalyze = false` 시 `title="의존 관계 분석 불가 (지원 언어 외 파일)"` 툴팁.
 - `[코드 보기]` 버튼: `aria-label="{파일명} 코드 보기"`.
 - `[AI 정리 보기]` 버튼: `aria-label="{파일명} AI 정리 보기"`.
 

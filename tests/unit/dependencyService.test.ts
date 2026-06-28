@@ -1,9 +1,10 @@
+import { EventEmitter } from 'node:events';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const execFileMock = vi.hoisted(() => vi.fn());
+const spawnMock = vi.hoisted(() => vi.fn());
 const fetchFileContentAtCommitMock = vi.hoisted(() => vi.fn());
 
 vi.mock('child_process', async (importOriginal) => {
@@ -11,7 +12,7 @@ vi.mock('child_process', async (importOriginal) => {
 
   return {
     ...actual,
-    execFile: execFileMock,
+    spawn: spawnMock,
   };
 });
 
@@ -40,9 +41,32 @@ describe('dependencyService', () => {
     const currentFilePath = path.join(repoPath, 'src/current.ts');
     fs.mkdirSync(path.dirname(currentFilePath), { recursive: true });
     fs.writeFileSync(currentFilePath, "import './legacy';\n", 'utf8');
-    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue('/tmp/git-rewind-restore');
+    const tmpDir = '/tmp/git-rewind-restore';
+    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
 
     fetchFileContentAtCommitMock.mockResolvedValueOnce("import './current';\n");
+    mockSpawnForJson({
+      modules: [
+        {
+          source: path.join(tmpDir, 'src/current.ts'),
+          dependencies: [
+            {
+              resolved: path.join(tmpDir, 'src/legacy.ts'),
+              dependencyTypes: ['local'],
+            },
+          ],
+        },
+        {
+          source: path.join(tmpDir, 'src/legacy.ts'),
+          dependencies: [
+            {
+              resolved: path.join(tmpDir, 'src/current.ts'),
+              dependencyTypes: ['local'],
+            },
+          ],
+        },
+      ],
+    });
 
     const { analyzeDependencies } = await import('../../src/extension/dependencyService');
     const edges = await analyzeDependencies(repoPath, ['src/current.ts', 'src/legacy.ts'], 'abc123');
@@ -56,44 +80,37 @@ describe('dependencyService', () => {
     mkdtempSpy.mockRestore();
   });
 
-  it('resolves repository-relative analyzer output using repoPath and passes tsconfig when available', async () => {
+  it('analyzes python imports without dependency-cruiser', async () => {
     const repoPath = makeTempRepoPath();
-    fs.mkdirSync(path.join(repoPath, 'src'), { recursive: true });
-    fs.writeFileSync(path.join(repoPath, 'tsconfig.json'), '{}', 'utf8');
-    fs.writeFileSync(path.join(repoPath, 'src/a.ts'), "import { b } from './b';\n", 'utf8');
-    fs.writeFileSync(path.join(repoPath, 'src/b.ts'), 'export const b = 1;\n', 'utf8');
-    const tmpDir = '/tmp/git-rewind-analyze';
+    fs.mkdirSync(path.join(repoPath, 'pkg'), { recursive: true });
+    fs.writeFileSync(path.join(repoPath, 'pkg', 'a.py'), 'from . import b\nimport pkg.b\n', 'utf8');
+    fs.writeFileSync(path.join(repoPath, 'pkg', 'b.py'), 'value = 1\n', 'utf8');
+    const tmpDir = '/tmp/git-rewind-python';
     const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
 
-    execFileMock.mockImplementationOnce(async (_command, args: string[]) => {
-      expect(args).toContain('--no-config');
-      expect(args).toContain('--ts-config');
-      expect(args).toContain(path.join(repoPath, 'tsconfig.json'));
+    const { analyzeDependencies } = await import('../../src/extension/dependencyService');
+    const edges = await analyzeDependencies(repoPath, ['pkg/a.py', 'pkg/b.py']);
 
-      const tmpSourcePath = path.join(tmpDir, 'src/a.ts');
-      const tmpDependencyPath = path.join(tmpDir, 'src/b.ts');
+    expect(edges).toEqual([{ from: 'pkg/a.py', to: 'pkg/b.py', kind: 'import' }]);
+    mkdtempSpy.mockRestore();
+  });
 
-      return {
-        stdout: JSON.stringify({
-          modules: [
-            {
-              source: path.relative(repoPath, tmpSourcePath),
-              dependencies: [
-                {
-                  resolved: path.relative(repoPath, tmpDependencyPath),
-                  dependencyTypes: ['local', 'export'],
-                },
-              ],
-            },
-          ],
-        }),
-      };
-    });
+  it('analyzes go imports without dependency-cruiser', async () => {
+    const repoPath = makeTempRepoPath();
+    fs.mkdirSync(path.join(repoPath, 'service'), { recursive: true });
+    fs.writeFileSync(
+      path.join(repoPath, 'service', 'a.go'),
+      `package service\n\nimport (\n  "service"\n)\n`,
+      'utf8',
+    );
+    fs.writeFileSync(path.join(repoPath, 'service', 'service.go'), 'package service\n', 'utf8');
+    const tmpDir = '/tmp/git-rewind-go';
+    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
 
     const { analyzeDependencies } = await import('../../src/extension/dependencyService');
-    const edges = await analyzeDependencies(repoPath, ['src/a.ts', 'src/b.ts']);
+    const edges = await analyzeDependencies(repoPath, ['service/a.go', 'service/service.go']);
 
-    expect(edges).toEqual([{ from: 'src/a.ts', to: 'src/b.ts', kind: 'import' }]);
+    expect(edges).toEqual([{ from: 'service/a.go', to: 'service/service.go', kind: 'import' }]);
     mkdtempSpy.mockRestore();
   });
 
@@ -117,51 +134,46 @@ describe('dependencyService', () => {
     const tmpDir = '/tmp/git-rewind-analyze-alias';
     const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
 
+    mockSpawnForJson({
+      modules: [
+        {
+          source: path.join(tmpDir, 'src/feature.ts'),
+          dependencies: [
+            {
+              resolved: path.join(tmpDir, 'src/constants/queryKey.ts'),
+              dependencyTypes: ['local', 'export'],
+            },
+          ],
+        },
+      ],
+    });
+
     const { analyzeDependencies } = await import('../../src/extension/dependencyService');
     const edges = await analyzeDependencies(repoPath, ['src/feature.ts', 'src/constants/queryKey.ts']);
 
     expect(edges).toEqual([{ from: 'src/feature.ts', to: 'src/constants/queryKey.ts', kind: 'import' }]);
     mkdtempSpy.mockRestore();
   });
+});
 
-  it('falls back to no-config when tsconfig is absent', async () => {
-    const repoPath = makeTempRepoPath();
-    fs.mkdirSync(path.join(repoPath, 'src'), { recursive: true });
-    fs.writeFileSync(path.join(repoPath, 'src/a.ts'), "require('./b');\n", 'utf8');
-    fs.writeFileSync(path.join(repoPath, 'src/b.ts'), 'export const b = 1;\n', 'utf8');
-    const tmpDir = '/tmp/git-rewind-analyze-no-config';
-    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
+function mockSpawnForJson(stdoutValue: unknown): void {
+  spawnMock.mockImplementationOnce(() => {
+    const child = new EventEmitter() as EventEmitter & {
+      stdout: EventEmitter;
+      stderr: EventEmitter;
+    };
 
-    execFileMock.mockImplementationOnce(async (_command, args: string[]) => {
-      expect(args).toContain('--no-config');
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
 
-      const tmpSourcePath = path.join(tmpDir, 'src/a.ts');
-      const tmpDependencyPath = path.join(tmpDir, 'src/b.ts');
-
-      return {
-        stdout: JSON.stringify({
-          modules: [
-            {
-              source: path.relative(repoPath, tmpSourcePath),
-              dependencies: [
-                {
-                  module: path.relative(repoPath, tmpDependencyPath),
-                  dependencyTypes: ['require'],
-                },
-              ],
-            },
-          ],
-        }),
-      };
+    queueMicrotask(() => {
+      child.stdout.emit('data', Buffer.from(JSON.stringify(stdoutValue)));
+      child.emit('close', 0);
     });
 
-    const { analyzeDependencies } = await import('../../src/extension/dependencyService');
-    const edges = await analyzeDependencies(repoPath, ['src/a.ts', 'src/b.ts']);
-
-    expect(edges).toEqual([{ from: 'src/a.ts', to: 'src/b.ts', kind: 'require' }]);
-    mkdtempSpy.mockRestore();
+    return child;
   });
-});
+}
 
 function makeTempRepoPath(): string {
   const tempPath = fs.mkdtempSync(path.join(os.tmpdir(), 'gae-dependency-service-'));

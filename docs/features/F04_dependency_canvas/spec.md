@@ -36,14 +36,15 @@
 
 | 항목 | 내용 |
 |------|------|
-| 분석 도구 | dependency-cruiser (JS/TS/CJS/ESM, TypeScript path alias 지원. `tsconfig.json`이 있으면 전달) |
+| 분석 도구 | JS/TS/CJS/ESM은 dependency-cruiser, Python/Go는 텍스트 파싱 기반 분석 |
 | 입력 재구성 | 현재 디스크 파일은 임시 디렉토리로 복사, 누락 파일은 `git show <commitHash>:<filePath>`로 복원 후 분석 |
-| 경로 비교 | dependency-cruiser가 path alias를 `repoPath` 절대 경로로 resolve해도, 변경 파일 집합과 비교할 수 있도록 결과 경로를 `tmpDir`/`repoPath` 기준으로 정규화 |
+| 경로 비교 | 분석 결과가 `tmpDir`/`repoPath` 절대 경로로 반환되더라도 변경 파일 집합과 비교할 수 있도록 repo-relative 경로로 정규화 |
 | 렌더링 라이브러리 | React Flow (MIT 라이선스, 줌·패닝·선택 인터랙션 내장) |
 | 노드 범위 | 커밋에서 변경된 파일만. 의존하는 미변경 파일은 노드로 표시하지 않음 |
 | 엣지 | 변경 파일 간 import / require 의존 관계 |
 | 고립 노드 | 의존 관계가 없는 변경 파일도 노드로 표시 (엣지 없이 단독 노드) |
-| JS/TS 외 파일 | 노드로 표시하되 엣지 없음. 노드에 "의존 관계 분석 불가" 툴팁 표시 |
+| Python/Go 파일 | 변경 파일 간 import 의존 관계를 엣지로 표시 |
+| JS/TS 외, Python/Go 제외 파일 | 노드로 표시하되 엣지 없음. 노드에 "의존 관계 분석 불가" 툴팁 표시 |
 | 레이아웃 | 확장자 그룹 기반 고정 앵커 배치. 확장자 그룹은 수평으로 나누고, 같은 확장자 파일은 왼쪽 면을 맞춰 수직으로 배치 |
 | 인터랙션 | 노드 호버 → [코드 보기] / [AI 정리 보기] 버튼 활성화 + 연결 엣지 강조. 노드는 드래그로 위치 조정 가능 |
 | 화면 맞춤 | 초기 렌더링 및 캔버스 크기 변경 시 `fitView()` 자동 적용 |
@@ -58,7 +59,7 @@
 | 의존 관계 분석 실패 | `ErrorState`: "의존 관계를 분석하지 못했습니다" + [재시도] 버튼 |
 | dependency-cruiser 실행 파일 없음 | `ErrorState`: "dependency-cruiser가 설치되지 않았습니다. pnpm install 후 다시 시도해주세요." + [재시도] 버튼 |
 | 변경 파일 없음 | `EmptyState`: "변경된 파일이 없습니다" |
-| JS/TS 외 파일 | 노드로 표시 + "의존 관계 분석 불가" 툴팁 |
+| JS/TS 외, Python/Go 제외 파일 | 노드로 표시 + "의존 관계 분석 불가" 툴팁 |
 
 ---
 
@@ -83,7 +84,7 @@
 | `changedFiles` | `ChangedFile[]` | 전역 상태. 노드로 변환될 변경 파일 목록 |
 | `selectedCommit` | `Commit` | 전역 상태. 의존 관계 분석 컨텍스트, `commitHash` 복원, 헤더 표시 |
 | `previousScreen` | `ScreenID \| null` | S05에서 S03/S04로 진입한 뒤 뒤로가기 목적지 보존 |
-| dependency-cruiser | CLI 실행 결과 | Extension Host에서 변경 파일을 임시 디렉토리로 재구성한 뒤 의존 관계 분석 실행. 출력은 스트리밍으로 수집 |
+| dependency-cruiser / 텍스트 파서 | CLI 실행 결과 / 정적 파싱 결과 | Extension Host에서 변경 파일을 임시 디렉토리로 재구성한 뒤 언어별 의존 관계 분석 실행 |
 
 ---
 

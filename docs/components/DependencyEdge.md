@@ -54,7 +54,7 @@ export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
 ## Business Rules
 
 - 엣지는 **변경 파일 간 의존 관계만** 표시한다. 미변경 파일과의 관계는 엣지 생성 안 함.
-- JS/TS 외 파일(분석 불가)은 엣지의 source 또는 target이 될 수 없다.
+- 지원 언어 외 파일(분석 불가)은 엣지의 source 또는 target이 될 수 없다.
 - 동일한 source-target 쌍의 중복 엣지는 하나로 합친다.
 - 노드를 드래그하면 `DependencyGraph`가 현재 노드 위치를 기준으로 `sourceHandle`/`targetHandle`을 다시 계산한다.
 

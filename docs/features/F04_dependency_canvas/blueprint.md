@@ -15,7 +15,7 @@
 ## Inputs
 
 - `changedFiles: ChangedFile[]` — 전역 상태에서 참조
-- `selectedCommit: Commit` — dependency-cruiser 분석 컨텍스트 및 `commitHash` 제공
+- `selectedCommit: Commit` — 언어별 분석 컨텍스트 및 `commitHash` 제공
 
 ---
 
@@ -90,7 +90,7 @@ F04_DependencyCanvas 전용. S05_DependencyCanvasScreen에서만 사용. → 상
 #### Data
 - `file: ChangedFile`
 - `isHovered: boolean`
-- `canAnalyzeDependency: boolean` — JS/TS 외 파일이면 false
+- `canAnalyzeDependency: boolean` — JS/TS, Python, Go 이외 파일이면 false
 
 #### Props
 ```typescript
@@ -111,13 +111,13 @@ interface FileNodeProps {
 #### States
 - `default`: 기본 노드
 - `hover`: 버튼 표시
-- `noAnalysis`: JS/TS 외 파일 (툴팁 표시)
+- `noAnalysis`: JS/TS, Python, Go 이외 파일 (툴팁 표시)
 - `saved`: `SavedBadge` 표시
 
 #### Accessibility
 - `aria-label="{파일명} 노드"`
 - `role="button"` (호버 시)
-- JS/TS 외 파일: `title="의존 관계 분석 불가"`
+- 지원 언어 외 파일: `title="의존 관계 분석 불가"`
 
 #### Reusability
 F04_DependencyCanvas 전용. DependencyGraph 내 React Flow 커스텀 노드로만 사용. → 상세 문서: [components/FileNode.md](../../components/FileNode.md)
