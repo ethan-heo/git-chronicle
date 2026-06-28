@@ -103,16 +103,25 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   }, [graphNodes, setNodes]);
 
   useEffect(() => {
-    setEdges(
-      graphEdges.map((edge) => ({
+    const isHovering = highlightedNodeId !== null;
+    const updatedEdges = graphEdges.map((edge) => {
+      const highlighted = highlightedNodeId === edge.source || highlightedNodeId === edge.target;
+
+      return {
         ...edge,
         data: {
           ...(edge.data ?? {}),
-          highlighted: highlightedNodeId === edge.source || highlightedNodeId === edge.target,
+          highlighted,
+          dimmed: isHovering && !highlighted,
           kind: edge.data?.kind ?? 'import',
         },
-      })),
-    );
+      };
+    });
+
+    setEdges([
+      ...updatedEdges.filter((edge) => !edge.data?.highlighted),
+      ...updatedEdges.filter((edge) => edge.data?.highlighted),
+    ]);
   }, [graphEdges, highlightedNodeId, setEdges]);
 
   useEffect(() => {

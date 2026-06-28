@@ -18,6 +18,7 @@ export type FileNodeType = Node<FileNodeData, 'fileNode'>;
 export interface DependencyEdgeData extends Record<string, unknown> {
   kind: 'import' | 'require';
   highlighted: boolean;
+  dimmed: boolean;
 }
 
 export type DependencyEdgeType = Edge<DependencyEdgeData, 'dependencyEdge'>;
@@ -94,6 +95,7 @@ export function buildGraphData(
         data: {
           kind: edge.kind,
           highlighted: false,
+          dimmed: false,
         },
       };
     }),

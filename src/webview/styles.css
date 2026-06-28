@@ -1194,11 +1194,16 @@ button:focus-visible,
 .dependency-edge {
   stroke: var(--gae-color-text-secondary);
   stroke-width: 1.6;
+  transition: opacity var(--gae-motion-duration-fast) var(--gae-motion-easing-default);
 }
 
 .dependency-edge-highlighted {
   stroke: var(--gae-color-text-link);
   stroke-width: 2.4;
+}
+
+.dependency-edge-dimmed {
+  opacity: 0.2;
 }
 
 .dependency-edge-require {

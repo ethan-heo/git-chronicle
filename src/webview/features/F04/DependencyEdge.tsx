@@ -24,6 +24,15 @@ export const DependencyEdge: FC<EdgeProps<DependencyEdgeType>> = ({
   });
   const kind = data?.kind ?? 'import';
   const highlighted = Boolean(data?.highlighted);
+  const dimmed = Boolean(data?.dimmed);
+  const className = [
+    'dependency-edge',
+    `dependency-edge-${kind}`,
+    highlighted ? 'dependency-edge-highlighted' : '',
+    dimmed ? 'dependency-edge-dimmed' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <>
@@ -31,7 +40,7 @@ export const DependencyEdge: FC<EdgeProps<DependencyEdgeType>> = ({
         id={id}
         path={edgePath}
         markerEnd={markerEnd}
-        className={`dependency-edge dependency-edge-${kind}${highlighted ? ' dependency-edge-highlighted' : ''}`}
+        className={className}
       />
       <EdgeLabelRenderer>
         <span

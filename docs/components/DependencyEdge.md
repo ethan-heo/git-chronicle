@@ -12,6 +12,7 @@ import { EdgeProps } from '@xyflow/react';
 interface DependencyEdgeData {
   kind: 'import' | 'require';
   highlighted: boolean;
+  dimmed: boolean;
 }
 
 type DependencyEdgeProps = EdgeProps<DependencyEdgeData>;
@@ -25,6 +26,8 @@ type DependencyEdgeProps = EdgeProps<DependencyEdgeData>;
 - 스타일: SmoothStep 엣지. `require` 관계는 dashed stroke로 표시.
 - 연결점: source/target 노드의 상/하/좌/우 핸들 중 현재 위치에서 가장 가까운 면을 선택.
 - 색상: 기본은 보조 텍스트 색상, 연결 노드 호버 시 링크 색상으로 강조.
+- 레이어링: 하이라이트된 엣지는 비하이라이트 엣지보다 뒤쪽으로 렌더링되어 SVG 상단에 표시된다.
+- 감쇠: 노드 호버 중 연결되지 않은 엣지는 낮은 opacity로 뒤로 물러난다.
 
 ```tsx
 export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
@@ -32,6 +35,8 @@ export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
   markerEnd, data,
 }) => {
   const [edgePath] = getSmoothStepPath({ sourceX, sourceY, targetX, targetY, borderRadius: 8 });
+  const highlighted = Boolean(data.highlighted);
+  const dimmed = Boolean(data.dimmed);
 
   return (
     <>
@@ -39,7 +44,7 @@ export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
         id={id}
         path={edgePath}
         markerEnd={markerEnd}
-        className={`dependency-edge dependency-edge-${data.kind}${data.highlighted ? ' dependency-edge-highlighted' : ''}`}
+        className={`dependency-edge dependency-edge-${data.kind}${highlighted ? ' dependency-edge-highlighted' : ''}${dimmed ? ' dependency-edge-dimmed' : ''}`}
       />
       <EdgeLabelRenderer>
         <span className="dependency-edge-label">{data.kind}</span>
@@ -65,7 +70,8 @@ export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
 | 상태 | 조건 | 시각 표현 |
 |------|------|---------|
 | `default` | 기본 | 회색 선, 얇은 두께 |
-| `highlighted` | 연결된 노드 호버 | 파란색 강조, 두꺼운 두께 |
+| `highlighted` | 연결된 노드 호버 | 파란색 강조, 두꺼운 두께, 상단 렌더링 |
+| `dimmed` | 연결되지 않은 엣지 + 호버 중 | 낮은 opacity |
 
 ---
 
