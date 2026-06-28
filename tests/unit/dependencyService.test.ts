@@ -97,6 +97,33 @@ describe('dependencyService', () => {
     mkdtempSpy.mockRestore();
   });
 
+  it('keeps path-alias dependencies that resolve to repository absolute paths', async () => {
+    const repoPath = makeTempRepoPath();
+    fs.mkdirSync(path.join(repoPath, 'src', 'constants'), { recursive: true });
+    fs.writeFileSync(
+      path.join(repoPath, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          baseUrl: '.',
+          paths: {
+            '@/*': ['src/*'],
+          },
+        },
+      }),
+      'utf8',
+    );
+    fs.writeFileSync(path.join(repoPath, 'src', 'feature.ts'), "import { queryKey } from '@/constants/queryKey';\n", 'utf8');
+    fs.writeFileSync(path.join(repoPath, 'src', 'constants', 'queryKey.ts'), 'export const queryKey = 1;\n', 'utf8');
+    const tmpDir = '/tmp/git-author-explorer-analyze-alias';
+    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
+
+    const { analyzeDependencies } = await import('../../src/extension/dependencyService');
+    const edges = await analyzeDependencies(repoPath, ['src/feature.ts', 'src/constants/queryKey.ts']);
+
+    expect(edges).toEqual([{ from: 'src/feature.ts', to: 'src/constants/queryKey.ts', kind: 'import' }]);
+    mkdtempSpy.mockRestore();
+  });
+
   it('falls back to no-config when tsconfig is absent', async () => {
     const repoPath = makeTempRepoPath();
     fs.mkdirSync(path.join(repoPath, 'src'), { recursive: true });

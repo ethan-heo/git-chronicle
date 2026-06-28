@@ -103,16 +103,14 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
     const seenEdges = new Set<string>();
 
     for (const module of result.modules ?? []) {
-      const from = normalizePath(path.relative(tmpDir, resolveRepoRelativePath(repoPath, module.source ?? '')));
+      const from = resolveToChangedFilePath(tmpDir, repoPath, module.source ?? '');
 
       if (!changedFileSet.has(from)) {
         continue;
       }
 
       for (const dependency of module.dependencies ?? []) {
-        const to = normalizePath(
-          path.relative(tmpDir, resolveRepoRelativePath(repoPath, dependency.resolved ?? dependency.module ?? '')),
-        );
+        const to = resolveToChangedFilePath(tmpDir, repoPath, dependency.resolved ?? dependency.module ?? '');
 
         if (!changedFileSet.has(to)) {
           continue;
@@ -142,12 +140,22 @@ function normalizePath(filePath: string): string {
   return filePath.replace(/\\/g, '/').replace(/^\.\//, '');
 }
 
-function resolveRepoRelativePath(repoPath: string, candidatePath: string): string {
+function resolveToChangedFilePath(tmpDir: string, repoPath: string, candidatePath: string): string {
   if (!candidatePath) {
     return candidatePath;
   }
 
-  return path.isAbsolute(candidatePath) ? candidatePath : path.resolve(repoPath, candidatePath);
+  const absolutePath = path.isAbsolute(candidatePath) ? candidatePath : path.resolve(repoPath, candidatePath);
+
+  if (absolutePath.startsWith(tmpDir)) {
+    return normalizePath(path.relative(tmpDir, absolutePath));
+  }
+
+  if (absolutePath.startsWith(repoPath)) {
+    return normalizePath(path.relative(repoPath, absolutePath));
+  }
+
+  return normalizePath(absolutePath);
 }
 
 function findTsConfigPath(repoPath: string): string | undefined {

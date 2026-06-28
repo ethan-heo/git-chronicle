@@ -59,7 +59,7 @@
 | 항목 | 선택 | 비고 |
 |------|------|------|
 | Git 데이터 | simple-git | `git log`, `git diff`, `git show` 래핑 |
-| 의존 관계 분석 | dependency-cruiser | JS/TS/CJS/ESM, TypeScript path alias 지원. 대용량 출력은 `spawn` 스트리밍으로 처리 |
+| 의존 관계 분석 | dependency-cruiser | JS/TS/CJS/ESM, TypeScript path alias 지원. 대용량 출력은 `spawn` 스트리밍으로 처리하며, alias가 repo 절대 경로로 resolve되는 경우에도 변경 파일 비교가 되도록 경로 정규화가 필요 |
 | AI CLI 실행 | Node.js `child_process.spawn` | Claude/Gemini/Codex CLI 호출. 외부 라이브러리 불필요 |
 | 파일 I/O | Node.js `fs` (표준 라이브러리) | `fs.mkdirSync({ recursive: true })` |
 

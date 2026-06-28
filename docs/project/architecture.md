@@ -23,7 +23,7 @@ src/
 │   ├── webviewPanel.ts               # WebviewPanel 생성·관리
 │   ├── messageHandler.ts             # Webview → Extension 메시지 라우터
 │   ├── gitService.ts                 # simple-git 기반 커밋 조회 서비스
-│   ├── dependencyService.ts          # dependency-cruiser spawn 실행·결과 파싱, tsconfig alias 보조
+│   ├── dependencyService.ts          # dependency-cruiser spawn 실행·결과 파싱, tsconfig alias 및 경로 정규화 보조
 │   ├── aiService.ts                  # child_process.spawn 기반 AI CLI 스트리밍 실행
 │   ├── aiTypes.ts                    # AIProviderName 타입
 │   ├── prompts.ts                    # 파일/커밋 AI 정리 프롬프트 빌더

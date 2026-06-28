@@ -38,6 +38,7 @@
 |------|------|
 | 분석 도구 | dependency-cruiser (JS/TS/CJS/ESM, TypeScript path alias 지원. `tsconfig.json`이 있으면 전달) |
 | 입력 재구성 | 현재 디스크 파일은 임시 디렉토리로 복사, 누락 파일은 `git show <commitHash>:<filePath>`로 복원 후 분석 |
+| 경로 비교 | dependency-cruiser가 path alias를 `repoPath` 절대 경로로 resolve해도, 변경 파일 집합과 비교할 수 있도록 결과 경로를 `tmpDir`/`repoPath` 기준으로 정규화 |
 | 렌더링 라이브러리 | React Flow (MIT 라이선스, 줌·패닝·선택 인터랙션 내장) |
 | 노드 범위 | 커밋에서 변경된 파일만. 의존하는 미변경 파일은 노드로 표시하지 않음 |
 | 엣지 | 변경 파일 간 import / require 의존 관계 |
