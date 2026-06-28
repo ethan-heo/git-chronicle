@@ -6,7 +6,7 @@
 
 ## Technical Context
 
-- **의존성 분석**: Extension Host에서 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 JS/TS/CJS/ESM은 `dependency-cruiser` CLI로, Python/Go는 텍스트 파싱으로 분석한다.
+- **의존성 분석**: Extension Host에서 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통해 `dependency-cruiser` API로, Python/Go는 텍스트 파싱으로 분석한다.
 - **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 레이아웃은 확장자 그룹 기반 고정 앵커 배치
 - **대상 파일**: JS/TS/CJS/ESM, Python, Go 파일 분석 가능 (`.mjs`, `.cjs`, `.js`, `.jsx`, `.mts`, `.cts`, `.ts`, `.tsx`, `.py`, `.go`)
 
@@ -87,7 +87,7 @@ export async function analyzeDependencies(
   if (analyzable.length === 0) return [];
 
   const analyzerPath = getDependencyCruiserBinPath();
-  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-rewind-'));
+  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-chronicle-'));
   const resolvedPaths: string[] = [];
 
   try {
@@ -165,7 +165,7 @@ function runDependencyCruiser(args: string[], cwd: string): Promise<string> {
         return;
       }
 
-      reject(new Error(stderr || `dependency-cruiser exited with code ${code ?? 'unknown'}`));
+      reject(new Error(stderr || `dependency-cruiser runner exited with code ${code ?? 'unknown'}`));
     });
   });
 }
@@ -317,11 +317,11 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 
 ## Business Rules
 
-1. JS/TS/CJS/ESM 파일은 `dependency-cruiser`로 분석하고, Python/Go 파일은 텍스트 파싱으로 분석
+1. JS/TS/CJS/ESM 파일은 `dependency-cruiser` runner로 분석하고, Python/Go 파일은 텍스트 파싱으로 분석
 2. 지원 언어 외 파일(`canAnalyze = false`)은 노드로 표시하되 점선 테두리 적용, 엣지 없음
 3. `fitView`는 초기 렌더링 및 패널 크기 변경 시 자동 호출
 4. 줌 범위: 0.3x ~ 2.0x
-5. `dependency-cruiser` 실행 파일이 없는 경우 JS/TS 분석 실패로 처리하고 `ErrorState` + `pnpm install` 안내 표시
+5. `dependency-cruiser` runner 또는 복사된 의존성이 없는 경우 JS/TS 분석 실패로 처리하고 `ErrorState` + `pnpm install` 안내 표시
 6. S05에서 S03/S04로 진입할 때 `previousScreen = "S05"`를 저장하고 뒤로가기 시 S05로 복귀
 7. S02에서 변경 파일 로딩 중에는 [캔버스 보기] 버튼을 로딩 상태로 표시하며, S05도 변경 파일 로딩 메시지를 처리할 수 있어야 함
 8. 같은 확장자 파일은 왼쪽 면을 맞춰 수직으로 배치하고, 다른 확장자 그룹은 수평으로 배치
@@ -334,7 +334,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 
 | 상황 | 처리 |
 |------|------|
-| `dependency-cruiser` 없음 | `ErrorState`: "dependency-cruiser가 설치되지 않았습니다. pnpm install 후 다시 시도해주세요." |
+| `dependency-cruiser` runner 없음 또는 의존성 누락 | `ErrorState`: "dependency-cruiser가 설치되지 않았습니다. pnpm install 후 다시 시도해주세요." |
 | 분석 실패 | `ErrorState` + [재시도] 버튼 |
 | 변경 파일 없음 | `EmptyState` |
 | 지원 언어 파일 없음 | 노드 표시, 엣지 없음, 안내 메시지 |
@@ -363,7 +363,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 
 ```bash
 pnpm install
-# dependency-cruiser는 package.json 의존성 및 bundledDependencies에 포함
+# dependency-cruiser는 package.json 의존성 및 dist 복사 대상에 포함
 ```
 
 ---

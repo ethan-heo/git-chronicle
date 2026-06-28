@@ -159,14 +159,17 @@ describe('dependencyService', () => {
 function mockSpawnForJson(stdoutValue: unknown): void {
   spawnMock.mockImplementationOnce(() => {
     const child = new EventEmitter() as EventEmitter & {
+      stdin: EventEmitter & { end: (chunk?: string | Buffer) => void };
       stdout: EventEmitter;
       stderr: EventEmitter;
     };
 
+    child.stdin = new EventEmitter() as EventEmitter & { end: (chunk?: string | Buffer) => void };
+    child.stdin.end = vi.fn();
     child.stdout = new EventEmitter();
     child.stderr = new EventEmitter();
 
-    queueMicrotask(() => {
+    setImmediate(() => {
       child.stdout.emit('data', Buffer.from(JSON.stringify(stdoutValue)));
       child.emit('close', 0);
     });

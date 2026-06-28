@@ -23,7 +23,9 @@ src/
 │   ├── webviewPanel.ts               # WebviewPanel 생성·관리
 │   ├── messageHandler.ts             # Webview → Extension 메시지 라우터
 │   ├── gitService.ts                 # simple-git 기반 커밋 조회 서비스
-│   ├── dependencyService.ts          # dependency-cruiser spawn 실행·결과 파싱, tsconfig alias 및 경로 정규화 보조
+│   ├── dependencyService.ts          # depcruiser runner 실행·결과 파싱, tsconfig alias 및 경로 정규화 보조
+│   ├── depcruiser-runner.mjs         # dependency-cruiser API 호출용 runner 소스
+│   ├── scripts/copy-dependency-cruiser.mjs # dependency-cruiser 및 transitive deps를 dist로 복사
 │   ├── aiService.ts                  # child_process.spawn 기반 AI CLI 스트리밍 실행
 │   ├── aiTypes.ts                    # AIProviderName 타입
 │   ├── prompts.ts                    # 파일/커밋 AI 정리 프롬프트 빌더
@@ -140,6 +142,7 @@ src/
 - 비즈니스 로직(git 호출, AI 실행, 파일 I/O)은 Extension Host에서만 실행한다.
 - Webview 커스텀 훅(`useXxx.ts`)은 상태 관리와 postMessage 전송만 담당한다.
 - `child_process`, `fs`, `path` 등 Node.js 전용 모듈은 Extension Host 코드에서만 import한다.
+- JS/TS 의존성 분석은 Extension Host가 `dist/depcruiser-runner.mjs`를 별도 Node 프로세스로 실행하고, runner가 `dependency-cruiser` API를 호출한다.
 
 ### Route Slot Rule (화면 전환 슬롯 규칙)
 
@@ -149,6 +152,7 @@ src/
 - outgoing 슬롯은 `aria-hidden="true"`와 `RouteSlotProvider isActive={false}`를 사용한다. 최상위 화면 컴포넌트는 `useRouteSlotActive()`가 false일 때 초기 데이터 로딩 effect와 Extension 메시지 listener 등록을 건너뛴다.
 - 라우트 전환 animation은 `styles.css`의 `--gae-motion-duration-base`와 `App.tsx`의 `ROUTE_TRANSITION_DURATION_MS`가 같은 200ms 값으로 동작한다.
 - `BatchProgressBar`와 `ToastContainer`는 라우트 슬롯 밖에 렌더링해 화면 전환 중에도 전역 피드백을 유지한다.
+- `dependency-cruiser`는 패키지 자체뿐 아니라 transitive dependency까지 `dist/node_modules/dependency-cruiser/`에 복사한 뒤 runner가 참조한다. pnpm symlink에 직접 의존하지 않는다.
 
 ---
 

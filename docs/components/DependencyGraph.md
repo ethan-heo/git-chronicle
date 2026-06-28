@@ -1,6 +1,6 @@
 # Component: DependencyGraph
 
-S05_DependencyCanvasScreen의 React Flow 기반 노드-엣지 그래프 캔버스. 변경 파일 간 의존 관계를 시각화한다. 분석 입력은 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 구성되며, JS/TS/CJS/ESM은 dependency-cruiser로, Python/Go는 텍스트 파싱으로 분석한다. 결과 경로는 `tmpDir` 또는 `repoPath` 기준으로 정규화한다.
+S05_DependencyCanvasScreen의 React Flow 기반 노드-엣지 그래프 캔버스. 변경 파일 간 의존 관계를 시각화한다. 분석 입력은 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 구성되며, JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통해 `dependency-cruiser` API로, Python/Go는 텍스트 파싱으로 분석한다. 결과 경로는 `tmpDir` 또는 `repoPath` 기준으로 정규화한다.
 
 ---
 
@@ -52,7 +52,7 @@ DependencyGraph
 - **레이아웃**: 확장자 그룹 기반 고정 앵커 배치. 확장자 그룹은 수평으로 나뉘고, 같은 확장자 파일은 왼쪽 면을 맞춰 수직으로 배치.
 - **노드 크기**: 파일명 길이에 따라 노드 폭을 동적으로 계산한다. 긴 파일명은 말줄임 대신 줄바꿈으로 전체 표시.
 - **엣지 연결**: 직선 엣지를 유지하되 source/target 노드의 현재 위치를 기준으로 가장 가까운 상/하/좌/우 핸들을 선택.
-- **언어별 분석**: JS/TS/CJS/ESM은 dependency-cruiser, Python/Go는 텍스트 파싱으로 분석한다.
+- **언어별 분석**: JS/TS/CJS/ESM은 `dependency-cruiser` runner, Python/Go는 텍스트 파싱으로 분석한다.
 - **경로 정규화**: 분석 결과가 임시 디렉토리 경로나 저장소 절대 경로로 반환되더라도, 변경 파일 집합과 비교 가능한 repo-relative 경로로 맞춘다.
 
 ---

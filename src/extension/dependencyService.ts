@@ -134,17 +134,17 @@ async function* analyzeWithDependencyCruiser(
   }
 
   const tsConfigPath = findTsConfigPath(repoPath);
-  const args = [
-    analyzerPath,
-    '--output-type',
-    'json',
-    '--no-config',
-    ...(tsConfigPath ? ['--ts-config', tsConfigPath] : []),
-    '--ts-pre-compilation-deps',
-    ...filePaths.map((filePath) => resolvedFiles.get(filePath)).filter((filePath): filePath is string => Boolean(filePath)),
-  ];
+  const payload = {
+    files: filePaths.map((filePath) => resolvedFiles.get(filePath)).filter((filePath): filePath is string => Boolean(filePath)),
+    options: {
+      outputType: 'json',
+      tsPreCompilationDeps: true,
+      baseDir: repoPath,
+      ...(tsConfigPath ? { tsConfig: { fileName: tsConfigPath } } : {}),
+    },
+  };
 
-  const stdout = await runDependencyCruiser(args, repoPath);
+  const stdout = await runDependencyCruiser(analyzerPath, payload, repoPath);
   const result = JSON.parse(stdout) as DependencyCruiserResult;
   const seenEdges = new Set<string>();
 
@@ -481,16 +481,27 @@ function findTsConfigPath(repoPath: string): string | undefined {
 }
 
 function getDependencyCruiserBinPath(): string {
-  const bundledPath = path.resolve(__dirname, '..', 'node_modules', 'dependency-cruiser', 'bin', 'dependency-cruise.mjs');
-  if (fs.existsSync(bundledPath)) return bundledPath;
-  return path.resolve(__dirname, '..', '..', 'node_modules', 'dependency-cruiser', 'bin', 'dependency-cruise.mjs');
+  const candidatePaths = [
+    path.resolve(__dirname, '..', 'depcruiser-runner.mjs'),
+    path.resolve(__dirname, '..', '..', 'dist', 'depcruiser-runner.mjs'),
+    path.resolve(__dirname, '..', '..', 'src', 'extension', 'depcruiser-runner.mjs'),
+    path.resolve(__dirname, '..', '..', 'depcruiser-runner.mjs'),
+  ];
+
+  for (const candidatePath of candidatePaths) {
+    if (fs.existsSync(candidatePath)) {
+      return candidatePath;
+    }
+  }
+
+  return candidatePaths[0];
 }
 
-function runDependencyCruiser(args: string[], cwd: string): Promise<string> {
+function runDependencyCruiser(scriptPath: string, payload: unknown, cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, {
+    const child = spawn(process.execPath, [scriptPath], {
       cwd,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
     const stdoutChunks: Buffer[] = [];
     const stderrChunks: Buffer[] = [];
@@ -504,6 +515,7 @@ function runDependencyCruiser(args: string[], cwd: string): Promise<string> {
     });
 
     child.on('error', reject);
+    child.stdin?.end(`${JSON.stringify(payload)}\n`);
 
     child.on('close', (code) => {
       const stdout = Buffer.concat(stdoutChunks).toString('utf8');

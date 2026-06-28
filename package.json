@@ -51,10 +51,10 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "dev:watch": "vite build --watch",
-    "build": "vite build && pnpm build:ext",
+    "build": "vite build && pnpm build:ext && pnpm build:depcruiser",
     "build:ext": "esbuild src/extension/index.ts --bundle --platform=node --target=node18 --external:vscode --outfile=dist/extension/index.js --sourcemap",
-    "copy:depcruiser": "node -e \"const fs=require('fs');fs.cpSync(fs.realpathSync('node_modules/dependency-cruiser'),'dist/node_modules/dependency-cruiser',{recursive:true})\"",
-    "package": "pnpm build && pnpm copy:depcruiser && npx vsce package --no-dependencies",
+    "build:depcruiser": "node scripts/copy-dependency-cruiser.mjs && node -e \"require('fs').copyFileSync('src/extension/depcruiser-runner.mjs','dist/depcruiser-runner.mjs')\"",
+    "package": "pnpm build && npx vsce package --no-dependencies",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:extension": "vscode-test",
