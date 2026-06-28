@@ -481,6 +481,8 @@ function findTsConfigPath(repoPath: string): string | undefined {
 }
 
 function getDependencyCruiserBinPath(): string {
+  const bundledPath = path.resolve(__dirname, '..', 'node_modules', 'dependency-cruiser', 'bin', 'dependency-cruise.mjs');
+  if (fs.existsSync(bundledPath)) return bundledPath;
   return path.resolve(__dirname, '..', '..', 'node_modules', 'dependency-cruiser', 'bin', 'dependency-cruise.mjs');
 }
 
