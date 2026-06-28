@@ -1,4 +1,4 @@
-# Product Overview: Git Author Explorer
+# Product Overview: GitRewind
 
 > **버전** v1.2 | **작성일** 2026-06-25 | **상태** 확정
 
@@ -6,7 +6,7 @@
 
 ## Product Purpose
 
-Git Author Explorer는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을 효율적으로 탐색하고, 파일 변경 내역을 시각적으로 분석하며, AI CLI를 통해 작업 내용을 마크다운 형식으로 자동 요약·저장할 수 있는 도구다.
+GitRewind는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을 효율적으로 탐색하고, 파일 변경 내역을 시각적으로 분석하며, AI CLI를 통해 작업 내용을 마크다운 형식으로 자동 요약·저장할 수 있는 도구다.
 
 ---
 

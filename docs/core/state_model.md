@@ -1,6 +1,6 @@
 # State Model
 
-> Git Author Explorer 전체에서 공유되는 전역 상태를 정의한다.
+> GitRewind 전체에서 공유되는 전역 상태를 정의한다.
 > 상태 관리 라이브러리: Zustand 또는 React Context (확정 전).
 
 ---

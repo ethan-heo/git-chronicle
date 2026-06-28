@@ -75,7 +75,7 @@ async function handleClearSavePath(panel: vscode.WebviewPanel, context: vscode.E
 }
 
 export async function setSavePath(context: vscode.ExtensionContext, savePath: string | null): Promise<AISettingsState> {
-  await context.globalState.update('gitAuthorExplorer.savePath', savePath ?? undefined);
+  await context.globalState.update('gitRewind.savePath', savePath ?? undefined);
   return loadAISettingsState(context);
 }
 ```

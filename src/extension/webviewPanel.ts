@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { registerMessageHandler } from './messageHandler';
 
-export class GitAuthorExplorerPanel {
-  private static currentPanel: GitAuthorExplorerPanel | undefined;
+export class GitRewindPanel {
+  private static currentPanel: GitRewindPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
   private readonly disposables: vscode.Disposable[] = [];
 
@@ -18,14 +18,14 @@ export class GitAuthorExplorerPanel {
   public static createOrShow(context: vscode.ExtensionContext): void {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
-    if (GitAuthorExplorerPanel.currentPanel) {
-      GitAuthorExplorerPanel.currentPanel.panel.reveal(column);
+    if (GitRewindPanel.currentPanel) {
+      GitRewindPanel.currentPanel.panel.reveal(column);
       return;
     }
 
     const panel = vscode.window.createWebviewPanel(
-      'gitAuthorExplorer',
-      'Git Author Explorer',
+      'gitRewind',
+      'GitRewind',
       column,
       {
         enableScripts: true,
@@ -33,15 +33,15 @@ export class GitAuthorExplorerPanel {
       },
     );
 
-    GitAuthorExplorerPanel.currentPanel = new GitAuthorExplorerPanel(panel, context);
+    GitRewindPanel.currentPanel = new GitRewindPanel(panel, context);
   }
 
   public static disposeCurrent(): void {
-    GitAuthorExplorerPanel.currentPanel?.dispose();
+    GitRewindPanel.currentPanel?.dispose();
   }
 
   private dispose(): void {
-    GitAuthorExplorerPanel.currentPanel = undefined;
+    GitRewindPanel.currentPanel = undefined;
 
     while (this.disposables.length > 0) {
       const disposable = this.disposables.pop();
@@ -66,7 +66,7 @@ export class GitAuthorExplorerPanel {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';" />
     <link href="${styleUri}" rel="stylesheet" />
-    <title>Git Author Explorer</title>
+    <title>GitRewind</title>
   </head>
   <body>
     <div id="root"></div>

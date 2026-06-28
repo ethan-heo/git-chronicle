@@ -1,6 +1,6 @@
 # Global Components
 
-> Git Author Explorer 전체에서 재사용되는 컴포넌트를 정의한다.
+> GitRewind 전체에서 재사용되는 컴포넌트를 정의한다.
 > 특정 Feature에만 속한 컴포넌트는 해당 Feature의 blueprint.md에 정의한다.
 
 ---

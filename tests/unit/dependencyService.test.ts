@@ -40,7 +40,7 @@ describe('dependencyService', () => {
     const currentFilePath = path.join(repoPath, 'src/current.ts');
     fs.mkdirSync(path.dirname(currentFilePath), { recursive: true });
     fs.writeFileSync(currentFilePath, "import './legacy';\n", 'utf8');
-    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue('/tmp/git-author-explorer-restore');
+    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue('/tmp/git-rewind-restore');
 
     fetchFileContentAtCommitMock.mockResolvedValueOnce("import './current';\n");
 
@@ -62,7 +62,7 @@ describe('dependencyService', () => {
     fs.writeFileSync(path.join(repoPath, 'tsconfig.json'), '{}', 'utf8');
     fs.writeFileSync(path.join(repoPath, 'src/a.ts'), "import { b } from './b';\n", 'utf8');
     fs.writeFileSync(path.join(repoPath, 'src/b.ts'), 'export const b = 1;\n', 'utf8');
-    const tmpDir = '/tmp/git-author-explorer-analyze';
+    const tmpDir = '/tmp/git-rewind-analyze';
     const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
 
     execFileMock.mockImplementationOnce(async (_command, args: string[]) => {
@@ -114,7 +114,7 @@ describe('dependencyService', () => {
     );
     fs.writeFileSync(path.join(repoPath, 'src', 'feature.ts'), "import { queryKey } from '@/constants/queryKey';\n", 'utf8');
     fs.writeFileSync(path.join(repoPath, 'src', 'constants', 'queryKey.ts'), 'export const queryKey = 1;\n', 'utf8');
-    const tmpDir = '/tmp/git-author-explorer-analyze-alias';
+    const tmpDir = '/tmp/git-rewind-analyze-alias';
     const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
 
     const { analyzeDependencies } = await import('../../src/extension/dependencyService');
@@ -129,7 +129,7 @@ describe('dependencyService', () => {
     fs.mkdirSync(path.join(repoPath, 'src'), { recursive: true });
     fs.writeFileSync(path.join(repoPath, 'src/a.ts'), "require('./b');\n", 'utf8');
     fs.writeFileSync(path.join(repoPath, 'src/b.ts'), 'export const b = 1;\n', 'utf8');
-    const tmpDir = '/tmp/git-author-explorer-analyze-no-config';
+    const tmpDir = '/tmp/git-rewind-analyze-no-config';
     const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
 
     execFileMock.mockImplementationOnce(async (_command, args: string[]) => {

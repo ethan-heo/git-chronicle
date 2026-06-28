@@ -1,4 +1,4 @@
-# Git Author Explorer — VSCode Extension 기획서
+# GitRewind — VSCode Extension 기획서
 
 > **버전** v1.2 | **작성일** 2026-06-25 | **상태** 확정
 >

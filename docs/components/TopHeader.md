@@ -24,7 +24,7 @@ interface TopHeaderProps {
 
 | 화면 | title 예시 | showBackButton | showSettingsIcon |
 |------|-----------|---------------|-----------------|
-| S01 | `"Git Author Explorer"` | false | true |
+| S01 | `"GitRewind"` | false | true |
 | S02 | `"{커밋 메시지}"` | true | true |
 | S03 | `"{커밋 메시지} > {파일 경로}"` | true | true |
 | S04 | `"{커밋 메시지} > {파일 경로}"` 또는 `"{커밋 메시지} > 커밋 전체 요약"` | true | true |

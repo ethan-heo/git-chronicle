@@ -6,7 +6,7 @@
 
 ## Product Context
 
-Git Author Explorer는 VSCode Extension의 Webview 패널 기반 SPA다. VSCode 테마 CSS 변수를 사용하므로 라이트/다크 테마를 별도로 구현하지 않는다. 패널 너비는 280px~600px 사이로 가변적이다.
+GitRewind는 VSCode Extension의 Webview 패널 기반 SPA다. VSCode 테마 CSS 변수를 사용하므로 라이트/다크 테마를 별도로 구현하지 않는다. 패널 너비는 280px~600px 사이로 가변적이다.
 
 ---
 
@@ -34,7 +34,7 @@ S01_CommitListScreen
 
 ## Component Tree
 
-- `TopHeader`: 화면 제목 "Git Author Explorer" + 우측 상단 ⚙ 아이콘
+- `TopHeader`: 화면 제목 "GitRewind" + 우측 상단 ⚙ 아이콘
 - `CommitFilterPanel`: 세 개의 필터를 세로로 배치한 패널
   - `DateRangeFilter`: 시작일/종료일 두 개의 날짜 입력
   - `AuthorDropdown`: 작성자 선택 드롭다운

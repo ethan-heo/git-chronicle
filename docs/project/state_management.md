@@ -1,4 +1,4 @@
-# State Management — Git Author Explorer
+# State Management — GitRewind
 
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 
@@ -6,7 +6,7 @@
 
 ## 개요
 
-Git Author Explorer의 상태는 두 레이어에 분리하여 관리한다.
+GitRewind의 상태는 두 레이어에 분리하여 관리한다.
 
 | 레이어 | 상태 종류 | 저장소 |
 |--------|-----------|--------|
@@ -469,13 +469,13 @@ F07 저장 경로 설정은 S06에서 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시
 
 ## ExtensionContext.globalState (영속 설정)
 
-Extension Host 재시작 후에도 유지해야 하는 설정은 F06/F07 구현에서 `ExtensionContext.globalState`에 저장한다. `loadAISettingsState()`는 `globalState`를 우선 사용하고, 기존 VSCode configuration의 `gitAuthorExplorer.savePath`, `gitAuthorExplorer.activeAIProvider`는 fallback으로만 읽는다.
+Extension Host 재시작 후에도 유지해야 하는 설정은 F06/F07 구현에서 `ExtensionContext.globalState`에 저장한다. `loadAISettingsState()`는 `globalState`를 우선 사용하고, 기존 VSCode configuration의 `gitRewind.savePath`, `gitRewind.activeAIProvider`는 fallback으로만 읽는다.
 
 | 키 | 타입 | 설명 |
 |---|------|------|
-| `gitAuthorExplorer.savePath` | `string \| undefined` | AI 정리 저장 경로 |
-| `gitAuthorExplorer.registeredProviders` | `AIProviderName[]` | 등록된 AI CLI 목록 |
-| `gitAuthorExplorer.activeAIProvider` | `AIProviderName \| undefined` | 활성화된 AI CLI |
+| `gitRewind.savePath` | `string \| undefined` | AI 정리 저장 경로 |
+| `gitRewind.registeredProviders` | `AIProviderName[]` | 등록된 AI CLI 목록 |
+| `gitRewind.activeAIProvider` | `AIProviderName \| undefined` | 활성화된 AI CLI |
 
 Extension 활성화 시 `globalState`에서 값을 읽어 Webview에 초기 상태로 전달한다.
 

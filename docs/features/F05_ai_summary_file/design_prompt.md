@@ -6,7 +6,7 @@
 
 ## Product Context
 
-Git Author Explorer VSCode Extension. [AI 정리 보기] 버튼 클릭 시 진입하는 S04_AISummaryViewerScreen. 파일 단위 AI 정리 결과를 스트리밍으로 표시하고 저장하는 화면. F05b_AISummaryCommit과 동일 화면을 `summaryMode`로 구분하여 공유한다.
+GitRewind VSCode Extension. [AI 정리 보기] 버튼 클릭 시 진입하는 S04_AISummaryViewerScreen. 파일 단위 AI 정리 결과를 스트리밍으로 표시하고 저장하는 화면. F05b_AISummaryCommit과 동일 화면을 `summaryMode`로 구분하여 공유한다.
 
 ---
 

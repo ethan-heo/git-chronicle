@@ -1,7 +1,7 @@
 {
-  "name": "git-author-explorer",
-  "displayName": "Git Author Explorer",
-  "description": "Explore Git commits, changed files, dependency graphs, and AI summaries in VSCode.",
+  "name": "git-rewind",
+  "displayName": "GitRewind",
+  "description": "Rewind your Git history — explore commits, changed files, dependency graphs, and AI summaries in VSCode.",
   "version": "0.0.1",
   "private": true,
   "packageManager": "pnpm@10.19.0",
@@ -13,26 +13,23 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:gitAuthorExplorer.open"
-  ],
   "main": "./dist/extension/index.js",
   "contributes": {
     "commands": [
       {
-        "command": "gitAuthorExplorer.open",
-        "title": "Git Author Explorer: Open"
+        "command": "gitRewind.open",
+        "title": "GitRewind: Open"
       }
     ],
     "configuration": {
-      "title": "Git Author Explorer",
+      "title": "GitRewind",
       "properties": {
-        "gitAuthorExplorer.savePath": {
+        "gitRewind.savePath": {
           "type": "string",
           "default": "",
           "description": "Default path for saved AI summaries."
         },
-        "gitAuthorExplorer.activeAIProvider": {
+        "gitRewind.activeAIProvider": {
           "type": "string",
           "enum": [
             "",

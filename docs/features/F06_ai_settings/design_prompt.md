@@ -6,7 +6,7 @@
 
 ## Product Context
 
-Git Author Explorer VSCode Extension. 설정 화면(S06_SettingsScreen)의 상단 영역. AI CLI(Claude/Gemini/Codex) 등록·활성화·비활성화 UI.
+GitRewind VSCode Extension. 설정 화면(S06_SettingsScreen)의 상단 영역. AI CLI(Claude/Gemini/Codex) 등록·활성화·비활성화 UI.
 
 ---
 

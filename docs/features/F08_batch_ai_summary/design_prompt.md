@@ -6,7 +6,7 @@
 
 ## Product Context
 
-Git Author Explorer VSCode Extension. 모든 변경 파일에 대해 AI 정리를 일괄 자동 실행하는 기능. 화면 최상단에 고정되는 `BatchProgressBar`가 유일한 UI 컴포넌트이며, 어떤 화면에 있어도 항상 표시된다.
+GitRewind VSCode Extension. 모든 변경 파일에 대해 AI 정리를 일괄 자동 실행하는 기능. 화면 최상단에 고정되는 `BatchProgressBar`가 유일한 UI 컴포넌트이며, 어떤 화면에 있어도 항상 표시된다.
 
 ---
 

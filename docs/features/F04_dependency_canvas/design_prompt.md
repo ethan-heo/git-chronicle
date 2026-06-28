@@ -6,7 +6,7 @@
 
 ## Product Context
 
-Git Author Explorer VSCode Extension. 이력 조회 화면(S02)에서 [캔버스 보기]를 클릭하면 진입하는 S05_DependencyCanvasScreen. React Flow 기반 노드-엣지 인터랙티브 그래프.
+GitRewind VSCode Extension. 이력 조회 화면(S02)에서 [캔버스 보기]를 클릭하면 진입하는 S05_DependencyCanvasScreen. React Flow 기반 노드-엣지 인터랙티브 그래프.
 
 ---
 

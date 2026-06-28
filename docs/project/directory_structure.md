@@ -1,4 +1,4 @@
-# Directory Structure — Git Author Explorer
+# Directory Structure — GitRewind
 
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 
@@ -7,7 +7,7 @@
 ## 최상위 구조
 
 ```
-git-author-explorer/
+git-rewind/
 ├── .vscode/
 │   └── launch.json                   # Extension 디버그 실행 설정
 ├── dist/

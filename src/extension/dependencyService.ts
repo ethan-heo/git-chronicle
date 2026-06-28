@@ -47,7 +47,7 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
     throw new DependencyCruiserNotFoundError(analyzerPath);
   }
 
-  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-author-explorer-'));
+  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-rewind-'));
   const resolvedFiles: string[] = [];
   const changedFileSet = new Set<string>();
 

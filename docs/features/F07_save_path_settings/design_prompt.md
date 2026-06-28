@@ -6,7 +6,7 @@
 
 ## Product Context
 
-Git Author Explorer VSCode Extension. 설정 화면(S06_SettingsScreen)의 하단 영역. AI 정리 결과물의 저장 경로를 선택·표시·삭제하는 UI.
+GitRewind VSCode Extension. 설정 화면(S06_SettingsScreen)의 하단 영역. AI 정리 결과물의 저장 경로를 선택·표시·삭제하는 UI.
 
 ---
 

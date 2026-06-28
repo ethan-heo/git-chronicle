@@ -6,7 +6,7 @@
 
 ## Product Context
 
-Git Author Explorer VSCode Extension의 Webview 패널. 사용자가 커밋을 선택하면 변경된 파일을 디렉토리 트리 형태로 확인하는 화면(S02_HistoryViewScreen)의 메인 기능.
+GitRewind VSCode Extension의 Webview 패널. 사용자가 커밋을 선택하면 변경된 파일을 디렉토리 트리 형태로 확인하는 화면(S02_HistoryViewScreen)의 메인 기능.
 
 ---
 

@@ -6,7 +6,7 @@
 
 ## Product Context
 
-Git Author Explorer VSCode Extension. 파일 트리(S02) 또는 캔버스(S05)에서 [코드 보기]를 클릭하면 진입하는 S03_CodeViewerScreen. 읽기 전용 diff 뷰어.
+GitRewind VSCode Extension. 파일 트리(S02) 또는 캔버스(S05)에서 [코드 보기]를 클릭하면 진입하는 S03_CodeViewerScreen. 읽기 전용 diff 뷰어.
 
 ---
 

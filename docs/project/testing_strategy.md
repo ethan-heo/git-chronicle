@@ -1,4 +1,4 @@
-# Testing Strategy — Git Author Explorer
+# Testing Strategy — GitRewind
 
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 
@@ -6,7 +6,7 @@
 
 ## 테스트 계층
 
-Git Author Explorer의 테스트는 세 계층으로 구분한다.
+GitRewind의 테스트는 세 계층으로 구분한다.
 
 | 계층 | 도구 | 대상 | 목적 |
 |------|------|------|------|

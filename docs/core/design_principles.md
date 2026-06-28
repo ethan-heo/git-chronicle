@@ -1,6 +1,6 @@
 # Design Principles
 
-> Git Author Explorer의 모든 UI 설계 결정은 아래 원칙을 기준으로 판단한다.
+> GitRewind의 모든 UI 설계 결정은 아래 원칙을 기준으로 판단한다.
 
 ---
 

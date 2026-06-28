@@ -153,8 +153,8 @@ case 'FETCH_AI_SUMMARY_SETTINGS': {
   panel.webview.postMessage({
     type: 'AI_SUMMARY_SETTINGS_LOADED',
     payload: {
-      savePath: vscode.workspace.getConfiguration('gitAuthorExplorer').get<string>('savePath') || null,
-      activeAIProvider: vscode.workspace.getConfiguration('gitAuthorExplorer').get<AIProviderName>('activeAIProvider') || null,
+      savePath: vscode.workspace.getConfiguration('gitRewind').get<string>('savePath') || null,
+      activeAIProvider: vscode.workspace.getConfiguration('gitRewind').get<AIProviderName>('activeAIProvider') || null,
     },
   });
   break;

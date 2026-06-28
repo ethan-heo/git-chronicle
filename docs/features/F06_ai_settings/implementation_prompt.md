@@ -126,8 +126,8 @@ export function persistProviderState(
   registeredProviders: AIProviderName[],
   activeAIProvider: AIProviderName | null
 ): void {
-  context.globalState.update('gitAuthorExplorer.registeredProviders', registeredProviders);
-  context.globalState.update('gitAuthorExplorer.activeAIProvider', activeAIProvider ?? undefined);
+  context.globalState.update('gitRewind.registeredProviders', registeredProviders);
+  context.globalState.update('gitRewind.activeAIProvider', activeAIProvider ?? undefined);
 }
 
 export function loadProviderState(context: vscode.ExtensionContext): {
@@ -135,8 +135,8 @@ export function loadProviderState(context: vscode.ExtensionContext): {
   activeAIProvider: AIProviderName | null;
 } {
   return {
-    registeredProviders: context.globalState.get('gitAuthorExplorer.registeredProviders', []),
-    activeAIProvider: context.globalState.get('gitAuthorExplorer.activeAIProvider', null),
+    registeredProviders: context.globalState.get('gitRewind.registeredProviders', []),
+    activeAIProvider: context.globalState.get('gitRewind.activeAIProvider', null),
   };
 }
 ```

@@ -1,4 +1,4 @@
-# Development Environment — Git Author Explorer
+# Development Environment — GitRewind
 
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 
@@ -109,7 +109,7 @@
 
 ## 환경 변수 & 설정
 
-- VSCode Extension의 사용자 설정은 `vscode.workspace.getConfiguration('gitAuthorExplorer')`로 접근한다.
+- VSCode Extension의 사용자 설정은 `vscode.workspace.getConfiguration('gitRewind')`로 접근한다.
 - AI 프로바이더 등록 정보와 저장 경로는 `ExtensionContext.globalState`에 영속 저장한다.
 - Webview에 초기 상태를 전달할 때는 `WebviewPanel.webview.html` 내 `<meta>`태그 또는 초기 `postMessage`를 사용한다.
 

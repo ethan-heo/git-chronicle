@@ -87,7 +87,7 @@ export async function analyzeDependencies(
   if (analyzable.length === 0) return [];
 
   const analyzerPath = getDependencyCruiserBinPath();
-  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-author-explorer-'));
+  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-rewind-'));
   const resolvedPaths: string[] = [];
 
   try {

@@ -1,6 +1,6 @@
 # Interaction Model
 
-> Git Author Explorer 전체에서 공통으로 사용하는 인터랙션 패턴을 정의한다.
+> GitRewind 전체에서 공통으로 사용하는 인터랙션 패턴을 정의한다.
 > 각 Feature의 blueprint.md에서 이 모델을 참조하여 Feature별 인터랙션을 명세한다.
 
 ---

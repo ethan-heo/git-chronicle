@@ -5,9 +5,9 @@ import type { AIProviderDefinition, AIProviderName } from './aiTypes';
 
 const execFileAsync = promisify(execFile);
 
-const REGISTERED_PROVIDERS_KEY = 'gitAuthorExplorer.registeredProviders';
-const ACTIVE_PROVIDER_KEY = 'gitAuthorExplorer.activeAIProvider';
-const SAVE_PATH_KEY = 'gitAuthorExplorer.savePath';
+const REGISTERED_PROVIDERS_KEY = 'gitRewind.registeredProviders';
+const ACTIVE_PROVIDER_KEY = 'gitRewind.activeAIProvider';
+const SAVE_PATH_KEY = 'gitRewind.savePath';
 
 export const AI_PROVIDERS: AIProviderDefinition[] = [
   {
@@ -116,7 +116,7 @@ export async function setSavePath(context: vscode.ExtensionContext, savePath: st
 }
 
 export function loadAISettingsState(context: vscode.ExtensionContext): AISettingsState {
-  const configuration = vscode.workspace.getConfiguration('gitAuthorExplorer');
+  const configuration = vscode.workspace.getConfiguration('gitRewind');
   const configuredActiveProvider = normalizeProviderName(configuration.get<string>('activeAIProvider'));
   const configuredSavePath = configuration.get<string>('savePath')?.trim() || null;
   const registeredProviders = normalizeProviderNames(context.globalState.get<AIProviderName[]>(REGISTERED_PROVIDERS_KEY, []));
