@@ -1,28 +1,28 @@
 export function buildFileSummaryPrompt(filePath: string, diff: string): string {
-  return `아래는 Git 커밋에서 변경된 파일의 diff입니다.
-이 내용을 바탕으로 개발자가 나중에 자신의 작업을 회고할 수 있도록 마크다운 형식으로 정리해주세요.
+  return `Here is the diff for a file changed in a Git commit.
+Summarize it in Markdown so the developer can review their work later.
 
-파일 경로: ${filePath}
+File path: ${filePath}
 
-## 조건
-- 출력 언어: 한국어
-- 코드를 단순 번역하지 말고, 변경의 의도와 맥락을 중심으로 작성할 것
-- 추측이 필요한 경우 "~로 보임", "~한 것으로 추정됨" 형태로 표현할 것
-- 출력 형식은 아래 구조를 따를 것
+## Conditions
+- Output language: Korean
+- Focus on intent and context rather than translating code line by line
+- If inference is needed, phrase it as "보임" or "추정됨"
+- Follow the structure below
 
-## 출력 형식
-### 한 줄 요약
-(변경 내용을 한 문장으로)
+## Output format
+### One-line summary
+(Summarize the change in one sentence)
 
-### 변경 목적
-(버그 수정 / 기능 추가 / 리팩터링 / 성능 개선 중 해당하는 것과 구체적인 이유)
+### Change purpose
+(Choose from bug fix / feature / refactor / performance improvement and explain why)
 
-### 주요 변경 포인트
+### Key points
 -
 -
 
-### 기술적 판단 근거 (해당하는 경우)
-(특이한 구현 방식이나 패턴이 있다면 그 이유 추론)
+### Technical rationale, if applicable
+(Explain any notable implementation choices or patterns)
 
 ## diff
 \`\`\`diff
@@ -31,31 +31,31 @@ ${diff}
 }
 
 export function buildCommitSummaryPrompt(commitHash: string, diff: string): string {
-  return `아래는 Git 커밋에서 변경된 전체 파일의 diff입니다.
-이 내용을 바탕으로 개발자가 나중에 자신의 작업을 회고할 수 있도록 커밋 전체를 종합하여 마크다운 형식으로 정리해주세요.
+  return `Here is the diff for all files changed in a Git commit.
+Summarize the entire commit in Markdown so the developer can review their work later.
 
-커밋 해시: ${commitHash.slice(0, 7)}
+Commit hash: ${commitHash.slice(0, 7)}
 
-## 조건
-- 출력 언어: 한국어
-- 개별 파일의 변경을 나열하지 말고, 이 커밋이 전체적으로 무엇을 달성했는지 중심으로 작성할 것
-- 코드를 단순 번역하지 말고, 변경의 의도와 맥락을 중심으로 작성할 것
-- 추측이 필요한 경우 "~로 보임", "~한 것으로 추정됨" 형태로 표현할 것
-- 출력 형식은 아래 구조를 따를 것
+## Conditions
+- Output language: Korean
+- Focus on what the commit achieved overall rather than listing each file
+- Focus on intent and context rather than translating code line by line
+- If inference is needed, phrase it as "보임" or "추정됨"
+- Follow the structure below
 
-## 출력 형식
-### 한 줄 요약
-(이 커밋의 작업 내용을 한 문장으로)
+## Output format
+### One-line summary
+(Summarize the work in one sentence)
 
-### 변경 목적
-(버그 수정 / 기능 추가 / 리팩터링 / 성능 개선 중 해당하는 것과 구체적인 이유)
+### Change purpose
+(Choose from bug fix / feature / refactor / performance improvement and explain why)
 
-### 주요 변경 파일 및 포인트
-- \`{파일명}\`: (이 파일에서 달라진 핵심 내용 한 줄)
+### Key files and points
+- \`{file name}\`: (Summarize the key change in this file)
 - ...
 
-### 기술적 판단 근거 (해당하는 경우)
-(특이한 구현 방식이나 패턴이 있다면 그 이유 추론)
+### Technical rationale, if applicable
+(Explain any notable implementation choices or patterns)
 
 ## diff
 \`\`\`diff

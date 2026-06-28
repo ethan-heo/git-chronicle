@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useAppStore } from '../../store/appStore';
 import type { AIProviderName } from '../../types/commit';
@@ -43,6 +44,7 @@ interface StreamDemoSummaryOptions {
 }
 
 export function useAISummary() {
+  const { t } = useTranslation();
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const selectedFile = useAppStore((state) => state.selectedFile);
   const summaryMode = useAppStore((state) => state.summaryMode);
@@ -71,12 +73,12 @@ export function useAISummary() {
   const canStartSummary = Boolean(selectedCommit && activeAIProvider && savePath && (summaryMode === 'commit' || selectedFile));
 
   const headerContext = useMemo(() => {
-    if (!selectedCommit) return '준비 중';
+    if (!selectedCommit) return t('shared.loading');
     if (summaryMode === 'commit') {
-      return ['커밋 전체 요약', 'AI 정리', activeAIProvider, hasCurrentSavedSummary ? '저장됨' : null].filter(Boolean).join(' · ');
+      return ['커밋 전체 요약', t('ai_summary.ai_result'), activeAIProvider, hasCurrentSavedSummary ? t('shared.saved') : null].filter(Boolean).join(' · ');
     }
-    return `${selectedCommit.shortHash} > ${selectedFile?.path ?? ''} · 분할 보기`;
-  }, [activeAIProvider, hasCurrentSavedSummary, selectedCommit, selectedFile?.path, summaryMode]);
+    return `${selectedCommit.shortHash} > ${selectedFile?.path ?? ''} · ${t('ai_summary.split_view')}`;
+  }, [activeAIProvider, hasCurrentSavedSummary, selectedCommit, selectedFile?.path, summaryMode, t]);
 
   const startSummary = useCallback(
     (forceRegenerate = false): void => {

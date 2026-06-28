@@ -1,4 +1,5 @@
 import type { FC, KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileActionButtons, FileStatusBadge, SavedBadge } from '../../shared/components';
 import type { ChangedFile } from '../../types/commit';
 
@@ -11,6 +12,7 @@ interface FileTreeNodeProps {
 }
 
 export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeView, onAISummary }) => {
+  const { t } = useTranslation();
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Enter') {
       onCodeView(file);
@@ -28,7 +30,7 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeV
       style={{ paddingLeft: `${10 + depth * 16}px` }}
       role="treeitem"
       tabIndex={0}
-      aria-label={`${file.path} - ${getStatusLabel(file.status)}`}
+      aria-label={`${file.path} - ${getStatusLabel(file.status, t)}`}
       onKeyDown={onKeyDown}
     >
       <FileStatusBadge status={file.status} />
@@ -47,12 +49,12 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeV
   );
 };
 
-function getStatusLabel(status: ChangedFile['status']): string {
+function getStatusLabel(status: ChangedFile['status'], t: (key: string) => string): string {
   const labels: Record<ChangedFile['status'], string> = {
-    A: '추가됨',
-    M: '수정됨',
-    D: '삭제됨',
-    R: '이름변경됨',
+    A: t('dependency.status_added'),
+    M: t('dependency.status_modified'),
+    D: t('dependency.status_deleted'),
+    R: t('dependency.status_renamed'),
   };
 
   return labels[status];

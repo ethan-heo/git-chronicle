@@ -1,4 +1,5 @@
 import { useMemo, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import type { ChangedFile } from '../../types/commit';
 import { DirectoryNode } from './DirectoryNode';
@@ -15,13 +16,14 @@ interface FileTreeProps {
 }
 
 export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, onRetry, onFileCodeView, onFileAISummary }) => {
+  const { t } = useTranslation();
   const tree = useMemo(() => buildFileTree(changedFiles), [changedFiles]);
   const stats = useMemo(() => getFileStats(changedFiles), [changedFiles]);
 
   if (isLoading) {
     return (
       <section className="history-view-state">
-        <LoadingState label="변경 파일을 불러오는 중..." size="lg" />
+        <LoadingState label={t('file_tree.loading')} size="lg" />
       </section>
     );
   }
@@ -29,7 +31,7 @@ export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, on
   if (error) {
     return (
       <section className="history-view-state">
-        <ErrorState message="변경 파일 목록을 불러오지 못했습니다" onRetry={onRetry} />
+        <ErrorState message={t('file_tree.error')} onRetry={onRetry} />
       </section>
     );
   }
@@ -37,24 +39,24 @@ export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, on
   if (changedFiles.length === 0) {
     return (
       <section className="history-view-state">
-        <EmptyState message="변경된 파일이 없습니다" />
+        <EmptyState message={t('file_tree.empty')} />
       </section>
     );
   }
 
   return (
-    <section className="file-tree-panel" aria-label="변경 파일">
+    <section className="file-tree-panel" aria-label={t('file_tree.panel_aria')}>
       <div className="file-tree-summary">
-        <span>변경 파일</span>
+        <span>{t('file_tree.panel_aria')}</span>
         <strong>{changedFiles.length}</strong>
-        <div className="file-tree-stats" aria-label="변경 상태별 파일 수">
+        <div className="file-tree-stats" aria-label={t('file_tree.stats_aria')}>
           {stats.A > 0 ? <span className="file-tree-stat file-tree-stat-a">+{stats.A}</span> : null}
           {stats.M > 0 ? <span className="file-tree-stat file-tree-stat-m">~{stats.M}</span> : null}
           {stats.D > 0 ? <span className="file-tree-stat file-tree-stat-d">-{stats.D}</span> : null}
           {stats.R > 0 ? <span className="file-tree-stat file-tree-stat-r">R{stats.R}</span> : null}
         </div>
       </div>
-      <div className="file-tree" role="tree" aria-label="변경 파일 트리">
+      <div className="file-tree" role="tree" aria-label={t('file_tree.tree_aria')}>
         {tree.children.map((child) =>
           isDirectoryNode(child) ? (
             <DirectoryNode key={child.path} node={child} depth={0} onCodeView={onFileCodeView} onAISummary={onFileAISummary} />

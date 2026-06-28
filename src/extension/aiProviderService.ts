@@ -47,7 +47,7 @@ export async function checkCLIInstalled(providerName: AIProviderName): Promise<C
   const provider = AI_PROVIDERS.find((candidate) => candidate.name === providerName);
 
   if (!provider) {
-    return { installed: false, error: '알 수 없는 AI 제공자입니다' };
+    return { installed: false, error: 'Unknown AI provider' };
   }
 
   const [command, ...args] = provider.checkCommand.split(' ');
@@ -66,7 +66,7 @@ export async function checkCLIInstalled(providerName: AIProviderName): Promise<C
 
     return {
       installed: false,
-      error: isNotFound || message.includes('ENOENT') ? 'CLI가 감지되지 않습니다. 설치 페이지를 확인하세요' : '연동에 실패했습니다',
+      error: isNotFound || message.includes('ENOENT') ? 'CLI was not detected. Check the installation page.' : 'Connection failed',
       reason: isNotFound || message.includes('ENOENT') ? 'not-found' : 'failed',
     };
   }
@@ -76,7 +76,7 @@ export async function registerAIProvider(context: vscode.ExtensionContext, provi
   const checkResult = await checkCLIInstalled(providerName);
 
   if (!checkResult.installed) {
-    throw new Error(checkResult.error ?? '연동에 실패했습니다');
+    throw new Error(checkResult.error ?? 'Connection failed');
   }
 
   const state = loadAISettingsState(context);

@@ -1,6 +1,7 @@
 import '@xyflow/react/dist/style.css';
 import { Background, BackgroundVariant, MarkerType, ReactFlow, useEdgesState, useNodesState, useReactFlow } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import type { ChangedFile, DependencyEdge as DependencyEdgeModel } from '../../types/commit';
 import { CanvasControls } from './CanvasControls';
@@ -36,10 +37,11 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
   onFileCodeView,
   onFileAISummary,
 }) => {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <section className="dependency-canvas-state">
-        <LoadingState label="의존 관계를 분석하는 중..." size="lg" />
+        <LoadingState label={t('dependency.loading')} size="lg" />
       </section>
     );
   }
@@ -55,7 +57,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
   if (files.length === 0) {
     return (
       <section className="dependency-canvas-state">
-        <EmptyState message="변경된 파일이 없습니다" />
+        <EmptyState message={t('dependency.empty')} />
       </section>
     );
   }
@@ -76,6 +78,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   onFileCodeView,
   onFileAISummary,
 }) => {
+  const { t } = useTranslation();
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const graphRef = useRef<HTMLElement | null>(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
@@ -104,8 +107,9 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
       graphEdges.map((edge) => ({
         ...edge,
         data: {
-          ...edge.data,
+          ...(edge.data ?? {}),
           highlighted: highlightedNodeId === edge.source || highlightedNodeId === edge.target,
+          kind: edge.data?.kind ?? 'import',
         },
       })),
     );
@@ -135,7 +139,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   }, [fitCanvas]);
 
   return (
-    <section className="dependency-graph" aria-label="의존 관계 그래프" ref={graphRef}>
+    <section className="dependency-graph" aria-label={t('dependency.graph_aria')} ref={graphRef}>
       {hasOnlyUnanalyzableFiles ? <div className="dependency-canvas-notice">JS/TS 외 파일은 노드로만 표시됩니다.</div> : null}
       <ReactFlow
         nodes={nodes}

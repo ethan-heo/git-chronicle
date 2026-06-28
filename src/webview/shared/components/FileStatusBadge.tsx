@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type FileStatus = 'A' | 'M' | 'D' | 'R';
 
@@ -10,10 +11,11 @@ const STATUS_LABELS: Record<FileStatus, string> = {
 };
 
 export const FileStatusBadge: FC<{ status: FileStatus }> = ({ status }) => {
+  const { t } = useTranslation();
   return (
     <span
       className={`file-status-badge file-status-badge-${status.toLowerCase()}`}
-      aria-label={`파일 상태: ${STATUS_LABELS[status]}`}
+      aria-label={t('dependency.file_status', { status: STATUS_LABELS[status] })}
       title={STATUS_LABELS[status]}
     >
       {status}

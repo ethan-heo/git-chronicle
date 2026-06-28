@@ -1,4 +1,5 @@
 import { useCallback, useEffect, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
@@ -7,6 +8,7 @@ import { CommitFilterPanel } from './CommitFilterPanel';
 import { CommitList } from './CommitList';
 
 export const S01CommitListScreen: FC = () => {
+  const { t } = useTranslation();
   const {
     commitList,
     authorList,
@@ -94,7 +96,7 @@ export const S01CommitListScreen: FC = () => {
 
   return (
     <main className="app-shell commit-log-shell">
-      <TopHeader title="GitChronicle" context="커밋 목록" showSettingsIcon onSettingsClick={goToSettingsView} />
+      <TopHeader title="GitChronicle" context={t('commit.list_title')} showSettingsIcon onSettingsClick={goToSettingsView} />
       <CommitFilterPanel
         filterDateStart={filterDateStart}
         filterDateEnd={filterDateEnd}

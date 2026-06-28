@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SplitViewButton, TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
@@ -8,6 +9,7 @@ import { TokenLimitWarning } from './TokenLimitWarning';
 import { useAISummary } from './useAISummary';
 
 export const S04AISummaryViewerScreen: FC = () => {
+  const { t } = useTranslation();
   const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const goToSettingsView = useAppStore((state) => state.goToSettingsView);
   const goToSplitView = useAppStore((state) => state.goToSplitView);
@@ -47,7 +49,7 @@ export const S04AISummaryViewerScreen: FC = () => {
         context={headerContext}
         showBackButton
         onBackClick={goBackFromDetail}
-        endSlot={<SplitViewButton label="코드 함께 보기" disabled={summaryMode !== 'file'} onClick={goToSplitView} />}
+        endSlot={<SplitViewButton label={t('ai_summary.split_view')} disabled={summaryMode !== 'file'} onClick={goToSplitView} />}
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />

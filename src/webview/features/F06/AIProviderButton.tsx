@@ -1,4 +1,5 @@
 import type { CSSProperties, FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { AIProvider, AIProviderButtonState } from '../../types/commit';
 import { CLIInstallLink } from './CLIInstallLink';
 
@@ -10,23 +11,8 @@ interface AIProviderButtonProps {
   onOpenInstall: (url: string) => void;
 }
 
-const STATE_LABELS: Record<AIProviderButtonState, string> = {
-  unregistered: '등록',
-  registering: '확인 중',
-  active: '활성',
-  inactive: '활성화',
-  error: '실패',
-};
-
-const STATUS_TEXT: Record<AIProviderButtonState, string> = {
-  unregistered: '미등록',
-  registering: 'CLI 버전 확인 중...',
-  active: '활성 - AI 정리에 사용 중',
-  inactive: '등록됨 · 비활성',
-  error: '연동 실패',
-};
-
 export const AIProviderButton: FC<AIProviderButtonProps> = ({ provider, state, errorMessage, onToggle, onOpenInstall }) => {
+  const { t } = useTranslation();
   const isActive = state === 'active';
   const isRegistering = state === 'registering';
   const isError = state === 'error';
@@ -37,9 +23,9 @@ export const AIProviderButton: FC<AIProviderButtonProps> = ({ provider, state, e
         type="button"
         className="ai-provider-main-button"
         disabled={isRegistering}
-        aria-label={`${provider.label} ${isActive ? '비활성화' : '활성화'}`}
+        aria-label={`${provider.label} ${isActive ? t('provider.click_disable') : t('provider.click_enable')}`}
         aria-pressed={isActive}
-        title={getTitle(state)}
+        title={getTitle(state, t)}
         onClick={onToggle}
       >
         <span className="ai-provider-mark" aria-hidden="true">
@@ -50,37 +36,66 @@ export const AIProviderButton: FC<AIProviderButtonProps> = ({ provider, state, e
             <span className="ai-provider-label">{provider.label}</span>
             <span className="ai-provider-cli">{provider.cli}</span>
           </span>
-          <span className="ai-provider-status">{STATUS_TEXT[state]}</span>
+          <span className="ai-provider-status">{getStatusText(state, t)}</span>
         </span>
         <span className="ai-provider-state-pill">
           {isRegistering ? <span className="ai-provider-spinner" aria-hidden="true" /> : null}
-          {STATE_LABELS[state]}
+          {getStateLabel(state, t)}
         </span>
       </button>
       {isError ? (
         <div className="ai-provider-error" role="alert">
-          <span>{errorMessage || 'CLI가 감지되지 않습니다. 설치 페이지를 확인하세요'}</span>
-          <CLIInstallLink url={provider.installUrl} label={`${provider.label} 설치 페이지 열기`} ariaLabel={`${provider.label} 설치 페이지 열기`} onOpen={onOpenInstall} />
+          <span>{errorMessage || t('settings.provider_cli_missing')}</span>
+          <CLIInstallLink
+            url={provider.installUrl}
+            label={t('settings.open_install_page', { name: provider.label })}
+            ariaLabel={t('settings.open_install_page', { name: provider.label })}
+            onOpen={onOpenInstall}
+          />
         </div>
       ) : null}
     </div>
   );
 };
 
-function getTitle(state: AIProviderButtonState): string {
+function getTitle(state: AIProviderButtonState, t: (key: string) => string): string {
   if (state === 'active') {
-    return '클릭하여 비활성화';
+    return t('provider.click_disable');
   }
 
   if (state === 'inactive') {
-    return '클릭하여 활성화';
+    return t('provider.click_enable');
   }
 
   if (state === 'error') {
-    return '클릭하여 다시 등록';
+    return t('provider.click_reregister');
   }
 
-  return '클릭하여 등록';
+  return t('provider.click_register');
+}
+
+function getStateLabel(state: AIProviderButtonState, t: (key: string) => string): string {
+  return t(`provider.${state}`);
+}
+
+function getStatusText(state: AIProviderButtonState, t: (key: string) => string): string {
+  if (state === 'unregistered') {
+    return t('provider.unregistered');
+  }
+
+  if (state === 'registering') {
+    return t('provider.cli_checking');
+  }
+
+  if (state === 'active') {
+    return t('provider.active_in_use');
+  }
+
+  if (state === 'inactive') {
+    return t('provider.registered_inactive');
+  }
+
+  return t('provider.connection_failed');
 }
 
 const ProviderIcon: FC<{ providerName: AIProvider['name'] }> = ({ providerName }) => {

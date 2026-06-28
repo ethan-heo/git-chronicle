@@ -11,6 +11,7 @@
 - **Extension Host**: VSCode API, Git 데이터, 파일시스템, AI CLI 프로세스를 담당하는 Node.js 런타임.
 - **Webview SPA**: React + TypeScript로 구현된 UI 레이어. 브라우저 유사 환경에서 실행되며, DOM·CSS·React 생태계를 활용한다.
 - **두 레이어 간 통신**: `postMessage` / `onDidReceiveMessage` API만을 유일한 통신 채널로 사용한다.
+- **다국어 지원**: Webview는 `src/webview/i18n/`의 로컬 번역 리소스를 사용하고, 초기 언어는 `vscode.env.language`를 기준으로 `en`/`ko`로 정규화한다.
 
 ---
 
@@ -34,6 +35,12 @@ src/
 └── webview/                          # Webview SPA (React + TypeScript)
     ├── main.tsx                      # React 진입점 (ReactDOM.createRoot)
     ├── App.tsx                       # 화면 라우터 (currentScreen 기반 라우트 슬롯 렌더링)
+    ├── i18n/                         # Webview 로컬 번역 리소스 및 런타임
+    │   ├── index.ts                  # 번역 리소스 등록 및 초기화 진입점
+    │   ├── runtime.ts                # 최소 i18n 런타임 구현
+    │   └── locales/
+    │       ├── en/translation.json   # 기본 영어 번역
+    │       └── ko/translation.json   # 한국어 번역
     ├── store/
     │   └── appStore.ts               # Zustand 전역 상태 스토어
     ├── types/
@@ -170,6 +177,14 @@ export function setWebviewState<T>(state: T): void;
 ```
 
 브라우저 개발 모드에서는 `acquireVsCodeApi()`가 없으므로 `isVSCodeRuntime()`이 false가 되고, Webview State 읽기/쓰기는 no-op으로 동작한다.
+
+### Webview 다국어
+
+Webview UI 문자열은 컴포넌트 내부 하드코딩을 줄이고 `react-i18next` 호환 훅(`useTranslation`)으로 관리한다. 초기 언어는 Extension Host가 주입한 `window.__LANG__`를 우선 사용하고, 값이 없으면 브라우저/호스트 기본값을 따라 `en`으로 폴백한다.
+
+- 번역 키는 `src/webview/i18n/locales/en/translation.json`을 기준으로 유지한다.
+- 한국어는 `src/webview/i18n/locales/ko/translation.json`에서 관리한다.
+- 언어 정규화는 `ko*` 계열이면 한국어, 그 외는 영어로 처리한다.
 
 ### Extension ↔ Webview 메시지 프로토콜
 

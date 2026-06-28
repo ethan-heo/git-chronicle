@@ -1,4 +1,5 @@
 import { useEffect, useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
@@ -18,6 +19,7 @@ interface AISettingsPayload {
 }
 
 export const S06SettingsScreen: FC = () => {
+  const { t } = useTranslation();
   const savePath = useAppStore((state) => state.savePath);
   const registeredProviders = useAppStore((state) => state.registeredProviders);
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
@@ -60,25 +62,22 @@ export const S06SettingsScreen: FC = () => {
         });
         setRegisteringProvider(null);
         setProviderErrors({});
-        setStatusMessage(getSuccessMessage(type, payload?.providerName, payload?.activeAIProvider ?? null));
+        setStatusMessage(getSuccessMessage(t, type, payload?.providerName, payload?.activeAIProvider ?? null));
         return;
       }
 
       if (type === 'AI_PROVIDER_REGISTRATION_FAILED') {
         setRegisteringProvider(null);
         if (payload?.providerName) {
-          setProviderErrors((errors) => ({
-            ...errors,
-            [payload.providerName as AIProviderName]: payload.message || 'CLI가 감지되지 않습니다. 설치 페이지를 확인하세요',
-          }));
+          setProviderErrors((errors) => ({ ...errors, [payload.providerName as AIProviderName]: payload.message || t('settings.provider_cli_missing') }));
         }
-        setStatusMessage(payload?.message || '연동에 실패했습니다');
+        setStatusMessage(payload?.message || t('settings.msg_register_failed'));
         return;
       }
 
       if (type === 'AI_SETTINGS_ERROR') {
         setRegisteringProvider(null);
-        setStatusMessage(payload?.message || '설정을 변경하지 못했습니다');
+        setStatusMessage(payload?.message || t('settings.msg_settings_error'));
       }
     };
 
@@ -116,9 +115,9 @@ export const S06SettingsScreen: FC = () => {
         if (providerName === 'codex') {
           setProviderErrors((errors) => ({
             ...errors,
-            codex: 'CLI가 감지되지 않습니다. 설치 페이지를 확인하세요',
+            codex: t('settings.provider_cli_missing'),
           }));
-          setStatusMessage('Codex CLI를 찾을 수 없습니다');
+          setStatusMessage(t('settings.provider_codex_missing'));
           return;
         }
 
@@ -126,7 +125,7 @@ export const S06SettingsScreen: FC = () => {
           registeredProviders: Array.from(new Set([...registeredProviders, providerName])),
           activeAIProvider: providerName,
         });
-        setStatusMessage(`${providerName} 등록 완료 · 활성화됨`);
+        setStatusMessage(t('settings.msg_provider_registered', { name: providerName }));
       }, 700);
       return;
     }
@@ -135,7 +134,7 @@ export const S06SettingsScreen: FC = () => {
       registeredProviders,
       activeAIProvider: activeAIProvider === providerName ? null : providerName,
     });
-    setStatusMessage(activeAIProvider === providerName ? 'AI가 비활성화되었습니다' : `${providerName} 활성화됨`);
+    setStatusMessage(activeAIProvider === providerName ? t('settings.msg_ai_deactivated') : t('settings.msg_provider_activated', { name: providerName }));
   };
 
   const handleOpenInstall = (url: string): void => {
@@ -154,7 +153,7 @@ export const S06SettingsScreen: FC = () => {
     }
 
     setAISummarySettings({ savePath: '/Users/example/git-author-summaries' });
-    setStatusMessage('저장 경로가 설정되었습니다');
+    setStatusMessage(t('settings.msg_save_path_set'));
   };
 
   const handlePathDelete = (): void => {
@@ -164,12 +163,12 @@ export const S06SettingsScreen: FC = () => {
     }
 
     setAISummarySettings({ savePath: null });
-    setStatusMessage('저장 경로 설정을 삭제했습니다 · 기존 파일은 유지됩니다');
+    setStatusMessage(t('settings.msg_save_path_cleared'));
   };
 
   return (
     <main className="app-shell commit-log-shell settings-shell">
-      <TopHeader title="설정" context="GitChronicle" showBackButton onBackClick={goBackFromDetail} />
+      <TopHeader title={t('settings.title')} context={t('settings.context')} showBackButton onBackClick={goBackFromDetail} />
       <div className="settings-screen">
         <AIProviderSection
           registeredProviders={registeredProviders}
@@ -190,25 +189,30 @@ export const S06SettingsScreen: FC = () => {
   );
 };
 
-function getSuccessMessage(type: string, providerName: AIProviderName | undefined, activeAIProvider: AIProviderName | null): string | null {
+function getSuccessMessage(
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  type: string,
+  providerName: AIProviderName | undefined,
+  activeAIProvider: AIProviderName | null,
+): string | null {
   if (type === 'AI_SUMMARY_SETTINGS_LOADED') {
     return null;
   }
 
   if (type === 'AI_PROVIDER_REGISTERED' && providerName) {
-    return `${providerName} 등록 완료 · 활성화됨`;
+    return t('settings.msg_provider_registered', { name: providerName });
   }
 
   if (type === 'AI_PROVIDER_STATE_UPDATED') {
-    return activeAIProvider ? `${activeAIProvider} 활성화됨` : 'AI가 비활성화되었습니다';
+    return activeAIProvider ? t('settings.msg_provider_activated', { name: activeAIProvider }) : t('settings.msg_ai_deactivated');
   }
 
   if (type === 'SAVE_PATH_SET') {
-    return '저장 경로가 설정되었습니다';
+    return t('settings.msg_save_path_set');
   }
 
   if (type === 'SAVE_PATH_CLEARED') {
-    return '저장 경로 설정을 삭제했습니다 · 기존 파일은 유지됩니다';
+    return t('settings.msg_save_path_cleared');
   }
 
   return null;

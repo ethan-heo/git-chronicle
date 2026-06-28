@@ -1,4 +1,5 @@
 import { useEffect, useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface KeywordSearchInputProps {
   id: string;
@@ -21,6 +22,7 @@ export const KeywordSearchInput: FC<KeywordSearchInputProps> = ({
   className,
   debounceMs = 300,
 }) => {
+  const { t } = useTranslation();
   const [localValue, setLocalValue] = useState(keyword);
 
   useEffect(() => {
@@ -60,10 +62,10 @@ export const KeywordSearchInput: FC<KeywordSearchInputProps> = ({
           value={localValue}
           onChange={(event) => setLocalValue(event.target.value)}
           aria-label={ariaLabel}
-          placeholder={placeholder ?? '커밋 메시지 검색'}
+          placeholder={placeholder ?? t('commit.filter_include_placeholder')}
         />
         {localValue ? (
-          <button className="keyword-clear-button" type="button" onClick={clearKeyword} aria-label="검색어 지우기">
+          <button className="keyword-clear-button" type="button" onClick={clearKeyword} aria-label={t('commit.search_clear_aria')}>
             x
           </button>
         ) : null}

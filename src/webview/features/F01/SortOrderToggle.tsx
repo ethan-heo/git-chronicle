@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FilterState } from '../../types/commit';
 
 interface SortOrderToggleProps {
@@ -7,18 +8,20 @@ interface SortOrderToggleProps {
 }
 
 export const SortOrderToggle: FC<SortOrderToggleProps> = ({ sortOrder, onSortOrderChange }) => {
+  const { t } = useTranslation();
   const isDescending = sortOrder === 'desc';
   const nextSortOrder: FilterState['sortOrder'] = isDescending ? 'asc' : 'desc';
+  const orderLabel = isDescending ? t('commit.sort_desc') : t('commit.sort_asc');
 
   return (
     <button
       className="commit-filter-sort-toggle"
       type="button"
       onClick={() => onSortOrderChange(nextSortOrder)}
-      aria-label={`정렬 순서 변경, 현재 ${isDescending ? '최신순' : '오래된순'}`}
+      aria-label={t('commit.sort_aria', { order: orderLabel })}
     >
       <span aria-hidden="true">{isDescending ? '↓' : '↑'}</span>
-      <span>{isDescending ? '최신순' : '오래된순'}</span>
+      <span>{orderLabel}</span>
     </button>
   );
 };

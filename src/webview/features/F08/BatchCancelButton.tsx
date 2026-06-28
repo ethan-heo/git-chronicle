@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface BatchCancelButtonProps {
   disabled: boolean;
@@ -6,9 +7,10 @@ interface BatchCancelButtonProps {
 }
 
 export const BatchCancelButton: FC<BatchCancelButtonProps> = ({ disabled, onCancel }) => {
+  const { t } = useTranslation();
   return (
-    <button className="batch-cancel-button" type="button" aria-label="AI 정리 일괄 생성 취소" title="현재 파일 완료 후 중단" disabled={disabled} onClick={onCancel}>
-      {disabled ? '취소 중' : '취소'}
+    <button className="batch-cancel-button" type="button" aria-label={t('action_bar.batch_cancel_aria')} title={t('action_bar.batch_cancel_title')} disabled={disabled} onClick={onCancel}>
+      {disabled ? t('batch.cancelling') : t('batch.cancel')}
     </button>
   );
 };

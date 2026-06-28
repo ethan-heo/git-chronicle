@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import i18n from 'i18next';
 import type { ToastItem, ToastType } from '../shared/components/Toast';
 import { getWebviewState, isVSCodeRuntime, postMessage, setWebviewState } from '../bridge/vscodeApi';
 import type { AIProviderName, ChangedFile, Commit, DependencyEdge, FilterState, RouteTransitionDirection, ScreenID, SummaryMode } from '../types/commit';
@@ -390,12 +391,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     if (!state.activeAIProvider) {
-      get().pushToast('AI가 설정되지 않았습니다', 'error');
+      get().pushToast(i18n.t('ai_summary.no_ai'), 'error');
       return;
     }
 
     if (!state.savePath) {
-      get().pushToast('저장 경로를 먼저 설정해주세요', 'error');
+      get().pushToast(i18n.t('ai_summary.no_save_path'), 'error');
       return;
     }
 
@@ -481,7 +482,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       batchFailedCount,
     });
 
-    get().pushToast(batchFailedCount > 0 ? `완료되었습니다. 실패 ${batchFailedCount}개` : '파일 AI 정리가 완료되었습니다', batchFailedCount > 0 ? 'warning' : 'success');
+    get().pushToast(batchFailedCount > 0 ? `Completed with ${batchFailedCount} failures` : i18n.t('status.ai_summary_generation'), batchFailedCount > 0 ? 'warning' : 'success');
   },
 
   handleBatchCancelled: ({ batchCompleted = get().batchCompleted, batchFailedCount = get().batchFailedCount }) => {
@@ -492,10 +493,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       batchFailedCount,
     });
 
-    get().pushToast(`${batchCompleted - batchFailedCount}개 파일이 저장되었습니다`, 'success');
+    get().pushToast(`${batchCompleted - batchFailedCount} files saved`, 'success');
   },
 
-  handleBatchError: (message = '일괄 생성을 완료하지 못했습니다') => {
+  handleBatchError: (message = 'Could not complete batch generation') => {
     set({
       isBatchRunning: false,
       isBatchCancelling: false,
@@ -601,7 +602,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  failAISummary: (message = '생성에 실패했습니다') => {
+  failAISummary: (message = 'Generation failed') => {
     set({
       isLoadingSummary: false,
       isGeneratingSummary: false,
@@ -646,7 +647,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  handleCommitsLoadFailed: (message = '커밋 목록을 불러오지 못했습니다') => {
+  handleCommitsLoadFailed: (message = 'Failed to load commit list') => {
     const hasExistingCommits = get().commitList.length > 0;
 
     set({
@@ -669,7 +670,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  handleChangedFilesLoadFailed: (message = '변경 파일 목록을 불러오지 못했습니다') => {
+  handleChangedFilesLoadFailed: (message = 'Failed to load changed file list') => {
     set({
       changedFiles: [],
       isLoadingChangedFiles: false,
@@ -689,7 +690,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  handleDependenciesLoadFailed: (message = '의존 관계를 분석하지 못했습니다') => {
+  handleDependenciesLoadFailed: (message = 'Failed to analyze dependencies') => {
     set({
       dependencyEdges: [],
       isLoadingDependencies: false,

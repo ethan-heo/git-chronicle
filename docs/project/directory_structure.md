@@ -17,8 +17,13 @@ git-chronicle/
 ├── src/                              # 소스 코드
 │   ├── extension/                    # Extension Host (Node.js)
 │   └── webview/                      # Webview SPA (React)
+│       ├── i18n/                     # 로컬 번역 리소스 및 최소 런타임
+│       ├── i18next.ts                # i18next 호환 로컬 엔트리
+│       └── react-i18next.ts          # react-i18next 호환 로컬 엔트리
 ├── tests/                            # 테스트 코드
 ├── package.json
+├── package.nls.json                  # VSCode manifest 기본 언어 문자열
+├── package.nls.ko.json               # VSCode manifest 한국어 문자열
 ├── tsconfig.json                     # Webview 타입스크립트 설정
 ├── tsconfig.extension.json           # Extension Host 타입스크립트 설정
 ├── vite.config.ts                    # Vite 빌드 설정
@@ -239,3 +244,9 @@ tests/
 - [architecture.md](./architecture.md)
 - [coding_standards.md](./coding_standards.md)
 - [../core/naming_rules.md](../core/naming_rules.md)
+
+## 다국어 관련 파일
+
+- `package.nls.json` / `package.nls.ko.json`: VSCode 확장 매니페스트와 설정 설명 문자열의 로컬라이즈 버전이다.
+- `src/webview/i18n/locales/en/translation.json` / `src/webview/i18n/locales/ko/translation.json`: Webview 화면과 공통 컴포넌트에서 사용하는 UI 문자열을 관리한다.
+- `src/webview/i18next.ts` / `src/webview/react-i18next.ts`: Webview 내부에서 외부 패키지 import 경로를 유지하기 위한 로컬 호환 엔트리다.

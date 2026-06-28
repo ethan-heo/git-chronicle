@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type BackButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'>;
 
@@ -8,6 +9,8 @@ export const BackButton: FC<BackButtonProps> = ({
   type = 'button',
   ...buttonProps
 }) => {
+  const { t } = useTranslation();
+
   return (
     <button
       {...buttonProps}
@@ -18,7 +21,7 @@ export const BackButton: FC<BackButtonProps> = ({
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
         <path d="M10 3 5 8l5 5" />
       </svg>
-      <span>뒤로</span>
+      <span>{t('shared.back_button')}</span>
     </button>
   );
 };

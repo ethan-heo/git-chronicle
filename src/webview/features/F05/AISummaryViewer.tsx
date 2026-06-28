@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import type { SummaryMode } from '../../types/commit';
 import { RegenerateButton } from './RegenerateButton';
@@ -36,16 +37,17 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   onRegenerate,
   onRetry,
 }) => {
+  const { t } = useTranslation();
   if (!hasAIProvider) {
-    return <EmptyState message="AI가 설정되지 않았습니다" ctaLabel="설정으로 이동" onCtaClick={onGoToSettings} />;
+    return <EmptyState message={t('ai_summary.no_ai')} ctaLabel={t('ai_summary.go_to_settings')} onCtaClick={onGoToSettings} />;
   }
 
   if (!hasSavePath) {
-    return <EmptyState message="저장 경로를 먼저 설정해주세요" ctaLabel="설정으로 이동" onCtaClick={onGoToSettings} />;
+    return <EmptyState message={t('ai_summary.no_save_path')} ctaLabel={t('ai_summary.go_to_settings')} onCtaClick={onGoToSettings} />;
   }
 
   if (isLoading) {
-    return <LoadingState label="AI 정리를 불러오는 중..." size="sm" />;
+    return <LoadingState label={t('ai_summary.loading')} size="sm" />;
   }
 
   if (error) {
@@ -56,10 +58,10 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const showSavedPath = hasSavedSummary && Boolean(savedPath);
 
   return (
-    <section className="ai-summary-viewer" role="region" aria-label="AI 정리 결과" aria-live={isGenerating ? 'polite' : undefined}>
+    <section className="ai-summary-viewer" role="region" aria-label={t('ai_summary.ai_result')} aria-live={isGenerating ? 'polite' : undefined}>
       <div className="ai-summary-action-bar">
         <div className="ai-summary-source-group">
-          <span className="ai-summary-source-tag">{formatSourceTag(hasSavedSummary, isGenerating, providerLabel, savedPath)}</span>
+          <span className="ai-summary-source-tag">{formatSourceTag(t, hasSavedSummary, isGenerating, providerLabel, savedPath)}</span>
           {showSavedPath ? (
             <span className="ai-summary-saved-path" title={savedPath ?? undefined}>
               {savedPath}
@@ -86,27 +88,33 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
             {content}
           </ReactMarkdown>
         ) : (
-          <EmptyState message={summaryMode === 'commit' ? '커밋 AI 정리가 없습니다' : 'AI 정리가 없습니다'} />
+          <EmptyState message={summaryMode === 'commit' ? t('ai_summary.empty_commit') : t('ai_summary.empty')} />
         )}
       </div>
     </section>
   );
 };
 
-function formatSourceTag(hasSavedSummary: boolean, isGenerating: boolean, providerLabel: string | null, savedPath: string | null): string {
+function formatSourceTag(
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  hasSavedSummary: boolean,
+  isGenerating: boolean,
+  providerLabel: string | null,
+  savedPath: string | null,
+): string {
   const provider = providerLabel ?? 'AI';
 
   if (isGenerating) {
-    return `${provider} 응답 생성 중`;
+    return t('ai_summary.source_generating', { provider });
   }
 
   if (hasSavedSummary && savedPath) {
-    return `저장본을 불러왔습니다 · ${provider}`;
+    return t('ai_summary.source_saved_loaded', { provider });
   }
 
   if (hasSavedSummary) {
-    return `저장 완료 · ${provider}`;
+    return t('ai_summary.source_saved', { provider });
   }
 
-  return `${provider} 준비됨`;
+  return t('ai_summary.source_ready', { provider });
 }

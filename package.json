@@ -1,7 +1,7 @@
 {
   "name": "git-chronicle",
-  "displayName": "GitChronicle",
-  "description": "Rewind your Git history — explore commits, changed files, dependency graphs, and AI summaries in VSCode.",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
   "version": "0.0.2",
   "publisher": "ethanheo",
   "icon": "assets/icon.png",
@@ -23,16 +23,16 @@
     "commands": [
       {
         "command": "gitChronicle.open",
-        "title": "GitChronicle: Open"
+        "title": "%command.open.title%"
       }
     ],
     "configuration": {
-      "title": "GitChronicle",
+      "title": "%configuration.title%",
       "properties": {
         "gitChronicle.savePath": {
           "type": "string",
           "default": "",
-          "description": "Default path for saved AI summaries."
+          "description": "%configuration.savePath.description%"
         },
         "gitChronicle.activeAIProvider": {
           "type": "string",
@@ -43,7 +43,7 @@
             "codex"
           ],
           "default": "",
-          "description": "Active AI CLI provider for summaries."
+          "description": "%configuration.activeAIProvider.description%"
         }
       }
     }
@@ -64,8 +64,10 @@
   "dependencies": {
     "@xyflow/react": "^12.8.4",
     "dependency-cruiser": "^17.1.0",
+    "i18next": "^25.3.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-i18next": "^15.7.0",
     "react-markdown": "^10.1.0",
     "shiki": "^3.7.0",
     "simple-git": "^3.28.0",

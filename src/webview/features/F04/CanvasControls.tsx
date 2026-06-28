@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CanvasControlsProps {
   onZoomIn: () => void;
@@ -7,16 +8,17 @@ interface CanvasControlsProps {
 }
 
 export const CanvasControls: FC<CanvasControlsProps> = ({ onZoomIn, onZoomOut, onFitView }) => {
+  const { t } = useTranslation();
   return (
-    <div className="dependency-canvas-controls" role="toolbar" aria-label="캔버스 제어">
-      <button type="button" aria-label="확대" title="확대" onClick={onZoomIn}>
+    <div className="dependency-canvas-controls" role="toolbar" aria-label={t('dependency.canvas_aria')}>
+      <button type="button" aria-label={t('dependency.zoom_in')} title={t('dependency.zoom_in')} onClick={onZoomIn}>
         +
       </button>
-      <button type="button" aria-label="축소" title="축소" onClick={onZoomOut}>
+      <button type="button" aria-label={t('dependency.zoom_out')} title={t('dependency.zoom_out')} onClick={onZoomOut}>
         -
       </button>
-      <button type="button" aria-label="전체 화면 맞춤" title="맞춤" onClick={onFitView}>
-        맞춤
+      <button type="button" aria-label={t('dependency.fit_view')} title={t('dependency.fit_view')} onClick={onFitView}>
+        {t('dependency.fit_view')}
       </button>
     </div>
   );

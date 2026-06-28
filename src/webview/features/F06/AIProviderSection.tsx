@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { AIProviderButtonState, AIProviderName } from '../../types/commit';
 import { AIProviderButton } from './AIProviderButton';
 import { AI_PROVIDERS } from './providers';
@@ -20,18 +21,19 @@ export const AIProviderSection: FC<AIProviderSectionProps> = ({
   onProviderClick,
   onOpenInstall,
 }) => {
+  const { t } = useTranslation();
   const activeProvider = AI_PROVIDERS.find((provider) => provider.name === activeAIProvider);
 
   return (
-    <section className="ai-provider-section" role="group" aria-label="AI 등록">
+    <section className="ai-provider-section" role="group" aria-label={t('settings.ai_section_label')}>
       <div className="settings-section-heading">
         <div>
-          <h2>AI 등록</h2>
-          <p>사용할 AI CLI를 등록하고 활성화하세요. 한 번에 하나만 활성화됩니다.</p>
+          <h2>{t('settings.ai_section_heading')}</h2>
+          <p>{t('settings.ai_section_desc')}</p>
         </div>
         <span className="ai-provider-active-summary">
           <span className={activeProvider ? 'active-summary-dot active-summary-dot-on' : 'active-summary-dot'} />
-          {activeProvider ? `${activeProvider.label} 활성` : '활성 AI 없음'}
+          {activeProvider ? t('settings.ai_active', { name: activeProvider.label }) : t('settings.ai_no_active')}
         </span>
       </div>
       <div className="ai-provider-list">

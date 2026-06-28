@@ -15,6 +15,11 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "i18next": ["src/webview/i18next.ts"],
+      "react-i18next": ["src/webview/react-i18next.ts"]
+    },
     "types": ["vite/client", "vitest/globals"]
   },
   "include": ["src/webview", "tests"],

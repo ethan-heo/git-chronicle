@@ -1,4 +1,5 @@
 import { useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FilterState } from '../../types/commit';
 import { AuthorDropdown } from './AuthorDropdown';
 import { DateRangeFilter } from './DateRangeFilter';
@@ -22,6 +23,7 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
   onFilterChange,
   onClearFilters,
 }) => {
+  const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const activeFilterCount = [
     filterDateStart,
@@ -43,7 +45,7 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
             aria-expanded={!isCollapsed}
           >
             <span aria-hidden="true">{isCollapsed ? '▸' : '▾'}</span>
-            <span>필터</span>
+            <span>{t('commit.filter_title')}</span>
           </button>
           <SortOrderToggle
             sortOrder={sortOrder}
@@ -51,9 +53,9 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
           />
         </div>
         <div className="active-filter-summary">
-          {isActive ? <span>{activeFilterCount} 적용</span> : <span>조건 없음</span>}
+          {isActive ? <span>{t('commit.filter_applied', { count: activeFilterCount })}</span> : <span>{t('commit.filter_none')}</span>}
           <button className="filter-reset-button" type="button" onClick={onClearFilters}>
-            초기화
+            {t('commit.clear_filters')}
           </button>
         </div>
       </div>
@@ -72,19 +74,19 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
           />
           <KeywordSearchInput
             id="commit-keyword-filter"
-            label="포함 키워드"
+            label={t('commit.filter_include_label')}
             keyword={filterKeyword}
             onKeywordChange={(keyword) => onFilterChange({ filterKeyword: keyword })}
-            ariaLabel="커밋 메시지 포함 키워드 검색"
-            placeholder="커밋 메시지 포함"
+            ariaLabel={t('commit.filter_include_aria')}
+            placeholder={t('commit.filter_include_placeholder')}
           />
           <KeywordSearchInput
             id="commit-exclude-keyword-filter"
-            label="제외 키워드"
+            label={t('commit.filter_exclude_label')}
             keyword={filterExcludeKeyword}
             onKeywordChange={(keyword) => onFilterChange({ filterExcludeKeyword: keyword })}
-            ariaLabel="커밋 메시지 제외 키워드 검색"
-            placeholder="쉼표로 구분"
+            ariaLabel={t('commit.filter_exclude_aria')}
+            placeholder={t('commit.filter_exclude_placeholder')}
           />
         </div>
       ) : null}

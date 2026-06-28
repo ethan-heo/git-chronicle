@@ -1,4 +1,5 @@
 import { useEffect, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type ToastType = 'success' | 'warning' | 'error';
 
@@ -36,8 +37,10 @@ interface ToastContainerProps {
 }
 
 export const ToastContainer: FC<ToastContainerProps> = ({ toasts, onDismiss }) => {
+  const { t } = useTranslation();
+
   return (
-    <div className="toast-container" aria-label="알림">
+    <div className="toast-container" aria-label={t('shared.alerts')}>
       {toasts.slice(0, 3).map((toast) => (
         <Toast key={toast.id} {...toast} onDismiss={() => onDismiss(toast.id)} />
       ))}

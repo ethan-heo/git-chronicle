@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import type { Commit } from '../../types/commit';
 import { CommitListItem } from './CommitListItem';
@@ -39,6 +40,7 @@ export const CommitList: FC<CommitListProps> = ({
   savedScrollTop,
   onScrollTopChange,
 }) => {
+  const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasRestoredScrollRef = useRef(false);
 
@@ -82,7 +84,7 @@ export const CommitList: FC<CommitListProps> = ({
   if (isLoadingCommits && commitList.length === 0) {
     return (
       <div className="commit-list-state">
-        <LoadingState label="커밋을 불러오는 중..." size="lg" />
+        <LoadingState label={t('commit.loading')} size="lg" />
       </div>
     );
   }
@@ -90,7 +92,7 @@ export const CommitList: FC<CommitListProps> = ({
   if (commitLoadError) {
     return (
       <div className="commit-list-state">
-        <ErrorState message="커밋 목록을 불러오지 못했습니다" onRetry={onRetry} />
+        <ErrorState message={t('commit.error')} onRetry={onRetry} />
       </div>
     );
   }
@@ -98,7 +100,7 @@ export const CommitList: FC<CommitListProps> = ({
   if (!isGitRepoDetected) {
     return (
       <div className="commit-list-state">
-        <EmptyState message="Git 저장소가 감지되지 않았습니다" ctaLabel="레포 열기" onCtaClick={onOpenRepository} />
+        <EmptyState message={t('commit.empty_no_repo')} ctaLabel={t('commit.open_repo')} onCtaClick={onOpenRepository} />
       </div>
     );
   }
@@ -106,7 +108,7 @@ export const CommitList: FC<CommitListProps> = ({
   if (hasLoadedCommits && commitList.length === 0 && isFilterActive) {
     return (
       <div className="commit-list-state">
-        <EmptyState message="조건에 맞는 커밋이 없습니다" ctaLabel="필터 초기화" onCtaClick={onClearFilters} />
+        <EmptyState message={t('commit.empty_no_result')} ctaLabel={t('commit.clear_filters')} onCtaClick={onClearFilters} />
       </div>
     );
   }
@@ -114,7 +116,7 @@ export const CommitList: FC<CommitListProps> = ({
   if (hasLoadedCommits && commitList.length === 0) {
     return (
       <div className="commit-list-state">
-        <EmptyState message="커밋 이력이 없습니다" />
+        <EmptyState message={t('commit.empty_no_history')} />
       </div>
     );
   }
@@ -129,11 +131,11 @@ export const CommitList: FC<CommitListProps> = ({
       {loadMoreError ? <div className="commit-list-inline-error">{loadMoreError}</div> : null}
       {isLoadingCommits ? (
         <div className="commit-list-footer">
-          <LoadingState label="더 불러오는 중..." size="sm" />
+          <LoadingState label={t('commit.load_more')} size="sm" />
         </div>
       ) : null}
       <InfiniteScrollTrigger isEnabled={!isLoadingCommits && hasMoreCommits} onTrigger={onLoadMore} />
-      {!hasMoreCommits && commitList.length > 0 ? <div className="commit-list-end">모든 커밋을 불러왔습니다</div> : null}
+      {!hasMoreCommits && commitList.length > 0 ? <div className="commit-list-end">{t('commit.all_loaded')}</div> : null}
     </div>
   );
 };

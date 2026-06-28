@@ -27,7 +27,7 @@ export function streamAISummary(options: StreamAISummaryOptions): () => void {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
   } catch {
-    onError('연결된 CLI를 찾을 수 없습니다. 설정을 확인하세요');
+    onError('Connected CLI was not found. Check your settings.');
     return () => undefined;
   }
 
@@ -38,7 +38,7 @@ export function streamAISummary(options: StreamAISummaryOptions): () => void {
 
     settled = true;
     process.kill('SIGTERM');
-    onError('생성에 실패했습니다');
+    onError('Generation failed');
   }, timeoutMs);
 
   process.stdout.on('data', (data: Buffer) => {
@@ -56,7 +56,7 @@ export function streamAISummary(options: StreamAISummaryOptions): () => void {
 
     settled = true;
     clearTimeout(timeout);
-    onError('연결된 CLI를 찾을 수 없습니다. 설정을 확인하세요');
+    onError('Connected CLI was not found. Check your settings.');
   });
 
   process.on('close', (code) => {
@@ -72,7 +72,7 @@ export function streamAISummary(options: StreamAISummaryOptions): () => void {
       return;
     }
 
-    onError(stderr.trim() || '생성에 실패했습니다');
+    onError(stderr.trim() || 'Generation failed');
   });
 
   process.stdin.end(prompt);

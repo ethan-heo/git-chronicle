@@ -1,4 +1,5 @@
 import type { FC, MouseEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CLIInstallLinkProps {
   url: string;
@@ -8,6 +9,7 @@ interface CLIInstallLinkProps {
 }
 
 export const CLIInstallLink: FC<CLIInstallLinkProps> = ({ url, label, ariaLabel, onOpen }) => {
+  const { t } = useTranslation();
   const handleClick = (event: MouseEvent<HTMLAnchorElement>): void => {
     event.preventDefault();
     onOpen(url);

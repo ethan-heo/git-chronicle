@@ -8,7 +8,7 @@ export class GitChroniclePanel {
 
   private constructor(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
     this.panel = panel;
-    this.panel.webview.html = this.getHtmlForWebview(context.extensionUri);
+    this.panel.webview.html = this.getHtmlForWebview(context.extensionUri, vscode.env.language);
 
     registerMessageHandler(this.panel, context);
 
@@ -19,6 +19,10 @@ export class GitChroniclePanel {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
     if (GitChroniclePanel.currentPanel) {
+      GitChroniclePanel.currentPanel.panel.webview.html = GitChroniclePanel.currentPanel.getHtmlForWebview(
+        context.extensionUri,
+        vscode.env.language,
+      );
       GitChroniclePanel.currentPanel.panel.reveal(column);
       return;
     }
@@ -49,7 +53,7 @@ export class GitChroniclePanel {
     }
   }
 
-  private getHtmlForWebview(extensionUri: vscode.Uri): string {
+  private getHtmlForWebview(extensionUri: vscode.Uri, language: string): string {
     const webview = this.panel.webview;
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'assets', 'index.js'),
@@ -57,10 +61,11 @@ export class GitChroniclePanel {
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'assets', 'index.css'),
     );
+    const normalizedLanguage = normalizeLanguage(language);
     const nonce = getNonce();
 
     return `<!doctype html>
-<html lang="ko">
+<html lang="${normalizedLanguage}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -70,6 +75,7 @@ export class GitChroniclePanel {
   </head>
   <body>
     <div id="root"></div>
+    <script nonce="${nonce}">window.__LANG__ = ${JSON.stringify(normalizedLanguage)};</script>
     <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
   </body>
 </html>`;
@@ -85,4 +91,8 @@ function getNonce(): string {
   }
 
   return nonce;
+}
+
+function normalizeLanguage(language: string): 'en' | 'ko' {
+  return language.toLowerCase().startsWith('ko') ? 'ko' : 'en';
 }

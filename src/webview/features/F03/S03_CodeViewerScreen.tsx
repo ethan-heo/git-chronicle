@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SplitViewButton, TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
@@ -6,6 +7,7 @@ import { DiffViewer } from './DiffViewer';
 import { useFileDiff } from './useFileDiff';
 
 export const S03CodeViewerScreen: FC = () => {
+  const { t } = useTranslation();
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const selectedFile = useAppStore((state) => state.selectedFile);
   const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
@@ -30,7 +32,7 @@ export const S03CodeViewerScreen: FC = () => {
         context={`${selectedCommit.shortHash} > ${selectedFile.path}`}
         showBackButton
         onBackClick={goBackFromDetail}
-        endSlot={<SplitViewButton label="AI 요약 함께 보기" disabled={!selectedFile} onClick={goToSplitView} />}
+        endSlot={<SplitViewButton label={t('ai_summary.split_view')} disabled={!selectedFile} onClick={goToSplitView} />}
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />

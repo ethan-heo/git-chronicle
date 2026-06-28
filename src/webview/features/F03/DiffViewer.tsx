@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import { DiffLine } from './DiffLine';
 import type { DiffLineData } from './types';
@@ -23,6 +24,7 @@ export const DiffViewer: FC<DiffViewerProps> = ({
   isDeletedFile,
   onRetry,
 }) => {
+  const { t } = useTranslation();
   useEffect(() => {
     if (isLoading || error || isBinaryFile || diffLines.length === 0) {
       return;
@@ -35,7 +37,7 @@ export const DiffViewer: FC<DiffViewerProps> = ({
   if (isLoading) {
     return (
       <section className="diff-viewer-state">
-        <LoadingState label="코드 변경이력을 불러오는 중..." size="lg" />
+        <LoadingState label={t('diff.loading')} size="lg" />
       </section>
     );
   }
@@ -51,16 +53,16 @@ export const DiffViewer: FC<DiffViewerProps> = ({
   if (isBinaryFile) {
     return (
       <section className="diff-viewer-state" role="alert">
-        <EmptyState message="Binary file — diff를 표시할 수 없습니다" />
+        <EmptyState message={t('diff.binary')} />
       </section>
     );
   }
 
   return (
-    <section className="diff-viewer" role="region" aria-label={`${filePath} 코드 변경 내역`} tabIndex={0}>
+    <section className="diff-viewer" role="region" aria-label={t('diff.region_aria', { filePath })} tabIndex={0}>
       {isDeletedFile ? (
         <div className="diff-deleted-notice" role="alert">
-          삭제된 파일입니다
+          {t('diff.deleted_file')}
         </div>
       ) : null}
       {diffLines.length > 0 ? (
@@ -71,7 +73,7 @@ export const DiffViewer: FC<DiffViewerProps> = ({
         </div>
       ) : (
         <div className="diff-viewer-state">
-          <EmptyState message="표시할 diff가 없습니다" />
+          <EmptyState message={t('diff.empty')} />
         </div>
       )}
     </section>

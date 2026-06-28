@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SavePathSectionProps {
   savePath: string | null;
@@ -7,15 +8,16 @@ interface SavePathSectionProps {
 }
 
 export const SavePathSection: FC<SavePathSectionProps> = ({ savePath, onPathSelect, onPathDelete }) => {
+  const { t } = useTranslation();
   const hasPath = Boolean(savePath);
   const displayPath = savePath ? splitDisplayPath(savePath) : null;
 
   return (
-    <section className="save-path-section" role="group" aria-label="저장 경로 설정">
+    <section className="save-path-section" role="group" aria-label={t('settings.save_path_label')}>
       <div className="settings-section-heading">
         <div>
-          <h2>저장 경로</h2>
-          <p>AI 정리 결과(.md)가 저장될 로컬 폴더입니다.</p>
+          <h2>{t('settings.save_path_label')}</h2>
+          <p>{t('settings.save_path_desc')}</p>
         </div>
       </div>
       {hasPath ? (
@@ -23,22 +25,22 @@ export const SavePathSection: FC<SavePathSectionProps> = ({ savePath, onPathSele
           <button
             className="save-path-display-button"
             type="button"
-            aria-label={`저장 경로: ${savePath}. 클릭하여 변경`}
+            aria-label={t('settings.save_path_selected_aria', { path: savePath ?? '' })}
             title={savePath ?? undefined}
             onClick={onPathSelect}
           >
             <FolderIcon />
-            <span className="save-path-display" aria-label={`현재 저장 경로: ${savePath}`}>
+            <span className="save-path-display" aria-label={t('settings.save_path_current_aria', { path: savePath ?? '' })}>
               <span className="save-path-display-head">{displayPath?.head}</span>
               <span className="save-path-display-tail">{displayPath?.tail}</span>
             </span>
-            <span className="save-path-change-label">변경</span>
+            <span className="save-path-change-label">{t('settings.change')}</span>
           </button>
           <button
             className="save-path-delete-button"
             type="button"
-            aria-label="저장 경로 삭제 (기존 파일은 삭제되지 않음)"
-            title="경로 설정 삭제 (저장된 파일은 유지)"
+            aria-label={t('settings.save_path_delete_aria')}
+            title={t('settings.save_path_delete_title')}
             onClick={onPathDelete}
           >
             <TrashIcon />
@@ -46,16 +48,16 @@ export const SavePathSection: FC<SavePathSectionProps> = ({ savePath, onPathSele
           <p className="save-path-helper save-path-helper-set">
             <CheckIcon />
             <span>
-              커밋 단위 정리는 <code>전체_파일_정리.md</code>로 저장됩니다.
+              {t('settings.commit_summary_file')}
             </span>
           </p>
         </div>
       ) : (
-        <button className="save-path-selector save-path-selector-unset" type="button" aria-label="저장 경로 선택" onClick={onPathSelect}>
+        <button className="save-path-selector save-path-selector-unset" type="button" aria-label={t('settings.save_path_select_aria')} onClick={onPathSelect}>
           <FolderIcon />
-          <span>경로를 선택하세요</span>
-          <span className="save-path-empty-label">미설정</span>
-          <span className="save-path-helper">폴더를 지정하면 AI 정리 시 결과 파일이 이 위치에 자동 저장됩니다.</span>
+          <span>{t('settings.save_path_prompt')}</span>
+          <span className="save-path-empty-label">{t('settings.unset')}</span>
+          <span className="save-path-helper">{t('settings.save_path_helper')}</span>
         </button>
       )}
     </section>

@@ -1,0 +1,8 @@
+{
+  "extension.displayName": "GitChronicle",
+  "extension.description": "Rewind your Git history - explore commits, changed files, dependency graphs, and AI summaries in VSCode.",
+  "command.open.title": "GitChronicle: Open",
+  "configuration.title": "GitChronicle",
+  "configuration.savePath.description": "Default path for saved AI summaries.",
+  "configuration.activeAIProvider.description": "Active AI CLI provider for summaries."
+}

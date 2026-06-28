@@ -94,6 +94,10 @@ interface ActiveBatchRun {
 let activeBatchRun: ActiveBatchRun | null = null;
 let nextBatchRunId = 1;
 
+function l10n(message: string): string {
+  return message;
+}
+
 export function registerMessageHandler(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): void {
   panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
     switch (message.type) {
@@ -101,7 +105,7 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         await panel.webview.postMessage({
           type: 'PONG',
           payload: {
-            message: 'Extension Host 연결이 준비되었습니다.',
+            message: l10n('Extension Host connection is ready'),
           },
         });
         break;
@@ -160,7 +164,7 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         await panel.webview.postMessage({
           type: 'UNKNOWN_MESSAGE',
           payload: {
-            message: `지원하지 않는 메시지입니다: ${message.type}`,
+            message: l10n(`Unsupported message: ${message.type}`),
           },
         });
     }
@@ -182,7 +186,7 @@ async function handleRegisterAIProvider(panel: vscode.WebviewPanel, context: vsc
   const providerName = payload.providerName ?? payload.name;
 
   if (!providerName) {
-    await postAISettingsError(panel, '선택된 AI 제공자가 없습니다');
+    await postAISettingsError(panel, l10n('No AI provider selected'));
     return;
   }
 
@@ -204,7 +208,7 @@ async function handleRegisterAIProvider(panel: vscode.WebviewPanel, context: vsc
       payload: {
         providerName,
         installUrl: provider?.installUrl,
-        message: error instanceof Error ? error.message : '연동에 실패했습니다',
+        message: error instanceof Error ? error.message : l10n('Failed to connect'),
       },
     });
   }
@@ -214,7 +218,7 @@ async function handleSetActiveAIProvider(panel: vscode.WebviewPanel, context: vs
   const providerName = payload.providerName ?? payload.name;
 
   if (!providerName) {
-    await postAISettingsError(panel, '선택된 AI 제공자가 없습니다');
+    await postAISettingsError(panel, l10n('No AI provider selected'));
     return;
   }
 
@@ -242,8 +246,8 @@ async function handleSetSavePath(panel: vscode.WebviewPanel, context: vscode.Ext
     canSelectFiles: false,
     canSelectFolders: true,
     canSelectMany: false,
-    openLabel: '이 폴더에 저장',
-    title: 'AI 정리 저장 폴더 선택',
+    openLabel: l10n('Save to this folder'),
+    title: l10n('Choose a folder to save AI summaries'),
   });
 
   const selectedPath = selected?.[0]?.fsPath;
@@ -276,7 +280,7 @@ async function handleAnalyzeDependencies(panel: vscode.WebviewPanel, payload: An
     await panel.webview.postMessage({
       type: 'DEPENDENCIES_LOAD_FAILED',
       payload: {
-        message: 'Git 저장소가 감지되지 않았습니다',
+        message: l10n('No Git repository detected'),
       },
     });
     return;
@@ -294,10 +298,10 @@ async function handleAnalyzeDependencies(panel: vscode.WebviewPanel, payload: An
   } catch (error) {
     const message =
       error instanceof DependencyCruiserNotFoundError
-        ? 'dependency-cruiser가 설치되지 않았습니다. pnpm install 후 다시 시도해주세요.'
+        ? 'dependency-cruiser is not installed. Run pnpm install and try again.'
         : error instanceof Error
           ? error.message
-          : '의존 관계를 분석하지 못했습니다';
+          : 'Failed to analyze dependencies';
 
     await panel.webview.postMessage({
       type: 'DEPENDENCIES_LOAD_FAILED',
@@ -315,7 +319,7 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
     await panel.webview.postMessage({
       type: 'GIT_REPOSITORY_NOT_FOUND',
       payload: {
-        message: 'Git 저장소가 감지되지 않았습니다',
+        message: 'No Git repository detected',
       },
     });
     return;
@@ -353,7 +357,7 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
       await panel.webview.postMessage({
         type: 'GIT_REPOSITORY_NOT_FOUND',
         payload: {
-          message: 'Git 저장소가 감지되지 않았습니다',
+          message: 'No Git repository detected',
         },
       });
       return;
@@ -362,7 +366,7 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
     await panel.webview.postMessage({
       type: 'COMMITS_LOAD_FAILED',
       payload: {
-        message: error instanceof Error ? error.message : '커밋 목록을 불러오지 못했습니다',
+        message: error instanceof Error ? error.message : 'Failed to load commit list',
       },
     });
   }
@@ -375,7 +379,7 @@ async function handleFetchChangedFiles(panel: vscode.WebviewPanel, context: vsco
     await panel.webview.postMessage({
       type: 'CHANGED_FILES_LOAD_FAILED',
       payload: {
-        message: 'Git 저장소가 감지되지 않았습니다',
+        message: 'No Git repository detected',
       },
     });
     return;
@@ -385,7 +389,7 @@ async function handleFetchChangedFiles(panel: vscode.WebviewPanel, context: vsco
     await panel.webview.postMessage({
       type: 'CHANGED_FILES_LOAD_FAILED',
       payload: {
-        message: '선택된 커밋이 없습니다',
+        message: 'No commit selected',
       },
     });
     return;
@@ -405,7 +409,7 @@ async function handleFetchChangedFiles(panel: vscode.WebviewPanel, context: vsco
     await panel.webview.postMessage({
       type: 'CHANGED_FILES_LOAD_FAILED',
       payload: {
-        message: error instanceof Error ? error.message : '변경 파일 목록을 불러오지 못했습니다',
+        message: error instanceof Error ? error.message : 'Failed to load changed files',
       },
     });
   }
@@ -418,7 +422,7 @@ async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: FetchFil
     await panel.webview.postMessage({
       type: 'FILE_DIFF_LOAD_FAILED',
       payload: {
-        message: 'Git 저장소가 감지되지 않았습니다',
+        message: 'No Git repository detected',
       },
     });
     return;
@@ -428,7 +432,7 @@ async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: FetchFil
     await panel.webview.postMessage({
       type: 'FILE_DIFF_LOAD_FAILED',
       payload: {
-        message: '선택된 파일이 없습니다',
+        message: 'No file selected',
       },
     });
     return;
@@ -445,7 +449,7 @@ async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: FetchFil
     await panel.webview.postMessage({
       type: 'FILE_DIFF_LOAD_FAILED',
       payload: {
-        message: error instanceof Error ? error.message : 'diff를 불러오지 못했습니다',
+        message: error instanceof Error ? error.message : 'Failed to load diff',
       },
     });
   }
@@ -458,22 +462,22 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vsc
   const savePath = payload.savePath ?? settings.savePath;
 
   if (!repoPath) {
-    await postAISummaryError(panel, 'Git 저장소가 감지되지 않았습니다');
+    await postAISummaryError(panel, 'No Git repository detected');
     return;
   }
 
   if (!payload.commitHash || !payload.filePath) {
-    await postAISummaryError(panel, '선택된 파일이 없습니다');
+    await postAISummaryError(panel, 'No file selected');
     return;
   }
 
   if (!provider) {
-    await postAISummaryError(panel, 'AI가 설정되지 않았습니다');
+    await postAISummaryError(panel, 'AI is not configured');
     return;
   }
 
   if (!savePath) {
-    await postAISummaryError(panel, '저장 경로를 먼저 설정해주세요');
+    await postAISummaryError(panel, 'Set a save path first');
     return;
   }
 
@@ -498,7 +502,7 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vsc
     const diff = await fetchFileDiff(repoPath, payload.commitHash, payload.filePath);
 
     if (diff.isBinary) {
-      await postAISummaryError(panel, '바이너리 파일은 AI 정리를 생성할 수 없습니다');
+      await postAISummaryError(panel, 'Binary files cannot be summarized by AI');
       return;
     }
 
@@ -551,7 +555,7 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vsc
       },
     });
   } catch (error) {
-    await postAISummaryError(panel, error instanceof Error ? error.message : '생성에 실패했습니다');
+    await postAISummaryError(panel, error instanceof Error ? error.message : 'Generation failed');
   }
 }
 
@@ -562,22 +566,22 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
   const savePath = payload.savePath ?? settings.savePath;
 
   if (!repoPath) {
-    await postAISummaryError(panel, 'Git 저장소가 감지되지 않았습니다');
+    await postAISummaryError(panel, 'No Git repository detected');
     return;
   }
 
   if (!payload.commitHash) {
-    await postAISummaryError(panel, '선택된 커밋이 없습니다');
+    await postAISummaryError(panel, 'No commit selected');
     return;
   }
 
   if (!provider) {
-    await postAISummaryError(panel, 'AI가 설정되지 않았습니다');
+    await postAISummaryError(panel, 'AI is not configured');
     return;
   }
 
   if (!savePath) {
-    await postAISummaryError(panel, '저장 경로를 먼저 설정해주세요');
+    await postAISummaryError(panel, 'Set a save path first');
     return;
   }
 
@@ -650,7 +654,7 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
       },
     });
   } catch (error) {
-    await postAISummaryError(panel, error instanceof Error ? error.message : '생성에 실패했습니다');
+    await postAISummaryError(panel, error instanceof Error ? error.message : 'Generation failed');
   }
 }
 
@@ -662,27 +666,27 @@ async function handleStartBatchAISummary(panel: vscode.WebviewPanel, context: vs
   const files = payload.files ?? [];
 
   if (!repoPath) {
-    await postBatchError(panel, 'Git 저장소가 감지되지 않았습니다');
+    await postBatchError(panel, 'No Git repository detected');
     return;
   }
 
   if (!payload.commitHash) {
-    await postBatchError(panel, '선택된 커밋이 없습니다');
+    await postBatchError(panel, 'No commit selected');
     return;
   }
 
   if (!provider) {
-    await postBatchError(panel, 'AI가 설정되지 않았습니다');
+    await postBatchError(panel, 'AI is not configured');
     return;
   }
 
   if (!savePath) {
-    await postBatchError(panel, '저장 경로를 먼저 설정해주세요');
+    await postBatchError(panel, 'Set a save path first');
     return;
   }
 
   if (files.length === 0) {
-    await postBatchError(panel, '변경 파일이 없습니다');
+    await postBatchError(panel, 'No changed files');
     return;
   }
 
@@ -740,7 +744,7 @@ async function handleStartBatchAISummary(panel: vscode.WebviewPanel, context: vs
       });
     }
   } catch (error) {
-    await postBatchError(panel, error instanceof Error ? error.message : '일괄 생성을 완료하지 못했습니다');
+    await postBatchError(panel, error instanceof Error ? error.message : 'Could not complete batch generation');
   } finally {
     if (activeBatchRun?.id === batchRun.id) {
       activeBatchRun = null;
@@ -771,7 +775,7 @@ function getSummarySaveErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return error instanceof Error ? error.message : '생성에 실패했습니다';
+  return error instanceof Error ? error.message : 'Generation failed';
 }
 
 async function postAISettingsError(panel: vscode.WebviewPanel, message: string): Promise<void> {

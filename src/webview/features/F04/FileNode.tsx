@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileActionButtons, FileStatusBadge, SavedBadge } from '../../shared/components';
 import { getSourceHandleId, getTargetHandleId, type FileNodeType } from './graph';
 
@@ -11,13 +12,14 @@ const handlePositions = [
 ] as const;
 
 export const FileNode: FC<NodeProps<FileNodeType>> = ({ data }) => {
-  const title = data.canAnalyze ? `${data.directory}${data.label}` : '의존 관계 분석 불가 (JS/TS 외 파일)';
+  const { t } = useTranslation();
+  const title = data.canAnalyze ? `${data.directory}${data.label}` : 'JS/TS 외 파일은 노드로만 표시됩니다.';
 
   return (
     <div
       className={`dependency-file-node${data.canAnalyze ? '' : ' dependency-file-node-no-analysis'}${data.file.status === 'D' ? ' dependency-file-node-deleted' : ''}`}
       role="button"
-      aria-label={`${data.label} 노드`}
+      aria-label={data.label}
       title={title}
       tabIndex={0}
     >

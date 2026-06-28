@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DateRangeFilterProps {
   startDate: string | null;
@@ -13,6 +14,7 @@ export const DateRangeFilter: FC<DateRangeFilterProps> = ({
   onStartDateChange,
   onEndDateChange,
 }) => {
+  const { t } = useTranslation();
   const handleStartDateChange = (date: string): void => {
     onStartDateChange(date || null);
 
@@ -32,18 +34,18 @@ export const DateRangeFilter: FC<DateRangeFilterProps> = ({
 
   return (
     <div className="commit-filter-field">
-      <span className="commit-filter-label">기간</span>
+      <span className="commit-filter-label">{t('commit.filter_title')}</span>
       <div className="date-range-filter">
         <input
           type="date"
-          aria-label="시작일"
+          aria-label={t('common.start_date')}
           value={startDate ?? ''}
           onChange={(event) => handleStartDateChange(event.target.value)}
         />
         <span aria-hidden="true">~</span>
         <input
           type="date"
-          aria-label="종료일"
+          aria-label={t('common.end_date')}
           value={endDate ?? ''}
           onChange={(event) => handleEndDateChange(event.target.value)}
         />
