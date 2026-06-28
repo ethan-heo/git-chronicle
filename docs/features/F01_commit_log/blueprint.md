@@ -25,6 +25,7 @@
 - `commitList`: 로드된 커밋 목록 (전역 상태 업데이트)
 - `authorList`: 드롭다운용 작성자 목록 (전역 상태 업데이트)
 - `selectedCommit`: 클릭 시 선택된 커밋 (전역 상태 업데이트 → S-02 진입 트리거)
+- `commitListScrollTop`: S-01 재진입 시 복원할 마지막 스크롤 위치
 
 > 현재 구현은 `src/webview/features/F01/` 아래에 F01 전용 컴포넌트를 두고, `S01_CommitListScreen.tsx`를 같은 디렉토리에서 조합한다.
 
@@ -192,6 +193,7 @@ F01_CommitLog 전용. CommitFilterPanel 내에서만 사용.
 - `commitList: Commit[]`
 - `isLoadingCommits: boolean`
 - `hasMoreCommits: boolean`
+- `savedScrollTop: number`
 
 #### Props
 ```typescript
@@ -202,11 +204,15 @@ interface CommitListProps {
   isGitRepoDetected: boolean;
   onCommitClick: (commit: Commit) => void;
   onLoadMore: () => void;
+  savedScrollTop: number;
+  onScrollTopChange: (top: number) => void;
 }
 ```
 
 #### Interaction
 - 스크롤 하단 도달 시 `InfiniteScrollTrigger` 발동 → 다음 200개 로드
+- S-01 재진입 시 이미 로드된 목록이 있으면 목록을 유지하고 마지막 스크롤 위치를 복원한다.
+- 필터 변경 시에는 목록을 첫 페이지부터 다시 로드하고 스크롤 위치를 0으로 초기화한다.
 
 #### States
 - `loading` (초기 로드 중): `LoadingState` 표시
@@ -331,6 +337,7 @@ CommitList (스크롤 영역)
 
 - `CommitFilterPanel`은 상단에 고정. 스크롤해도 항상 표시.
 - `CommitList`는 `CommitFilterPanel` 하단부터 화면 끝까지 전체 스크롤 영역을 차지.
+- 뒤로가기 또는 설정 화면 복귀처럼 S-01을 다시 열 때는 저장된 스크롤 위치를 기준으로 리스트가 복원된다.
 
 ---
 
@@ -342,6 +349,7 @@ CommitList (스크롤 영역)
 | 키워드 입력 | 텍스트 입력 | 300ms 디바운스 후 필터 실행 |
 | 커밋 클릭 | `CommitListItem` 클릭 | S-02 화면 전환 |
 | 스크롤 하단 도달 | `InfiniteScrollTrigger` | 다음 200개 추가 로드 |
+| S-01 재진입 | 이미 로드된 목록 존재 | 목록 재로드 없이 스크롤 위치 복원 |
 
 ---
 

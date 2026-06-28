@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useLayoutEffect, useRef, type FC } from 'react';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import type { Commit } from '../../types/commit';
 import { CommitListItem } from './CommitListItem';
@@ -18,6 +18,8 @@ interface CommitListProps {
   onRetry: () => void;
   onOpenRepository: () => void;
   onClearFilters: () => void;
+  savedScrollTop: number;
+  onScrollTopChange: (top: number) => void;
 }
 
 export const CommitList: FC<CommitListProps> = ({
@@ -34,7 +36,49 @@ export const CommitList: FC<CommitListProps> = ({
   onRetry,
   onOpenRepository,
   onClearFilters,
+  savedScrollTop,
+  onScrollTopChange,
 }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const hasRestoredScrollRef = useRef(false);
+
+  useLayoutEffect(() => {
+    hasRestoredScrollRef.current = false;
+  }, [commitList.length]);
+
+  useLayoutEffect(() => {
+    if (hasRestoredScrollRef.current) {
+      return;
+    }
+
+    const element = scrollContainerRef.current;
+
+    if (!element || commitList.length === 0 || savedScrollTop === 0) {
+      return;
+    }
+
+    element.scrollTop = savedScrollTop;
+    hasRestoredScrollRef.current = true;
+  }, [commitList.length, savedScrollTop]);
+
+  useLayoutEffect(() => {
+    return () => {
+      const element = scrollContainerRef.current;
+
+      if (element) {
+        onScrollTopChange(element.scrollTop);
+      }
+    };
+  }, [onScrollTopChange]);
+
+  const handleScroll = (): void => {
+    const element = scrollContainerRef.current;
+
+    if (element) {
+      onScrollTopChange(element.scrollTop);
+    }
+  };
+
   if (isLoadingCommits && commitList.length === 0) {
     return (
       <div className="commit-list-state">
@@ -76,7 +120,7 @@ export const CommitList: FC<CommitListProps> = ({
   }
 
   return (
-    <div className="commit-list-scroll">
+    <div className="commit-list-scroll" ref={scrollContainerRef} onScroll={handleScroll}>
       <div className="commit-list" role="list">
         {commitList.map((commit) => (
           <CommitListItem key={commit.hash} commit={commit} onClick={onCommitClick} />

@@ -67,6 +67,7 @@ CommitFilterPanel
 - Zustand 필터 상태 업데이트
 - VSCode Webview State에 `{ filter }` 저장
 - 커밋 목록 첫 페이지부터 재로드
+- 커밋 목록 스크롤 위치를 0으로 초기화
 
 따라서 패널 숨김으로 Webview 런타임이 재생성되어도 S01 마운트 시 복원된 필터 값이 입력 UI에 다시 표시된다.
 

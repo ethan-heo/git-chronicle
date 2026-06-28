@@ -61,6 +61,7 @@ interface AppState extends FilterState {
   commitLoadError: string | null;
   loadMoreError: string | null;
   hasLoadedCommits: boolean;
+  commitListScrollTop: number;
   loadCommits: (reset?: boolean) => void;
   loadChangedFiles: () => void;
   loadDependencies: () => void;
@@ -102,6 +103,7 @@ interface AppState extends FilterState {
   handleChangedFilesLoadFailed: (message?: string) => void;
   handleDependenciesLoaded: (edges: DependencyEdge[]) => void;
   handleDependenciesLoadFailed: (message?: string) => void;
+  setCommitListScrollTop: (top: number) => void;
 }
 
 const initialFilterState: FilterState = {
@@ -148,6 +150,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   commitLoadError: null,
   loadMoreError: null,
   hasLoadedCommits: false,
+  commitListScrollTop: 0,
   ...initialFilterState,
 
   loadCommits: (reset = false) => {
@@ -240,12 +243,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setFilter: (filter) => {
     set(filter);
+    set({ commitListScrollTop: 0 });
     persistFilterState(get());
     get().loadCommits(true);
   },
 
   clearFilters: () => {
     set(DEFAULT_FILTER_STATE);
+    set({ commitListScrollTop: 0 });
     persistFilterState(get());
     get().loadCommits(true);
   },
@@ -678,6 +683,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       isLoadingDependencies: false,
       dependenciesError: message,
     });
+  },
+
+  setCommitListScrollTop: (top) => {
+    set({ commitListScrollTop: top });
   },
 }));
 

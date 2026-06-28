@@ -14,6 +14,7 @@ export const S01CommitListScreen: FC = () => {
     isLoadingCommits,
     isGitRepoDetected,
     hasLoadedCommits,
+    commitListScrollTop,
     commitLoadError,
     loadMoreError,
     filterDateStart,
@@ -21,6 +22,7 @@ export const S01CommitListScreen: FC = () => {
     filterAuthor,
     filterKeyword,
     loadCommits,
+    setCommitListScrollTop,
     setFilter,
     clearFilters,
     selectCommit,
@@ -35,8 +37,12 @@ export const S01CommitListScreen: FC = () => {
       return;
     }
 
+    if (hasLoadedCommits) {
+      return;
+    }
+
     loadCommits(true);
-  }, [isRouteSlotActive, loadCommits]);
+  }, [hasLoadedCommits, isRouteSlotActive, loadCommits]);
 
   useEffect(() => {
     if (!isRouteSlotActive) {
@@ -108,6 +114,8 @@ export const S01CommitListScreen: FC = () => {
         onRetry={retry}
         onOpenRepository={openRepository}
         onClearFilters={clearFilters}
+        savedScrollTop={commitListScrollTop}
+        onScrollTopChange={setCommitListScrollTop}
       />
     </main>
   );
