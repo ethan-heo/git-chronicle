@@ -53,7 +53,7 @@ CommitFilterPanel
 | 작성자 필터 | 드롭다운 자동완성. `authorList` prop에서 선택지 렌더링 |
 | 포함 키워드 | `--grep` git 옵션. 입력 후 300ms 디바운싱 후 콜백 호출 |
 | 제외 키워드 | 쉼표 구분 문자열을 Extension Host에서 후처리 필터로 적용 |
-| 정렬 순서 | `desc` 기본값, `asc`일 때 `--reverse` git 옵션 사용 |
+| 정렬 순서 | `desc` 기본값, `asc`일 때 전체 `git log`를 오래된 순으로 읽은 뒤 페이지를 분할 |
 | 조합 방식 | AND 고정 (세 조건 동시 적용) |
 | 초기화 | 각 필드 독립적으로 초기화 가능 |
 | 상태 복원 | 필터 변경/초기화 시 Zustand 액션이 VSCode Webview State에 필터 값만 동기화 |

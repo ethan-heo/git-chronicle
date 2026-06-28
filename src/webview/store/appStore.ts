@@ -175,8 +175,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     if (!isVSCodeRuntime()) {
       window.setTimeout(() => {
-        const filtered = filterDemoCommits(get());
-        const commits = filtered.slice(page * DEMO_PAGE_SIZE, (page + 1) * DEMO_PAGE_SIZE);
+        const commits = getDemoCommitsPage(get(), page, DEMO_PAGE_SIZE);
         get().handleCommitsLoaded({ commits, page, pageSize: DEMO_PAGE_SIZE });
       }, 260);
       return;
@@ -758,6 +757,14 @@ function simulateDemoBatchAISummary(): void {
   runNext(0, 0, 0);
 }
 
+function getDemoCommitsPage(state: FilterState, page: number, pageSize: number): Commit[] {
+  const filtered = filterDemoCommits(state);
+  const start = page * pageSize;
+  const end = start + pageSize;
+
+  return filtered.slice(start, end);
+}
+
 function filterDemoCommits(state: FilterState): Commit[] {
   const keyword = state.filterKeyword.trim().toLowerCase();
   const excludeKeywords = state.filterExcludeKeyword
@@ -789,7 +796,13 @@ function filterDemoCommits(state: FilterState): Commit[] {
     return true;
   });
 
-  return state.sortOrder === 'asc' ? [...filtered].reverse() : filtered;
+  return sortDemoCommits(filtered, state.sortOrder);
+}
+
+function sortDemoCommits(commits: Commit[], sortOrder: FilterState['sortOrder']): Commit[] {
+  const sorted = [...commits].sort((left, right) => left.date.localeCompare(right.date));
+
+  return sortOrder === 'asc' ? sorted : sorted.reverse();
 }
 
 const demoCommits: Commit[] = [

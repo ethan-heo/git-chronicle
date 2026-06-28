@@ -203,6 +203,8 @@ clearFilters: () => {
 
 `S01_CommitListScreen`은 active route slot이 될 때 `loadCommits(true)`를 호출한다. 웹뷰가 숨김 상태에서 파괴되었다가 다시 생성되어도 `initialFilterState`가 먼저 복원되므로, 재로드 요청은 복원된 필터 조건을 사용한다.
 
+정렬 순서가 `asc`일 때는 Extension Host가 전체 `git log`를 오래된 순으로 가져온 뒤 페이지 단위로 잘라서 응답한다. 즉, 현재 렌더 중인 목록을 다시 정렬하는 것이 아니라 소스 로그 자체의 순서를 바꿔서 반환한다.
+
 ---
 
 ### 화면 전환 상태

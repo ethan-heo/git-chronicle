@@ -56,13 +56,13 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
   }
 
   const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
-  const args = [
-    'log',
-    `--max-count=${pageSize}`,
-    `--skip=${Math.max(options.page, 0) * pageSize}`,
-    '--date=iso-strict',
-    `--pretty=format:%H%x1f%h%x1f%s%x1f%an%x1f%aI%x1e`,
-  ];
+  const shouldReverse = options.sortOrder === 'asc';
+  const args = ['log', '--date=iso-strict', `--pretty=format:%H%x1f%h%x1f%s%x1f%an%x1f%aI%x1e`];
+
+  if (!shouldReverse) {
+    args.push(`--max-count=${pageSize}`);
+    args.push(`--skip=${Math.max(options.page, 0) * pageSize}`);
+  }
 
   if (options.dateStart) {
     args.push(`--after=${options.dateStart}`);
@@ -80,13 +80,13 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
     args.push(`--grep=${options.keyword.trim()}`);
   }
 
-  if (options.sortOrder === 'asc') {
+  if (shouldReverse) {
     args.push('--reverse');
   }
 
   const output = await git.raw(args);
 
-  return output
+  const commits = output
     .split(RECORD_SEPARATOR)
     .map((record) => record.trim())
     .filter(Boolean)
@@ -112,6 +112,15 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
 
       return !excludeKeywords.some((keyword) => message.includes(keyword));
     });
+
+  if (!shouldReverse) {
+    return commits;
+  }
+
+  const start = Math.max(options.page, 0) * pageSize;
+  const end = start + pageSize;
+
+  return commits.slice(start, end);
 }
 
 export async function fetchChangedFiles(repoPath: string, commitHash: string, savePath: string | null, commitMessage?: string): Promise<ChangedFile[]> {
