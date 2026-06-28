@@ -234,6 +234,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     postMessage('ANALYZE_DEPENDENCIES', {
       filePaths: state.changedFiles.map((file) => file.path),
+      commitHash: state.selectedCommit?.hash,
     });
   },
 

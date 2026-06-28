@@ -1,6 +1,6 @@
 # Component: DependencyGraph
 
-S05_DependencyCanvasScreen의 React Flow 기반 노드-엣지 그래프 캔버스. dependency-cruiser로 분석된 변경 파일 간 의존 관계를 시각화한다.
+S05_DependencyCanvasScreen의 React Flow 기반 노드-엣지 그래프 캔버스. dependency-cruiser로 분석된 변경 파일 간 의존 관계를 시각화한다. 분석 입력은 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 구성된다.
 
 ---
 

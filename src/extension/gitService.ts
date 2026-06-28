@@ -132,6 +132,21 @@ export async function fetchFileDiff(repoPath: string, commitHash: string, filePa
   };
 }
 
+export async function fetchFileContentAtCommit(repoPath: string, commitHash: string, filePath: string): Promise<string | null> {
+  const git = simpleGit(repoPath);
+  const isRepo = await git.checkIsRepo();
+
+  if (!isRepo) {
+    throw new GitRepositoryNotFoundError(repoPath);
+  }
+
+  try {
+    return await git.show([`${commitHash}:${filePath}`]);
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchCommitFullDiff(repoPath: string, commitHash: string): Promise<string> {
   const git = simpleGit(repoPath);
   const isRepo = await git.checkIsRepo();

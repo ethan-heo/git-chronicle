@@ -15,7 +15,7 @@
 ## Inputs
 
 - `changedFiles: ChangedFile[]` — 전역 상태에서 참조
-- `selectedCommit: Commit` — dependency-cruiser 분석 컨텍스트
+- `selectedCommit: Commit` — dependency-cruiser 분석 컨텍스트 및 `commitHash` 제공
 
 ---
 

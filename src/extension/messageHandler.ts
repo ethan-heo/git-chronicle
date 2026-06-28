@@ -44,6 +44,7 @@ interface FetchFileDiffPayload {
 
 interface AnalyzeDependenciesPayload {
   filePaths?: string[];
+  commitHash?: string;
 }
 
 interface StartAISummaryFilePayload {
@@ -280,7 +281,7 @@ async function handleAnalyzeDependencies(panel: vscode.WebviewPanel, payload: An
   }
 
   try {
-    const edges = await analyzeDependencies(repoPath, payload.filePaths ?? []);
+    const edges = await analyzeDependencies(repoPath, payload.filePaths ?? [], payload.commitHash ?? '');
 
     await panel.webview.postMessage({
       type: 'DEPENDENCIES_LOADED',

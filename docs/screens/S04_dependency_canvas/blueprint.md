@@ -8,7 +8,7 @@
 
 ## Purpose
 
-커밋에서 변경된 파일 간의 import/require 의존 관계를 React Flow 기반 노드-엣지 그래프로 시각화하는 화면.
+커밋에서 변경된 파일 간의 import/require 의존 관계를 React Flow 기반 노드-엣지 그래프로 시각화하는 화면. 분석 시에는 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 동일한 입력 세트로 `dependency-cruiser`를 실행한다.
 
 ---
 
@@ -86,7 +86,8 @@ S05_DependencyCanvasScreen
 ```
 [S02에서 [캔버스 보기] 클릭]
     → changedFiles가 없고 아직 로드 완료 전이면 변경 파일 로딩
-    → dependency-cruiser로 changedFiles 의존 관계 분석
+    → 현재 파일 복사 + 누락 파일 git 복원
+    → commitHash를 포함해 dependency-cruiser로 changedFiles 의존 관계 분석
     → (분석 성공) React Flow로 노드-엣지 렌더링
         → 노드 호버 → FileActionButtons 표시
             → [코드 보기] → S03

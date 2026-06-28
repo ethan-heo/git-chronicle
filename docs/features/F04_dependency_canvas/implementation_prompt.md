@@ -6,7 +6,7 @@
 
 ## Technical Context
 
-- **의존성 분석**: Extension Host에서 `dependency-cruiser` CLI를 `child_process.execFile`로 실행, JSON 결과 파싱
+- **의존성 분석**: Extension Host에서 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 `dependency-cruiser` CLI를 `child_process.execFile`로 실행, JSON 결과 파싱
 - **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 레이아웃은 확장자 그룹 기반 고정 앵커 배치
 - **대상 파일**: JS/TS 파일만 분석 가능 (`.mjs`, `.cjs`, `.js`, `.jsx`, `.mts`, `.cts`, `.ts`, `.tsx`)
 
@@ -63,8 +63,12 @@ interface DependencyGraphProps {
 ### `src/extension/dependencyService.ts`
 
 ```typescript
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { fetchFileContentAtCommit } from '../../extension/gitService';
 
 const execFileAsync = promisify(execFile);
 
@@ -76,7 +80,8 @@ interface DepEdge {
 
 export async function analyzeDependencies(
   repoPath: string,
-  filePaths: string[]
+  filePaths: string[],
+  commitHash: string
 ): Promise<DepEdge[]> {
   // JS/TS 파일만 필터
   const analyzable = filePaths.filter(p =>
@@ -84,32 +89,67 @@ export async function analyzeDependencies(
   );
   if (analyzable.length === 0) return [];
 
-  const args = [
-    '--output-type', 'json',
-    '--no-config',
-    '--ts-pre-compilation-deps',
-    ...analyzable,
-  ];
+  const analyzerPath = getDependencyCruiserBinPath();
+  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-author-explorer-'));
+  const resolvedPaths: string[] = [];
 
-  const { stdout } = await execFileAsync(process.execPath, [analyzerPath, ...args], { cwd: repoPath });
-  const result = JSON.parse(stdout);
+  try {
+    for (const filePath of analyzable) {
+      const onDiskPath = path.resolve(repoPath, filePath);
+      const tmpFilePath = path.join(tmpDir, filePath);
 
-  const edges: DepEdge[] = [];
-  for (const module of result.modules || []) {
-    for (const dep of module.dependencies || []) {
-      if (analyzable.includes(dep.resolved)) {
-        edges.push({ from: module.source, to: dep.resolved });
+      if (fs.existsSync(onDiskPath)) {
+        await fs.promises.mkdir(path.dirname(tmpFilePath), { recursive: true });
+        await fs.promises.copyFile(onDiskPath, tmpFilePath);
+        resolvedPaths.push(tmpFilePath);
+        continue;
+      }
+
+      if (!commitHash) {
+        continue;
+      }
+
+      const content = await fetchFileContentAtCommit(repoPath, commitHash, filePath);
+      if (content === null) {
+        continue;
+      }
+
+      await fs.promises.mkdir(path.dirname(tmpFilePath), { recursive: true });
+      await fs.promises.writeFile(tmpFilePath, content, 'utf8');
+      resolvedPaths.push(tmpFilePath);
+    }
+
+    if (resolvedPaths.length === 0) return [];
+
+    const args = [
+      '--output-type', 'json',
+      '--no-config',
+      '--ts-pre-compilation-deps',
+      ...resolvedPaths,
+    ];
+
+    const { stdout } = await execFileAsync(process.execPath, [analyzerPath, ...args], { cwd: repoPath });
+    const result = JSON.parse(stdout);
+
+    const edges: DepEdge[] = [];
+    for (const module of result.modules || []) {
+      for (const dep of module.dependencies || []) {
+        if (resolvedPaths.includes(dep.resolved)) {
+          edges.push({ from: module.source, to: dep.resolved });
+        }
       }
     }
+    return edges;
+  } finally {
+    await fs.promises.rm(tmpDir, { recursive: true, force: true });
   }
-  return edges;
 }
 ```
 
 Extension Host 메시지 핸들러:
 ```typescript
 case 'ANALYZE_DEPENDENCIES': {
-  const edges = await analyzeDependencies(repoPath, message.payload.filePaths);
+  const edges = await analyzeDependencies(repoPath, message.payload.filePaths, message.payload.commitHash);
   panel.webview.postMessage({ type: 'DEPENDENCIES_LOADED', payload: { edges } });
   break;
 }
