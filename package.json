@@ -10,7 +10,7 @@
     "url": "https://github.com/ethan-heo/git-chronicle.git"
   },
   "packageManager": "pnpm@10.19.0",
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "vscode": "^1.85.0",
     "node": ">=18.0.0"
