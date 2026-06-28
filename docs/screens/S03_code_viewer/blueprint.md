@@ -8,7 +8,7 @@
 
 ## Purpose
 
-선택된 파일의 Git diff를 unified diff 형식 + Shiki 신텍스 하이라이팅으로 표시하는 읽기 전용 뷰어 화면.
+선택된 파일의 Git diff를 unified diff 형식 + Shiki 신텍스 하이라이팅으로 표시하는 읽기 전용 뷰어 화면. 현재 구현은 파일 전체를 로드해 첫 변경 지점으로 자동 스크롤한다.
 
 ---
 
@@ -45,6 +45,7 @@ S03_CodeViewerScreen
     ├─ DeletedFileNotice (조건부, 삭제된 파일)
     └─ DiffLine × N
        OR BinaryFileNotice
+   └─ 로드 후 첫 변경 라인으로 자동 스크롤
 ```
 
 ---

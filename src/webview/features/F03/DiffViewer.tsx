@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { FC } from 'react';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import { DiffLine } from './DiffLine';
@@ -22,6 +23,15 @@ export const DiffViewer: FC<DiffViewerProps> = ({
   isDeletedFile,
   onRetry,
 }) => {
+  useEffect(() => {
+    if (isLoading || error || isBinaryFile || diffLines.length === 0) {
+      return;
+    }
+
+    const firstChange = document.querySelector('.diff-line-added, .diff-line-removed') as HTMLElement | null;
+    firstChange?.scrollIntoView({ block: 'center' });
+  }, [diffLines, error, isBinaryFile, isLoading]);
+
   if (isLoading) {
     return (
       <section className="diff-viewer-state">

@@ -6,7 +6,7 @@
 
 ## Technical Context
 
-- **diff 데이터**: Extension Host에서 `simple-git show --format= --find-renames --unified=3 {hash} -- {file}`로 커밋 내 파일 diff 추출
+- **diff 데이터**: Extension Host에서 `simple-git show --format= --find-renames --unified=99999 {hash} -- {file}`로 커밋 내 파일 전체 diff 추출
 - **구문 강조**: Webview에서 `Shiki` fine-grained bundle을 lazy import하여 diff 라인 코드 토큰에만 적용
 - **출력 전용**: 상태 변경 없음 (read-only)
 - **현재 구현 위치**: S03 화면은 `src/webview/features/F03/` 내부에 feature-local screen으로 구현한다.
@@ -77,7 +77,7 @@ export async function fetchFileDiff(
   const rawDiff = await git.show([
     '--format=',
     '--find-renames',
-    '--unified=3',
+    '--unified=99999',
     commitHash,
     '--',
     filePath,
@@ -226,13 +226,14 @@ export const S03CodeViewerScreen: FC = () => {
 
 ## Business Rules
 
-1. diff는 `unified=3` 컨텍스트 라인 포함 (앞뒤 3줄)
+1. diff는 `unified=99999`로 파일 전체를 반환한다.
 2. `@@` 헤더 라인, `diff --git`, `index`, `---`, `+++`, rename metadata는 렌더링에서 제외
 3. 이진 파일: `BinaryFileNotice` 표시, diff 없음
 4. 삭제된 파일: `DeletedFileNotice` + 삭제 전 내용 diff 표시
 5. 이 화면은 Side Effect 없음 (read-only)
 6. Shiki 하이라이팅 실패 시 토큰 없는 plain text diff로 fallback
 7. 브라우저 개발 모드에서는 VSCode API가 없으므로 S03 데모 diff를 사용
+8. diff 로드 후 첫 추가/삭제 라인으로 자동 스크롤한다.
 
 ---
 

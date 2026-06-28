@@ -1,6 +1,6 @@
 # Component: DiffViewer
 
-파일의 unified diff를 Shiki 신텍스 하이라이팅과 함께 표시하는 코드 뷰어 컴포넌트. F03_CodeViewer에서 사용한다.
+파일의 unified diff를 Shiki 신텍스 하이라이팅과 함께 표시하는 코드 뷰어 컴포넌트. F03_CodeViewer에서 사용한다. 현재 구현은 파일 전체를 표시하고, 첫 변경 라인으로 자동 스크롤한다.
 
 ---
 
@@ -60,11 +60,12 @@ DiffViewer
 
 ## Business Rules
 
-- unified diff 형식 고정 (`git diff --unified`).
+- unified diff 형식 고정 (`git show --unified=99999`).
 - 이진 파일: diff 표시 불가 메시지만 표시. 다운로드 링크 없음.
 - 삭제 파일: "삭제된 파일입니다" 배너를 상단에 표시하고, 삭제 전 내용을 diff 라인으로 표시.
 - 줄 번호: old/new 두 컬럼을 표시한다. 좁은 너비에서는 숨길 수 있다.
 - Shiki 하이라이팅 실패 시 plain text 토큰으로 fallback한다.
+- diff 로드가 완료되면 첫 번째 추가/삭제 라인으로 스크롤한다.
 
 ---
 
