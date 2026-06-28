@@ -222,6 +222,7 @@ interface SymbolLegendPanelProps {
 #### States
 - `visible`: 전체 표시
 - `minimized`: 좁은 패널에서 아이콘만 표시
+- 초기 상태는 `minimized`
 
 #### Accessibility
 - `aria-label="노드 그래프 범례"`
@@ -259,8 +260,9 @@ interface SymbolCodePanelProps {
 #### Interaction
 - `isOpen === true` 일 때 우측에서 슬라이드 인
 - 닫기 버튼 클릭 시 `onClose()` 호출
-- 활성 노드 클릭 시 `scrollToRange`로 해당 라인 범위 이동
+- 활성 노드 클릭 시 `scrollToRange`와 `scrollRequestId`로 해당 라인 범위 이동
 - 호버 노드 변경 시 `highlightRange`로 배경 강조
+- 호버는 스크롤을 유발하지 않음
 
 #### Reusability
 F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 내에서만 사용.
@@ -284,7 +286,8 @@ interface SymbolFileCodeViewerProps {
 
 #### Interaction
 - `highlightRange`에 포함된 라인 배경 강조
-- `scrollToRange` 변경 시 해당 라인으로 smooth scroll
+- 클릭으로 활성화된 노드의 라인 범위를 우선 강조
+- `scrollToRange`와 `scrollRequestId` 변경 시 해당 라인으로 smooth scroll
 
 #### Reusability
 F10 전용. `SymbolCodePanel` 내부에서만 사용.
@@ -348,7 +351,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 - 엣지가 있으면 Dagre 계층 레이아웃 (`rankdir: 'LR'`), 없으면 심볼 종류(kind) 그룹 기반 앵커 배치.
 - 고립 노드(엣지 없음)는 kind 그룹 규칙으로 Dagre 영역 하단에 배치.
 - `SymbolLegendPanel`과 `CanvasControls`는 캔버스 위 오버레이로 고정 배치.
-- `SymbolLegendPanel`은 기본적으로 펼쳐져 있으나, 사용자가 접기/펼치기로 화면 공간을 회수할 수 있다.
+- `SymbolLegendPanel`은 기본적으로 접혀 있으며, 사용자가 펼치기로 화면 공간을 사용할 수 있다.
 
 ---
 
@@ -401,7 +404,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 
 ## Responsive Rules
 
-- 패널 크기 변경 시 `fitView()` 자동 호출
+- 초기 진입 시 노드/엣지 초기화 완료 후 `fitView()` 1회 호출
 - `SymbolLegendPanel`은 필요 시 사용자가 직접 최소화 상태로 전환
 
 ---

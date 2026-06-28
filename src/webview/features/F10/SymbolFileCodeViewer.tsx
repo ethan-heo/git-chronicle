@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from 'react';
 import { createHighlighterCore, type HighlighterCore } from 'shiki/core';
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 import langCss from 'shiki/langs/css.mjs';
@@ -23,14 +23,16 @@ interface SymbolFileCodeViewerProps {
   language: string;
   highlightRange: LineRange | null;
   scrollToRange: LineRange | null;
+  scrollRequestId: number;
 }
 
 type TokensResult = ReturnType<HighlighterCore['codeToTokens']>;
 
 let highlighterPromise: Promise<HighlighterCore> | null = null;
 
-export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ fileContent, language, highlightRange, scrollToRange }) => {
+export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ fileContent, language, highlightRange, scrollToRange, scrollRequestId }) => {
   const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const viewerRef = useRef<HTMLElement | null>(null);
   const lines = useMemo(() => fileContent.split('\n'), [fileContent]);
   const [tokensByLine, setTokensByLine] = useState<TokensResult['tokens']>([]);
 
@@ -72,16 +74,26 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ fileConten
     };
   }, [fileContent, language]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!scrollToRange) {
       return;
     }
 
-    lineRefs.current[Math.max(0, scrollToRange.start - 1)]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [scrollToRange]);
+    const targetLine = lineRefs.current[Math.max(0, scrollToRange.start - 1)];
+    const viewer = viewerRef.current;
+
+    if (!targetLine || !viewer) {
+      return;
+    }
+
+    const viewerRect = viewer.getBoundingClientRect();
+    const targetRect = targetLine.getBoundingClientRect();
+    const nextTop = viewer.scrollTop + (targetRect.top - viewerRect.top) - viewerRect.height / 2 + targetRect.height / 2;
+    viewer.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+  }, [scrollRequestId, scrollToRange]);
 
   return (
-    <section className="symbol-code-viewer" aria-label="파일 코드 보기" tabIndex={0}>
+    <section ref={viewerRef} className="symbol-code-viewer" aria-label="파일 코드 보기" tabIndex={0}>
       <div className="symbol-code-lines">
         {lines.map((line, index) => {
           const lineNumber = index + 1;

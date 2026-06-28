@@ -1,5 +1,5 @@
 import '@xyflow/react/dist/style.css';
-import { Background, BackgroundVariant, MarkerType, ReactFlow, useEdgesState, useNodesState, useReactFlow } from '@xyflow/react';
+import { Background, BackgroundVariant, MarkerType, ReactFlow, useEdgesState, useNodesInitialized, useNodesState, useReactFlow } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import { CanvasControls } from '../F04/CanvasControls';
@@ -32,28 +32,35 @@ export const SymbolGraph: FC<Props> = ({ symbolNodes, symbolEdges, isLoading, er
 
 const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeNodeId' | 'onNodeClick' | 'onNodeHover'>> = ({ symbolNodes, symbolEdges, activeNodeId, onNodeClick, onNodeHover }) => {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
-  const graphRef = useRef<HTMLElement | null>(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
-  const [isLegendMinimized, setIsLegendMinimized] = useState(false);
+  const [isLegendMinimized, setIsLegendMinimized] = useState(true);
+  const nodesInitialized = useNodesInitialized();
   const { nodes: graphNodes, edges: graphEdges } = useMemo(() => buildSymbolGraphData(symbolNodes, symbolEdges), [symbolEdges, symbolNodes]);
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
+  const fittedGraphKeyRef = useRef<string | null>(null);
 
   useEffect(() => setNodes(graphNodes), [graphNodes, setNodes]);
   useEffect(() => {
     const highlight = new Set([highlightedNodeId, activeNodeId].filter(Boolean) as string[]);
     setEdges(graphEdges.map((edge) => ({ ...edge, data: { ...(edge.data ?? {}), highlighted: highlight.has(edge.source), dimmed: highlight.size > 0 && !highlight.has(edge.source), kind: edge.data?.kind ?? 'uses' } })));
   }, [activeNodeId, graphEdges, highlightedNodeId, setEdges]);
-  useEffect(() => { window.setTimeout(() => void fitView({ padding: 0.22, duration: 180 }), 0); }, [fitView, symbolEdges, symbolNodes]);
   useEffect(() => {
-    if (!graphRef.current || typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(() => void fitView({ padding: 0.22, duration: 180 }));
-    observer.observe(graphRef.current);
-    return () => observer.disconnect();
-  }, [fitView]);
+    if (!nodesInitialized || nodes.length === 0) {
+      return;
+    }
+
+    const graphKey = `${nodes.length}:${edges.length}`;
+    if (fittedGraphKeyRef.current === graphKey) {
+      return;
+    }
+
+    fittedGraphKeyRef.current = graphKey;
+    window.setTimeout(() => void fitView({ padding: 0.22, duration: 180 }), 0);
+  }, [edges.length, fitView, nodes.length, nodesInitialized]);
 
   return (
-    <section className="dependency-graph symbol-graph" aria-label="파일 내부 심볼 의존성 그래프" ref={graphRef}>
+    <section className="dependency-graph symbol-graph" aria-label="파일 내부 심볼 의존성 그래프">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -62,7 +69,6 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
         nodesDraggable
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        fitView
         minZoom={0.3}
         maxZoom={2}
         proOptions={{ hideAttribution: true }}

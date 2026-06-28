@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from '@xyflow/react';
-import { useCallback, useEffect, useMemo, type FC } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { SplitViewButton, TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
@@ -59,6 +59,15 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
   const retry = useCallback(() => loadSymbolGraph(), [loadSymbolGraph]);
   const hoveredNode = useMemo(() => symbolNodes.find((node) => node.id === hoveredSymbolNodeId) ?? null, [hoveredSymbolNodeId, symbolNodes]);
   const activeNode = useMemo(() => symbolNodes.find((node) => node.id === activeSymbolNodeId) ?? null, [activeSymbolNodeId, symbolNodes]);
+  const [scrollRequestId, setScrollRequestId] = useState(0);
+  const highlightedRange = useMemo(
+    () => (isCodePanelOpen ? activeNode ?? hoveredNode : null),
+    [activeNode, hoveredNode, isCodePanelOpen],
+  );
+  const scrollToRange = useMemo(
+    () => (activeNode ? { start: activeNode.lineStart, end: activeNode.lineEnd } : null),
+    [activeNode],
+  );
 
   if (!selectedCommit || !selectedFileForSymbolGraph) return null;
 
@@ -97,11 +106,11 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
               activeNodeId={activeSymbolNodeId ?? hoveredSymbolNodeId}
               onNodeClick={(nodeId) => {
                 setActiveSymbolNode(nodeId);
-                if (!isCodePanelOpen) {
-                  openCodePanel();
-                }
+                setScrollRequestId((current) => current + 1);
               }}
-              onNodeHover={setHoveredSymbolNode}
+              onNodeHover={(nodeId) => {
+                setHoveredSymbolNode(nodeId);
+              }}
             />
           </ReactFlowProvider>
         </div>
@@ -110,8 +119,9 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
           filePath={selectedFileForSymbolGraph.path}
           fileContent={symbolFileContent ?? ''}
           language={selectedFileForSymbolGraph.path}
-          highlightRange={hoveredNode ? { start: hoveredNode.lineStart, end: hoveredNode.lineEnd } : null}
-          scrollToRange={activeNode ? { start: activeNode.lineStart, end: activeNode.lineEnd } : null}
+          highlightRange={highlightedRange ? { start: highlightedRange.lineStart, end: highlightedRange.lineEnd } : null}
+          scrollToRange={scrollToRange}
+          scrollRequestId={scrollRequestId}
           onClose={closeCodePanel}
         />
       </section>

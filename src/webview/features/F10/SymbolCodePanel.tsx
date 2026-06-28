@@ -8,10 +8,11 @@ interface SymbolCodePanelProps {
   language: string;
   highlightRange: { start: number; end: number } | null;
   scrollToRange: { start: number; end: number } | null;
+  scrollRequestId: number;
   onClose: () => void;
 }
 
-export const SymbolCodePanel: FC<SymbolCodePanelProps> = ({ isOpen, filePath, fileContent, language, highlightRange, scrollToRange, onClose }) => {
+export const SymbolCodePanel: FC<SymbolCodePanelProps> = ({ isOpen, filePath, fileContent, language, highlightRange, scrollToRange, scrollRequestId, onClose }) => {
   return (
     <aside className={['symbol-code-panel', isOpen ? 'symbol-code-panel-open' : 'symbol-code-panel-closed'].filter(Boolean).join(' ')} aria-hidden={!isOpen}>
       <header className="symbol-code-panel-header">
@@ -23,7 +24,7 @@ export const SymbolCodePanel: FC<SymbolCodePanelProps> = ({ isOpen, filePath, fi
           ×
         </button>
       </header>
-      <SymbolFileCodeViewer fileContent={fileContent} language={language} highlightRange={highlightRange} scrollToRange={scrollToRange} />
+      <SymbolFileCodeViewer fileContent={fileContent} language={language} highlightRange={highlightRange} scrollToRange={scrollToRange} scrollRequestId={scrollRequestId} />
     </aside>
   );
 };
