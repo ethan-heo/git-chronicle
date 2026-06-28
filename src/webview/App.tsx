@@ -100,6 +100,7 @@ export const App: FC = () => {
         useAppStore.getState().handleSymbolGraphLoaded({
           nodes: event.data.payload?.nodes ?? [],
           edges: event.data.payload?.edges ?? [],
+          fileContent: event.data.payload?.fileContent ?? '',
         });
       }
 

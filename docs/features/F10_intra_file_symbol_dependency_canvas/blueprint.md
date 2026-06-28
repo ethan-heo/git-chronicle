@@ -18,8 +18,12 @@
 - `selectedCommit: Commit` — 헤더 표시 및 파일 내용 복원 컨텍스트
 - `symbolNodes: SymbolNode[]` — 전역 상태
 - `symbolEdges: SymbolEdge[]` — 전역 상태
+- `symbolFileContent: string` — 전역 상태. 코드 패널 렌더링용 파일 본문
 - `isLoadingSymbolGraph: boolean` — 전역 상태
 - `symbolGraphError: string | null` — 전역 상태
+- `isCodePanelOpen: boolean` — 전역 상태. 우측 코드 패널 표시 여부
+- `activeSymbolNodeId: string | null` — 전역 상태. 클릭 노드 ID
+- `hoveredSymbolNodeId: string | null` — 전역 상태. 호버 노드 ID
 
 ---
 
@@ -36,6 +40,8 @@
 - `SymbolEdge` (React Flow 커스텀 엣지)
 - `SymbolKindBadge`
 - `SymbolLegendPanel`
+- `SymbolCodePanel`
+- `SymbolFileCodeViewer`
 - `CanvasControls` (F04에서 재사용)
 
 ---
@@ -59,6 +65,9 @@ interface SymbolGraphProps {
   isLoading: boolean;
   error: string | null;
   onRetry: () => void;
+  activeNodeId?: string | null;
+  onNodeClick?: (nodeId: string) => void;
+  onNodeHover?: (nodeId: string | null) => void;
 }
 ```
 
@@ -66,7 +75,8 @@ interface SymbolGraphProps {
 - 줌: 마우스 휠
 - 패닝: 빈 영역 드래그
 - 노드 드래그: 노드 위치 직접 조정
-- 노드 호버: 연결 엣지 강조 + 비연결 엣지 감쇠
+- 노드 호버: 연결 엣지 강조 + 비연결 엣지 감쇠, hover 콜백 전달
+- 노드 클릭: 활성 노드 변경 및 코드 패널 스크롤 타겟 설정
 - 노드 드래그 후: 현재 위치 기준 엣지 연결 면 재계산
 - 캔버스 리사이즈: `fitView()` 재적용
 
@@ -227,6 +237,59 @@ F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 우측 하단 오버레이
 
 ---
 
+### Component: SymbolCodePanel
+
+#### Purpose
+S08 우측에서 슬라이드 인하는 코드 패널. 파일명과 닫기 버튼을 보여주고, 내부에 `SymbolFileCodeViewer`를 포함한다.
+
+#### Props
+```typescript
+interface SymbolCodePanelProps {
+  isOpen: boolean;
+  filePath: string;
+  fileContent: string;
+  language: string;
+  highlightRange: { start: number; end: number } | null;
+  scrollToRange: { start: number; end: number } | null;
+  onClose: () => void;
+}
+```
+
+#### Interaction
+- `isOpen === true` 일 때 우측에서 슬라이드 인
+- 닫기 버튼 클릭 시 `onClose()` 호출
+- 활성 노드 클릭 시 `scrollToRange`로 해당 라인 범위 이동
+- 호버 노드 변경 시 `highlightRange`로 배경 강조
+
+#### Reusability
+F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 내에서만 사용.
+
+---
+
+### Component: SymbolFileCodeViewer
+
+#### Purpose
+Shiki 기반 구문 강조 코드 뷰어. 라인 번호와 노드 라인 범위 강조를 렌더링한다.
+
+#### Props
+```typescript
+interface SymbolFileCodeViewerProps {
+  fileContent: string;
+  language: string;
+  highlightRange: { start: number; end: number } | null;
+  scrollToRange: { start: number; end: number } | null;
+}
+```
+
+#### Interaction
+- `highlightRange`에 포함된 라인 배경 강조
+- `scrollToRange` 변경 시 해당 라인으로 smooth scroll
+
+#### Reusability
+F10 전용. `SymbolCodePanel` 내부에서만 사용.
+
+---
+
 ## Component Tree
 
 ```
@@ -238,6 +301,8 @@ F10_IntraFileSymbolDependencyCanvas
 │   │   └─ 라인 범위 텍스트
 │   └─ SymbolEdge × M
 ├─ SymbolLegendPanel
+├─ SymbolCodePanel
+│  └─ SymbolFileCodeViewer
 └─ CanvasControls (재사용)
 ```
 
@@ -258,6 +323,10 @@ F10_IntraFileSymbolDependencyCanvas
 ### SymbolLegendPanel
 - `visible`: 전체 표시
 - `minimized`: 좁은 패널에서 최소화
+
+### SymbolCodePanel
+- `open`: 우측 슬라이드 인
+- `closed`: 우측 슬라이드 아웃
 
 ---
 

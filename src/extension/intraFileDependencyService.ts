@@ -26,27 +26,31 @@ const JS_TS_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i;
 const PY_PATTERN = /\.py$/i;
 const GO_PATTERN = /\.go$/i;
 
-export async function analyzeSymbolGraph(repoPath: string, filePath: string, commitHash: string | null | undefined): Promise<{ nodes: SymbolNode[]; edges: SymbolEdge[] }> {
+export async function analyzeSymbolGraph(
+  repoPath: string,
+  filePath: string,
+  commitHash: string | null | undefined,
+): Promise<{ nodes: SymbolNode[]; edges: SymbolEdge[]; fileContent: string }> {
   if (!SUPPORTED_FILE_PATTERN.test(filePath)) {
-    return { nodes: [], edges: [] };
+    return { nodes: [], edges: [], fileContent: '' };
   }
 
   const content = await readFileContent(repoPath, filePath, commitHash ?? '');
   if (content === null) {
-    return { nodes: [], edges: [] };
+    return { nodes: [], edges: [], fileContent: '' };
   }
 
   if (JS_TS_PATTERN.test(filePath)) {
-    return analyzeJsTs(content, filePath);
+    return { ...analyzeJsTs(content, filePath), fileContent: content };
   }
   if (PY_PATTERN.test(filePath)) {
-    return analyzePython(content);
+    return { ...analyzePython(content), fileContent: content };
   }
   if (GO_PATTERN.test(filePath)) {
-    return analyzeGo(content);
+    return { ...analyzeGo(content), fileContent: content };
   }
 
-  return { nodes: [], edges: [] };
+  return { nodes: [], edges: [], fileContent: content };
 }
 
 async function readFileContent(repoPath: string, filePath: string, commitHash: string): Promise<string | null> {

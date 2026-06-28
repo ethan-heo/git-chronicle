@@ -93,7 +93,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **S05** 의존성 캔버스 | [blueprint](screens/S04_dependency_canvas/blueprint.md) | 노드-엣지 의존성 그래프 화면 |
 | **S06** 설정 | [blueprint](screens/S06_settings/blueprint.md) | AI 프로바이더·저장 경로 설정 화면 |
 | **S07** 코드 + AI 요약 분할 | [blueprint](screens/S07_code_and_ai_summary/blueprint.md) | 코드 diff와 AI 요약을 좌우 분할로 동시에 보는 화면 |
-| **S08** 파일 내부 심볼 의존성 캔버스 | [blueprint](screens/S08_intra_file_dependency_canvas/blueprint.md) | 단일 파일 내 심볼(함수·클래스·변수 등) 간 의존 관계 그래프 화면 |
+| **S08** 파일 내부 심볼 의존성 캔버스 | [blueprint](screens/S08_intra_file_dependency_canvas/blueprint.md) | 단일 파일 내 심볼(함수·클래스·변수 등) 간 의존 관계 그래프 + 우측 코드 패널 화면 |
 
 ---
 
@@ -148,6 +148,15 @@ UI 컴포넌트별 Props 정의, 동작 명세, 사용 예시입니다.
 |------|------|
 | [components/DependencyGraph.md](components/DependencyGraph.md) | 노드-엣지 의존성 그래프 캔버스 컨테이너 |
 | [components/DependencyEdge.md](components/DependencyEdge.md) | 의존성 그래프 엣지 (방향·라벨) |
+
+### 파일 내부 심볼 캔버스
+
+| 파일 | 설명 |
+|------|------|
+| [components/SymbolGraph.md](components/SymbolGraph.md) | 파일 내부 심볼 의존성 그래프 캔버스 컨테이너 |
+| [components/SymbolLegendPanel.md](components/SymbolLegendPanel.md) | 심볼 그래프 범례 패널 |
+| [components/SymbolCodePanel.md](components/SymbolCodePanel.md) | 우측 슬라이드 인 코드 패널 |
+| [components/SymbolFileCodeViewer.md](components/SymbolFileCodeViewer.md) | Shiki 기반 코드 뷰어 및 라인 강조 |
 
 ### 설정
 

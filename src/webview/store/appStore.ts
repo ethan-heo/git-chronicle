@@ -51,9 +51,13 @@ interface AppState extends FilterState {
   selectedFileForSymbolGraph: ChangedFile | null;
   symbolNodes: SymbolNode[];
   symbolEdges: SymbolEdge[];
+  symbolFileContent: string | null;
   isLoadingSymbolGraph: boolean;
   hasLoadedSymbolGraph: boolean;
   symbolGraphError: string | null;
+  isCodePanelOpen: boolean;
+  activeSymbolNodeId: string | null;
+  hoveredSymbolNodeId: string | null;
   savePath: string | null;
   registeredProviders: AIProviderName[];
   activeAIProvider: AIProviderName | null;
@@ -126,9 +130,14 @@ interface AppState extends FilterState {
   handleChangedFilesLoadFailed: (message?: string) => void;
   handleDependenciesLoaded: (edges: DependencyEdge[]) => void;
   handleDependenciesLoadFailed: (message?: string) => void;
-  handleSymbolGraphLoaded: (payload: { nodes?: SymbolNode[]; edges?: SymbolEdge[] }) => void;
+  handleSymbolGraphLoaded: (payload: { nodes?: SymbolNode[]; edges?: SymbolEdge[]; fileContent?: string }) => void;
   handleSymbolGraphLoadFailed: (message?: string) => void;
   setCommitListScrollTop: (top: number) => void;
+  openCodePanel: () => void;
+  closeCodePanel: () => void;
+  toggleCodePanel: () => void;
+  setActiveSymbolNode: (nodeId: string | null) => void;
+  setHoveredSymbolNode: (nodeId: string | null) => void;
 }
 
 const initialFilterState: FilterState = {
@@ -151,9 +160,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedFileForSymbolGraph: null,
   symbolNodes: [],
   symbolEdges: [],
+  symbolFileContent: null,
   isLoadingSymbolGraph: false,
   hasLoadedSymbolGraph: false,
   symbolGraphError: null,
+  isCodePanelOpen: false,
+  activeSymbolNodeId: null,
+  hoveredSymbolNodeId: null,
   savePath: isVSCodeRuntime() ? null : '.git-author',
   registeredProviders: isVSCodeRuntime() ? [] : ['claude', 'gemini'],
   activeAIProvider: isVSCodeRuntime() ? null : 'claude',
@@ -285,6 +298,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       symbolGraphError: null,
       symbolNodes: [],
       symbolEdges: [],
+      symbolFileContent: null,
+      isCodePanelOpen: false,
+      activeSymbolNodeId: null,
+      hoveredSymbolNodeId: null,
     });
 
     if (!isVSCodeRuntime()) {
@@ -292,6 +309,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         get().handleSymbolGraphLoaded({
           nodes: demoSymbolNodes,
           edges: demoSymbolEdges,
+          fileContent: demoSymbolFileContent,
         });
       }, 220);
       return;
@@ -331,9 +349,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       selectedFileForSymbolGraph: null,
       symbolNodes: [],
       symbolEdges: [],
+      symbolFileContent: null,
       isLoadingSymbolGraph: false,
       hasLoadedSymbolGraph: false,
       symbolGraphError: null,
+      isCodePanelOpen: false,
+      activeSymbolNodeId: null,
+      hoveredSymbolNodeId: null,
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: false,
@@ -436,9 +458,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       selectedFileForSymbolGraph: file,
       symbolNodes: [],
       symbolEdges: [],
+      symbolFileContent: null,
       symbolGraphError: null,
       isLoadingSymbolGraph: false,
       hasLoadedSymbolGraph: false,
+      isCodePanelOpen: false,
+      activeSymbolNodeId: null,
+      hoveredSymbolNodeId: null,
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S08',
       transitionDirection: 'forward',
@@ -773,6 +799,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       symbolNodes: payload.nodes ?? [],
       symbolEdges: payload.edges ?? [],
+      symbolFileContent: payload.fileContent ?? '',
       isLoadingSymbolGraph: false,
       hasLoadedSymbolGraph: true,
       symbolGraphError: null,
@@ -783,6 +810,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       symbolNodes: [],
       symbolEdges: [],
+      symbolFileContent: null,
       isLoadingSymbolGraph: false,
       hasLoadedSymbolGraph: true,
       symbolGraphError: message ?? '심볼을 분석하지 못했습니다',
@@ -800,6 +828,21 @@ export const useAppStore = create<AppState>((set, get) => ({
   setCommitListScrollTop: (top) => {
     set({ commitListScrollTop: top });
   },
+
+  openCodePanel: () => set({ isCodePanelOpen: true }),
+
+  closeCodePanel: () =>
+    set({
+      isCodePanelOpen: false,
+      activeSymbolNodeId: null,
+      hoveredSymbolNodeId: null,
+    }),
+
+  toggleCodePanel: () => set((state) => ({ isCodePanelOpen: !state.isCodePanelOpen })),
+
+  setActiveSymbolNode: (nodeId) => set({ activeSymbolNodeId: nodeId }),
+
+  setHoveredSymbolNode: (nodeId) => set({ hoveredSymbolNodeId: nodeId }),
 }));
 
 function persistFilterState(state: FilterState): void {
@@ -970,3 +1013,22 @@ const demoSymbolEdges: SymbolEdge[] = [
   { from: 'buildGraph:3', to: 'GraphState:58', kind: 'uses' },
   { from: 'resolveNodes:30', to: 'GRAPH_LIMIT:66', kind: 'uses' },
 ];
+
+const demoSymbolFileContent = `export function buildGraph(items: string[]): GraphState {
+  const resolved = resolveNodes(items);
+  return {
+    nodes: resolved,
+    limit: GRAPH_LIMIT,
+  };
+}
+
+function resolveNodes(items: string[]): string[] {
+  return items.filter((item) => item.length < GRAPH_LIMIT);
+}
+
+export interface GraphState {
+  nodes: string[];
+  limit: number;
+}
+
+export const GRAPH_LIMIT = 120;`;
