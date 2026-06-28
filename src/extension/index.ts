@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
-import { GitRewindPanel } from './webviewPanel';
+import { GitChroniclePanel } from './webviewPanel';
 
 export function activate(context: vscode.ExtensionContext): void {
-  const openCommand = vscode.commands.registerCommand('gitRewind.open', () => {
-    GitRewindPanel.createOrShow(context);
+  const openCommand = vscode.commands.registerCommand('gitChronicle.open', () => {
+    GitChroniclePanel.createOrShow(context);
   });
 
   context.subscriptions.push(openCommand);
 }
 
 export function deactivate(): void {
-  GitRewindPanel.disposeCurrent();
+  GitChroniclePanel.disposeCurrent();
 }

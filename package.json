@@ -1,13 +1,13 @@
 {
-  "name": "git-rewind",
-  "displayName": "GitRewind",
+  "name": "git-chronicle",
+  "displayName": "GitChronicle",
   "description": "Rewind your Git history — explore commits, changed files, dependency graphs, and AI summaries in VSCode.",
   "version": "0.0.1",
   "publisher": "ethanheo",
   "icon": "assets/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ethan-heo/git-rewind.git"
+    "url": "https://github.com/ethan-heo/git-chronicle.git"
   },
   "packageManager": "pnpm@10.19.0",
   "license": "UNLICENSED",
@@ -22,19 +22,19 @@
   "contributes": {
     "commands": [
       {
-        "command": "gitRewind.open",
-        "title": "GitRewind: Open"
+        "command": "gitChronicle.open",
+        "title": "GitChronicle: Open"
       }
     ],
     "configuration": {
-      "title": "GitRewind",
+      "title": "GitChronicle",
       "properties": {
-        "gitRewind.savePath": {
+        "gitChronicle.savePath": {
           "type": "string",
           "default": "",
           "description": "Default path for saved AI summaries."
         },
-        "gitRewind.activeAIProvider": {
+        "gitChronicle.activeAIProvider": {
           "type": "string",
           "enum": [
             "",

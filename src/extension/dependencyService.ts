@@ -45,7 +45,7 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
     return [];
   }
 
-  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-rewind-'));
+  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-chronicle-'));
   const resolvedFiles = new Map<string, string>();
   const changedFileSet = new Set<string>();
 

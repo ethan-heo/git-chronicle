@@ -94,7 +94,7 @@ export const S01CommitListScreen: FC = () => {
 
   return (
     <main className="app-shell commit-log-shell">
-      <TopHeader title="GitRewind" context="커밋 목록" showSettingsIcon onSettingsClick={goToSettingsView} />
+      <TopHeader title="GitChronicle" context="커밋 목록" showSettingsIcon onSettingsClick={goToSettingsView} />
       <CommitFilterPanel
         filterDateStart={filterDateStart}
         filterDateEnd={filterDateEnd}

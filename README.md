@@ -1,4 +1,4 @@
-# GitRewind
+# GitChronicle
 
 Rewind your Git history — explore commits, visualize file changes, analyze dependencies, and generate AI summaries, all inside VSCode.
 
@@ -37,14 +37,14 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 ## Usage
 
 1. Open the Command Palette (`⌘+Shift+P` / `Ctrl+Shift+P`)
-2. Run **`GitRewind: Open`**
+2. Run **`GitChronicle: Open`**
 3. Browse commits → select a commit → explore changed files, diffs, dependencies, and AI summaries
 
 ## Extension Settings
 
 | Setting                      | Default | Description                                            |
 | ---------------------------- | ------- | ------------------------------------------------------ |
-| `gitRewind.activeAIProvider` | `""`    | Active AI CLI provider (`claude` / `gemini` / `codex`) |
-| `gitRewind.savePath`         | `""`    | Local directory path where AI summaries are saved      |
+| `gitChronicle.activeAIProvider` | `""`    | Active AI CLI provider (`claude` / `gemini` / `codex`) |
+| `gitChronicle.savePath`         | `""`    | Local directory path where AI summaries are saved      |
 
 Settings can also be configured from the in-extension settings screen (⚙ icon).

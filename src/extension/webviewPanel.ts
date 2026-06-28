@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { registerMessageHandler } from './messageHandler';
 
-export class GitRewindPanel {
-  private static currentPanel: GitRewindPanel | undefined;
+export class GitChroniclePanel {
+  private static currentPanel: GitChroniclePanel | undefined;
   private readonly panel: vscode.WebviewPanel;
   private readonly disposables: vscode.Disposable[] = [];
 
@@ -18,14 +18,14 @@ export class GitRewindPanel {
   public static createOrShow(context: vscode.ExtensionContext): void {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
-    if (GitRewindPanel.currentPanel) {
-      GitRewindPanel.currentPanel.panel.reveal(column);
+    if (GitChroniclePanel.currentPanel) {
+      GitChroniclePanel.currentPanel.panel.reveal(column);
       return;
     }
 
     const panel = vscode.window.createWebviewPanel(
-      'gitRewind',
-      'GitRewind',
+      'gitChronicle',
+      'GitChronicle',
       column,
       {
         enableScripts: true,
@@ -33,15 +33,15 @@ export class GitRewindPanel {
       },
     );
 
-    GitRewindPanel.currentPanel = new GitRewindPanel(panel, context);
+    GitChroniclePanel.currentPanel = new GitChroniclePanel(panel, context);
   }
 
   public static disposeCurrent(): void {
-    GitRewindPanel.currentPanel?.dispose();
+    GitChroniclePanel.currentPanel?.dispose();
   }
 
   private dispose(): void {
-    GitRewindPanel.currentPanel = undefined;
+    GitChroniclePanel.currentPanel = undefined;
 
     while (this.disposables.length > 0) {
       const disposable = this.disposables.pop();
@@ -66,7 +66,7 @@ export class GitRewindPanel {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';" />
     <link href="${styleUri}" rel="stylesheet" />
-    <title>GitRewind</title>
+    <title>GitChronicle</title>
   </head>
   <body>
     <div id="root"></div>

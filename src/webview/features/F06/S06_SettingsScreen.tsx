@@ -169,7 +169,7 @@ export const S06SettingsScreen: FC = () => {
 
   return (
     <main className="app-shell commit-log-shell settings-shell">
-      <TopHeader title="설정" context="GitRewind" showBackButton onBackClick={goBackFromDetail} />
+      <TopHeader title="설정" context="GitChronicle" showBackButton onBackClick={goBackFromDetail} />
       <div className="settings-screen">
         <AIProviderSection
           registeredProviders={registeredProviders}
