@@ -1,8 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { createRequire } from 'node:module';
 
 const sourceRoot = fs.realpathSync('node_modules/dependency-cruiser');
 const targetRoot = path.resolve('dist/node_modules/dependency-cruiser');
+const requireFromSource = createRequire(path.join(sourceRoot, 'package.json'));
 
 fs.mkdirSync(path.dirname(targetRoot), { recursive: true });
 fs.rmSync(targetRoot, { recursive: true, force: true });
@@ -32,10 +34,10 @@ function copyPackageDependencies(sourcePackageRoot, targetPackageRoot) {
     }
 
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    const dependencies = Object.keys(packageJson.dependencies ?? {});
-    const currentTargetNodeModules = path.join(currentTargetRoot, 'node_modules');
+      const dependencies = Object.keys(packageJson.dependencies ?? {});
+      const currentTargetNodeModules = path.join(currentTargetRoot, 'node_modules');
 
-    for (const dependencyName of dependencies) {
+      for (const dependencyName of dependencies) {
       const sourceDependencyPath = resolvePackagePath(currentSourceRoot, dependencyName);
       if (!sourceDependencyPath) {
         continue;
@@ -51,20 +53,27 @@ function copyPackageDependencies(sourcePackageRoot, targetPackageRoot) {
 }
 
 function resolvePackagePath(startPackageRoot, packageName) {
-  let currentDir = startPackageRoot;
-
   while (true) {
-    const candidate = path.join(currentDir, 'node_modules', packageName);
-    if (fs.existsSync(candidate)) {
-      return fs.realpathSync(candidate);
-    }
+    try {
+      const resolvedEntry = requireFromSource.resolve(packageName, { paths: [startPackageRoot] });
+      let currentDir = path.dirname(resolvedEntry);
 
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
+      while (true) {
+        const packageJsonPath = path.join(currentDir, 'package.json');
+        if (fs.existsSync(packageJsonPath)) {
+          return fs.realpathSync(currentDir);
+        }
+
+        const parentDir = path.dirname(currentDir);
+        if (parentDir === currentDir) {
+          return null;
+        }
+
+        currentDir = parentDir;
+      }
+    } catch {
       return null;
     }
-
-    currentDir = parentDir;
   }
 }
 

@@ -59,7 +59,7 @@
 | 항목 | 선택 | 비고 |
 |------|------|------|
 | Git 데이터 | simple-git | `git log`, `git diff`, `git show` 래핑 |
-| 의존 관계 분석 | dependency-cruiser | JS/TS/CJS/ESM, TypeScript path alias 지원. Extension Host는 `dist/depcruiser-runner.mjs`를 별도 Node 프로세스로 실행하고, runner는 `dependency-cruiser` API를 사용한다. 패키징 시 `dependency-cruiser`와 transitive dependency를 `dist/node_modules/dependency-cruiser/`로 복사해야 하며, 결과 경로가 repo 절대 경로가 되더라도 변경 파일 비교가 되도록 경로 정규화가 필요 |
+| 의존 관계 분석 | dependency-cruiser | JS/TS/CJS/ESM, TypeScript path alias 지원. Extension Host는 `dist/depcruiser-runner.mjs`를 별도 Node 프로세스로 실행하고, runner는 `dependency-cruiser` API를 사용한다. 패키징 시 `dependency-cruiser`와 transitive dependency를 `dist/node_modules/dependency-cruiser/`로 복사해야 하며, pnpm symlink에 직접 의존하지 않는다. 결과 경로가 repo 절대 경로가 되더라도 변경 파일 비교가 되도록 경로 정규화가 필요하고, `resolved`가 비어 있는 결과는 `module`과 source 파일 기준 상대 경로로 복원한다 |
 | AI CLI 실행 | Node.js `child_process.spawn` | Claude/Gemini/Codex CLI 호출. 외부 라이브러리 불필요 |
 | 파일 I/O | Node.js `fs` (표준 라이브러리) | `fs.mkdirSync({ recursive: true })` |
 
@@ -125,6 +125,7 @@
 - 패키지 매니저: **pnpm** (lockfile: `pnpm-lock.yaml`)
 - 의존성 설치는 `pnpm install`로 수행한다.
 - Webview 의존성과 Extension Host 의존성을 `package.json`에서 구분하지 않는다. Extension Host에서 필요한 패키지는 일반 dependencies로 관리하고, `dependency-cruiser`는 runner와 함께 `dist/node_modules/dependency-cruiser/`에 복사해 실행한다.
+- `scripts/copy-dependency-cruiser.mjs`는 pnpm의 실제 설치 레이아웃을 따라 `require.resolve()` 기반으로 `dependency-cruiser`의 transitive dependency까지 dist로 복사한다. 런타임 에러 `Cannot find package 'commander'`는 이 복사 누락 신호다.
 - Webview 번들(`dist/webview/`) 내에는 `react`, `react-dom`, `zustand`, `@xyflow/react`, `react-markdown`, `shiki`, `tailwindcss` 등이 포함된다.
 
 ---

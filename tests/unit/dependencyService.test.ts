@@ -154,6 +154,80 @@ describe('dependencyService', () => {
     expect(edges).toEqual([{ from: 'src/feature.ts', to: 'src/constants/queryKey.ts', kind: 'import' }]);
     mkdtempSpy.mockRestore();
   });
+
+  it('resolves path-alias dependencies even when dependency-cruiser only returns the module specifier', async () => {
+    const repoPath = makeTempRepoPath();
+    fs.mkdirSync(path.join(repoPath, 'src', 'constants'), { recursive: true });
+    fs.writeFileSync(
+      path.join(repoPath, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          baseUrl: '.',
+          paths: {
+            '@/*': ['src/*'],
+          },
+        },
+      }),
+      'utf8',
+    );
+    fs.writeFileSync(path.join(repoPath, 'src', 'feature.ts'), "import { queryKey } from '@/constants/queryKey';\n", 'utf8');
+    fs.writeFileSync(path.join(repoPath, 'src', 'constants', 'queryKey.ts'), 'export const queryKey = 1;\n', 'utf8');
+    const tmpDir = '/tmp/git-rewind-analyze-alias-module';
+    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
+
+    mockSpawnForJson({
+      modules: [
+        {
+          source: path.join(tmpDir, 'src/feature.ts'),
+          dependencies: [
+            {
+              module: '@/constants/queryKey',
+              dependencyTypes: ['local', 'export'],
+            },
+          ],
+        },
+      ],
+    });
+
+    const { analyzeDependencies } = await import('../../src/extension/dependencyService');
+    const edges = await analyzeDependencies(repoPath, ['src/feature.ts', 'src/constants/queryKey.ts']);
+
+    expect(edges).toEqual([{ from: 'src/feature.ts', to: 'src/constants/queryKey.ts', kind: 'import' }]);
+    mkdtempSpy.mockRestore();
+  });
+
+  it('resolves relative dependencies from the source file even when dependency-cruiser only returns module specifiers for re-exports', async () => {
+    const repoPath = makeTempRepoPath();
+    fs.mkdirSync(path.join(repoPath, 'src', 'components'), { recursive: true });
+    fs.writeFileSync(path.join(repoPath, 'src', 'components', 'Button.tsx'), 'export default function Button() { return null; }\n', 'utf8');
+    fs.writeFileSync(
+      path.join(repoPath, 'src', 'components', 'index.ts'),
+      "export { default as Button } from './Button';\nexport { Button } from './Button';\n",
+      'utf8',
+    );
+    const tmpDir = '/tmp/git-rewind-analyze-relative-module';
+    const mkdtempSpy = vi.spyOn(fs.promises, 'mkdtemp').mockResolvedValue(tmpDir);
+
+    mockSpawnForJson({
+      modules: [
+        {
+          source: path.join(tmpDir, 'src/components/index.ts'),
+          dependencies: [
+            {
+              module: './Button',
+              dependencyTypes: ['local', 'export'],
+            },
+          ],
+        },
+      ],
+    });
+
+    const { analyzeDependencies } = await import('../../src/extension/dependencyService');
+    const edges = await analyzeDependencies(repoPath, ['src/components/index.ts', 'src/components/Button.tsx']);
+
+    expect(edges).toEqual([{ from: 'src/components/index.ts', to: 'src/components/Button.tsx', kind: 'import' }]);
+    mkdtempSpy.mockRestore();
+  });
 });
 
 function mockSpawnForJson(stdoutValue: unknown): void {

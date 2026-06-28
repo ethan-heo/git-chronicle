@@ -39,6 +39,7 @@
 | 분석 도구 | JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통한 dependency-cruiser API 실행, Python/Go는 텍스트 파싱 기반 분석 |
 | 입력 재구성 | 현재 디스크 파일은 임시 디렉토리로 복사, 누락 파일은 `git show <commitHash>:<filePath>`로 복원 후 분석 |
 | 경로 비교 | 분석 결과가 `tmpDir`/`repoPath` 절대 경로로 반환되더라도 변경 파일 집합과 비교할 수 있도록 repo-relative 경로로 정규화 |
+| JS/TS 경로 해석 | `dependency-cruiser`가 `resolved` 대신 `module`만 반환하거나, `./Button`처럼 확장자 없는 상대 경로를 반환해도 같은 커밋의 변경 파일로 재해석 |
 | 렌더링 라이브러리 | React Flow (MIT 라이선스, 줌·패닝·선택 인터랙션 내장) |
 | 노드 범위 | 커밋에서 변경된 파일만. 의존하는 미변경 파일은 노드로 표시하지 않음 |
 | 엣지 | 변경 파일 간 import / require 의존 관계 |

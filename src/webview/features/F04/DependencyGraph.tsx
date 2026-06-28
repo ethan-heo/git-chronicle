@@ -1,5 +1,5 @@
 import '@xyflow/react/dist/style.css';
-import { Background, BackgroundVariant, MarkerType, ReactFlow, useNodesState, useReactFlow } from '@xyflow/react';
+import { Background, BackgroundVariant, MarkerType, ReactFlow, useEdgesState, useNodesState, useReactFlow } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import type { ChangedFile, DependencyEdge as DependencyEdgeModel } from '../../types/commit';
@@ -7,7 +7,7 @@ import { CanvasControls } from './CanvasControls';
 import { DependencyEdge } from './DependencyEdge';
 import { FileNode } from './FileNode';
 import { LegendPanel } from './LegendPanel';
-import { buildGraphData, getNearestHandles, getNodeHeight } from './graph';
+import { buildGraphData } from './graph';
 
 interface DependencyGraphProps {
   files: ChangedFile[];
@@ -88,36 +88,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
     [dependencyEdges, files, onFileAISummary, onFileCodeView],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
-  const edges = useMemo(
-    () => {
-      const geometryByNodeId = new Map(
-        nodes.map((node) => [
-          node.id,
-          {
-            x: node.position.x,
-            y: node.position.y,
-            width: Number(node.style?.width ?? 220),
-            height: getNodeHeight(node.id),
-          },
-        ]),
-      );
-
-      return graphEdges.map((edge) => {
-        const handles = getNearestHandles(geometryByNodeId.get(edge.source), geometryByNodeId.get(edge.target));
-
-        return {
-          ...edge,
-          sourceHandle: handles.sourceHandle,
-          targetHandle: handles.targetHandle,
-          data: {
-            ...edge.data,
-            highlighted: highlightedNodeId === edge.source || highlightedNodeId === edge.target,
-          },
-        };
-      });
-    },
-    [graphEdges, highlightedNodeId, nodes],
-  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
   const hasOnlyUnanalyzableFiles = files.every((file) => !/\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i.test(file.path));
 
   const fitCanvas = useCallback(() => {
@@ -127,6 +98,18 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   useEffect(() => {
     setNodes(graphNodes);
   }, [graphNodes, setNodes]);
+
+  useEffect(() => {
+    setEdges(
+      graphEdges.map((edge) => ({
+        ...edge,
+        data: {
+          ...edge.data,
+          highlighted: highlightedNodeId === edge.source || highlightedNodeId === edge.target,
+        },
+      })),
+    );
+  }, [graphEdges, highlightedNodeId, setEdges]);
 
   useEffect(() => {
     window.setTimeout(fitCanvas, 0);
@@ -165,6 +148,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
         minZoom={0.3}
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
+        onEdgesChange={onEdgesChange}
         defaultEdgeOptions={{
           markerEnd: {
             type: MarkerType.ArrowClosed,

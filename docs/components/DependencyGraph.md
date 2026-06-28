@@ -1,6 +1,6 @@
 # Component: DependencyGraph
 
-S05_DependencyCanvasScreen의 React Flow 기반 노드-엣지 그래프 캔버스. 변경 파일 간 의존 관계를 시각화한다. 분석 입력은 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 구성되며, JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통해 `dependency-cruiser` API로, Python/Go는 텍스트 파싱으로 분석한다. 결과 경로는 `tmpDir` 또는 `repoPath` 기준으로 정규화한다.
+S05_DependencyCanvasScreen의 React Flow 기반 노드-엣지 그래프 캔버스. 변경 파일 간 의존 관계를 시각화한다. 분석 입력은 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 구성되며, JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통해 `dependency-cruiser` API로, Python/Go는 텍스트 파싱으로 분석한다. 결과 경로는 `tmpDir` 또는 `repoPath` 기준으로 정규화한다. `dependency-cruiser`가 `resolved` 대신 `module`만 반환하거나 `./Button` 같은 확장자 없는 상대 경로를 반환해도 변경 파일 경로로 다시 해석한다.
 
 ---
 
@@ -54,6 +54,7 @@ DependencyGraph
 - **엣지 연결**: 직선 엣지를 유지하되 source/target 노드의 현재 위치를 기준으로 가장 가까운 상/하/좌/우 핸들을 선택.
 - **언어별 분석**: JS/TS/CJS/ESM은 `dependency-cruiser` runner, Python/Go는 텍스트 파싱으로 분석한다.
 - **경로 정규화**: 분석 결과가 임시 디렉토리 경로나 저장소 절대 경로로 반환되더라도, 변경 파일 집합과 비교 가능한 repo-relative 경로로 맞춘다.
+- **JS/TS 상대 경로 복원**: default export, named export, re-export에서 `resolved`가 비어 있거나 `module`만 주어져도 source 파일 기준 상대 경로와 확장자 후보를 조합해 변경 파일로 재매핑한다.
 
 ---
 

@@ -35,8 +35,11 @@ export function buildGraphData(
   dependencyEdges: DependencyEdge[],
   handlers: Pick<FileNodeData, 'onCodeView' | 'onAISummary'>,
 ): { nodes: FileNodeType[]; edges: DependencyEdgeType[] } {
-  const changedFileSet = new Set(files.map((file) => file.path));
-  const validEdges = dependencyEdges.filter((edge) => changedFileSet.has(edge.from) && changedFileSet.has(edge.to));
+  const nodePathIndex = buildNodePathIndex(files);
+  const fullPathKeys = new Set(files.map((file) => normalizePath(file.path)));
+  const validEdges = dependencyEdges
+    .map((edge) => normalizeDependencyEdge(edge, nodePathIndex, fullPathKeys))
+    .filter((edge): edge is DependencyEdge => Boolean(edge));
   const positions = layoutFiles(files, validEdges);
   const geometryByPath = new Map(
     files.map((file) => {
@@ -93,6 +96,25 @@ export function buildGraphData(
         },
       };
     }),
+  };
+}
+
+function normalizeDependencyEdge(
+  edge: DependencyEdge,
+  nodePathIndex: Map<string, string>,
+  fullPathKeys: Set<string>,
+): DependencyEdge | null {
+  const from = resolveNodePath(edge.from, nodePathIndex, fullPathKeys);
+  const to = resolveNodePath(edge.to, nodePathIndex, fullPathKeys);
+
+  if (!from || !to) {
+    return null;
+  }
+
+  return {
+    ...edge,
+    from,
+    to,
   };
 }
 
@@ -222,6 +244,59 @@ function getDirectoryName(filePath: string): string {
   const parts = filePath.split('/');
   parts.pop();
   return parts.length > 0 ? `${parts.join('/')}/` : '';
+}
+
+export function buildNodePathIndex(files: ChangedFile[]): Map<string, string> {
+  const index = new Map<string, string>();
+  const fileNameCount = new Map<string, number>();
+
+  for (const file of files) {
+    const normalizedPath = normalizePath(file.path);
+    const fileName = getFileName(normalizedPath);
+
+    fileNameCount.set(fileName, (fileNameCount.get(fileName) ?? 0) + 1);
+    index.set(normalizedPath, file.path);
+  }
+
+  for (const file of files) {
+    const normalizedPath = normalizePath(file.path);
+    const fileName = getFileName(normalizedPath);
+
+    if (fileNameCount.get(fileName) === 1) {
+      index.set(fileName, file.path);
+    }
+  }
+
+  return index;
+}
+
+export function resolveNodePath(
+  candidatePath: string,
+  nodePathIndex: Map<string, string>,
+  fullPathKeys: Set<string>,
+): string | null {
+  const normalizedPath = normalizePath(candidatePath);
+
+  if (nodePathIndex.has(normalizedPath)) {
+    return nodePathIndex.get(normalizedPath) ?? null;
+  }
+
+  const fileName = getFileName(normalizedPath);
+  if (nodePathIndex.has(fileName)) {
+    return nodePathIndex.get(fileName) ?? null;
+  }
+
+  for (const nodeKey of fullPathKeys) {
+    if (normalizedPath === nodeKey || normalizedPath.endsWith(`/${nodeKey}`)) {
+      return nodePathIndex.get(nodeKey) ?? null;
+    }
+  }
+
+  return null;
+}
+
+function normalizePath(filePath: string): string {
+  return filePath.replace(/\\/g, '/').replace(/^\.\//, '');
 }
 
 function buildExtensionGroups(files: ChangedFile[], verticalGap: number): ExtensionLayoutGroup[] {

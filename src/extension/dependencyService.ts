@@ -36,6 +36,13 @@ interface DependencyCruiserResult {
   modules?: DependencyCruiserModule[];
 }
 
+interface TsConfigPaths {
+  compilerOptions?: {
+    baseUrl?: string;
+    paths?: Record<string, string[]>;
+  };
+}
+
 type AnalyzableGroup = 'jsTs' | 'python' | 'go';
 
 export async function analyzeDependencies(repoPath: string, filePaths: string[], commitHash: string = ''): Promise<DependencyEdge[]> {
@@ -48,6 +55,8 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
   const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-chronicle-'));
   const resolvedFiles = new Map<string, string>();
   const changedFileSet = new Set<string>();
+  const tsConfigPath = findTsConfigPath(repoPath);
+  const tsConfigPaths = readTsConfigPaths(tsConfigPath);
 
   try {
     for (const filePath of analyzableFiles) {
@@ -81,6 +90,10 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
 
     if (groups.jsTs.length > 0) {
       for await (const edge of analyzeWithDependencyCruiser(repoPath, tmpDir, groups.jsTs, resolvedFiles, changedFileSet)) {
+        edges.set(edgeKey(edge), edge);
+      }
+
+      for (const edge of analyzeJsTsDependenciesFromSource(tmpDir, repoPath, groups.jsTs, resolvedFiles, changedFileSet, tsConfigPaths)) {
         edges.set(edgeKey(edge), edge);
       }
     }
@@ -134,6 +147,7 @@ async function* analyzeWithDependencyCruiser(
   }
 
   const tsConfigPath = findTsConfigPath(repoPath);
+  const tsConfigPaths = readTsConfigPaths(tsConfigPath);
   const payload = {
     files: filePaths.map((filePath) => resolvedFiles.get(filePath)).filter((filePath): filePath is string => Boolean(filePath)),
     options: {
@@ -156,7 +170,13 @@ async function* analyzeWithDependencyCruiser(
     }
 
     for (const dependency of module.dependencies ?? []) {
-      const to = resolveToChangedFilePath(tmpDir, repoPath, dependency.resolved ?? dependency.module ?? '');
+      const to = resolveDependencyTargetPath(
+        tmpDir,
+        repoPath,
+        from,
+        dependency.resolved ?? dependency.module ?? '',
+        tsConfigPaths,
+      );
 
       if (!changedFileSet.has(to)) {
         continue;
@@ -261,6 +281,122 @@ function analyzeGoDependencies(
 
   void tmpDir;
   return edges;
+}
+
+function analyzeJsTsDependenciesFromSource(
+  tmpDir: string,
+  repoPath: string,
+  filePaths: string[],
+  resolvedFiles: Map<string, string>,
+  changedFileSet: Set<string>,
+  tsConfigPaths: TsConfigPaths | undefined,
+): DependencyEdge[] {
+  const edges: DependencyEdge[] = [];
+  const seenEdges = new Set<string>();
+  const changedFilePaths = [...changedFileSet];
+
+  for (const from of filePaths) {
+    const sourcePath = resolvedFiles.get(from);
+
+    if (!sourcePath) {
+      continue;
+    }
+
+    const content = fs.readFileSync(sourcePath, 'utf8');
+    const dependencies = extractJsTsDependencySpecifiers(content);
+
+    for (const dependency of dependencies) {
+      const to = resolveJsTsDependencyTarget(from, dependency, changedFilePaths, tmpDir, repoPath, tsConfigPaths);
+
+      if (!to) {
+        continue;
+      }
+
+      const edge: DependencyEdge = { from, to, kind: 'import' };
+      const key = edgeKey(edge);
+
+      if (seenEdges.has(key)) {
+        continue;
+      }
+
+      seenEdges.add(key);
+      edges.push(edge);
+    }
+  }
+
+  return edges;
+}
+
+function resolveJsTsDependencyTarget(
+  fromPath: string,
+  dependency: string,
+  changedFilePaths: string[],
+  tmpDir: string,
+  repoPath: string,
+  tsConfigPaths: TsConfigPaths | undefined,
+): string | null {
+  const candidates = new Set<string>();
+  const isRelativeDependency = dependency.startsWith('.');
+  const normalizedDependency = normalizePath(dependency);
+
+  candidates.add(normalizedDependency);
+
+  if (isRelativeDependency) {
+    const sourceDirectory = path.posix.dirname(normalizePath(fromPath));
+    candidates.add(normalizePath(path.posix.join(sourceDirectory, normalizedDependency)));
+  } else {
+    const aliasResolution = resolveTsConfigAlias(repoPath, tmpDir, normalizedDependency, tsConfigPaths);
+    if (aliasResolution) {
+      candidates.add(resolveToChangedFilePath(tmpDir, repoPath, aliasResolution));
+    }
+  }
+
+  for (const candidate of [...candidates]) {
+    const resolvedCandidate = resolveToChangedFilePath(tmpDir, repoPath, candidate);
+    if (changedFilePaths.includes(resolvedCandidate)) {
+      return resolvedCandidate;
+    }
+
+    const withExtension = resolveExistingSourceFile(candidate, tmpDir, repoPath);
+    if (withExtension) {
+      const normalized = resolveToChangedFilePath(tmpDir, repoPath, withExtension);
+      if (changedFilePaths.includes(normalized)) {
+        return normalized;
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractJsTsDependencySpecifiers(content: string): string[] {
+  const specifiers = new Set<string>();
+  const lines = content.split(/\r?\n/);
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!trimmed || trimmed.startsWith('//')) {
+      continue;
+    }
+
+    const importFromMatch = trimmed.match(/^import\s+.*\s+from\s+['"]([^'"]+)['"]/);
+    if (importFromMatch) {
+      specifiers.add(importFromMatch[1]);
+    }
+
+    const exportFromMatch = trimmed.match(/^export\s+.*\s+from\s+['"]([^'"]+)['"]/);
+    if (exportFromMatch) {
+      specifiers.add(exportFromMatch[1]);
+    }
+
+    const sideEffectImportMatch = trimmed.match(/^import\s+['"]([^'"]+)['"]/);
+    if (sideEffectImportMatch) {
+      specifiers.add(sideEffectImportMatch[1]);
+    }
+  }
+
+  return [...specifiers];
 }
 
 function extractPythonImports(content: string): string[] {
@@ -460,6 +596,131 @@ function resolveToChangedFilePath(tmpDir: string, repoPath: string, candidatePat
   return normalizePath(absolutePath);
 }
 
+function resolveDependencyTargetPath(
+  tmpDir: string,
+  repoPath: string,
+  fromPath: string,
+  candidatePath: string,
+  tsConfigPaths: TsConfigPaths | undefined,
+): string {
+  const normalizedCandidate = normalizePath(candidatePath);
+  const directResolution = resolveChangedFileCandidate(tmpDir, repoPath, fromPath, normalizedCandidate);
+
+  if (path.isAbsolute(normalizedCandidate) || normalizedCandidate.startsWith('.') || normalizedCandidate.startsWith('/')) {
+    return directResolution;
+  }
+
+  const aliasResolution = resolveTsConfigAlias(repoPath, tmpDir, normalizedCandidate, tsConfigPaths);
+
+  if (aliasResolution) {
+    return resolveToChangedFilePath(tmpDir, repoPath, aliasResolution);
+  }
+
+  return directResolution;
+}
+
+function resolveChangedFileCandidate(tmpDir: string, repoPath: string, fromPath: string, candidatePath: string): string {
+  const sourceDirectory = path.posix.dirname(normalizePath(fromPath));
+  const relativeCandidate = candidatePath.startsWith('.') ? normalizePath(path.posix.join(sourceDirectory, candidatePath)) : candidatePath;
+  const resolvedCandidate = resolveExistingSourceFile(relativeCandidate, tmpDir, repoPath) ?? relativeCandidate;
+
+  return resolveToChangedFilePath(tmpDir, repoPath, resolvedCandidate);
+}
+
+function resolveTsConfigAlias(
+  repoPath: string,
+  tmpDir: string,
+  specifier: string,
+  tsConfigPaths: TsConfigPaths | undefined,
+): string | null {
+  const compilerOptions = tsConfigPaths?.compilerOptions;
+  const baseUrl = compilerOptions?.baseUrl ?? '.';
+  const paths = compilerOptions?.paths ?? {};
+  const baseDir = repoPath;
+  const baseUrlDir = path.resolve(baseDir, baseUrl);
+
+  for (const [pattern, replacements] of Object.entries(paths)) {
+    const match = matchTsConfigPathPattern(pattern, specifier);
+
+    if (!match) {
+      continue;
+    }
+
+    for (const replacement of replacements) {
+      const substituted = substituteTsConfigPath(replacement, match);
+      const candidate = path.resolve(baseUrlDir, substituted);
+
+      const resolved = resolveExistingSourceFile(candidate, tmpDir, repoPath);
+      if (resolved) {
+        return resolved;
+      }
+    }
+  }
+
+  return null;
+}
+
+function matchTsConfigPathPattern(pattern: string, specifier: string): string[] | null {
+  if (!pattern.includes('*')) {
+    return pattern === specifier ? [] : null;
+  }
+
+  const [prefix, suffix] = pattern.split('*');
+  if (!specifier.startsWith(prefix) || !specifier.endsWith(suffix ?? '')) {
+    return null;
+  }
+
+  return [specifier.slice(prefix.length, specifier.length - (suffix?.length ?? 0))];
+}
+
+function substituteTsConfigPath(replacement: string, matches: string[]): string {
+  let result = replacement;
+
+  for (const match of matches) {
+    result = result.replace('*', match);
+  }
+
+  return result;
+}
+
+function resolveExistingSourceFile(candidate: string, tmpDir: string, repoPath: string): string | null {
+  const extensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];
+  const hasExtension = path.extname(candidate) !== '';
+  const candidates = hasExtension
+    ? [candidate]
+    : [candidate, ...extensions.map((extension) => `${candidate}${extension}`), ...extensions.map((extension) => path.join(candidate, `index${extension}`))];
+
+  for (const filePath of candidates) {
+    const tmpCandidate = path.isAbsolute(filePath) ? filePath : path.join(tmpDir, filePath);
+    if (fs.existsSync(tmpCandidate)) {
+      return tmpCandidate;
+    }
+
+    const repoCandidate = path.isAbsolute(filePath) ? filePath : path.resolve(repoPath, filePath);
+    if (fs.existsSync(repoCandidate)) {
+      return repoCandidate;
+    }
+  }
+
+  const directory = path.dirname(candidate);
+  const baseName = path.basename(candidate);
+  const searchRoots = [path.join(tmpDir, directory), path.resolve(repoPath, directory)];
+
+  for (const root of searchRoots) {
+    if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
+      continue;
+    }
+
+    for (const entry of fs.readdirSync(root)) {
+      if (path.basename(entry, path.extname(entry)) === baseName) {
+        return path.join(root, entry);
+      }
+    }
+  }
+
+  return null;
+}
+
 function findTsConfigPath(repoPath: string): string | undefined {
   let currentDir = repoPath;
 
@@ -477,6 +738,18 @@ function findTsConfigPath(repoPath: string): string | undefined {
     }
 
     currentDir = parentDir;
+  }
+}
+
+function readTsConfigPaths(tsConfigPath: string | undefined): TsConfigPaths | undefined {
+  if (!tsConfigPath || !fs.existsSync(tsConfigPath)) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(tsConfigPath, 'utf8')) as TsConfigPaths;
+  } catch {
+    return undefined;
   }
 }
 
