@@ -44,6 +44,6 @@ export interface AIProvider {
   brandColor: string;
 }
 
-export type ScreenID = 'S01' | 'S02' | 'S03' | 'S04' | 'S05' | 'S06';
+export type ScreenID = 'S01' | 'S02' | 'S03' | 'S04' | 'S05' | 'S06' | 'S07';
 
 export type RouteTransitionDirection = 'forward' | 'back';

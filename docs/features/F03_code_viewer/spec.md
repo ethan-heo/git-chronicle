@@ -24,6 +24,7 @@
 ## User Scenarios
 
 - 파일 트리(S-02) 또는 캔버스 노드(S-05)에서 [코드 보기] 버튼을 클릭하면 해당 파일의 **변경 이력(diff)** 을 확인할 수 있다.
+- 코드 뷰어(S-03) 헤더의 [AI 요약 함께 보기] 버튼을 클릭하면 같은 파일을 유지한 채 분할 화면(S-07)으로 전환된다.
 
 ---
 
@@ -58,6 +59,7 @@
 ## Related Screens
 
 - [S03_CodeViewerScreen](../../screens/S03_code_viewer/blueprint.md)
+- [S07_CodeAndAISummaryScreen](../../screens/S07_code_and_ai_summary/blueprint.md)
 
 ---
 

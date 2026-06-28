@@ -191,6 +191,7 @@
 | `context` | `string \| undefined` | 제목 아래 보조 컨텍스트 텍스트 |
 | `showSettingsIcon` | `boolean` | 설정 아이콘 표시 여부. 기본값 `false` |
 | `showBackButton` | `boolean` | 뒤로가기 버튼 표시 여부 |
+| `endSlot` | `React.ReactNode \| undefined` | 우측 액션 슬롯. 분할 보기 버튼처럼 추가 액션을 배치할 때 사용 |
 | `onSettingsClick` | `() => void` | 설정 아이콘 클릭 → S-06 진입 |
 | `onBackClick` | `() => void` | 뒤로가기 버튼 클릭 핸들러 |
 

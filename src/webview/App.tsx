@@ -5,6 +5,7 @@ import { S03CodeViewerScreen } from './features/F03';
 import { S05DependencyCanvasScreen } from './features/F04';
 import { S04AISummaryViewerScreen } from './features/F05';
 import { S06SettingsScreen } from './features/F06';
+import { S07CodeAndAISummaryScreen } from './features/F09';
 import { BatchProgressBar } from './features/F08/BatchProgressBar';
 import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
@@ -168,6 +169,10 @@ function renderScreen(currentScreen: ScreenID): ReactElement {
 
   if (currentScreen === 'S06') {
     return <S06SettingsScreen />;
+  }
+
+  if (currentScreen === 'S07') {
+    return <S07CodeAndAISummaryScreen />;
   }
 
   return <S01CommitListScreen />;

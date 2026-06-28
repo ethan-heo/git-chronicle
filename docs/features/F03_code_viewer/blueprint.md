@@ -9,6 +9,7 @@
 ## Purpose
 
 선택된 파일의 Git diff를 unified diff 형식 + Shiki 신텍스 하이라이팅으로 렌더링한다.
+헤더 우측에는 분할 화면(S07)으로 이동하는 [AI 요약 함께 보기] 아이콘 버튼이 추가된다.
 
 ---
 
@@ -169,6 +170,7 @@ F03_CodeViewer
 ```
 S03_CodeViewerScreen
 ├─ TopHeader ({커밋 메시지} > {파일 경로})
+│  └─ 우측 액션: AI 요약 함께 보기 버튼 + 설정 버튼
 └─ DiffViewer (스크롤 영역)
     ├─ DeletedFileNotice (조건부, 최상단)
     └─ DiffLine × N

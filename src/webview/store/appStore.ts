@@ -71,6 +71,7 @@ interface AppState extends FilterState {
   goToCommitList: () => void;
   goToHistoryView: () => void;
   goBackFromDetail: () => void;
+  goToSplitView: () => void;
   selectFileForCode: (file: ChangedFile) => void;
   selectFileForAI: (file: ChangedFile) => void;
   goToCommitAISummary: () => void;
@@ -365,6 +366,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => ({
       currentScreen: 'S06',
       previousScreen: state.currentScreen === 'S06' ? state.previousScreen : state.currentScreen,
+      transitionDirection: 'forward',
+    }));
+  },
+
+  goToSplitView: () => {
+    set((state) => ({
+      currentScreen: 'S07',
+      previousScreen: state.currentScreen,
       transitionDirection: 'forward',
     }));
   },

@@ -190,6 +190,13 @@ button:focus-visible,
   gap: var(--gae-spacing-sm);
 }
 
+.top-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gae-spacing-xs);
+  margin-left: auto;
+}
+
 .top-header-title-group {
   min-width: 0;
 }
@@ -233,6 +240,34 @@ button:focus-visible,
 .top-header-icon-button:hover {
   background: var(--gae-color-surface-hover);
   color: var(--gae-color-text-primary);
+}
+
+.top-header-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.split-view-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.split-view-panels {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.split-view-panel {
+  flex: 1;
+  min-width: 220px;
+  overflow-y: auto;
+}
+
+.split-view-panel + .split-view-panel {
+  border-left: 1px solid var(--gae-border-color-default);
 }
 
 .hero-panel {

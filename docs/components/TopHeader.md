@@ -1,6 +1,6 @@
 # Component: TopHeader
 
-모든 화면의 상단 헤더. 화면 제목 또는 컨텍스트 경로(breadcrumb), 뒤로가기 버튼, 설정 아이콘을 포함한다.
+모든 화면의 상단 헤더. 화면 제목 또는 컨텍스트 경로(breadcrumb), 뒤로가기 버튼, 우측 액션 슬롯, 설정 아이콘을 포함한다.
 
 ---
 
@@ -11,6 +11,7 @@ interface TopHeaderProps {
   title: string;                    // 화면 제목 또는 breadcrumb 경로
   context?: string;                 // 제목 아래 보조 컨텍스트
   showBackButton?: boolean;         // 기본값: false
+  endSlot?: React.ReactNode;        // 우측 액션 슬롯
   showSettingsIcon?: boolean;       // 기본값: false
   onBackClick?: () => void;         // showBackButton === true 시 필수
   onSettingsClick?: () => void;     // S06 진입 콜백
@@ -27,6 +28,7 @@ interface TopHeaderProps {
 | S02 | `"{커밋 메시지}"` | true | true |
 | S03 | `"{커밋 메시지} > {파일 경로}"` | true | true |
 | S04 | `"{커밋 메시지} > {파일 경로}"` 또는 `"{커밋 메시지} > 커밋 전체 요약"` | true | true |
+| S07 | `"{shortHash} > {filePath} · 분할 보기"` | true | true |
 | S05 | `"{커밋 메시지}"` | true | true |
 | S06 | `"설정"` | true | false |
 
@@ -53,15 +55,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         {context ? <p>{context}</p> : null}
       </div>
     </div>
-    {showSettingsIcon && (
-      <button
-        className="top-header-icon-button"
-        onClick={onSettingsClick}
-        aria-label="설정 열기"
-      >
-        ...
-      </button>
-    )}
+    <div className="top-header-actions">
+      {endSlot}
+      {showSettingsIcon && (
+        <button
+          className="top-header-icon-button"
+          onClick={onSettingsClick}
+          aria-label="설정 열기"
+        >
+          ...
+        </button>
+      )}
+    </div>
   </header>
 );
 ```
@@ -99,6 +104,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   color: var(--gae-color-text-secondary);
   width: 28px;
   height: 28px;
+}
+
+.top-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--gae-spacing-xs);
+  margin-left: auto;
 }
 ```
 

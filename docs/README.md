@@ -91,6 +91,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **S04** AI 요약 뷰어 | [blueprint](screens/S05_ai_summary_viewer/blueprint.md) | AI 요약 결과 마크다운 뷰어 화면 |
 | **S05** 의존성 캔버스 | [blueprint](screens/S04_dependency_canvas/blueprint.md) | 노드-엣지 의존성 그래프 화면 |
 | **S06** 설정 | [blueprint](screens/S06_settings/blueprint.md) | AI 프로바이더·저장 경로 설정 화면 |
+| **S07** 코드 + AI 요약 분할 | [blueprint](screens/S07_code_and_ai_summary/blueprint.md) | 코드 diff와 AI 요약을 좌우 분할로 동시에 보는 화면 |
 
 ---
 
@@ -137,6 +138,7 @@ UI 컴포넌트별 Props 정의, 동작 명세, 사용 예시입니다.
 | [components/AISummaryViewer.md](components/AISummaryViewer.md) | AI 요약 마크다운 뷰어 (스트리밍 타이핑 효과) |
 | [components/AIProviderButton.md](components/AIProviderButton.md) | AI 프로바이더 선택 버튼 (Claude·GPT 등) |
 | [components/BatchProgressBar.md](components/BatchProgressBar.md) | 일괄 AI 요약 진행률 표시 바 |
+| [components/SplitViewButton.md](components/SplitViewButton.md) | 코드/요약 분할 화면 진입용 아이콘 버튼 |
 
 ### 의존성 캔버스
 
