@@ -6,7 +6,7 @@
 
 ## Technical Context
 
-- **의존성 분석**: Extension Host에서 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 `dependency-cruiser` CLI를 `child_process.execFile`로 실행, JSON 결과 파싱
+- **의존성 분석**: Extension Host에서 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 `dependency-cruiser` CLI를 `child_process.spawn`으로 실행해 JSON 결과를 스트리밍 수집하고 파싱
 - **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 레이아웃은 확장자 그룹 기반 고정 앵커 배치
 - **대상 파일**: JS/TS 파일만 분석 가능 (`.mjs`, `.cjs`, `.js`, `.jsx`, `.mts`, `.cts`, `.ts`, `.tsx`)
 
@@ -66,11 +66,8 @@ interface DependencyGraphProps {
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import { fetchFileContentAtCommit } from '../../extension/gitService';
-
-const execFileAsync = promisify(execFile);
 
 interface DepEdge {
   from: string;
@@ -124,11 +121,12 @@ export async function analyzeDependencies(
     const args = [
       '--output-type', 'json',
       '--no-config',
+      ...(tsConfigPath ? ['--ts-config', tsConfigPath] : []),
       '--ts-pre-compilation-deps',
       ...resolvedPaths,
     ];
 
-    const { stdout } = await execFileAsync(process.execPath, [analyzerPath, ...args], { cwd: repoPath });
+    const stdout = await runDependencyCruiser([analyzerPath, ...args], repoPath);
     const result = JSON.parse(stdout);
 
     const edges: DepEdge[] = [];
@@ -143,6 +141,33 @@ export async function analyzeDependencies(
   } finally {
     await fs.promises.rm(tmpDir, { recursive: true, force: true });
   }
+}
+
+function runDependencyCruiser(args: string[], cwd: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, args, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+
+    child.stdout?.on('data', (chunk: Buffer) => stdoutChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    child.stderr?.on('data', (chunk: Buffer) => stderrChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+
+    child.on('error', reject);
+    child.on('close', (code) => {
+      const stdout = Buffer.concat(stdoutChunks).toString('utf8');
+      const stderr = Buffer.concat(stderrChunks).toString('utf8');
+
+      if (code === 0) {
+        resolve(stdout);
+        return;
+      }
+
+      reject(new Error(stderr || `dependency-cruiser exited with code ${code ?? 'unknown'}`));
+    });
+  });
 }
 ```
 

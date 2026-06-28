@@ -55,7 +55,9 @@ describe('appStore webview filter persistence', () => {
         filterDateStart: null,
         filterDateEnd: null,
         filterAuthor: 'Jane Cooper',
+        filterExcludeKeyword: '',
         filterKeyword: 'summary',
+        sortOrder: 'desc',
       },
     });
 
@@ -66,7 +68,9 @@ describe('appStore webview filter persistence', () => {
         filterDateStart: null,
         filterDateEnd: null,
         filterAuthor: null,
+        filterExcludeKeyword: '',
         filterKeyword: '',
+        sortOrder: 'desc',
       },
     });
   });

@@ -1,6 +1,6 @@
 # Component: DependencyGraph
 
-S05_DependencyCanvasScreen의 React Flow 기반 노드-엣지 그래프 캔버스. dependency-cruiser로 분석된 변경 파일 간 의존 관계를 시각화한다. 분석 입력은 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 구성된다.
+S05_DependencyCanvasScreen의 React Flow 기반 노드-엣지 그래프 캔버스. dependency-cruiser로 분석된 변경 파일 간 의존 관계를 시각화한다. 분석 입력은 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 구성되며, 결과 JSON은 대용량 출력에도 안전하도록 `spawn` 스트리밍 방식으로 수집한다.
 
 ---
 
@@ -52,7 +52,7 @@ DependencyGraph
 - **레이아웃**: 확장자 그룹 기반 고정 앵커 배치. 확장자 그룹은 수평으로 나뉘고, 같은 확장자 파일은 왼쪽 면을 맞춰 수직으로 배치.
 - **노드 크기**: 파일명 길이에 따라 노드 폭을 동적으로 계산한다. 긴 파일명은 말줄임 대신 줄바꿈으로 전체 표시.
 - **엣지 연결**: 직선 엣지를 유지하되 source/target 노드의 현재 위치를 기준으로 가장 가까운 상/하/좌/우 핸들을 선택.
-- **dependency-cruiser 범위**: JS/TS/CJS/ESM 파일. TypeScript path alias 지원.
+- **dependency-cruiser 범위**: JS/TS/CJS/ESM 파일. TypeScript path alias 지원. `tsconfig.json`이 있으면 이를 명시적으로 전달해 alias 해석을 보조한다.
 
 ---
 

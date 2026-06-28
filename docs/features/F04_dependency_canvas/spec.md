@@ -36,7 +36,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 분석 도구 | dependency-cruiser (JS/TS/CJS/ESM, TypeScript path alias 지원) |
+| 분석 도구 | dependency-cruiser (JS/TS/CJS/ESM, TypeScript path alias 지원. `tsconfig.json`이 있으면 전달) |
 | 입력 재구성 | 현재 디스크 파일은 임시 디렉토리로 복사, 누락 파일은 `git show <commitHash>:<filePath>`로 복원 후 분석 |
 | 렌더링 라이브러리 | React Flow (MIT 라이선스, 줌·패닝·선택 인터랙션 내장) |
 | 노드 범위 | 커밋에서 변경된 파일만. 의존하는 미변경 파일은 노드로 표시하지 않음 |
@@ -82,7 +82,7 @@
 | `changedFiles` | `ChangedFile[]` | 전역 상태. 노드로 변환될 변경 파일 목록 |
 | `selectedCommit` | `Commit` | 전역 상태. 의존 관계 분석 컨텍스트, `commitHash` 복원, 헤더 표시 |
 | `previousScreen` | `ScreenID \| null` | S05에서 S03/S04로 진입한 뒤 뒤로가기 목적지 보존 |
-| dependency-cruiser | CLI 실행 결과 | Extension Host에서 변경 파일을 임시 디렉토리로 재구성한 뒤 의존 관계 분석 실행 |
+| dependency-cruiser | CLI 실행 결과 | Extension Host에서 변경 파일을 임시 디렉토리로 재구성한 뒤 의존 관계 분석 실행. 출력은 스트리밍으로 수집 |
 
 ---
 

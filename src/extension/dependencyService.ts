@@ -1,11 +1,8 @@
-import { execFile } from 'child_process';
+import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { promisify } from 'util';
 import { fetchFileContentAtCommit } from './gitService';
-
-const execFileAsync = promisify(execFile);
 
 const ANALYZABLE_FILE_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i;
 
@@ -88,33 +85,34 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
       return [];
     }
 
+    const tsConfigPath = findTsConfigPath(repoPath);
     const args = [
       analyzerPath,
       '--output-type',
       'json',
       '--no-config',
+      ...(tsConfigPath ? ['--ts-config', tsConfigPath] : []),
       '--ts-pre-compilation-deps',
       ...resolvedFiles,
     ];
 
-    const { stdout } = await execFileAsync(process.execPath, args, {
-      cwd: repoPath,
-      maxBuffer: 1024 * 1024 * 8,
-    });
+    const stdout = await runDependencyCruiser(args, repoPath);
 
     const result = JSON.parse(stdout) as DependencyCruiserResult;
     const edges: DependencyEdge[] = [];
     const seenEdges = new Set<string>();
 
     for (const module of result.modules ?? []) {
-      const from = normalizePath(path.relative(tmpDir, module.source ?? ''));
+      const from = normalizePath(path.relative(tmpDir, resolveRepoRelativePath(repoPath, module.source ?? '')));
 
       if (!changedFileSet.has(from)) {
         continue;
       }
 
       for (const dependency of module.dependencies ?? []) {
-        const to = normalizePath(path.relative(tmpDir, dependency.resolved ?? dependency.module ?? ''));
+        const to = normalizePath(
+          path.relative(tmpDir, resolveRepoRelativePath(repoPath, dependency.resolved ?? dependency.module ?? '')),
+        );
 
         if (!changedFileSet.has(to)) {
           continue;
@@ -144,6 +142,67 @@ function normalizePath(filePath: string): string {
   return filePath.replace(/\\/g, '/').replace(/^\.\//, '');
 }
 
+function resolveRepoRelativePath(repoPath: string, candidatePath: string): string {
+  if (!candidatePath) {
+    return candidatePath;
+  }
+
+  return path.isAbsolute(candidatePath) ? candidatePath : path.resolve(repoPath, candidatePath);
+}
+
+function findTsConfigPath(repoPath: string): string | undefined {
+  let currentDir = repoPath;
+
+  while (true) {
+    const tsConfigPath = path.join(currentDir, 'tsconfig.json');
+
+    if (fs.existsSync(tsConfigPath)) {
+      return tsConfigPath;
+    }
+
+    const parentDir = path.dirname(currentDir);
+
+    if (parentDir === currentDir) {
+      return undefined;
+    }
+
+    currentDir = parentDir;
+  }
+}
+
 function getDependencyCruiserBinPath(): string {
   return path.resolve(__dirname, '..', '..', 'node_modules', 'dependency-cruiser', 'bin', 'dependency-cruise.mjs');
+}
+
+function runDependencyCruiser(args: string[], cwd: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, args, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    const stdoutChunks: Buffer[] = [];
+    const stderrChunks: Buffer[] = [];
+
+    child.stdout?.on('data', (chunk: Buffer) => {
+      stdoutChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+
+    child.stderr?.on('data', (chunk: Buffer) => {
+      stderrChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    });
+
+    child.on('error', reject);
+
+    child.on('close', (code) => {
+      const stdout = Buffer.concat(stdoutChunks).toString('utf8');
+      const stderr = Buffer.concat(stderrChunks).toString('utf8');
+
+      if (code === 0) {
+        resolve(stdout);
+        return;
+      }
+
+      reject(new Error(stderr || `dependency-cruiser exited with code ${code ?? 'unknown'}`));
+    });
+  });
 }
