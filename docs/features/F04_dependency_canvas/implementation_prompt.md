@@ -8,7 +8,7 @@
 
 - **의존성 분석**: Extension Host에서 현재 디스크 파일을 임시 디렉토리로 복사하고, 누락 파일은 `git show <commitHash>:<filePath>`로 복원한 뒤 JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통해 `dependency-cruiser` API로, Python/Go는 텍스트 파싱으로 분석한다.
 - **JS/TS 경로 해석**: `dependency-cruiser` 결과가 `resolved` 대신 `module`만 제공하거나 `./Button`처럼 확장자 없는 상대 specifier를 반환해도 변경 파일 경로로 재해석한다. default export, named export, re-export 패턴 모두 선이 끊기지 않도록 한다.
-- **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 레이아웃은 확장자 그룹 기반 고정 앵커 배치
+- **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 엣지가 있으면 `@dagrejs/dagre` 기반 계층 레이아웃, 없으면 확장자 그룹 기반 고정 앵커 배치
 - **대상 파일**: JS/TS/CJS/ESM, Python, Go 파일 분석 가능 (`.mjs`, `.cjs`, `.js`, `.jsx`, `.mts`, `.cts`, `.ts`, `.tsx`, `.py`, `.go`)
 
 ---
@@ -24,7 +24,7 @@
 | `src/webview/features/F04/LegendPanel.tsx` | 범례 패널 |
 | `src/webview/features/F04/CanvasControls.tsx` | 줌 컨트롤 버튼 |
 | `src/webview/features/F04/S05_DependencyCanvasScreen.tsx` | S05 화면 조합 컴포넌트 |
-| `src/webview/features/F04/graph.ts` | 변경 파일/의존 관계를 React Flow 노드·엣지로 변환, 확장자 그룹 좌표 계산, 가장 가까운 면 핸들 선택 |
+| `src/webview/features/F04/graph.ts` | 변경 파일/의존 관계를 React Flow 노드·엣지로 변환, Dagre/확장자 그룹 혼합 좌표 계산, 가장 가까운 면 핸들 선택 |
 | `tests/unit/dependencyGraph.test.ts` | 노드/엣지 필터링, 확장자 그룹 배치, 긴 파일명 노드 폭, 가까운 면 핸들 선택 단위 테스트 |
 
 ---
@@ -239,6 +239,8 @@ export function buildGraphData(
 
 ### `FileNode.tsx` (React Flow 커스텀 노드)
 
+파일명 길이에 맞춰 노드 폭이 조정되며, JS/TS 계열 파일 여부에 따라 의존 관계 분석 가능 상태를 표시한다.
+
 ```tsx
 import { Handle, Position } from '@xyflow/react';
 
@@ -280,6 +282,10 @@ export const FileNode: React.FC<{ data: FileNodeData }> = ({ data }) => {
 };
 ```
 
+### `DependencyEdge.tsx` (React Flow 커스텀 엣지)
+
+`getSmoothStepPath()`를 사용해 직각 우회 경로로 렌더링한다. `require` 관계는 dashed stroke를 유지한다.
+
 ### `DependencyGraph.tsx`
 
 ```tsx
@@ -310,9 +316,16 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
     >
       <Background />
     </ReactFlow>
-  );
+ );
 };
 ```
+
+### `graph.ts` 좌표 규칙
+
+- 엣지가 있으면 Dagre를 우선 적용한다.
+- 연결된 노드만 Dagre 배치 대상으로 삼고, 고립 노드는 기존 확장자 그룹 규칙으로 아래쪽에 추가한다.
+- 엣지가 없으면 기존 확장자 그룹 배치를 유지한다.
+- 노드 드래그 후 엣지 연결 면은 현재 위치를 기준으로 가장 가까운 면으로 다시 계산한다.
 
 ---
 
@@ -326,7 +339,7 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 6. JS/TS 분석 결과는 `resolved`가 없더라도 `module`과 source 파일 기준 상대 경로를 조합해 변경 파일 경로로 복원한다
 6. S05에서 S03/S04로 진입할 때 `previousScreen = "S05"`를 저장하고 뒤로가기 시 S05로 복귀
 7. S02에서 변경 파일 로딩 중에는 [캔버스 보기] 버튼을 로딩 상태로 표시하며, S05도 변경 파일 로딩 메시지를 처리할 수 있어야 함
-8. 같은 확장자 파일은 왼쪽 면을 맞춰 수직으로 배치하고, 다른 확장자 그룹은 수평으로 배치
+8. 엣지가 있으면 Dagre 계층 레이아웃을 적용하고, 엣지가 없을 때만 기존 확장자 그룹 배치를 사용
 9. 긴 파일명은 노드 폭 확장 및 줄바꿈으로 전체 표시
 10. 노드는 드래그로 위치 조정 가능하며, 엣지는 현재 위치에서 가장 가까운 상/하/좌/우 핸들에 연결
 

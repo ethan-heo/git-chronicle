@@ -22,7 +22,7 @@ type DependencyEdgeProps = EdgeProps<DependencyEdgeData>;
 ## 렌더링
 
 - 방향: source(의존하는 파일) → target(의존 대상 파일). 화살표 끝에 arrowhead 표시.
-- 스타일: 직선 엣지. `require` 관계는 dashed stroke로 표시.
+- 스타일: SmoothStep 엣지. `require` 관계는 dashed stroke로 표시.
 - 연결점: source/target 노드의 상/하/좌/우 핸들 중 현재 위치에서 가장 가까운 면을 선택.
 - 색상: 기본은 보조 텍스트 색상, 연결 노드 호버 시 링크 색상으로 강조.
 
@@ -31,7 +31,7 @@ export const DependencyEdge: React.FC<DependencyEdgeProps> = ({
   id, sourceX, sourceY, targetX, targetY,
   markerEnd, data,
 }) => {
-  const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY });
+  const [edgePath] = getSmoothStepPath({ sourceX, sourceY, targetX, targetY, borderRadius: 8 });
 
   return (
     <>

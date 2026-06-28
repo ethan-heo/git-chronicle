@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChangedFile } from '../../src/webview/types/commit';
-import { buildNodePathIndex, resolveNodePath } from '../../src/webview/features/F04/graph';
+import { buildNodePathIndex, layoutFiles, resolveNodePath } from '../../src/webview/features/F04/graph';
 
 describe('graph path resolution', () => {
   it('does not let duplicate file names overwrite each other in the node index', () => {
@@ -27,5 +27,19 @@ describe('graph path resolution', () => {
     expect(resolveNodePath('src/utils/hooks.ts', index, fullPathKeys)).toBe('src/utils/hooks.ts');
     expect(resolveNodePath('hooks.ts', index, fullPathKeys)).toBeNull();
     expect(resolveNodePath('src/services/hooks.ts', index, fullPathKeys)).toBe('src/services/hooks.ts');
+  });
+
+  it('uses dagre layout when edges are present and keeps isolated files in a separate band', () => {
+    const files = [
+      { path: 'src/a.ts', status: 'M', hasSavedSummary: false },
+      { path: 'src/b.ts', status: 'M', hasSavedSummary: false },
+      { path: 'src/c.ts', status: 'M', hasSavedSummary: false },
+    ] satisfies ChangedFile[];
+    const positions = layoutFiles(files, [
+      { from: 'src/a.ts', to: 'src/b.ts', kind: 'import' },
+    ]);
+
+    expect(positions.get('src/a.ts')?.x).toBeLessThan(positions.get('src/b.ts')?.x ?? 0);
+    expect(positions.get('src/c.ts')?.y).toBeGreaterThan(positions.get('src/b.ts')?.y ?? 0);
   });
 });

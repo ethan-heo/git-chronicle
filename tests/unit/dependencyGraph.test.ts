@@ -88,8 +88,8 @@ describe('buildGraphData', () => {
     );
 
     expect(graph.edges[0]).toMatchObject({
-      sourceHandle: 'source-bottom',
-      targetHandle: 'target-top',
+      sourceHandle: 'source-right',
+      targetHandle: 'target-left',
     });
     expect(graph.edges[1]).toMatchObject({
       sourceHandle: 'source-right',

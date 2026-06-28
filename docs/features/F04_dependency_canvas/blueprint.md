@@ -261,15 +261,15 @@ F04_DependencyCanvas
 S05_DependencyCanvasScreen
 ├─ TopHeader ({커밋 메시지})
 ├─ DependencyGraph (전체 영역)
-│   ├─ FileNode × N (확장자 그룹 기반 배치)
+│   ├─ FileNode × N (Dagre 우선, 고립 노드는 확장자 그룹 배치)
 │   └─ DependencyEdge × M
 ├─ LegendPanel (우측 하단 고정)
 └─ CanvasControls (우측 상단 고정)
 ```
 
 - `DependencyGraph`는 화면 전체를 채우는 캔버스 영역.
-- `FileNode`는 확장자 그룹별 수평 컬럼에 배치되며, 같은 확장자 그룹 안에서는 왼쪽 면을 맞춰 수직으로 정렬된다.
-- 같은 확장자 그룹 내부의 기본 수직 간격은 `190px`이다.
+- `FileNode`는 엣지가 있으면 Dagre 계층 레이아웃으로 배치되며, 고립 노드는 기존 확장자 그룹 규칙을 유지한다.
+- 확장자 그룹 기반 배치는 같은 확장자 그룹 안에서 왼쪽 면을 맞춰 수직으로 정렬되며, 기본 수직 간격은 `190px`이다.
 - 긴 파일명은 노드 폭을 확장하거나 줄바꿈하여 끝까지 표시한다.
 - `LegendPanel`과 `CanvasControls`는 캔버스 위에 오버레이로 고정 배치.
 
@@ -349,7 +349,7 @@ S05_DependencyCanvasScreen
 - `DependencyGraph`는 독립 Frame으로 분리 (React Flow 캔버스 전체 영역)
 - `LegendPanel`과 `CanvasControls`는 캔버스 위 오버레이 — position absolute Frame
 - `FileNode`는 재사용 Component로 등록 (default/hover/noAnalysis/saved Variant)
-- `DependencyEdge`는 React Flow 커스텀 직선 엣지 — Figma에서는 Arrow 컴포넌트로 표현
+- `DependencyEdge`는 React Flow 커스텀 SmoothStep 엣지 — Figma에서는 Arrow 컴포넌트로 표현
 - `FileActionButtons`, `SavedBadge`, `FileStatusBadge`는 전역 Component 참조
 - React Flow 내 노드 드래그는 활성화. 액션 버튼 영역은 `nodrag nopan`으로 드래그에서 제외
 

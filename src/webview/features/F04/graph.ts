@@ -1,4 +1,5 @@
 import type { Edge, Node } from '@xyflow/react';
+import { graphlib, layout as layoutGraph } from '@dagrejs/dagre';
 import type { ChangedFile, DependencyEdge } from '../../types/commit';
 
 export const ANALYZABLE_FILE_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i;
@@ -118,13 +119,112 @@ function normalizeDependencyEdge(
   };
 }
 
-function layoutFiles(files: ChangedFile[], edges: DependencyEdge[]): Map<string, { x: number; y: number }> {
-  void edges;
-
+export function layoutFiles(files: ChangedFile[], edges: DependencyEdge[]): Map<string, { x: number; y: number }> {
   if (files.length === 0) {
     return new Map();
   }
 
+  if (edges.length === 0) {
+    return layoutByExtensionGroup(files);
+  }
+
+  const dagreLayout = layoutWithDagre(files, edges);
+  if (dagreLayout.size === 0) {
+    return layoutByExtensionGroup(files);
+  }
+
+  const connectedPaths = new Set(edges.flatMap((edge) => [edge.from, edge.to]));
+  const isolatedFiles = files.filter((file) => !connectedPaths.has(file.path));
+  if (isolatedFiles.length > 0) {
+    const isolatedLayout = layoutByExtensionGroup(isolatedFiles);
+    const dagreBottom = Math.max(
+      ...[...dagreLayout.entries()].map(([filePath, position]) => position.y + getNodeHeight(filePath)),
+    );
+    const isolatedTop = Math.min(...[...isolatedLayout.values()].map((position) => position.y));
+    const isolatedOffsetY = dagreBottom + 120 - isolatedTop;
+
+    for (const [filePath, position] of isolatedLayout) {
+      dagreLayout.set(filePath, {
+        x: position.x,
+        y: position.y + isolatedOffsetY,
+      });
+    }
+  }
+
+  const minX = Math.min(...[...dagreLayout.values()].map((position) => position.x));
+  const minY = Math.min(...[...dagreLayout.values()].map((position) => position.y));
+  const margin = 100;
+
+  return new Map(
+    [...dagreLayout.entries()].map(([filePath, position]) => [
+      filePath,
+      {
+        x: position.x - minX + margin,
+        y: position.y - minY + margin,
+      },
+    ]),
+  );
+}
+
+function layoutWithDagre(files: ChangedFile[], edges: DependencyEdge[]): Map<string, { x: number; y: number }> {
+  const graph = new graphlib.Graph();
+  graph.setGraph({
+    rankdir: 'LR',
+    nodesep: 80,
+    ranksep: 160,
+    marginx: 40,
+    marginy: 40,
+  });
+  graph.setDefaultEdgeLabel(() => ({}));
+
+  for (const file of files) {
+    graph.setNode(file.path, {
+      width: getNodeWidth(file.path),
+      height: getNodeHeight(file.path),
+    });
+  }
+
+  for (const edge of edges) {
+    if (graph.hasNode(edge.from) && graph.hasNode(edge.to)) {
+      graph.setEdge(edge.from, edge.to);
+    }
+  }
+
+  layoutGraph(graph);
+
+  const positions = new Map<string, { x: number; y: number }>();
+  for (const file of files) {
+    const node = graph.node(file.path) as { x?: number; y?: number } | undefined;
+    if (node?.x === undefined || node?.y === undefined) {
+      continue;
+    }
+
+    positions.set(file.path, {
+      x: node.x - getNodeWidth(file.path) / 2,
+      y: node.y - getNodeHeight(file.path) / 2,
+    });
+  }
+
+  if (positions.size === 0) {
+    return new Map();
+  }
+
+  const minX = Math.min(...[...positions.values()].map((position) => position.x));
+  const minY = Math.min(...[...positions.values()].map((position) => position.y));
+  const margin = 100;
+
+  return new Map(
+    [...positions.entries()].map(([filePath, position]) => [
+      filePath,
+      {
+        x: position.x - minX + margin,
+        y: position.y - minY + margin,
+      },
+    ]),
+  );
+}
+
+function layoutByExtensionGroup(files: ChangedFile[]): Map<string, { x: number; y: number }> {
   const centerX = 520;
   const centerY = 340;
   const horizontalGap = 160;

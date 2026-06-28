@@ -1,13 +1,26 @@
-import { BaseEdge, EdgeLabelRenderer, getStraightPath, type EdgeProps } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from '@xyflow/react';
 import type { FC } from 'react';
 import type { DependencyEdgeType } from './graph';
 
-export const DependencyEdge: FC<EdgeProps<DependencyEdgeType>> = ({ id, sourceX, sourceY, targetX, targetY, markerEnd, data }) => {
-  const [edgePath, labelX, labelY] = getStraightPath({
+export const DependencyEdge: FC<EdgeProps<DependencyEdgeType>> = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  markerEnd,
+  data,
+}) => {
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     targetX,
     targetY,
+    sourcePosition,
+    targetPosition,
+    borderRadius: 8,
   });
   const kind = data?.kind ?? 'import';
   const highlighted = Boolean(data?.highlighted);
