@@ -128,9 +128,59 @@ case 'START_AI_SUMMARY_FILE':
 
 ---
 
+## 커밋 메시지 규칙
+
+이 프로젝트의 커밋 메시지는 [Conventional Commits 1.0.0](https://www.conventionalcommits.org/ko/v1.0.0/) 규칙을 따른다.
+
+### 기본 형식
+
+```text
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### 필수 규칙
+
+- 모든 커밋은 `feat`, `fix` 같은 타입 접두어로 시작해야 한다.
+- 타입 뒤에는 선택적 scope를 괄호로 표기할 수 있다.
+- 설명은 콜론 뒤 공백 1칸 다음에 작성한다.
+- breaking change가 있으면 `!` 또는 `BREAKING CHANGE:` 꼬리말로 명시한다.
+- 본문과 꼬리말은 필요할 때만 추가한다.
+
+### 권장 타입
+
+- `feat`: 새로운 기능 추가
+- `fix`: 버그 수정
+- `docs`: 문서 변경
+- `refactor`: 기능 변경 없는 구조 개선
+- `test`: 테스트 추가 또는 수정
+- `chore`: 빌드, 설정, 잡무성 변경
+
+### 예시
+
+```text
+feat: add conventional commit guidance
+fix(dependency): handle missing file path in analysis
+docs: update contribution workflow
+refactor(webview): simplify summary state handling
+```
+
+### 작성 기준
+
+- 커밋 메시지는 작업의 성격이 한눈에 드러나도록 작성한다.
+- 하나의 커밋에는 가능한 한 하나의 목적만 담는다.
+- 문서만 바뀐 경우에는 `docs`, 코드만 바뀐 경우에는 `feat` 또는 `fix` 등 변경 성격에 맞는 타입을 사용한다.
+- breaking change가 포함된 경우에는 사용자 영향이 바로 드러나도록 제목에 `!`를 포함한다.
+
+---
+
 ## 관련 문서
 
 - [architecture.md](./architecture.md)
 - [state_management.md](./state_management.md)
 - [testing_strategy.md](./testing_strategy.md)
 - [../core/naming_rules.md](../core/naming_rules.md)
+- [Conventional Commits 1.0.0](https://www.conventionalcommits.org/ko/v1.0.0/)
