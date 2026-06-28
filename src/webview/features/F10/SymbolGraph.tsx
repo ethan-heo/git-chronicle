@@ -34,6 +34,7 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const graphRef = useRef<HTMLElement | null>(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+  const [isLegendMinimized, setIsLegendMinimized] = useState(false);
   const { nodes: graphNodes, edges: graphEdges } = useMemo(() => buildSymbolGraphData(symbolNodes, symbolEdges), [symbolEdges, symbolNodes]);
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
@@ -83,7 +84,7 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
       </ReactFlow>
       <CanvasControls onZoomIn={() => void zoomIn({ duration: 120 })} onZoomOut={() => void zoomOut({ duration: 120 })} onFitView={() => void fitView({ padding: 0.22, duration: 180 })} />
-      <SymbolLegendPanel />
+      <SymbolLegendPanel isMinimized={isLegendMinimized} onToggleMinimized={() => setIsLegendMinimized((current) => !current)} />
     </section>
   );
 };

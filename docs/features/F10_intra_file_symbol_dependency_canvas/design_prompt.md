@@ -82,7 +82,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 
 ### SymbolLegendPanel
 - `visible`: 전체 표시
-- `minimized`: 좁은 패널에서 최소화
+- `minimized`: 사용자가 접기 버튼을 눌러 제목과 토글 버튼만 남긴 상태로 전환
 
 ---
 
@@ -98,7 +98,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 - `SymbolEdge` uses: `strokeWidth: 1.5`, `strokeDasharray: 4 2`, `color: var(--vscode-panel-border)` 계열
 - `SymbolEdge` extends: `strokeWidth: 2.5`, `color: var(--vscode-charts-green)`
 - `SymbolEdge` implements: `strokeWidth: 2.5`, `strokeDasharray: 6 3`, `color: var(--vscode-charts-purple)`
-- `SymbolLegendPanel`: 반투명 배경 (`backdrop-filter: blur`), F04 LegendPanel과 동일 위치
+- `SymbolLegendPanel`: 반투명 배경 (`backdrop-filter: blur`), F04 LegendPanel과 동일 위치, 접기/펼치기 토글 제공
 - `CanvasControls`: F04와 동일 디자인 재사용
 
 ---
@@ -106,7 +106,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 ## Responsive Rules
 
 - 패널 크기 변경 시 React Flow `fitView()` 자동 호출
-- `SymbolLegendPanel`은 너비 < 350px에서 최소화 상태로 전환
+- `SymbolLegendPanel`은 사용자가 토글하여 최소화 상태로 전환
 
 ---
 

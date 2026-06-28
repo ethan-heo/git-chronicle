@@ -30,8 +30,8 @@
 | `src/webview/features/F10/SymbolKindBadge.tsx` | 신규 | 노드 종류 배지 |
 | `src/webview/features/F10/SymbolNode.tsx` | 신규 | React Flow 커스텀 노드 |
 | `src/webview/features/F10/SymbolEdge.tsx` | 신규 | React Flow 커스텀 엣지 |
-| `src/webview/features/F10/SymbolLegendPanel.tsx` | 신규 | 범례 패널 |
-| `src/webview/features/F10/SymbolGraph.tsx` | 신규 | React Flow 캔버스 컨테이너 |
+| `src/webview/features/F10/SymbolLegendPanel.tsx` | 신규 | 접기/펼치기 가능한 범례 패널 |
+| `src/webview/features/F10/SymbolGraph.tsx` | 신규 | React Flow 캔버스 컨테이너 및 범례 토글 상태 관리 |
 | `src/webview/features/F10/S08_IntraFileSymbolDependencyCanvasScreen.tsx` | 신규 | S08 화면 조합 컴포넌트 |
 | `src/webview/features/F10/index.ts` | 신규 | 공개 export |
 | `src/webview/App.tsx` | 수정 | S08 라우트 + 메시지 핸들러 추가 |

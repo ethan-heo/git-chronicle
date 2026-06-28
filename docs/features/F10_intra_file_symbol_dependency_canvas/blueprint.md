@@ -207,7 +207,7 @@ F10 전용. SymbolNode 내부에서만 사용. → 상세 문서: [components/Sy
 ### Component: SymbolLegendPanel
 
 #### Purpose
-노드 종류(노드 색상), 노드 라벨의 의미, 엣지 방향의 의미를 설명하는 범례 패널. F04 `LegendPanel`과 같은 위치·구조로 F10 전용 내용을 표시한다.
+노드 종류(노드 색상), 노드 라벨의 의미, 엣지 방향의 의미를 설명하는 범례 패널. F04 `LegendPanel`과 같은 위치·구조로 F10 전용 내용을 표시하며, 접기/펼치기 토글로 캔버스 공간을 확보할 수 있다.
 
 #### Props
 ```typescript
@@ -225,6 +225,7 @@ interface SymbolLegendPanelProps {
 
 #### Accessibility
 - `aria-label="노드 그래프 범례"`
+- 접기/펼치기 버튼을 통해 `isMinimized` 상태를 전환한다
 
 #### Reusability
 F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 우측 하단 오버레이에서만 사용. → 상세 문서: [components/SymbolLegendPanel.md](../../components/SymbolLegendPanel.md)
@@ -322,7 +323,7 @@ F10_IntraFileSymbolDependencyCanvas
 
 ### SymbolLegendPanel
 - `visible`: 전체 표시
-- `minimized`: 좁은 패널에서 최소화
+- `minimized`: 사용자가 접기 버튼을 눌러 제목과 토글 버튼만 남긴 상태로 전환
 
 ### SymbolCodePanel
 - `open`: 우측 슬라이드 인
@@ -347,6 +348,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 - 엣지가 있으면 Dagre 계층 레이아웃 (`rankdir: 'LR'`), 없으면 심볼 종류(kind) 그룹 기반 앵커 배치.
 - 고립 노드(엣지 없음)는 kind 그룹 규칙으로 Dagre 영역 하단에 배치.
 - `SymbolLegendPanel`과 `CanvasControls`는 캔버스 위 오버레이로 고정 배치.
+- `SymbolLegendPanel`은 기본적으로 펼쳐져 있으나, 사용자가 접기/펼치기로 화면 공간을 회수할 수 있다.
 
 ---
 
@@ -400,7 +402,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 ## Responsive Rules
 
 - 패널 크기 변경 시 `fitView()` 자동 호출
-- `SymbolLegendPanel`은 너비 < 350px에서 최소화 상태로 전환
+- `SymbolLegendPanel`은 필요 시 사용자가 직접 최소화 상태로 전환
 
 ---
 
