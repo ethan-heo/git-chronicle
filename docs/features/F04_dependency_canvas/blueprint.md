@@ -64,7 +64,8 @@ interface DependencyGraphProps {
 - 패닝: 빈 영역 드래그
 - 노드 드래그: 노드 위치 직접 조정
 - 노드 호버: `FileNode`의 `FileActionButtons` 표시
-- 노드 호버: 연결된 `DependencyEdge` 강조, 비연결 `DependencyEdge` 감쇠
+- 노드 호버: 해당 노드가 의존하는 대상의 `DependencyEdge` 강조, 나머지 `DependencyEdge` 감쇠
+- 노드 클릭: 선택 상태를 고정하고, 이후 다른 노드 호버 시 호버 노드 기준 강조를 우선 적용
 - 노드 드래그 후: 현재 노드 위치 기준으로 `DependencyEdge` 연결 면 재계산
 - 캔버스 리사이즈: `fitView()` 재적용
 
@@ -249,7 +250,7 @@ F04_DependencyCanvas
 
 ### DependencyEdge
 - `default`: 기본 화살표
-- `highlighted`: 연결 노드 호버 시 강조
+- `highlighted`: 활성 노드가 의존하는 대상 강조
 
 ### LegendPanel
 - `visible`: 전체 표시

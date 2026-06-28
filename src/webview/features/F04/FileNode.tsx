@@ -11,13 +11,20 @@ const handlePositions = [
   { face: 'left', position: Position.Left },
 ] as const;
 
-export const FileNode: FC<NodeProps<FileNodeType>> = ({ data }) => {
+export const FileNode: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
   const { t } = useTranslation();
   const title = data.canAnalyze ? `${data.directory}${data.label}` : 'JS/TS 외 파일은 노드로만 표시됩니다.';
 
   return (
     <div
-      className={`dependency-file-node${data.canAnalyze ? '' : ' dependency-file-node-no-analysis'}${data.file.status === 'D' ? ' dependency-file-node-deleted' : ''}`}
+      className={[
+        'dependency-file-node',
+        !data.canAnalyze ? 'dependency-file-node-no-analysis' : '',
+        data.file.status === 'D' ? 'dependency-file-node-deleted' : '',
+        selected ? 'dependency-file-node--selected' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       role="button"
       aria-label={data.label}
       title={title}

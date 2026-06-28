@@ -48,6 +48,7 @@ FileNode (React Flow NodeWrapper)
 |------|------|---------|
 | `default` | 기본 | 일반 노드 배경 |
 | `hover` | 마우스 오버 | `FileActionButtons` 표시, 배경 밝아짐 |
+| `selected` | 노드 클릭 | `hover`와 같은 강조 유지, 액션 버튼 항상 표시 |
 | `no-analysis` | `canAnalyze = false` | 점선 테두리, 툴팁 "의존 관계 분석 불가" |
 | `deleted` | `file.status = "D"` | 파일명 취소선 |
 
@@ -78,6 +79,7 @@ FileNode (React Flow NodeWrapper)
 - 노드 본문은 React Flow `nodesDraggable`에 의해 드래그 이동 가능하다.
 - `FileActionButtons` 영역은 `nodrag nopan`으로 지정해 버튼 클릭이 노드 드래그와 충돌하지 않도록 한다.
 - 상/하/좌/우 source/target 핸들은 엣지 연결 계산용이며 화면에서는 투명하게 처리한다.
+- 클릭으로 선택된 노드는 마우스가 벗어나도 강조 상태를 유지하며, 다른 노드 호버 시에는 호버 노드 기준 엣지 강조가 추가로 반영된다.
 
 ---
 

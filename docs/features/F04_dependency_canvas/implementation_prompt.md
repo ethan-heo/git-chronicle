@@ -284,7 +284,7 @@ export const FileNode: React.FC<{ data: FileNodeData }> = ({ data }) => {
 
 ### `DependencyEdge.tsx` (React Flow 커스텀 엣지)
 
-`getSmoothStepPath()`를 사용해 직각 우회 경로로 렌더링한다. `require` 관계는 dashed stroke를 유지한다.
+`getSmoothStepPath()`를 사용해 직각 우회 경로로 렌더링한다. `require` 관계는 dashed stroke를 유지한다. 활성 노드의 `source -> target` 관계 중 `source`가 활성일 때만 `highlighted`로 표시하며, 선택 상태가 있어도 hover 노드가 우선일 때는 hover 기준으로 재계산한다.
 
 ### `DependencyGraph.tsx`
 
@@ -337,11 +337,13 @@ export const DependencyGraph: React.FC<DependencyGraphProps> = ({
 4. 줌 범위: 0.3x ~ 2.0x
 5. `dependency-cruiser` runner 또는 복사된 의존성이 없는 경우 JS/TS 분석 실패로 처리하고 `ErrorState` + `pnpm install` 안내 표시
 6. JS/TS 분석 결과는 `resolved`가 없더라도 `module`과 source 파일 기준 상대 경로를 조합해 변경 파일 경로로 복원한다
-6. S05에서 S03/S04로 진입할 때 `previousScreen = "S05"`를 저장하고 뒤로가기 시 S05로 복귀
-7. S02에서 변경 파일 로딩 중에는 [캔버스 보기] 버튼을 로딩 상태로 표시하며, S05도 변경 파일 로딩 메시지를 처리할 수 있어야 함
-8. 엣지가 있으면 Dagre 계층 레이아웃을 적용하고, 엣지가 없을 때만 기존 확장자 그룹 배치를 사용
-9. 긴 파일명은 노드 폭 확장 및 줄바꿈으로 전체 표시
-10. 노드는 드래그로 위치 조정 가능하며, 엣지는 현재 위치에서 가장 가까운 상/하/좌/우 핸들에 연결
+7. S05에서 S03/S04로 진입할 때 `previousScreen = "S05"`를 저장하고 뒤로가기 시 S05로 복귀
+8. S02에서 변경 파일 로딩 중에는 [캔버스 보기] 버튼을 로딩 상태로 표시하며, S05도 변경 파일 로딩 메시지를 처리할 수 있어야 함
+9. 엣지가 있으면 Dagre 계층 레이아웃을 적용하고, 엣지가 없을 때만 기존 확장자 그룹 배치를 사용
+10. 긴 파일명은 노드 폭 확장 및 줄바꿈으로 전체 표시
+11. 노드는 드래그로 위치 조정 가능하며, 엣지는 현재 위치에서 가장 가까운 상/하/좌/우 핸들에 연결
+12. 노드 클릭은 선택 상태를 고정하고, 다른 노드 호버 시에는 호버 노드 기준 강조가 우선 적용된다
+13. 강조 색상은 활성 노드가 의존하는 대상(outgoing dependency)에만 적용하고, 반대 방향 엣지는 강조하지 않는다
 
 ---
 

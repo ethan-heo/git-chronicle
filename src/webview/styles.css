@@ -1090,8 +1090,17 @@ button:focus-visible,
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.44);
 }
 
+.dependency-file-node--selected {
+  border-color: var(--gae-border-color-focus);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.44);
+}
+
 .react-flow__node:has(.dependency-file-node:hover),
 .react-flow__node:has(.dependency-file-node:focus-within) {
+  z-index: 1000 !important;
+}
+
+.react-flow__node:has(.dependency-file-node--selected) {
   z-index: 1000 !important;
 }
 
@@ -1177,6 +1186,12 @@ button:focus-visible,
 
 .dependency-file-node:hover .dependency-file-node-actions,
 .dependency-file-node:focus-within .dependency-file-node-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.dependency-file-node--selected .dependency-file-node-actions {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);

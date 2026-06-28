@@ -82,6 +82,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const graphRef = useRef<HTMLElement | null>(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const { nodes: graphNodes, edges: graphEdges } = useMemo(
     () =>
       buildGraphData(files, dependencyEdges, {
@@ -93,6 +94,11 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
   const hasOnlyUnanalyzableFiles = files.every((file) => !/\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i.test(file.path));
+  const activeNodeIds = useMemo(() => {
+    const nodeIds = [selectedNodeId, highlightedNodeId].filter((nodeId): nodeId is string => Boolean(nodeId));
+
+    return new Set(nodeIds);
+  }, [highlightedNodeId, selectedNodeId]);
 
   const fitCanvas = useCallback(() => {
     void fitView({ padding: 0.22, duration: 180 });
@@ -103,9 +109,9 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   }, [graphNodes, setNodes]);
 
   useEffect(() => {
-    const isHovering = highlightedNodeId !== null;
+    const isHovering = activeNodeIds.size > 0;
     const updatedEdges = graphEdges.map((edge) => {
-      const highlighted = highlightedNodeId === edge.source || highlightedNodeId === edge.target;
+      const highlighted = activeNodeIds.has(edge.source);
 
       return {
         ...edge,
@@ -122,7 +128,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
       ...updatedEdges.filter((edge) => !edge.data?.highlighted),
       ...updatedEdges.filter((edge) => edge.data?.highlighted),
     ]);
-  }, [graphEdges, highlightedNodeId, setEdges]);
+  }, [activeNodeIds, graphEdges, setEdges]);
 
   useEffect(() => {
     window.setTimeout(fitCanvas, 0);
@@ -170,8 +176,10 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
             color: 'var(--gae-color-text-secondary)',
           },
         }}
+        onNodeClick={(_, node) => setSelectedNodeId((currentNodeId) => (currentNodeId === node.id ? null : node.id))}
         onNodeMouseEnter={(_, node) => setHighlightedNodeId((currentNodeId) => (currentNodeId === node.id ? currentNodeId : node.id))}
         onNodeMouseLeave={(_, node) => setHighlightedNodeId((currentNodeId) => (currentNodeId === node.id ? null : currentNodeId))}
+        onPaneClick={() => setSelectedNodeId(null)}
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
       </ReactFlow>
