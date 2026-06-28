@@ -2,7 +2,7 @@
   "name": "git-chronicle",
   "displayName": "GitChronicle",
   "description": "Rewind your Git history — explore commits, changed files, dependency graphs, and AI summaries in VSCode.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "ethanheo",
   "icon": "assets/icon.png",
   "repository": {
