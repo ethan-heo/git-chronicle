@@ -21,6 +21,8 @@ export const S01CommitListScreen: FC = () => {
     filterDateEnd,
     filterAuthor,
     filterKeyword,
+    filterExcludeKeyword,
+    sortOrder,
     loadCommits,
     setCommitListScrollTop,
     setFilter,
@@ -30,7 +32,9 @@ export const S01CommitListScreen: FC = () => {
     openRepository,
   } = useAppStore();
   const isRouteSlotActive = useRouteSlotActive();
-  const isFilterActive = Boolean(filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim());
+  const isFilterActive = Boolean(
+    filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim(),
+  );
 
   useEffect(() => {
     if (!isRouteSlotActive) {
@@ -96,6 +100,8 @@ export const S01CommitListScreen: FC = () => {
         filterDateEnd={filterDateEnd}
         filterAuthor={filterAuthor}
         filterKeyword={filterKeyword}
+        filterExcludeKeyword={filterExcludeKeyword}
+        sortOrder={sortOrder}
         authorList={authorList}
         onFilterChange={setFilter}
         onClearFilters={clearFilters}

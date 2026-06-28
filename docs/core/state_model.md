@@ -37,7 +37,9 @@
 | `filterDateStart` | `string \| null` | `null` | 날짜 필터 시작일 (ISO 8601) |
 | `filterDateEnd` | `string \| null` | `null` | 날짜 필터 종료일 (ISO 8601) |
 | `filterAuthor` | `string \| null` | `null` | 작성자 필터 선택값 |
-| `filterKeyword` | `string` | `""` | 커밋 메시지 키워드 검색어 |
+| `filterKeyword` | `string` | `""` | 커밋 메시지 포함 키워드 검색어 |
+| `filterExcludeKeyword` | `string` | `""` | 커밋 메시지 제외 키워드 검색어 |
+| `sortOrder` | `"desc" \| "asc"` | `"desc"` | 커밋 정렬 순서 |
 | `authorList` | `string[]` | `[]` | 드롭다운용 작성자 목록 (로드된 커밋 목록에서 추출) |
 
 ---

@@ -39,7 +39,9 @@ S01_CommitListScreen
 ├─ CommitFilterPanel
 │   ├─ DateRangeFilter
 │   ├─ AuthorDropdown
-│   └─ KeywordSearchInput
+│   ├─ SortOrderToggle
+│   ├─ KeywordSearchInput (포함)
+│   └─ KeywordSearchInput (제외)
 └─ CommitList (스크롤 영역)
     ├─ CommitListItem × N
     └─ InfiniteScrollTrigger

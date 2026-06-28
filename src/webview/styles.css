@@ -1440,10 +1440,16 @@ button:focus-visible,
   padding: 4px 10px;
 }
 
+.commit-filter-header-leading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
 .commit-filter-toggle {
   display: inline-flex;
   min-width: 0;
-  flex: 1;
   align-items: center;
   gap: 6px;
   border: none;
@@ -1456,6 +1462,7 @@ button:focus-visible,
 
 .active-filter-summary {
   display: inline-flex;
+  margin-left: auto;
   flex-shrink: 0;
   align-items: center;
   gap: 6px;
@@ -1486,10 +1493,14 @@ button:focus-visible,
 }
 
 .commit-filter-body {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   padding: 2px 10px 12px;
+}
+
+.commit-filter-body .filter-item--full {
+  grid-column: 1 / -1;
 }
 
 .commit-filter-field {
@@ -1551,6 +1562,25 @@ button:focus-visible,
 
 .keyword-search-input input {
   padding: 5px 26px 5px 28px;
+}
+
+.commit-filter-sort-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-round);
+  background: var(--gae-color-surface-elevated);
+  color: var(--gae-color-text-primary);
+  cursor: pointer;
+  padding: 4px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.commit-filter-sort-toggle:hover {
+  border-color: var(--gae-color-text-secondary);
+  background: var(--gae-color-surface-hover);
 }
 
 .keyword-search-icon {

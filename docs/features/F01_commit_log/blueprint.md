@@ -8,14 +8,14 @@
 
 ## Purpose
 
-커밋 이력 목록을 표시하고, 기간·작성자·키워드 필터를 제공하며, 무한 스크롤로 추가 로드를 지원한다.
+커밋 이력 목록을 표시하고, 기간·작성자·포함/제외 키워드와 정렬 필터를 제공하며, 무한 스크롤로 추가 로드를 지원한다.
 
 ---
 
 ## Inputs
 
 - 현재 워크스페이스의 Git 저장소 경로
-- 필터 값: `filterDateStart`, `filterDateEnd`, `filterAuthor`, `filterKeyword`
+- 필터 값: `filterDateStart`, `filterDateEnd`, `filterAuthor`, `filterKeyword`, `filterExcludeKeyword`, `sortOrder`
 - 페이지 오프셋: `commitPage`
 
 ---
@@ -48,13 +48,15 @@
 ### Component: CommitFilterPanel
 
 #### Purpose
-날짜 범위, 작성자, 키워드 세 가지 필터를 하나의 패널로 묶어 표시한다.
+날짜 범위, 작성자, 포함/제외 키워드와 정렬 순서를 하나의 패널로 묶어 표시한다.
 
 #### Data
 - `filterDateStart: string | null`
 - `filterDateEnd: string | null`
 - `filterAuthor: string | null`
 - `filterKeyword: string`
+- `filterExcludeKeyword: string`
+- `sortOrder: 'desc' | 'asc'`
 
 #### Props
 ```typescript
@@ -63,6 +65,8 @@ interface CommitFilterPanelProps {
   filterDateEnd: string | null;
   filterAuthor: string | null;
   filterKeyword: string;
+  filterExcludeKeyword: string;
+  sortOrder: 'desc' | 'asc';
   authorList: string[];
   onFilterChange: (filter: Partial<FilterState>) => void;
 }
@@ -170,7 +174,7 @@ interface KeywordSearchInputProps {
 ```
 
 #### Interaction
-- 입력 후 300ms 디바운싱 후 `filterKeyword` 업데이트
+- 입력 후 300ms 디바운싱 후 `filterKeyword` 또는 `filterExcludeKeyword` 업데이트
 - 입력창 우측에 초기화(×) 버튼 표시 (입력값 있을 때)
 
 #### States

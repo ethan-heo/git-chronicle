@@ -120,7 +120,7 @@ UI 컴포넌트별 Props 정의, 동작 명세, 사용 예시입니다.
 | 파일 | 설명 |
 |------|------|
 | [components/CommitListItem.md](components/CommitListItem.md) | 커밋 목록 개별 행 (해시·메시지·날짜·작성자) |
-| [components/CommitFilterPanel.md](components/CommitFilterPanel.md) | 기간·작성자·키워드 필터 패널 |
+| [components/CommitFilterPanel.md](components/CommitFilterPanel.md) | 기간·작성자·포함/제외 키워드·정렬 필터 패널 |
 
 ### 파일 트리
 

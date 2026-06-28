@@ -11,6 +11,8 @@ export interface FilterState {
   filterDateEnd: string | null;
   filterAuthor: string | null;
   filterKeyword: string;
+  filterExcludeKeyword: string;
+  sortOrder: 'desc' | 'asc';
 }
 
 export type FileStatus = 'A' | 'M' | 'D' | 'R';

@@ -10,6 +10,8 @@ const DEFAULT_FILTER_STATE: FilterState = {
   filterDateEnd: null,
   filterAuthor: null,
   filterKeyword: '',
+  filterExcludeKeyword: '',
+  sortOrder: 'desc',
 };
 
 interface PersistedWebviewState {
@@ -187,6 +189,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       filterDateEnd: state.filterDateEnd,
       filterAuthor: state.filterAuthor,
       filterKeyword: state.filterKeyword,
+      filterExcludeKeyword: state.filterExcludeKeyword,
+      sortOrder: state.sortOrder,
     });
   },
 
@@ -706,6 +710,8 @@ function persistFilterState(state: FilterState): void {
       filterDateEnd: state.filterDateEnd,
       filterAuthor: state.filterAuthor,
       filterKeyword: state.filterKeyword,
+      filterExcludeKeyword: state.filterExcludeKeyword,
+      sortOrder: state.sortOrder,
     },
   });
 }
@@ -754,8 +760,12 @@ function simulateDemoBatchAISummary(): void {
 
 function filterDemoCommits(state: FilterState): Commit[] {
   const keyword = state.filterKeyword.trim().toLowerCase();
+  const excludeKeywords = state.filterExcludeKeyword
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
 
-  return demoCommits.filter((commit) => {
+  const filtered = demoCommits.filter((commit) => {
     if (state.filterAuthor && commit.author !== state.filterAuthor) {
       return false;
     }
@@ -772,8 +782,14 @@ function filterDemoCommits(state: FilterState): Commit[] {
       return false;
     }
 
+    if (excludeKeywords.some((excludeKeyword) => commit.message.toLowerCase().includes(excludeKeyword))) {
+      return false;
+    }
+
     return true;
   });
+
+  return state.sortOrder === 'asc' ? [...filtered].reverse() : filtered;
 }
 
 const demoCommits: Commit[] = [

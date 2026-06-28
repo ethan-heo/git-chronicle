@@ -76,10 +76,11 @@ src/webview/
 ├── features/
 │   ├── F01/
 │   │   ├── S01_CommitListScreen.tsx  # S01 화면 조합 컴포넌트
-│   │   ├── CommitFilterPanel.tsx     # 날짜/작성자/키워드 필터 UI
+│   │   ├── CommitFilterPanel.tsx     # 날짜/작성자/키워드/정렬 필터 UI
 │   │   ├── DateRangeFilter.tsx       # 시작일/종료일 입력
 │   │   ├── AuthorDropdown.tsx        # 작성자 선택
 │   │   ├── KeywordSearchInput.tsx    # 300ms 디바운스 키워드 검색
+│   │   ├── SortOrderToggle.tsx       # 최신순/오래된순 전환 토글
 │   │   ├── CommitList.tsx            # 커밋 목록 및 상태 분기
 │   │   ├── CommitListItem.tsx        # 커밋 행
 │   │   ├── InfiniteScrollTrigger.tsx # IntersectionObserver 추가 로드 트리거

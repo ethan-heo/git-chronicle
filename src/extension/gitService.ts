@@ -26,6 +26,8 @@ export interface FetchCommitsOptions {
   dateEnd?: string | null;
   author?: string | null;
   keyword?: string;
+  sortOrder?: 'desc' | 'asc';
+  excludeKeywords?: string[];
 }
 
 export interface FileDiffResult {
@@ -78,6 +80,10 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
     args.push(`--grep=${options.keyword.trim()}`);
   }
 
+  if (options.sortOrder === 'asc') {
+    args.push('--reverse');
+  }
+
   const output = await git.raw(args);
 
   return output
@@ -94,6 +100,17 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
         author,
         date,
       };
+    })
+    .filter((commit) => {
+      const excludeKeywords = options.excludeKeywords?.filter(Boolean).map((item) => item.toLowerCase()) ?? [];
+
+      if (excludeKeywords.length === 0) {
+        return true;
+      }
+
+      const message = commit.message.toLowerCase();
+
+      return !excludeKeywords.some((keyword) => message.includes(keyword));
     });
 }
 

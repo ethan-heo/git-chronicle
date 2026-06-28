@@ -29,6 +29,8 @@ interface FetchCommitsPayload {
   filterDateEnd?: string | null;
   filterAuthor?: string | null;
   filterKeyword?: string;
+  filterExcludeKeyword?: string;
+  sortOrder?: 'desc' | 'asc';
 }
 
 interface FetchChangedFilesPayload {
@@ -322,6 +324,10 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
   try {
     const page = payload.page ?? 0;
     const pageSize = payload.pageSize ?? 200;
+    const excludeKeywords = (payload.filterExcludeKeyword ?? '')
+      .split(',')
+      .map((keyword) => keyword.trim())
+      .filter(Boolean);
     const commits = await fetchCommits({
       repoPath,
       page,
@@ -330,6 +336,8 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
       dateEnd: payload.filterDateEnd,
       author: payload.filterAuthor,
       keyword: payload.filterKeyword,
+      sortOrder: payload.sortOrder,
+      excludeKeywords,
     });
 
     await panel.webview.postMessage({

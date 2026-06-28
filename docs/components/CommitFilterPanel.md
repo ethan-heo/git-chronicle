@@ -1,6 +1,6 @@
 # Component: CommitFilterPanel
 
-S01_CommitListScreen의 필터 영역. 기간(날짜 범위)·작성자·키워드 세 가지 조건을 제공하며, 조건은 AND로 고정 조합된다.
+S01_CommitListScreen의 필터 영역. 기간(날짜 범위)·작성자·포함/제외 키워드·정렬 순서를 제공하며, 조건은 AND로 고정 조합된다.
 
 ---
 
@@ -12,11 +12,15 @@ interface CommitFilterPanelProps {
   dateEnd: string | null;
   author: string | null;
   keyword: string;
+  excludeKeyword: string;
+  sortOrder: 'desc' | 'asc';
   authorList: string[];
   onDateStartChange: (date: string | null) => void;
   onDateEndChange: (date: string | null) => void;
   onAuthorChange: (author: string | null) => void;
   onKeywordChange: (keyword: string) => void;
+  onExcludeKeywordChange: (keyword: string) => void;
+  onSortOrderChange: (sortOrder: 'desc' | 'asc') => void;
 }
 ```
 
@@ -31,8 +35,12 @@ CommitFilterPanel
 │   └── <input type="date" /> (종료일)
 ├── AuthorDropdown
 │   └── <select> / <datalist> (작성자 선택)
+├── KeywordSearchInput
+│   └── <input type="text" /> (커밋 메시지 포함 키워드, 300ms 디바운싱)
+├── SortOrderToggle
+│   └── 최신순/오래된순 전환 버튼
 └── KeywordSearchInput
-    └── <input type="text" /> (커밋 메시지 키워드, 300ms 디바운싱)
+    └── <input type="text" /> (커밋 메시지 제외 키워드, 300ms 디바운싱)
 ```
 
 ---
@@ -43,7 +51,9 @@ CommitFilterPanel
 |------|------|
 | 날짜 필터 | `<input type="date">` × 2 (시작일 / 종료일). `--after` / `--before` git 옵션으로 변환 |
 | 작성자 필터 | 드롭다운 자동완성. `authorList` prop에서 선택지 렌더링 |
-| 키워드 필터 | `--grep` git 옵션. 입력 후 300ms 디바운싱 후 콜백 호출 |
+| 포함 키워드 | `--grep` git 옵션. 입력 후 300ms 디바운싱 후 콜백 호출 |
+| 제외 키워드 | 쉼표 구분 문자열을 Extension Host에서 후처리 필터로 적용 |
+| 정렬 순서 | `desc` 기본값, `asc`일 때 `--reverse` git 옵션 사용 |
 | 조합 방식 | AND 고정 (세 조건 동시 적용) |
 | 초기화 | 각 필드 독립적으로 초기화 가능 |
 | 상태 복원 | 필터 변경/초기화 시 Zustand 액션이 VSCode Webview State에 필터 값만 동기화 |
@@ -77,7 +87,7 @@ CommitFilterPanel
 
 - 날짜 입력창에 `aria-label="시작일"` / `aria-label="종료일"` 명시.
 - 작성자 드롭다운에 `aria-label="작성자 필터"` 명시.
-- 키워드 입력창에 `aria-label="커밋 메시지 키워드"` 명시.
+- 키워드 입력창에 `aria-label="커밋 메시지 포함 키워드"` / `aria-label="커밋 메시지 제외 키워드"` 명시.
 - Tab 키로 세 필드 간 이동 가능.
 
 ---

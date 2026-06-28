@@ -1,14 +1,24 @@
 import { useEffect, useState, type FC } from 'react';
 
 interface KeywordSearchInputProps {
+  id: string;
+  label: string;
   keyword: string;
   onKeywordChange: (keyword: string) => void;
+  placeholder?: string;
+  ariaLabel: string;
+  className?: string;
   debounceMs?: number;
 }
 
 export const KeywordSearchInput: FC<KeywordSearchInputProps> = ({
+  id,
+  label,
   keyword,
   onKeywordChange,
+  placeholder,
+  ariaLabel,
+  className,
   debounceMs = 300,
 }) => {
   const [localValue, setLocalValue] = useState(keyword);
@@ -33,9 +43,9 @@ export const KeywordSearchInput: FC<KeywordSearchInputProps> = ({
   };
 
   return (
-    <div className="commit-filter-field">
-      <label className="commit-filter-label" htmlFor="commit-keyword-filter">
-        키워드
+    <div className={`commit-filter-field ${className ?? ''}`.trim()}>
+      <label className="commit-filter-label" htmlFor={id}>
+        {label}
       </label>
       <div className="keyword-search-input">
         <span className="keyword-search-icon" aria-hidden="true">
@@ -45,12 +55,12 @@ export const KeywordSearchInput: FC<KeywordSearchInputProps> = ({
           </svg>
         </span>
         <input
-          id="commit-keyword-filter"
+          id={id}
           type="search"
           value={localValue}
           onChange={(event) => setLocalValue(event.target.value)}
-          aria-label="커밋 메시지 키워드 검색"
-          placeholder="커밋 메시지 검색"
+          aria-label={ariaLabel}
+          placeholder={placeholder ?? '커밋 메시지 검색'}
         />
         {localValue ? (
           <button className="keyword-clear-button" type="button" onClick={clearKeyword} aria-label="검색어 지우기">

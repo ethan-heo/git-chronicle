@@ -46,6 +46,8 @@ interface FilterState {
   filterDateEnd: string | null;
   filterAuthor: string | null;
   filterKeyword: string;
+  filterExcludeKeyword: string;
+  sortOrder: 'desc' | 'asc';
 }
 
 interface AppState extends FilterState {
@@ -80,6 +82,8 @@ interface FetchCommitsOptions {
   dateEnd?: string | null;
   author?: string | null;
   keyword?: string;
+  excludeKeywords?: string[];
+  sortOrder?: 'desc' | 'asc';
 }
 
 export async function fetchCommits(opts: FetchCommitsOptions): Promise<Commit[]> {
@@ -98,6 +102,7 @@ export async function fetchCommits(opts: FetchCommitsOptions): Promise<Commit[]>
   if (opts.dateEnd) args.push(`--before=${opts.dateEnd}`);
   if (opts.author) args.push(`--author=${opts.author}`);
   if (opts.keyword) args.push(`--grep=${opts.keyword}`);
+  if (opts.sortOrder === 'asc') args.push('--reverse');
 
   const output = await git.raw(args);
 
@@ -142,6 +147,8 @@ const useAppStore = create<AppState>((set, get) => ({
   filterDateEnd: null,
   filterAuthor: null,
   filterKeyword: '',
+  filterExcludeKeyword: '',
+  sortOrder: 'desc',
   currentScreen: 'S01',
 
   loadCommits: async (reset = false) => {
@@ -157,6 +164,8 @@ const useAppStore = create<AppState>((set, get) => ({
       filterDateEnd: state.filterDateEnd,
       filterAuthor: state.filterAuthor,
       filterKeyword: state.filterKeyword,
+      filterExcludeKeyword: state.filterExcludeKeyword,
+      sortOrder: state.sortOrder,
     });
   },
 
