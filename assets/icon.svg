@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Background: transparent -->
+
+  <!-- Glow -->
+  <path d="M 100 64 A 36 36 0 1 0 82 95"
+        stroke="#f59e0b" stroke-width="22" stroke-linecap="round" fill="none" opacity="0.10"/>
+
+  <!-- Rewind arc — counterclockwise 300° (center 64,64 radius 36) -->
+  <!-- Start: angle 0° → (100, 64) | End: angle 60° → (82, 95) -->
+  <path d="M 100 64 A 36 36 0 1 0 82 95"
+        stroke="#f59e0b" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+  <!-- Git commit main branch -->
+  <line x1="64" y1="43" x2="64" y2="83" stroke="#7dd3fc" stroke-width="2.5" opacity="0.9"/>
+  <circle cx="64" cy="43" r="4.5" fill="#7dd3fc"/>
+  <circle cx="64" cy="63" r="5.5" fill="#7dd3fc"/>
+  <circle cx="64" cy="83" r="4.5" fill="#7dd3fc"/>
+
+  <!-- Feature branch -->
+  <path d="M 64 56 Q 64 47 78 47" stroke="#7dd3fc" stroke-width="2.5" fill="none" opacity="0.9"/>
+  <circle cx="78" cy="47" r="4" fill="#7dd3fc"/>
+</svg>

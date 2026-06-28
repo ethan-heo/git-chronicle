@@ -2,9 +2,16 @@ node_modules/
 src/
 tests/
 docs/
+.vscode/
+.pnpm-store/
 *.log
 tsconfig*.json
 vite.config.ts
 tailwind.config.ts
 .eslintrc.cjs
 .prettierrc
+pnpm-lock.yaml
+CLAUDE.md
+AGENTS.md
+.DS_Store
+assets/icon.svg
