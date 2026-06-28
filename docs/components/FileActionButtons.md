@@ -1,6 +1,6 @@
 # Component: FileActionButtons
 
-파일 트리 노드(S02) 또는 캔버스 노드(S05) 호버 시 표시되는 [코드 보기] / [AI 정리 보기] 액션 버튼 쌍.
+파일 트리 노드(S02) 또는 캔버스 노드(S05) 호버 시 표시되는 [코드 보기] / [AI 정리 보기] 액션 버튼 쌍. S05 컨텍스트에서는 `onSymbolGraph` prop을 전달하여 세 번째 [심볼 그래프] 버튼도 표시할 수 있다.
 
 ---
 
@@ -8,9 +8,11 @@
 
 ```typescript
 interface FileActionButtonsProps {
-  onCodeView: () => void;       // S03 진입
-  onAISummary: () => void;      // S04 진입
-  isVisible?: boolean;          // 호버 상태 제어 (기본값: true)
+  onCodeView: () => void;           // S03 진입
+  onAISummary: () => void;          // S04 진입
+  onSymbolGraph?: () => void;       // S08 진입 (옵셔널. 미전달 시 버튼 미표시)
+  isSymbolGraphDisabled?: boolean;  // 미지원 파일 유형일 때 버튼 비활성 (기본값: false)
+  isVisible?: boolean;              // 호버 상태 제어 (기본값: true)
 }
 ```
 
@@ -18,8 +20,8 @@ interface FileActionButtonsProps {
 
 ## Usage
 
-- `FileTreeNode` 내부: 호버 시 `isHovered === true`일 때 렌더링
-- `FileNode` (React Flow) 내부: `onMouseEnter`/`onMouseLeave`로 제어
+- `FileTreeNode` 내부 (S02): 호버 시 `isHovered === true`일 때 렌더링. `onSymbolGraph` 미전달.
+- `FileNode` (React Flow, S05) 내부: `onSymbolGraph`와 `isSymbolGraphDisabled` 전달. JS/TS/Python/Go 파일만 활성.
 
 ---
 
@@ -27,7 +29,7 @@ interface FileActionButtonsProps {
 
 ```tsx
 export const FileActionButtons: React.FC<FileActionButtonsProps> = ({
-  onCodeView, onAISummary, isVisible = true
+  onCodeView, onAISummary, onSymbolGraph, isSymbolGraphDisabled = false, isVisible = true
 }) => {
   if (!isVisible) return null;
 
@@ -47,6 +49,17 @@ export const FileActionButtons: React.FC<FileActionButtonsProps> = ({
       >
         AI 정리 보기
       </button>
+      {onSymbolGraph !== undefined && (
+        <button
+          className="file-action-btn"
+          onClick={e => { e.stopPropagation(); onSymbolGraph(); }}
+          aria-label="심볼 그래프"
+          title={isSymbolGraphDisabled ? '이 파일 유형은 심볼 분석이 지원되지 않습니다.' : '심볼 그래프'}
+          disabled={isSymbolGraphDisabled}
+        >
+          심볼 그래프
+        </button>
+      )}
     </div>
   );
 };
@@ -84,3 +97,4 @@ export const FileActionButtons: React.FC<FileActionButtonsProps> = ({
 - [global_components.md](../core/global_components.md#fileactionbuttons)
 - [F02 blueprint.md](../features/F02_changed_file_tree/blueprint.md)
 - [F04 blueprint.md](../features/F04_dependency_canvas/blueprint.md)
+- [F10 blueprint.md](../features/F10_intra_file_symbol_dependency_canvas/blueprint.md)

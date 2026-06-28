@@ -71,6 +71,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **F06** AI 설정 | [spec](features/F06_ai_settings/spec.md) | [blueprint](features/F06_ai_settings/blueprint.md) | [design](features/F06_ai_settings/design_prompt.md) | [impl](features/F06_ai_settings/implementation_prompt.md) |
 | **F07** 저장 경로 설정 | [spec](features/F07_save_path_settings/spec.md) | [blueprint](features/F07_save_path_settings/blueprint.md) | [design](features/F07_save_path_settings/design_prompt.md) | [impl](features/F07_save_path_settings/implementation_prompt.md) |
 | **F08** 일괄 AI 요약 | [spec](features/F08_batch_ai_summary/spec.md) | [blueprint](features/F08_batch_ai_summary/blueprint.md) | [design](features/F08_batch_ai_summary/design_prompt.md) | [impl](features/F08_batch_ai_summary/implementation_prompt.md) |
+| **F10** 파일 내부 심볼 의존성 캔버스 | [spec](features/F10_intra_file_symbol_dependency_canvas/spec.md) | [blueprint](features/F10_intra_file_symbol_dependency_canvas/blueprint.md) | [design](features/F10_intra_file_symbol_dependency_canvas/design_prompt.md) | [impl](features/F10_intra_file_symbol_dependency_canvas/implementation_prompt.md) |
 
 > - **spec**: 기능 요구사항 및 동작 명세
 > - **blueprint**: UI 레이아웃·컴포넌트 구성
@@ -92,6 +93,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **S05** 의존성 캔버스 | [blueprint](screens/S04_dependency_canvas/blueprint.md) | 노드-엣지 의존성 그래프 화면 |
 | **S06** 설정 | [blueprint](screens/S06_settings/blueprint.md) | AI 프로바이더·저장 경로 설정 화면 |
 | **S07** 코드 + AI 요약 분할 | [blueprint](screens/S07_code_and_ai_summary/blueprint.md) | 코드 diff와 AI 요약을 좌우 분할로 동시에 보는 화면 |
+| **S08** 파일 내부 심볼 의존성 캔버스 | [blueprint](screens/S08_intra_file_dependency_canvas/blueprint.md) | 단일 파일 내 심볼(함수·클래스·변수 등) 간 의존 관계 그래프 화면 |
 
 ---
 

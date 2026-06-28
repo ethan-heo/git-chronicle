@@ -45,7 +45,11 @@ export const FileNode: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
         {!data.canAnalyze ? <span className="dependency-no-analysis-label">분석 불가</span> : null}
       </div>
       <div className="dependency-file-node-actions nodrag nopan">
-        <FileActionButtons onCodeView={() => data.onCodeView(data.file)} onAISummary={() => data.onAISummary(data.file)} />
+        <FileActionButtons
+          onCodeView={() => data.onCodeView(data.file)}
+          onAISummary={() => data.onAISummary(data.file)}
+          onSymbolGraph={data.onSymbolGraph && data.isSymbolGraphSupported ? () => data.onSymbolGraph?.(data.file) : undefined}
+        />
       </div>
       {handlePositions.map(({ face, position }) => (
         <Handle key={getSourceHandleId(face)} id={getSourceHandleId(face)} className="dependency-node-handle" type="source" position={position} />

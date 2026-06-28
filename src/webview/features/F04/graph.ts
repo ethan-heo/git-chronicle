@@ -11,6 +11,8 @@ export interface FileNodeData extends Record<string, unknown> {
   canAnalyze: boolean;
   onCodeView: (file: ChangedFile) => void;
   onAISummary: (file: ChangedFile) => void;
+  onSymbolGraph?: (file: ChangedFile) => void;
+  isSymbolGraphSupported?: boolean;
 }
 
 export type FileNodeType = Node<FileNodeData, 'fileNode'>;
@@ -35,7 +37,7 @@ interface NodeGeometry {
 export function buildGraphData(
   files: ChangedFile[],
   dependencyEdges: DependencyEdge[],
-  handlers: Pick<FileNodeData, 'onCodeView' | 'onAISummary'>,
+  handlers: Pick<FileNodeData, 'onCodeView' | 'onAISummary' | 'onSymbolGraph'>,
 ): { nodes: FileNodeType[]; edges: DependencyEdgeType[] } {
   const nodePathIndex = buildNodePathIndex(files);
   const fullPathKeys = new Set(files.map((file) => normalizePath(file.path)));
@@ -78,6 +80,8 @@ export function buildGraphData(
           canAnalyze: ANALYZABLE_FILE_PATTERN.test(file.path),
           onCodeView: handlers.onCodeView,
           onAISummary: handlers.onAISummary,
+          onSymbolGraph: handlers.onSymbolGraph,
+          isSymbolGraphSupported: ANALYZABLE_FILE_PATTERN.test(file.path),
         },
       };
     }),

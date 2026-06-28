@@ -6,6 +6,7 @@ import { S05DependencyCanvasScreen } from './features/F04';
 import { S04AISummaryViewerScreen } from './features/F05';
 import { S06SettingsScreen } from './features/F06';
 import { S07CodeAndAISummaryScreen } from './features/F09';
+import { S08IntraFileSymbolDependencyCanvasScreen } from './features/F10';
 import { BatchProgressBar } from './features/F08/BatchProgressBar';
 import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
@@ -44,20 +45,7 @@ export const App: FC = () => {
     }
 
     const handler = (
-      event: MessageEvent<{
-        type: string;
-        payload?: {
-          savePath?: string | null;
-          activeAIProvider?: AIProviderName | null;
-          registeredProviders?: AIProviderName[];
-          batchTotal?: number;
-          batchCompleted?: number;
-          batchFailedCount?: number;
-          completedFilePath?: string;
-          hasSavedSummary?: boolean;
-          message?: string;
-        };
-      }>,
+      event: MessageEvent<{ type: string; payload?: any }>,
     ): void => {
       if (event.data.type === 'AI_SUMMARY_SETTINGS_LOADED') {
         setAISummarySettings({
@@ -106,6 +94,17 @@ export const App: FC = () => {
 
       if (event.data.type === 'BATCH_AI_SUMMARY_ERROR') {
         handleBatchError(event.data.payload?.message);
+      }
+
+      if (event.data.type === 'SYMBOL_GRAPH_LOADED') {
+        useAppStore.getState().handleSymbolGraphLoaded({
+          nodes: event.data.payload?.nodes ?? [],
+          edges: event.data.payload?.edges ?? [],
+        });
+      }
+
+      if (event.data.type === 'SYMBOL_GRAPH_LOAD_FAILED') {
+        useAppStore.getState().handleSymbolGraphLoadFailed(event.data.payload?.message);
       }
     };
 
@@ -173,6 +172,10 @@ function renderScreen(currentScreen: ScreenID): ReactElement {
 
   if (currentScreen === 'S07') {
     return <S07CodeAndAISummaryScreen />;
+  }
+
+  if (currentScreen === 'S08') {
+    return <S08IntraFileSymbolDependencyCanvasScreen />;
   }
 
   return <S01CommitListScreen />;

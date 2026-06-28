@@ -1,0 +1,76 @@
+import '@xyflow/react/dist/style.css';
+import { Background, BackgroundVariant, MarkerType, ReactFlow, useEdgesState, useNodesState, useReactFlow } from '@xyflow/react';
+import { useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
+import { CanvasControls } from '../F04/CanvasControls';
+import { buildSymbolGraphData } from './symbolGraphUtils';
+import { SymbolEdge } from './SymbolEdge';
+import { SymbolLegendPanel } from './SymbolLegendPanel';
+import { SymbolNode } from './SymbolNode';
+import type { SymbolEdge as SymbolEdgeModel, SymbolNode as SymbolNodeModel } from '../../types/commit';
+
+interface Props {
+  symbolNodes: SymbolNodeModel[];
+  symbolEdges: SymbolEdgeModel[];
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}
+
+const nodeTypes = { symbolNode: SymbolNode };
+const edgeTypes = { symbolEdge: SymbolEdge };
+
+export const SymbolGraph: FC<Props> = ({ symbolNodes, symbolEdges, isLoading, error, onRetry }) => {
+  if (isLoading) return <section className="dependency-canvas-state"><LoadingState label="심볼을 분석하는 중..." size="lg" /></section>;
+  if (error) return <section className="dependency-canvas-state"><ErrorState message={error} onRetry={onRetry} /></section>;
+  if (symbolNodes.length === 0) return <section className="dependency-canvas-state"><EmptyState message="분석 가능한 심볼이 없습니다" /></section>;
+  return <SymbolGraphCanvas symbolNodes={symbolNodes} symbolEdges={symbolEdges} />;
+};
+
+const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges'>> = ({ symbolNodes, symbolEdges }) => {
+  const { fitView, zoomIn, zoomOut } = useReactFlow();
+  const graphRef = useRef<HTMLElement | null>(null);
+  const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
+  const { nodes: graphNodes, edges: graphEdges } = useMemo(() => buildSymbolGraphData(symbolNodes, symbolEdges), [symbolEdges, symbolNodes]);
+  const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
+
+  useEffect(() => setNodes(graphNodes), [graphNodes, setNodes]);
+  useEffect(() => {
+    const highlight = new Set(highlightedNodeId ? [highlightedNodeId] : []);
+    setEdges(graphEdges.map((edge) => ({ ...edge, data: { ...(edge.data ?? {}), highlighted: highlight.has(edge.source), dimmed: highlight.size > 0 && !highlight.has(edge.source), kind: edge.data?.kind ?? 'uses' } })));
+  }, [graphEdges, highlightedNodeId, setEdges]);
+  useEffect(() => { window.setTimeout(() => void fitView({ padding: 0.22, duration: 180 }), 0); }, [fitView, symbolEdges, symbolNodes]);
+  useEffect(() => {
+    if (!graphRef.current || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => void fitView({ padding: 0.22, duration: 180 }));
+    observer.observe(graphRef.current);
+    return () => observer.disconnect();
+  }, [fitView]);
+
+  return (
+    <section className="dependency-graph symbol-graph" aria-label="파일 내부 심볼 의존성 그래프" ref={graphRef}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        nodesDraggable
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        fitView
+        minZoom={0.3}
+        maxZoom={2}
+        proOptions={{ hideAttribution: true }}
+        defaultEdgeOptions={{ markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: 'var(--gae-color-text-secondary)' } }}
+        onNodeMouseEnter={(_, node) => setHighlightedNodeId(node.id)}
+        onNodeMouseLeave={() => setHighlightedNodeId(null)}
+        onPaneClick={() => setHighlightedNodeId(null)}
+      >
+        <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
+      </ReactFlow>
+      <CanvasControls onZoomIn={() => void zoomIn({ duration: 120 })} onZoomOut={() => void zoomOut({ duration: 120 })} onFitView={() => void fitView({ padding: 0.22, duration: 180 })} />
+      <SymbolLegendPanel />
+    </section>
+  );
+};

@@ -22,6 +22,7 @@ export const S05DependencyCanvasScreen: FC = () => {
     loadDependencies,
     selectFileForCode,
     selectFileForAI,
+    goToSymbolGraphView,
     handleChangedFilesLoaded,
     handleChangedFilesLoadFailed,
     handleDependenciesLoaded,
@@ -121,6 +122,7 @@ export const S05DependencyCanvasScreen: FC = () => {
           onRetry={retry}
           onFileCodeView={selectFileForCode}
           onFileAISummary={selectFileForAI}
+          onFileSymbolGraph={goToSymbolGraphView}
         />
       </ReactFlowProvider>
     </main>

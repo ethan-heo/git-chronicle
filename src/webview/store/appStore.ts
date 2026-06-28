@@ -2,7 +2,18 @@ import { create } from 'zustand';
 import i18n from 'i18next';
 import type { ToastItem, ToastType } from '../shared/components/Toast';
 import { getWebviewState, isVSCodeRuntime, postMessage, setWebviewState } from '../bridge/vscodeApi';
-import type { AIProviderName, ChangedFile, Commit, DependencyEdge, FilterState, RouteTransitionDirection, ScreenID, SummaryMode } from '../types/commit';
+import type {
+  AIProviderName,
+  ChangedFile,
+  Commit,
+  DependencyEdge,
+  FilterState,
+  RouteTransitionDirection,
+  ScreenID,
+  SummaryMode,
+  SymbolEdge,
+  SymbolNode,
+} from '../types/commit';
 
 const PAGE_SIZE = 200;
 const DEMO_PAGE_SIZE = 12;
@@ -37,6 +48,12 @@ interface AppState extends FilterState {
   dependencyEdges: DependencyEdge[];
   isLoadingDependencies: boolean;
   dependenciesError: string | null;
+  selectedFileForSymbolGraph: ChangedFile | null;
+  symbolNodes: SymbolNode[];
+  symbolEdges: SymbolEdge[];
+  isLoadingSymbolGraph: boolean;
+  hasLoadedSymbolGraph: boolean;
+  symbolGraphError: string | null;
   savePath: string | null;
   registeredProviders: AIProviderName[];
   activeAIProvider: AIProviderName | null;
@@ -68,6 +85,7 @@ interface AppState extends FilterState {
   loadCommits: (reset?: boolean) => void;
   loadChangedFiles: () => void;
   loadDependencies: () => void;
+  loadSymbolGraph: () => void;
   setFilter: (filter: Partial<FilterState>) => void;
   clearFilters: () => void;
   selectCommit: (commit: Commit) => void;
@@ -79,6 +97,7 @@ interface AppState extends FilterState {
   selectFileForAI: (file: ChangedFile) => void;
   goToCommitAISummary: () => void;
   goToCanvasView: () => void;
+  goToSymbolGraphView: (file: ChangedFile) => void;
   goToSettingsView: () => void;
   startBatchAISummary: () => void;
   cancelBatchAISummary: () => void;
@@ -107,6 +126,8 @@ interface AppState extends FilterState {
   handleChangedFilesLoadFailed: (message?: string) => void;
   handleDependenciesLoaded: (edges: DependencyEdge[]) => void;
   handleDependenciesLoadFailed: (message?: string) => void;
+  handleSymbolGraphLoaded: (payload: { nodes?: SymbolNode[]; edges?: SymbolEdge[] }) => void;
+  handleSymbolGraphLoadFailed: (message?: string) => void;
   setCommitListScrollTop: (top: number) => void;
 }
 
@@ -127,6 +148,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   dependencyEdges: [],
   isLoadingDependencies: false,
   dependenciesError: null,
+  selectedFileForSymbolGraph: null,
+  symbolNodes: [],
+  symbolEdges: [],
+  isLoadingSymbolGraph: false,
+  hasLoadedSymbolGraph: false,
+  symbolGraphError: null,
   savePath: isVSCodeRuntime() ? null : '.git-author',
   registeredProviders: isVSCodeRuntime() ? [] : ['claude', 'gemini'],
   activeAIProvider: isVSCodeRuntime() ? null : 'claude',
@@ -246,6 +273,36 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
+  loadSymbolGraph: () => {
+    const state = get();
+    if (!state.selectedFileForSymbolGraph || state.isLoadingSymbolGraph) {
+      return;
+    }
+
+    set({
+      isLoadingSymbolGraph: true,
+      hasLoadedSymbolGraph: false,
+      symbolGraphError: null,
+      symbolNodes: [],
+      symbolEdges: [],
+    });
+
+    if (!isVSCodeRuntime()) {
+      window.setTimeout(() => {
+        get().handleSymbolGraphLoaded({
+          nodes: demoSymbolNodes,
+          edges: demoSymbolEdges,
+        });
+      }, 220);
+      return;
+    }
+
+    postMessage('ANALYZE_SYMBOL_GRAPH', {
+      filePath: state.selectedFileForSymbolGraph.path,
+      commitHash: state.selectedCommit?.hash,
+    });
+  },
+
   setFilter: (filter) => {
     set(filter);
     set({ commitListScrollTop: 0 });
@@ -271,6 +328,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       dependencyEdges: [],
       dependenciesError: null,
       isLoadingDependencies: false,
+      selectedFileForSymbolGraph: null,
+      symbolNodes: [],
+      symbolEdges: [],
+      isLoadingSymbolGraph: false,
+      hasLoadedSymbolGraph: false,
+      symbolGraphError: null,
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: false,
@@ -362,6 +425,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       currentScreen: 'S05',
       previousScreen: 'S02',
+      transitionDirection: 'forward',
+    });
+  },
+
+  goToSymbolGraphView: (file) => {
+    const state = get();
+
+    set({
+      selectedFileForSymbolGraph: file,
+      symbolNodes: [],
+      symbolEdges: [],
+      symbolGraphError: null,
+      isLoadingSymbolGraph: false,
+      hasLoadedSymbolGraph: false,
+      previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
+      currentScreen: 'S08',
       transitionDirection: 'forward',
     });
   },
@@ -690,6 +769,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
+  handleSymbolGraphLoaded: (payload) => {
+    set({
+      symbolNodes: payload.nodes ?? [],
+      symbolEdges: payload.edges ?? [],
+      isLoadingSymbolGraph: false,
+      hasLoadedSymbolGraph: true,
+      symbolGraphError: null,
+    });
+  },
+
+  handleSymbolGraphLoadFailed: (message) => {
+    set({
+      symbolNodes: [],
+      symbolEdges: [],
+      isLoadingSymbolGraph: false,
+      hasLoadedSymbolGraph: true,
+      symbolGraphError: message ?? '심볼을 분석하지 못했습니다',
+    });
+  },
+
   handleDependenciesLoadFailed: (message = 'Failed to analyze dependencies') => {
     set({
       dependencyEdges: [],
@@ -857,4 +956,17 @@ const demoDependencyEdges: DependencyEdge[] = [
   { from: 'src/components/CommitFilter/CommitFilterPanel.tsx', to: 'src/types/commit.ts', kind: 'import' },
   { from: 'src/components/CommitList/useInfiniteScroll.ts', to: 'src/hooks/useIntersectionObserver.ts', kind: 'import' },
   { from: 'src/utils/pagination.ts', to: 'src/types/commit.ts', kind: 'require' },
+];
+
+const demoSymbolNodes: SymbolNode[] = [
+  { id: 'buildGraph:3', name: 'buildGraph', kind: 'function', lineStart: 3, lineEnd: 28, isExported: true },
+  { id: 'resolveNodes:30', name: 'resolveNodes', kind: 'function', lineStart: 30, lineEnd: 56, isExported: false },
+  { id: 'GraphState:58', name: 'GraphState', kind: 'interface', lineStart: 58, lineEnd: 64, isExported: true },
+  { id: 'GRAPH_LIMIT:66', name: 'GRAPH_LIMIT', kind: 'constant', lineStart: 66, lineEnd: 66, isExported: true },
+];
+
+const demoSymbolEdges: SymbolEdge[] = [
+  { from: 'buildGraph:3', to: 'resolveNodes:30', kind: 'calls' },
+  { from: 'buildGraph:3', to: 'GraphState:58', kind: 'uses' },
+  { from: 'resolveNodes:30', to: 'GRAPH_LIMIT:66', kind: 'uses' },
 ];

@@ -4,6 +4,7 @@ import { streamAISummary } from './aiService';
 import type { AIProviderName } from './aiTypes';
 import { runBatchAISummary } from './batchService';
 import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
+import { analyzeSymbolGraph } from './intraFileDependencyService';
 import { fetchChangedFiles, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError, type ChangedFile } from './gitService';
 import { buildCommitSummaryPrompt, buildFileSummaryPrompt } from './prompts';
 import { loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from './summaryFileService';
@@ -46,6 +47,11 @@ interface FetchFileDiffPayload {
 
 interface AnalyzeDependenciesPayload {
   filePaths?: string[];
+  commitHash?: string;
+}
+
+interface AnalyzeSymbolGraphPayload {
+  filePath?: string;
   commitHash?: string;
 }
 
@@ -120,6 +126,9 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'ANALYZE_DEPENDENCIES':
         await handleAnalyzeDependencies(panel, message.payload as AnalyzeDependenciesPayload);
+        break;
+      case 'ANALYZE_SYMBOL_GRAPH':
+        await handleAnalyzeSymbolGraph(panel, context, message.payload as AnalyzeSymbolGraphPayload);
         break;
       case 'FETCH_AI_SUMMARY_SETTINGS':
         await handleFetchAISummarySettings(panel, context);
@@ -310,6 +319,33 @@ async function handleAnalyzeDependencies(panel: vscode.WebviewPanel, payload: An
       },
     });
   }
+}
+
+async function handleAnalyzeSymbolGraph(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: AnalyzeSymbolGraphPayload = {}): Promise<void> {
+  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+  if (!repoPath || !payload.filePath) {
+    await panel.webview.postMessage({
+      type: 'SYMBOL_GRAPH_LOAD_FAILED',
+      payload: { message: l10n('Failed to analyze symbol graph') },
+    });
+    return;
+  }
+
+  try {
+    const commitHash = payload.commitHash ?? '';
+    const result = await analyzeSymbolGraph(repoPath, payload.filePath, commitHash);
+    await panel.webview.postMessage({
+      type: 'SYMBOL_GRAPH_LOADED',
+      payload: result,
+    });
+  } catch (error) {
+    await panel.webview.postMessage({
+      type: 'SYMBOL_GRAPH_LOAD_FAILED',
+      payload: { message: error instanceof Error ? error.message : l10n('Failed to analyze symbol graph') },
+    });
+  }
+  void context;
 }
 
 async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchCommitsPayload = {}): Promise<void> {

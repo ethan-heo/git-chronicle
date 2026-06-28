@@ -18,6 +18,7 @@ interface DependencyGraphProps {
   onRetry: () => void;
   onFileCodeView: (file: ChangedFile) => void;
   onFileAISummary: (file: ChangedFile) => void;
+  onFileSymbolGraph?: (file: ChangedFile) => void;
 }
 
 const nodeTypes = {
@@ -36,6 +37,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
   onRetry,
   onFileCodeView,
   onFileAISummary,
+  onFileSymbolGraph,
 }) => {
   const { t } = useTranslation();
   if (isLoading) {
@@ -68,6 +70,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
       dependencyEdges={dependencyEdges}
       onFileCodeView={onFileCodeView}
       onFileAISummary={onFileAISummary}
+      onFileSymbolGraph={onFileSymbolGraph}
     />
   );
 };
@@ -77,6 +80,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   dependencyEdges,
   onFileCodeView,
   onFileAISummary,
+  onFileSymbolGraph,
 }) => {
   const { t } = useTranslation();
   const { fitView, zoomIn, zoomOut } = useReactFlow();
@@ -85,11 +89,12 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const { nodes: graphNodes, edges: graphEdges } = useMemo(
     () =>
-      buildGraphData(files, dependencyEdges, {
-        onCodeView: onFileCodeView,
-        onAISummary: onFileAISummary,
-      }),
-    [dependencyEdges, files, onFileAISummary, onFileCodeView],
+        buildGraphData(files, dependencyEdges, {
+          onCodeView: onFileCodeView,
+          onAISummary: onFileAISummary,
+          onSymbolGraph: onFileSymbolGraph,
+        }),
+    [dependencyEdges, files, onFileAISummary, onFileCodeView, onFileSymbolGraph],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
