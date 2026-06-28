@@ -20,6 +20,10 @@ View file-level unified diffs with syntax highlighting powered by [Shiki](https:
 
 Visualize import/require relationships between changed files as an interactive node-edge graph. Zoom, pan, and select nodes to explore how files connect.
 
+### Intra-file Symbol Dependency Canvas
+
+Inspect the internal structure of a single file by visualizing functions, classes, variables, and types as a symbol graph. Hover and click symbols to explore calls, references, inheritance, and implementation relationships, then open the code panel to jump to the relevant lines.
+
 ### AI Summary
 
 Generate markdown summaries of your work using your local AI CLI (Claude, Gemini, or Codex). Summaries are streamed in real time, saved to a local path, and reused instantly on revisit — no repeated API calls.
@@ -38,7 +42,7 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 
 1. Open the Command Palette (`⌘+Shift+P` / `Ctrl+Shift+P`)
 2. Run **`GitChronicle: Open`**
-3. Browse commits → select a commit → explore changed files, diffs, dependencies, and AI summaries
+3. Browse commits → select a commit → explore changed files, diffs, dependencies, symbol graphs, and AI summaries
 
 ## Extension Settings
 
