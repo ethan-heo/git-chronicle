@@ -12,7 +12,7 @@ GitRewind의 상태는 두 레이어에 분리하여 관리한다.
 |--------|-----------|--------|
 | Webview (React) | UI 전역 상태 | Zustand 단일 스토어 (`useAppStore`) |
 | Webview State | 웹뷰 재생성 후 복원할 최소 UI 상태 | VSCode `acquireVsCodeApi().getState()` / `setState()` |
-| Extension Host | 설정 영속 상태 | `ExtensionContext.globalState` |
+| Extension Host | 설정 영속 상태 | `registeredProviders`는 `ExtensionContext.globalState`, 프로젝트별 AI 설정은 `ExtensionContext.workspaceState` |
 | 컴포넌트 로컬 | hover, 드롭다운 열림 등 UI 전용 상태 | `React.useState` |
 
 ---
@@ -523,19 +523,26 @@ F07 저장 경로 설정은 S06에서 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시
 
 ---
 
-## ExtensionContext.globalState (영속 설정)
+## ExtensionContext Memento (영속 설정)
 
-Extension Host 재시작 후에도 유지해야 하는 설정은 F06/F07 구현에서 `ExtensionContext.globalState`에 저장한다. `loadAISettingsState()`는 `globalState`를 우선 사용하고, 기존 VSCode configuration의 `gitChronicle.savePath`, `gitChronicle.activeAIProvider`는 fallback으로만 읽는다.
+Extension Host 재시작 후에도 유지해야 하는 설정은 F06/F07 구현에서 `ExtensionContext.globalState`와 `ExtensionContext.workspaceState`로 나누어 저장한다. `loadAISettingsState()`는 CLI 등록 정보만 `globalState`에서 읽고, 프로젝트별 설정은 `workspaceState`를 우선 사용한다. VSCode configuration의 `gitChronicle.savePath`, `gitChronicle.activeAIProvider`는 `workspaceState`가 비어 있을 때만 fallback으로 읽는다.
 
 | 키 | 타입 | 설명 |
 |---|------|------|
-| `gitChronicle.savePath` | `string \| undefined` | AI 정리 저장 경로 |
 | `gitChronicle.registeredProviders` | `AIProviderName[]` | 등록된 AI CLI 목록 |
-| `gitChronicle.activeAIProvider` | `AIProviderName \| undefined` | 활성화된 AI CLI |
-| `gitRewind.summaryModelPerProvider` | `Record<AIProviderName, string>` | provider별 요약용 모델 |
-| `gitRewind.qaModelPerProvider` | `Record<AIProviderName, string>` | provider별 Q&A용 모델 |
+| `gitChronicle.activeAIProvider` | `AIProviderName \| undefined` | 현재 워크스페이스의 활성화된 AI CLI |
+| `gitChronicle.savePath` | `string \| undefined` | 현재 워크스페이스의 AI 정리 저장 경로 |
+| `gitRewind.summaryModelPerProvider` | `Record<AIProviderName, string>` | 현재 워크스페이스의 provider별 요약용 모델 |
+| `gitRewind.qaModelPerProvider` | `Record<AIProviderName, string>` | 현재 워크스페이스의 provider별 Q&A용 모델 |
 
-Extension 활성화 시 `globalState`에서 값을 읽어 Webview에 초기 상태로 전달한다.
+저장소 구분은 다음과 같다.
+
+| 저장소 | 키 |
+|---|---|
+| `globalState` | `gitChronicle.registeredProviders` |
+| `workspaceState` | `gitChronicle.activeAIProvider`, `gitChronicle.savePath`, `gitRewind.summaryModelPerProvider`, `gitRewind.qaModelPerProvider` |
+
+Extension 활성화 시 이 값을 읽어 Webview에 초기 상태로 전달한다.
 
 ---
 

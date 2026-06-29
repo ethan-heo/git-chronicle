@@ -75,7 +75,7 @@ async function handleClearSavePath(panel: vscode.WebviewPanel, context: vscode.E
 }
 
 export async function setSavePath(context: vscode.ExtensionContext, savePath: string | null): Promise<AISettingsState> {
-  await context.globalState.update('gitRewind.savePath', savePath ?? undefined);
+  await context.workspaceState.update('gitChronicle.savePath', savePath ?? undefined);
   return loadAISettingsState(context);
 }
 ```
@@ -195,6 +195,7 @@ case 'SAVE_PATH_CLEARED': {
 5. 경로 자체는 설정 시점에 디렉토리를 자동 생성하지 않음 (F05/F05b/F08 저장 시점에서 처리)
 6. 경로 설정 후 `hasSavedSummary` 재계산은 다음 S02 진입 시 수행
 7. 저장 디렉토리 생성 또는 파일 쓰기 실패 시 `SummarySaveError`를 `AI_SUMMARY_ERROR`로 전달하고 "저장 경로를 생성할 수 없습니다. 권한을 확인하세요"를 표시
+8. `savePath`는 `ExtensionContext.workspaceState`에 저장되어 프로젝트마다 분리된다
 
 ---
 

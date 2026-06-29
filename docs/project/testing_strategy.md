@@ -48,6 +48,23 @@ describe('summaryFileService', () => {
 });
 ```
 
+```typescript
+// aiProviderService.test.ts
+describe('aiProviderService', () => {
+  it('registeredProviders는 globalState에 유지하고 프로젝트 설정은 workspaceState에서 읽는다', () => {
+    // globalState / workspaceState mock
+  });
+
+  it('workspaceState가 비어 있으면 gitChronicle 설정값으로 폴백한다', () => {
+    // vscode.workspace.getConfiguration('gitChronicle') mock
+  });
+
+  it('activeAIProvider, savePath, 모델 선택은 workspaceState에만 저장한다', async () => {
+    // setActiveAIProvider / setSavePath / setAIModel
+  });
+});
+```
+
 #### Zustand 스토어 액션
 
 ```typescript

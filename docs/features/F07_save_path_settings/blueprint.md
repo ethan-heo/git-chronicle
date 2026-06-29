@@ -14,13 +14,13 @@
 
 ## Inputs
 
-- `savePath: string | null` — 전역 상태
+- `savePath: string | null` — 워크스페이스별 상태
 
 ---
 
 ## Outputs
 
-- `savePath` 업데이트 (전역 상태)
+- `savePath` 업데이트 (워크스페이스별 상태)
 
 ---
 

@@ -138,7 +138,7 @@ export async function setActiveAIProvider(context: vscode.ExtensionContext, prov
 }
 
 export async function setSavePath(context: vscode.ExtensionContext, savePath: string | null): Promise<AISettingsState> {
-  await context.globalState.update(SAVE_PATH_KEY, savePath ?? undefined);
+  await context.workspaceState.update(SAVE_PATH_KEY, savePath ?? undefined);
 
   return loadAISettingsState(context);
 }
@@ -166,10 +166,16 @@ export function loadAISettingsState(context: vscode.ExtensionContext): AISetting
   const configuredActiveProvider = normalizeProviderName(configuration.get<string>('activeAIProvider'));
   const configuredSavePath = configuration.get<string>('savePath')?.trim() || null;
   const registeredProviders = normalizeProviderNames(context.globalState.get<AIProviderName[]>(REGISTERED_PROVIDERS_KEY, []));
-  const activeAIProvider = normalizeProviderName(context.globalState.get<string>(ACTIVE_PROVIDER_KEY)) ?? configuredActiveProvider;
-  const savePath = context.globalState.get<string>(SAVE_PATH_KEY) || configuredSavePath;
-  const summaryModelPerProvider = normalizeModelMap(context.globalState.get<Partial<Record<AIProviderName, string>>>(SUMMARY_MODEL_KEY), DEFAULT_SUMMARY_MODELS);
-  const qaModelPerProvider = normalizeModelMap(context.globalState.get<Partial<Record<AIProviderName, string>>>(QA_MODEL_KEY), DEFAULT_QA_MODELS);
+  const activeAIProvider = normalizeProviderName(context.workspaceState.get<string>(ACTIVE_PROVIDER_KEY)) ?? configuredActiveProvider;
+  const savePath = context.workspaceState.get<string>(SAVE_PATH_KEY) || configuredSavePath;
+  const summaryModelPerProvider = normalizeModelMap(
+    context.workspaceState.get<Partial<Record<AIProviderName, string>>>(SUMMARY_MODEL_KEY),
+    DEFAULT_SUMMARY_MODELS,
+  );
+  const qaModelPerProvider = normalizeModelMap(
+    context.workspaceState.get<Partial<Record<AIProviderName, string>>>(QA_MODEL_KEY),
+    DEFAULT_QA_MODELS,
+  );
 
   return {
     registeredProviders,
@@ -185,9 +191,9 @@ export function loadAISettingsState(context: vscode.ExtensionContext): AISetting
 async function persistAISettingsState(context: vscode.ExtensionContext, state: AISettingsState): Promise<void> {
   await Promise.all([
     context.globalState.update(REGISTERED_PROVIDERS_KEY, state.registeredProviders),
-    context.globalState.update(ACTIVE_PROVIDER_KEY, state.activeAIProvider ?? undefined),
-    context.globalState.update(SUMMARY_MODEL_KEY, state.summaryModelPerProvider),
-    context.globalState.update(QA_MODEL_KEY, state.qaModelPerProvider),
+    context.workspaceState.update(ACTIVE_PROVIDER_KEY, state.activeAIProvider ?? undefined),
+    context.workspaceState.update(SUMMARY_MODEL_KEY, state.summaryModelPerProvider),
+    context.workspaceState.update(QA_MODEL_KEY, state.qaModelPerProvider),
   ]);
 }
 

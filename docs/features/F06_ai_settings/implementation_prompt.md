@@ -126,8 +126,8 @@ export function persistProviderState(
   registeredProviders: AIProviderName[],
   activeAIProvider: AIProviderName | null
 ): void {
-  context.globalState.update('gitRewind.registeredProviders', registeredProviders);
-  context.globalState.update('gitRewind.activeAIProvider', activeAIProvider ?? undefined);
+  context.globalState.update('gitChronicle.registeredProviders', registeredProviders);
+  context.workspaceState.update('gitChronicle.activeAIProvider', activeAIProvider ?? undefined);
 }
 
 export function loadProviderState(context: vscode.ExtensionContext): {
@@ -135,8 +135,8 @@ export function loadProviderState(context: vscode.ExtensionContext): {
   activeAIProvider: AIProviderName | null;
 } {
   return {
-    registeredProviders: context.globalState.get('gitRewind.registeredProviders', []),
-    activeAIProvider: context.globalState.get('gitRewind.activeAIProvider', null),
+    registeredProviders: context.globalState.get('gitChronicle.registeredProviders', []),
+    activeAIProvider: context.workspaceState.get('gitChronicle.activeAIProvider', null),
   };
 }
 ```
@@ -266,7 +266,7 @@ case 'AI_PROVIDER_REGISTRATION_FAILED': {
 3. 실패 시 `error` + `CLIInstallLink` 표시
 4. `active` 클릭 → `inactive` 전환 (`activeAIProvider = null`)
 5. `inactive` 클릭 → `active` 전환 (기존 active는 `inactive`)
-6. 모든 상태 변경은 `ExtensionContext.globalState`에 영속
+6. `registeredProviders`는 `ExtensionContext.globalState`에, `activeAIProvider`와 모델 선택은 `ExtensionContext.workspaceState`에 영속
 
 ---
 

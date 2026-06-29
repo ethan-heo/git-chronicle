@@ -114,8 +114,9 @@
 
 ## 환경 변수 & 설정
 
-- VSCode Extension의 사용자 설정은 `vscode.workspace.getConfiguration('gitRewind')`로 접근한다.
-- AI 프로바이더 등록 정보와 저장 경로는 `ExtensionContext.globalState`에 영속 저장한다.
+- VSCode Extension의 사용자 설정은 `vscode.workspace.getConfiguration('gitChronicle')`로 접근한다.
+- AI 프로바이더 등록 정보는 `ExtensionContext.globalState`에 영속 저장한다.
+- `activeAIProvider`, `savePath`, `summaryModelPerProvider`, `qaModelPerProvider`는 `ExtensionContext.workspaceState`에 영속 저장해 프로젝트별로 분리한다.
 - Webview에 초기 상태를 전달할 때는 `WebviewPanel.webview.html` 내 `<meta>`태그 또는 초기 `postMessage`를 사용한다.
 
 ---

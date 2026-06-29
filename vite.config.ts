@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       i18next: path.resolve(__dirname, 'src/webview/i18next.ts'),
       'react-i18next': path.resolve(__dirname, 'src/webview/react-i18next.ts'),
+      vscode: path.resolve(__dirname, 'tests/mocks/vscode.ts'),
     },
   },
   plugins: [react(), tailwindcss()],
