@@ -24,7 +24,7 @@
 ## User Scenarios
 
 1. [AI 정리 보기] 버튼 클릭 시 AI 정리 화면(S-04) 활성화. 헤더에 `{커밋 메시지} > {파일 경로}` 표시.
-2. AI 요약 뷰어(S-04) 헤더의 [코드 함께 보기] 버튼을 클릭하면 동일 파일을 유지한 채 분할 화면(S-07)으로 전환된다.
+2. AI 요약 뷰어(S-04) 헤더의 [코드 함께 보기] 버튼을 클릭하면 동일 파일을 유지한 채 우측 코드 패널이 인라인으로 슬라이드 인한다.
 3. **기존 저장본이 있는 경우**: 저장된 마크다운 파일을 즉시 불러와 표시. [재생성] 버튼 제공.
 4. **저장본이 없는 경우**: 클릭 즉시 파일 diff를 컨텍스트로 AI가 마크다운 형식으로 정리.
    - 정리된 내용은 설정 경로에 자동 저장.
@@ -105,7 +105,7 @@
 ## Related Screens
 
 - [S04_AISummaryViewerScreen](../../screens/S04_ai_summary_viewer/blueprint.md)
-- [S07_CodeAndAISummaryScreen](../../screens/S07_code_and_ai_summary/blueprint.md)
+- [S07_CodeAndAISummaryScreen](../../screens/S07_code_and_ai_summary/blueprint.md) - 기존 독립 분할 화면 문서. 현재 구현에서는 인라인 패널 방식으로 대체되었지만, 레이아웃 비교용 참조로 남겨둔다.
 
 ---
 

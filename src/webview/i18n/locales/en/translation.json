@@ -51,6 +51,7 @@
     "empty": "No diff to display",
     "binary": "Binary file - diff not available",
     "deleted_file": "Deleted file",
+    "panel_close_aria": "Close diff panel",
     "region_aria": "{{filePath}} code changes"
   },
   "dependency": {
@@ -107,6 +108,8 @@
     "no_save_path": "Set a save path first",
     "go_to_settings": "Go to settings",
     "split_view": "View code together",
+    "split_panel_hide": "Hide panel",
+    "split_panel_close_aria": "Close split panel",
     "token_warning_dismiss_aria": "Dismiss token warning",
     "overwrite_title": "Overwrite the existing saved version?",
     "overwrite_body": "Run AI again with the same diff and replace the currently saved summary with the new result.",

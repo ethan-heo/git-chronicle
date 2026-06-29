@@ -51,6 +51,7 @@
     "empty": "표시할 diff가 없습니다",
     "binary": "Binary file - diff를 표시할 수 없습니다",
     "deleted_file": "삭제된 파일입니다",
+    "panel_close_aria": "diff 패널 닫기",
     "region_aria": "{{filePath}} 코드 변경 내역"
   },
   "dependency": {
@@ -107,6 +108,8 @@
     "no_save_path": "저장 경로를 먼저 설정해주세요",
     "go_to_settings": "설정으로 이동",
     "split_view": "코드 함께 보기",
+    "split_panel_hide": "패널 닫기",
+    "split_panel_close_aria": "분할 패널 닫기",
     "token_warning_dismiss_aria": "토큰 경고 닫기",
     "overwrite_title": "기존 저장본을 덮어쓰시겠습니까?",
     "overwrite_body": "동일한 diff로 AI를 다시 호출하여 현재 저장된 정리 내용을 새 결과로 교체합니다.",

@@ -427,6 +427,105 @@ button:focus-visible,
   border-left: 1px solid var(--gae-border-color-default);
 }
 
+.code-split-workspace,
+.ai-split-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  flex: 1;
+  min-height: 0;
+  transition: grid-template-columns var(--gae-motion-duration-base) var(--gae-motion-easing-default);
+}
+
+.code-split-workspace-open,
+.ai-split-workspace-open {
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 40vw);
+}
+
+.code-split-main-panel,
+.ai-split-main-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.split-side-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-left: 1px solid var(--gae-border-color-default);
+  background: var(--gae-color-surface-secondary);
+  transform: translateX(100%);
+  transition:
+    transform 220ms ease-out,
+    opacity 220ms ease-out;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.split-side-panel-open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.split-side-panel-closed {
+  opacity: 0;
+}
+
+.split-side-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gae-spacing-md);
+  border-bottom: 1px solid var(--gae-border-color-default);
+  padding: var(--gae-spacing-md) var(--gae-spacing-lg);
+}
+
+.split-side-panel-title {
+  min-width: 0;
+}
+
+.split-side-panel-file {
+  overflow: hidden;
+  font-size: var(--gae-font-size-sm);
+  font-weight: var(--gae-font-weight-bold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.split-side-panel-subtitle {
+  margin-top: 2px;
+  color: var(--gae-color-text-secondary);
+  font-size: var(--gae-font-size-xs);
+}
+
+.split-side-panel-close {
+  border: none;
+  border-radius: var(--gae-border-radius-sm);
+  background: transparent;
+  color: var(--gae-color-text-secondary);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 var(--gae-spacing-xs);
+}
+
+.split-side-panel-close:hover {
+  background: var(--gae-color-surface-hover);
+  color: var(--gae-color-text-primary);
+}
+
+.split-side-panel-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .hero-panel {
   max-width: 980px;
   padding: 34px var(--gae-spacing-xl) 48px;

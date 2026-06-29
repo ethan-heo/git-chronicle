@@ -1,1 +1,2 @@
-export { S07CodeAndAISummaryScreen } from './S07CodeAndAISummaryScreen';
+export { AISummaryPanel } from './AISummaryPanel';
+export { DiffViewerPanel } from './DiffViewerPanel';

@@ -43,7 +43,8 @@ interface StreamDemoSummaryOptions {
   complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
 }
 
-export function useAISummary() {
+export function useAISummary(options?: { isActive?: boolean }) {
+  const isActive = options?.isActive ?? true;
   const { t } = useTranslation();
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const selectedFile = useAppStore((state) => state.selectedFile);
@@ -173,7 +174,7 @@ export function useAISummary() {
   }, [appendAISummaryChunk, completeAISummary, failAISummary, hasCurrentSavedSummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration]);
 
   useEffect(() => {
-    if (!hasLoadedSettings || !canStartSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) return;
+    if (!isActive || !hasLoadedSettings || !canStartSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) return;
     if (!isVSCodeRuntime() && summaryMode === 'file' && selectedFile?.hasSavedSummary) {
       loadSavedAISummary({
         content: DEMO_SUMMARY,
@@ -183,7 +184,7 @@ export function useAISummary() {
       return;
     }
     startSummary(false);
-  }, [activeAIProvider, canStartSummary, currentSummaryContent, hasLoadedSettings, isGeneratingSummary, isLoadingSummary, loadSavedAISummary, savePath, selectedCommit?.shortHash, selectedFile, startSummary, summaryError, summaryMode]);
+  }, [activeAIProvider, canStartSummary, currentSummaryContent, hasLoadedSettings, isActive, isGeneratingSummary, isLoadingSummary, loadSavedAISummary, savePath, selectedCommit?.shortHash, selectedFile, startSummary, summaryError, summaryMode]);
 
   return {
     activeAIProvider,

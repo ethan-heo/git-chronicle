@@ -30,7 +30,7 @@
 
 ## Child Screens
 
-없음
+- 우측 인라인 AI 요약 패널: `AISummaryPanel`
 
 ---
 
@@ -41,11 +41,14 @@ S03_CodeViewerScreen
 ├─ TopHeader ({커밋 메시지} > {파일 경로})
 │   ├─ BackButton → 이전 화면 복귀
 │   └─ SettingsIcon (⚙) → S06
-└─ DiffViewer (스크롤 영역)
-    ├─ DeletedFileNotice (조건부, 삭제된 파일)
-    └─ DiffLine × N
-       OR BinaryFileNotice
-   └─ 로드 후 첫 변경 라인으로 자동 스크롤
+└─ code-split-workspace
+   ├─ code-split-main-panel
+   │  └─ DiffViewer (스크롤 영역)
+   │      ├─ DeletedFileNotice (조건부, 삭제된 파일)
+   │      └─ DiffLine × N
+   │         OR BinaryFileNotice
+   │      └─ 로드 후 첫 변경 라인으로 자동 스크롤
+   └─ AISummaryPanel (조건부 인라인 패널)
 ```
 
 ---
@@ -60,6 +63,7 @@ S03_CodeViewerScreen
 | `DiffLine` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
 | `BinaryFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
 | `DeletedFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
+| `AISummaryPanel` | [S07 blueprint](../S07_code_and_ai_summary/blueprint.md) |
 | `LoadingState` | [global_components](../../core/global_components.md#loadingstate) |
 | `ErrorState` | [global_components](../../core/global_components.md#errorstate) |
 
@@ -84,6 +88,8 @@ S03_CodeViewerScreen
     → selectedFile 설정
     → diff 로드
     → DiffViewer 표시 (또는 BinaryFileNotice / DeletedFileNotice)
+    → [AI 요약 함께 보기] 클릭 시 isSplitPanelOpen 토글
+    → 우측 AISummaryPanel 슬라이드 인
     → BackButton → 이전 화면 복귀
     → ⚙ → S06
 ```

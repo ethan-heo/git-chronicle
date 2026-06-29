@@ -5,6 +5,7 @@ import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { DiffViewer } from './DiffViewer';
 import { useFileDiff } from './useFileDiff';
+import { AISummaryPanel } from '../F09/AISummaryPanel';
 
 export const S03CodeViewerScreen: FC = () => {
   const { t } = useTranslation();
@@ -12,7 +13,9 @@ export const S03CodeViewerScreen: FC = () => {
   const selectedFile = useAppStore((state) => state.selectedFile);
   const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const goToSettingsView = useAppStore((state) => state.goToSettingsView);
-  const goToSplitView = useAppStore((state) => state.goToSplitView);
+  const isSplitPanelOpen = useAppStore((state) => state.isSplitPanelOpen);
+  const openSplitPanel = useAppStore((state) => state.openSplitPanel);
+  const closeSplitPanel = useAppStore((state) => state.closeSplitPanel);
   const isRouteSlotActive = useRouteSlotActive();
   const { diffState, loadFileDiff } = useFileDiff({
     isActive: isRouteSlotActive,
@@ -32,19 +35,24 @@ export const S03CodeViewerScreen: FC = () => {
         context={`${selectedCommit.shortHash} > ${selectedFile.path}`}
         showBackButton
         onBackClick={goBackFromDetail}
-        endSlot={<SplitViewButton label={t('ai_summary.split_view')} disabled={!selectedFile} onClick={goToSplitView} />}
+        endSlot={<SplitViewButton label={t(isSplitPanelOpen ? 'ai_summary.split_panel_hide' : 'ai_summary.split_view')} disabled={!selectedFile} onClick={isSplitPanelOpen ? closeSplitPanel : openSplitPanel} />}
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />
-      <DiffViewer
-        diffLines={diffState.diffLines}
-        filePath={selectedFile.path}
-        isLoading={diffState.isLoading}
-        error={diffState.error}
-        isBinaryFile={diffState.isBinaryFile}
-        isDeletedFile={diffState.isDeletedFile}
-        onRetry={loadFileDiff}
-      />
+      <section className={['code-split-workspace', isSplitPanelOpen ? 'code-split-workspace-open' : ''].filter(Boolean).join(' ')}>
+        <div className="code-split-main-panel">
+          <DiffViewer
+            diffLines={diffState.diffLines}
+            filePath={selectedFile.path}
+            isLoading={diffState.isLoading}
+            error={diffState.error}
+            isBinaryFile={diffState.isBinaryFile}
+            isDeletedFile={diffState.isDeletedFile}
+            onRetry={loadFileDiff}
+          />
+        </div>
+        <AISummaryPanel isOpen={isSplitPanelOpen} filePath={selectedFile.path} onClose={closeSplitPanel} onGoToSettings={goToSettingsView} />
+      </section>
     </main>
   );
 };

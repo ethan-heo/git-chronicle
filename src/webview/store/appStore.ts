@@ -56,6 +56,7 @@ interface AppState extends FilterState {
   hasLoadedSymbolGraph: boolean;
   symbolGraphError: string | null;
   isCodePanelOpen: boolean;
+  isSplitPanelOpen: boolean;
   activeSymbolNodeId: string | null;
   hoveredSymbolNodeId: string | null;
   savePath: string | null;
@@ -96,7 +97,8 @@ interface AppState extends FilterState {
   goToCommitList: () => void;
   goToHistoryView: () => void;
   goBackFromDetail: () => void;
-  goToSplitView: () => void;
+  openSplitPanel: () => void;
+  closeSplitPanel: () => void;
   selectFileForCode: (file: ChangedFile) => void;
   selectFileForAI: (file: ChangedFile) => void;
   goToCommitAISummary: () => void;
@@ -165,6 +167,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   hasLoadedSymbolGraph: false,
   symbolGraphError: null,
   isCodePanelOpen: false,
+  isSplitPanelOpen: false,
   activeSymbolNodeId: null,
   hoveredSymbolNodeId: null,
   savePath: isVSCodeRuntime() ? null : '.git-author',
@@ -354,6 +357,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       hasLoadedSymbolGraph: false,
       symbolGraphError: null,
       isCodePanelOpen: false,
+      isSplitPanelOpen: false,
       activeSymbolNodeId: null,
       hoveredSymbolNodeId: null,
       currentSummaryContent: '',
@@ -374,6 +378,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: 'S01',
       previousScreen: null,
       transitionDirection: 'back',
+      isSplitPanelOpen: false,
     });
   },
 
@@ -382,6 +387,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: 'S02',
       previousScreen: null,
       transitionDirection: 'back',
+      isSplitPanelOpen: false,
     });
   },
 
@@ -393,6 +399,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: previousScreen,
       previousScreen: null,
       transitionDirection: 'back',
+      isSplitPanelOpen: false,
     });
   },
 
@@ -404,6 +411,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S03',
       transitionDirection: 'forward',
+      isSplitPanelOpen: false,
     });
   },
 
@@ -423,6 +431,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S04',
       transitionDirection: 'forward',
+      isSplitPanelOpen: false,
     });
   },
 
@@ -440,6 +449,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       previousScreen: 'S02',
       currentScreen: 'S04',
       transitionDirection: 'forward',
+      isSplitPanelOpen: false,
     });
   },
 
@@ -463,6 +473,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       isLoadingSymbolGraph: false,
       hasLoadedSymbolGraph: false,
       isCodePanelOpen: false,
+      isSplitPanelOpen: false,
       activeSymbolNodeId: null,
       hoveredSymbolNodeId: null,
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
@@ -479,13 +490,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  goToSplitView: () => {
-    set((state) => ({
-      currentScreen: 'S07',
-      previousScreen: state.currentScreen,
-      transitionDirection: 'forward',
-    }));
-  },
+  openSplitPanel: () => set({ isSplitPanelOpen: true }),
+  closeSplitPanel: () => set({ isSplitPanelOpen: false }),
 
   startBatchAISummary: () => {
     const state = get();

@@ -7,12 +7,15 @@ import { AISummaryViewer } from './AISummaryViewer';
 import { OverwriteConfirmDialog } from './OverwriteConfirmDialog';
 import { TokenLimitWarning } from './TokenLimitWarning';
 import { useAISummary } from './useAISummary';
+import { DiffViewerPanel } from '../F09/DiffViewerPanel';
 
 export const S04AISummaryViewerScreen: FC = () => {
   const { t } = useTranslation();
   const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const goToSettingsView = useAppStore((state) => state.goToSettingsView);
-  const goToSplitView = useAppStore((state) => state.goToSplitView);
+  const isSplitPanelOpen = useAppStore((state) => state.isSplitPanelOpen);
+  const openSplitPanel = useAppStore((state) => state.openSplitPanel);
+  const closeSplitPanel = useAppStore((state) => state.closeSplitPanel);
   const isRouteSlotActive = useRouteSlotActive();
   const {
     activeAIProvider,
@@ -36,7 +39,7 @@ export const S04AISummaryViewerScreen: FC = () => {
     summaryError,
     summaryMode,
     summarySavedPath,
-  } = useAISummary();
+  } = useAISummary({ isActive: isRouteSlotActive });
 
   if (!selectedCommit || (summaryMode === 'file' && !selectedFile)) {
     return null;
@@ -49,27 +52,30 @@ export const S04AISummaryViewerScreen: FC = () => {
         context={headerContext}
         showBackButton
         onBackClick={goBackFromDetail}
-        endSlot={<SplitViewButton label={t('ai_summary.split_view')} disabled={summaryMode !== 'file'} onClick={goToSplitView} />}
+        endSlot={<SplitViewButton label={t(isSplitPanelOpen ? 'ai_summary.split_panel_hide' : 'ai_summary.split_view')} disabled={summaryMode !== 'file'} onClick={isSplitPanelOpen ? closeSplitPanel : openSplitPanel} />}
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />
-      <section className="ai-summary-screen">
-        <TokenLimitWarning isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed} onDismiss={() => setIsTokenWarningDismissed(true)} />
-        <AISummaryViewer
-          content={currentSummaryContent}
-          error={summaryError}
-          isLoading={!hasLoadedSettings || isLoadingSummary || !isRouteSlotActive}
-          isGenerating={isGeneratingSummary}
-          hasSavedSummary={hasCurrentSavedSummary}
-          hasAIProvider={Boolean(activeAIProvider)}
-          hasSavePath={Boolean(savePath)}
-          savedPath={summarySavedPath}
-          providerLabel={activeAIProvider}
-          summaryMode={summaryMode}
-          onGoToSettings={goToSettingsView}
-          onRegenerate={onRegenerate}
-          onRetry={onRetry}
-        />
+      <section className={['ai-split-workspace', isSplitPanelOpen ? 'ai-split-workspace-open' : ''].filter(Boolean).join(' ')}>
+        <div className="ai-split-main-panel">
+          <TokenLimitWarning isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed} onDismiss={() => setIsTokenWarningDismissed(true)} />
+          <AISummaryViewer
+            content={currentSummaryContent}
+            error={summaryError}
+            isLoading={!hasLoadedSettings || isLoadingSummary || !isRouteSlotActive}
+            isGenerating={isGeneratingSummary}
+            hasSavedSummary={hasCurrentSavedSummary}
+            hasAIProvider={Boolean(activeAIProvider)}
+            hasSavePath={Boolean(savePath)}
+            savedPath={summarySavedPath}
+            providerLabel={activeAIProvider}
+            summaryMode={summaryMode}
+            onGoToSettings={goToSettingsView}
+            onRegenerate={onRegenerate}
+            onRetry={onRetry}
+          />
+        </div>
+        {selectedFile ? <DiffViewerPanel isOpen={isSplitPanelOpen} filePath={selectedFile.path} commitHash={selectedCommit.hash} isDeletedFile={selectedFile.status === 'D'} onClose={closeSplitPanel} /> : null}
       </section>
       <OverwriteConfirmDialog isOpen={isDialogOpen} onCancel={() => setIsDialogOpen(false)} onConfirm={onConfirmRegenerate} />
     </main>
