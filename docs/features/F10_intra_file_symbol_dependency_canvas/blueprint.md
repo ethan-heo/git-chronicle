@@ -88,6 +88,7 @@ interface SymbolGraphProps {
 
 #### Accessibility
 - `aria-label="파일 내부 노드 의존성 그래프"`
+- `LoadingState`, `EmptyState`, 코드 패널, 범례 패널, 코드 뷰어의 접근성 라벨은 `symbol_graph.*` 번역 키를 사용한다
 
 #### Reusability
 F10 전용. S08_IntraFileSymbolDependencyCanvasScreen에서만 사용. → 상세 문서: [components/SymbolGraph.md](../../components/SymbolGraph.md)
@@ -218,6 +219,9 @@ interface SymbolLegendPanelProps {
 
 #### Interaction
 없음 (정적 콘텐츠)
+
+#### Accessibility
+- 패널 제목, 토글 버튼, 라벨 설명, 엣지 설명은 모두 `symbol_graph.*` 번역 키를 사용해 한국어/영어를 함께 지원한다
 
 #### States
 - `visible`: 전체 표시

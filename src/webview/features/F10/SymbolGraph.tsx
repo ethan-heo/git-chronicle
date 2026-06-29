@@ -1,6 +1,7 @@
 import '@xyflow/react/dist/style.css';
 import { Background, BackgroundVariant, MarkerType, ReactFlow, useEdgesState, useNodesInitialized, useNodesState, useReactFlow } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import { CanvasControls } from '../F04/CanvasControls';
 import { buildSymbolGraphData } from './symbolGraphUtils';
@@ -24,13 +25,16 @@ const nodeTypes = { symbolNode: SymbolNode };
 const edgeTypes = { symbolEdge: SymbolEdge };
 
 export const SymbolGraph: FC<Props> = ({ symbolNodes, symbolEdges, isLoading, error, onRetry, activeNodeId, onNodeClick, onNodeHover }) => {
-  if (isLoading) return <section className="dependency-canvas-state"><LoadingState label="심볼을 분석하는 중..." size="lg" /></section>;
+  const { t } = useTranslation();
+
+  if (isLoading) return <section className="dependency-canvas-state"><LoadingState label={t('symbol_graph.loading')} size="lg" /></section>;
   if (error) return <section className="dependency-canvas-state"><ErrorState message={error} onRetry={onRetry} /></section>;
-  if (symbolNodes.length === 0) return <section className="dependency-canvas-state"><EmptyState message="분석 가능한 심볼이 없습니다" /></section>;
+  if (symbolNodes.length === 0) return <section className="dependency-canvas-state"><EmptyState message={t('symbol_graph.empty')} /></section>;
   return <SymbolGraphCanvas symbolNodes={symbolNodes} symbolEdges={symbolEdges} activeNodeId={activeNodeId} onNodeClick={onNodeClick} onNodeHover={onNodeHover} />;
 };
 
 const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeNodeId' | 'onNodeClick' | 'onNodeHover'>> = ({ symbolNodes, symbolEdges, activeNodeId, onNodeClick, onNodeHover }) => {
+  const { t } = useTranslation();
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [isLegendMinimized, setIsLegendMinimized] = useState(true);
@@ -60,7 +64,7 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
   }, [edges.length, fitView, nodes.length, nodesInitialized]);
 
   return (
-    <section className="dependency-graph symbol-graph" aria-label="파일 내부 심볼 의존성 그래프">
+    <section className="dependency-graph symbol-graph" aria-label={t('symbol_graph.graph_aria')}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

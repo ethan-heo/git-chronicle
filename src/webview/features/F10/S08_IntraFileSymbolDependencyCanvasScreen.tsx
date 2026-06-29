@@ -1,5 +1,6 @@
 import { ReactFlowProvider } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SplitViewButton, TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
@@ -7,6 +8,7 @@ import { SymbolCodePanel } from './SymbolCodePanel';
 import { SymbolGraph } from './SymbolGraph';
 
 export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
+  const { t } = useTranslation();
   const {
     selectedCommit,
     selectedFileForSymbolGraph,
@@ -75,14 +77,14 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
     <main className="app-shell commit-log-shell dependency-canvas-shell symbol-graph-shell">
       <TopHeader
         title={selectedFileForSymbolGraph.path}
-        context={`${selectedCommit.shortHash} · 심볼 ${symbolNodes.length}개`}
+        context={`${selectedCommit.shortHash} · ${t('symbol_graph.symbol_count_context', { count: symbolNodes.length })}`}
         showBackButton
         onBackClick={goBackFromDetail}
         showSettingsIcon
         onSettingsClick={goToSettingsView}
         endSlot={(
           <SplitViewButton
-            label={isCodePanelOpen ? '코드 숨기기' : '코드 보기'}
+            label={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
             disabled={symbolNodes.length === 0 || Boolean(symbolGraphError) || isLoadingSymbolGraph}
             onClick={() => {
               if (!isCodePanelOpen) {

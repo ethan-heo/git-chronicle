@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createHighlighterCore, type HighlighterCore } from 'shiki/core';
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 import langCss from 'shiki/langs/css.mjs';
@@ -31,6 +32,7 @@ type TokensResult = ReturnType<HighlighterCore['codeToTokens']>;
 let highlighterPromise: Promise<HighlighterCore> | null = null;
 
 export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ fileContent, language, highlightRange, scrollToRange, scrollRequestId }) => {
+  const { t } = useTranslation();
   const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
   const viewerRef = useRef<HTMLElement | null>(null);
   const lines = useMemo(() => fileContent.split('\n'), [fileContent]);
@@ -93,7 +95,7 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ fileConten
   }, [scrollRequestId, scrollToRange]);
 
   return (
-    <section ref={viewerRef} className="symbol-code-viewer" aria-label="파일 코드 보기" tabIndex={0}>
+    <section ref={viewerRef} className="symbol-code-viewer" aria-label={t('symbol_graph.code_viewer_aria')} tabIndex={0}>
       <div className="symbol-code-lines">
         {lines.map((line, index) => {
           const lineNumber = index + 1;

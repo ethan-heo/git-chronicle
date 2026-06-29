@@ -9,6 +9,7 @@
 ```typescript
 interface BackButtonProps {
   onClick: () => void;  // previousScreen으로 네비게이션
+  aria-label?: string;   // 선택. 미지정 시 shared.back_button 번역 키 사용
 }
 ```
 
@@ -35,12 +36,17 @@ export const BackButton: React.FC<BackButtonProps> = ({ onClick }) => (
   <button
     className="back-button"
     onClick={onClick}
-    aria-label="이전 화면으로 이동"
+    aria-label={t('shared.back_button')}
   >
     ←
   </button>
 );
 ```
+
+## i18n
+
+- 기본 접근성 라벨과 텍스트는 `shared.back_button` 번역 키를 사용한다.
+- 개별 화면에서 더 구체적인 라벨이 필요하면 `aria-label` prop으로 오버라이드할 수 있다.
 
 ---
 
