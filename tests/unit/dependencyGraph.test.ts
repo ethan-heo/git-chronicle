@@ -33,7 +33,7 @@ describe('buildGraphData', () => {
     expect(graph.nodes.every((node) => Number.isFinite(node.position.x) && Number.isFinite(node.position.y))).toBe(true);
   });
 
-  it('places extension groups horizontally and files in the same extension vertically', () => {
+  it('clusters dependency-free files into a compact block', () => {
     const files: ChangedFile[] = [
       { path: 'src/zeta.ts', status: 'M', hasSavedSummary: false },
       { path: 'docs/spec.md', status: 'M', hasSavedSummary: false },
@@ -51,10 +51,11 @@ describe('buildGraphData', () => {
     const specPosition = positions.get('docs/spec.md');
     const viewPosition = positions.get('src/view.tsx');
 
-    expect(alphaPosition?.x).toBe(zetaPosition?.x);
-    expect(Math.abs((zetaPosition?.y ?? 0) - (alphaPosition?.y ?? 0))).toBe(190);
-    expect(specPosition?.x).toBeLessThan(alphaPosition?.x ?? 0);
-    expect(viewPosition?.x).toBeGreaterThan(alphaPosition?.x ?? 0);
+    const xs = [zetaPosition?.x, alphaPosition?.x, specPosition?.x, viewPosition?.x].map((value) => value ?? 0);
+    const ys = [zetaPosition?.y, alphaPosition?.y, specPosition?.y, viewPosition?.y].map((value) => value ?? 0);
+
+    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThan(800);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(400);
   });
 
   it('expands long file-name nodes so the label can be shown completely', () => {

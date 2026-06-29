@@ -131,18 +131,18 @@ export function layoutFiles(files: ChangedFile[], edges: DependencyEdge[]): Map<
   }
 
   if (edges.length === 0) {
-    return layoutByExtensionGroup(files);
+    return layoutCompactCluster(files);
   }
 
   const dagreLayout = layoutWithDagre(files, edges);
   if (dagreLayout.size === 0) {
-    return layoutByExtensionGroup(files);
+    return layoutCompactCluster(files);
   }
 
   const connectedPaths = new Set(edges.flatMap((edge) => [edge.from, edge.to]));
   const isolatedFiles = files.filter((file) => !connectedPaths.has(file.path));
   if (isolatedFiles.length > 0) {
-    const isolatedLayout = layoutByExtensionGroup(isolatedFiles);
+    const isolatedLayout = layoutCompactCluster(isolatedFiles);
     const dagreBottom = Math.max(
       ...[...dagreLayout.entries()].map(([filePath, position]) => position.y + getNodeHeight(filePath)),
     );
@@ -230,62 +230,69 @@ function layoutWithDagre(files: ChangedFile[], edges: DependencyEdge[]): Map<str
   );
 }
 
-function layoutByExtensionGroup(files: ChangedFile[]): Map<string, { x: number; y: number }> {
-  const centerX = 520;
-  const centerY = 340;
-  const horizontalGap = 160;
-  const verticalGap = 190;
-  const anchoredPositions = buildExtensionLayoutAnchors(files, centerX, centerY, horizontalGap, verticalGap);
-  const positionList = [...anchoredPositions.values()];
-  const minX = Math.min(...positionList.map((position) => position.x));
-  const minY = Math.min(...positionList.map((position) => position.y));
-  const margin = 100;
+function layoutCompactCluster(files: ChangedFile[]): Map<string, { x: number; y: number }> {
+  const sortedFiles = [...files].sort((first, second) => compareFilePathForLayout(first.path, second.path));
+  const columns = Math.max(1, Math.min(3, Math.ceil(Math.sqrt(sortedFiles.length))));
+  const horizontalGap = 48;
+  const verticalGap = 40;
 
+  const columnWidths = Array.from({ length: columns }, (_, columnIndex) =>
+    Math.max(
+      0,
+      ...sortedFiles
+        .filter((_, index) => index % columns === columnIndex)
+        .map((file) => getNodeWidth(file.path)),
+    ),
+  );
+
+  const rowCount = Math.ceil(sortedFiles.length / columns);
+  const rowHeights = Array.from({ length: rowCount }, (_, rowIndex) =>
+    Math.max(
+      0,
+      ...sortedFiles
+        .filter((_, index) => Math.floor(index / columns) === rowIndex)
+        .map((file) => getNodeHeight(file.path)),
+    ),
+  );
+
+  const columnOffsets: number[] = [];
+  let currentX = 0;
+  for (const width of columnWidths) {
+    columnOffsets.push(currentX);
+    currentX += width + horizontalGap;
+  }
+
+  const rowOffsets: number[] = [];
+  let currentY = 0;
+  for (const height of rowHeights) {
+    rowOffsets.push(currentY);
+    currentY += height + verticalGap;
+  }
+
+  const positions = new Map<string, { x: number; y: number }>();
+  for (let index = 0; index < sortedFiles.length; index += 1) {
+    const file = sortedFiles[index];
+    const columnIndex = index % columns;
+    const rowIndex = Math.floor(index / columns);
+    const width = getNodeWidth(file.path);
+    const height = getNodeHeight(file.path);
+
+    positions.set(file.path, {
+      x: columnOffsets[columnIndex] + (columnWidths[columnIndex] - width) / 2,
+      y: rowOffsets[rowIndex] + (rowHeights[rowIndex] - height) / 2,
+    });
+  }
+
+  const margin = 100;
   return new Map(
-    [...anchoredPositions.entries()].map(([filePath, position]) => [
+    [...positions.entries()].map(([filePath, position]) => [
       filePath,
       {
-        x: position.x - minX + margin,
-        y: position.y - minY + margin,
+        x: position.x + margin,
+        y: position.y + margin,
       },
     ]),
   );
-}
-
-interface ExtensionLayoutGroup {
-  extension: string;
-  files: ChangedFile[];
-  width: number;
-  height: number;
-}
-
-function buildExtensionLayoutAnchors(
-  files: ChangedFile[],
-  centerX: number,
-  centerY: number,
-  horizontalGap: number,
-  verticalGap: number,
-): Map<string, { x: number; y: number }> {
-  const groups = buildExtensionGroups(files, verticalGap);
-  const totalWidth = groups.reduce((sum, group, index) => sum + group.width + (index === 0 ? 0 : horizontalGap), 0);
-  const startX = centerX - totalWidth / 2;
-  const anchors = new Map<string, { x: number; y: number }>();
-  let groupLeft = startX;
-
-  for (const group of groups) {
-    const groupTop = centerY - group.height / 2;
-
-    group.files.forEach((file, row) => {
-      anchors.set(file.path, {
-        x: groupLeft,
-        y: groupTop + row * verticalGap,
-      });
-    });
-
-    groupLeft += group.width + horizontalGap;
-  }
-
-  return anchors;
 }
 
 function getNodeWidth(filePath: string): number {
@@ -403,38 +410,6 @@ export function resolveNodePath(
 
 function normalizePath(filePath: string): string {
   return filePath.replace(/\\/g, '/').replace(/^\.\//, '');
-}
-
-function buildExtensionGroups(files: ChangedFile[], verticalGap: number): ExtensionLayoutGroup[] {
-  const extensionGroups = new Map<string, ChangedFile[]>();
-
-  for (const file of files) {
-    const extension = getExtensionName(file.path);
-    const group = extensionGroups.get(extension) ?? [];
-
-    group.push(file);
-    extensionGroups.set(extension, group);
-  }
-
-  return [...extensionGroups.entries()]
-    .sort(([firstExtension], [secondExtension]) => firstExtension.localeCompare(secondExtension))
-    .map(([extension, groupFiles]) => {
-      const sortedFiles = [...groupFiles].sort((first, second) => compareFilePathForLayout(first.path, second.path));
-
-      return {
-        extension,
-        files: sortedFiles,
-        width: Math.max(...sortedFiles.map((file) => getNodeWidth(file.path))),
-        height: (sortedFiles.length - 1) * verticalGap + Math.max(...sortedFiles.map((file) => getNodeHeight(file.path))),
-      };
-    });
-}
-
-function getExtensionName(filePath: string): string {
-  const fileName = getFileName(filePath);
-  const extensionIndex = fileName.lastIndexOf('.');
-
-  return extensionIndex > 0 ? fileName.slice(extensionIndex).toLowerCase() : '[no extension]';
 }
 
 function compareFilePathForLayout(firstPath: string, secondPath: string): number {
