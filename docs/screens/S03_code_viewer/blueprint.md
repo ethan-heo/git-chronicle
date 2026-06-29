@@ -87,6 +87,7 @@ S03_CodeViewerScreen
 ```
 [S02 또는 S05에서 [코드 보기] 클릭]
     → selectedFile 설정
+    → FILE_DIFF 메시지 리스너 활성화
     → diff 로드
     → DiffViewer 표시 (또는 BinaryFileNotice / DeletedFileNotice)
     → [AI 요약 함께 보기] 클릭 시 isSplitPanelOpen 토글
@@ -94,6 +95,8 @@ S03_CodeViewerScreen
     → BackButton → 이전 화면 복귀
     → ⚙ → S06
 ```
+
+개발 환경에서는 응답이 즉시 돌아올 수 있으므로, diff 요청보다 메시지 리스너 활성화가 항상 먼저여야 한다.
 
 ---
 

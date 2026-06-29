@@ -59,6 +59,7 @@ interface DiffViewerProps {
 #### Interaction
 - 수직 스크롤만 지원
 - 코드 수정 불가 (읽기 전용)
+- 활성 화면에서는 메시지 리스너 등록 후 diff 요청을 전송해야 한다
 
 #### States
 - `loading`: diff 로드 중
@@ -197,6 +198,8 @@ S03_CodeViewerScreen
 | `deleted` | 삭제된 파일 | `DeletedFileNotice` + 삭제 전 코드 표시 |
 | `populated` | 일반 diff | `DiffViewer` |
 | `error` | 로드 실패 | `ErrorState` |
+
+개발 환경처럼 응답이 빠른 경우에도 `loading` 상태가 영구 유지되지 않도록, 메시지 수신 경로와 후처리 실패 경로를 모두 종료 상태로 연결한다.
 
 ---
 

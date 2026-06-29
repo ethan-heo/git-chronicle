@@ -115,6 +115,7 @@ export function parseDiff(rawDiff: string): DiffLineData[] {
 ### Shiki 하이라이팅
 
 - `S03_CodeViewerScreen.tsx`에서 diff load 완료 후 `await import('./highlightDiff')`로 하이라이터를 지연 로드한다.
+- `useFileDiff.ts`에서는 `window.addEventListener('message', handler)`가 먼저 활성화된 뒤 `FETCH_FILE_DIFF`를 전송해야 한다. 개발 모드의 빠른 응답에서도 메시지를 놓치지 않도록 한다.
 - `highlightDiff.ts`는 `shiki/core`, `shiki/engine/javascript`, `shiki/langs/*.mjs`, `shiki/themes/dark-plus.mjs`를 직접 import한다.
 - 현재 지원 확장자: `ts`, `tsx`, `js`, `jsx`, `json`, `css`, `html`, `md`, `mdx`, `yaml`, `yml`.
 - 알 수 없는 확장자는 `text`로 처리하여 plain text로 렌더링한다.
@@ -186,15 +187,6 @@ export const S03CodeViewerScreen: FC = () => {
   };
 
   useEffect(() => {
-    if (!selectedFile || !selectedCommit) return;
-    setDiffState({ ...initialDiffState, isLoading: true });
-    postMessage('FETCH_FILE_DIFF', {
-      commitHash: selectedCommit.hash,
-      filePath: selectedFile.path,
-    });
-  }, [selectedFile, selectedCommit]);
-
-  useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.data.type !== 'FILE_DIFF_LOADED') return;
       void applyLoadedDiff(event.data.payload, selectedFile.path);
@@ -202,6 +194,15 @@ export const S03CodeViewerScreen: FC = () => {
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, [selectedFile]);
+
+  useEffect(() => {
+    if (!selectedFile || !selectedCommit) return;
+    setDiffState({ ...initialDiffState, isLoading: true });
+    postMessage('FETCH_FILE_DIFF', {
+      commitHash: selectedCommit.hash,
+      filePath: selectedFile.path,
+    });
+  }, [selectedFile, selectedCommit]);
 
   if (!selectedCommit || !selectedFile) return null;
 
@@ -234,6 +235,8 @@ export const S03CodeViewerScreen: FC = () => {
 6. Shiki 하이라이팅 실패 시 토큰 없는 plain text diff로 fallback
 7. 브라우저 개발 모드에서는 VSCode API가 없으므로 S03 데모 diff를 사용
 8. diff 로드 후 첫 추가/삭제 라인으로 자동 스크롤한다.
+9. `FILE_DIFF_LOADED` / `FILE_DIFF_LOAD_FAILED` 메시지는 요청 전에 listener가 준비된 상태에서 수신해야 한다.
+10. 하이라이팅 또는 후처리 중 예외가 발생하더라도 `isLoading`이 영구 유지되지 않도록 종료 경로를 보장한다.
 
 ---
 

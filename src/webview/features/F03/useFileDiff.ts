@@ -31,6 +31,13 @@ export function useFileDiff(options: {
   const { isActive, commitHash, filePath, isDeletedFile } = options;
   const [diffState, setDiffState] = useState<FileDiffState>(initialDiffState);
 
+  const failFileDiff = useCallback((message?: string): void => {
+    setDiffState({
+      ...initialDiffState,
+      error: message ?? 'diff를 불러오지 못했습니다',
+    });
+  }, []);
+
   const applyLoadedDiff = useCallback(async (payload: FileDiffPayload, loadedFilePath: string): Promise<void> => {
     if (payload.isBinary) {
       setDiffState({
@@ -78,10 +85,6 @@ export function useFileDiff(options: {
   }, [applyLoadedDiff, commitHash, filePath, isActive, isDeletedFile]);
 
   useEffect(() => {
-    loadFileDiff();
-  }, [loadFileDiff]);
-
-  useEffect(() => {
     if (!isActive) {
       return;
     }
@@ -107,21 +110,24 @@ export function useFileDiff(options: {
             isDeleted: Boolean(payload?.isDeleted),
           },
           filePath,
-        );
+        ).catch(() => {
+          failFileDiff();
+        });
         return;
       }
 
       if (event.data.type === 'FILE_DIFF_LOAD_FAILED') {
-        setDiffState({
-          ...initialDiffState,
-          error: event.data.payload?.message ?? 'diff를 불러오지 못했습니다',
-        });
+        failFileDiff(event.data.payload?.message);
       }
     };
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [applyLoadedDiff, filePath, isActive]);
+  }, [applyLoadedDiff, failFileDiff, filePath, isActive]);
+
+  useEffect(() => {
+    loadFileDiff();
+  }, [loadFileDiff]);
 
   return { diffState, loadFileDiff };
 }
