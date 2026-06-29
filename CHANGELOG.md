@@ -1,4 +1,10 @@
-## Unreleased (2026-06-29)
+
+## [0.7.0](https://github.com/ethan-heo/git-chronicle/compare/v0.6.0...v0.7.0) (2026-06-29)
+
+### Features
+
+* refine AI summary loading and QA formatting ([1fa8d89](https://github.com/ethan-heo/git-chronicle/commit/1fa8d892f00b44202e0cc66c04348457635f1fca))
+* scope AI settings per workspace ([d61e55f](https://github.com/ethan-heo/git-chronicle/commit/d61e55f5bffeb38bd437d308cd9784be2b916df4))
 
 ## [0.6.0](https://github.com/ethan-heo/git-chronicle/compare/v0.5.2...v0.6.0) (2026-06-29)
 
