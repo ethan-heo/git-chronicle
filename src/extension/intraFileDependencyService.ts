@@ -91,7 +91,7 @@ function analyzeJsTs(content: string, filePath: string): { nodes: SymbolNode[]; 
 }
 
 function extractJsTsNode(node: ts.Node, sourceFile: ts.SourceFile): SymbolNode | null {
-  const lineStart = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+  const lineStart = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile, true)).line + 1;
   const lineEnd = sourceFile.getLineAndCharacterOfPosition(node.getEnd()).line + 1;
   const isExported = ts.canHaveModifiers(node) ? (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) : false;
 
@@ -136,16 +136,26 @@ function collectJsTsEdges(node: ts.Node, from: SymbolNode, byName: Map<string, S
 function analyzePython(content: string): { nodes: SymbolNode[]; edges: SymbolEdge[] } {
   const nodes: SymbolNode[] = [];
   const lines = content.split('\n');
+  const blocks: Array<{ start: number; indent: number; nodeIndex: number }> = [];
 
   lines.forEach((line, index) => {
     const lineNumber = index + 1;
     const func = /^\s*def\s+([A-Za-z_]\w*)\s*\(/.exec(line);
     const cls = /^\s*class\s+([A-Za-z_]\w*)/.exec(line);
     const assign = /^\s*([A-Za-z_]\w*)\s*=/.exec(line);
-    if (func) nodes.push(makeNode(func[1], 'function', lineNumber, lineNumber, false));
-    if (cls) nodes.push(makeNode(cls[1], 'class', lineNumber, lineNumber, false));
+    const indent = (line.match(/^\s*/)?.[0] ?? '').length;
+    if (func) {
+      blocks.push({ start: lineNumber, indent, nodeIndex: nodes.push(makeNode(func[1], 'function', lineNumber, lineNumber, false)) - 1 });
+    }
+    if (cls) {
+      blocks.push({ start: lineNumber, indent, nodeIndex: nodes.push(makeNode(cls[1], 'class', lineNumber, lineNumber, false)) - 1 });
+    }
     if (assign) nodes.push(makeNode(assign[1], 'variable', lineNumber, lineNumber, false));
   });
+
+  for (const block of blocks) {
+    nodes[block.nodeIndex].lineEnd = findPythonBlockEnd(lines, block.start, block.indent);
+  }
 
   return { nodes, edges: [] };
 }
@@ -153,6 +163,7 @@ function analyzePython(content: string): { nodes: SymbolNode[]; edges: SymbolEdg
 function analyzeGo(content: string): { nodes: SymbolNode[]; edges: SymbolEdge[] } {
   const nodes: SymbolNode[] = [];
   const lines = content.split('\n');
+  const blocks: Array<{ start: number; nodeIndex: number }> = [];
 
   lines.forEach((line, index) => {
     const lineNumber = index + 1;
@@ -160,13 +171,93 @@ function analyzeGo(content: string): { nodes: SymbolNode[]; edges: SymbolEdge[] 
     const type = /^\s*type\s+([A-Za-z_]\w*)\s+/.exec(line);
     const variable = /^\s*var\s+([A-Za-z_]\w*)\s*=/.exec(line);
     const constant = /^\s*const\s+([A-Za-z_]\w*)\s*=/.exec(line);
-    if (func) nodes.push(makeNode(func[1], 'function', lineNumber, lineNumber, false));
+    if (func) {
+      blocks.push({ start: lineNumber, nodeIndex: nodes.push(makeNode(func[1], 'function', lineNumber, lineNumber, false)) - 1 });
+    }
     if (type) nodes.push(makeNode(type[1], 'type', lineNumber, lineNumber, false));
     if (variable) nodes.push(makeNode(variable[1], 'variable', lineNumber, lineNumber, false));
     if (constant) nodes.push(makeNode(constant[1], 'constant', lineNumber, lineNumber, false));
   });
 
+  for (const block of blocks) {
+    nodes[block.nodeIndex].lineEnd = findGoBlockEnd(lines, block.start);
+  }
+
   return { nodes, edges: [] };
+}
+
+function findPythonBlockEnd(lines: string[], startLine: number, startIndent: number): number {
+  for (let index = startLine; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (line.trim() === '') continue;
+    const indent = (line.match(/^\s*/)?.[0] ?? '').length;
+    if (indent <= startIndent) {
+      return index;
+    }
+  }
+
+  return lines.length;
+}
+
+function findGoBlockEnd(lines: string[], startLine: number): number {
+  let depth = 0;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inRawString = false;
+
+  for (let index = startLine - 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    let escaped = false;
+
+    for (let charIndex = 0; charIndex < line.length; charIndex += 1) {
+      const char = line[charIndex];
+      const next = line[charIndex + 1];
+
+      if (inRawString) {
+        if (char === '`') inRawString = false;
+        continue;
+      }
+      if (inSingleQuote) {
+        if (!escaped && char === '\'') inSingleQuote = false;
+        escaped = !escaped && char === '\\';
+        continue;
+      }
+      if (inDoubleQuote) {
+        if (!escaped && char === '"') inDoubleQuote = false;
+        escaped = !escaped && char === '\\';
+        continue;
+      }
+
+      if (char === '`') {
+        inRawString = true;
+        continue;
+      }
+      if (char === '\'') {
+        inSingleQuote = true;
+        continue;
+      }
+      if (char === '"') {
+        inDoubleQuote = true;
+        continue;
+      }
+      if (char === '/' && next === '/') break;
+      if (char === '/' && next === '*') {
+        const end = line.indexOf('*/', charIndex + 2);
+        if (end === -1) break;
+        charIndex = end + 1;
+        continue;
+      }
+      if (char === '{') depth += 1;
+      if (char === '}') {
+        depth -= 1;
+        if (depth === 0 && index >= startLine - 1) {
+          return index + 1;
+        }
+      }
+    }
+  }
+
+  return lines.length;
 }
 
 function makeNode(name: string, kind: SymbolKind, lineStart: number, lineEnd: number, isExported: boolean): SymbolNode {

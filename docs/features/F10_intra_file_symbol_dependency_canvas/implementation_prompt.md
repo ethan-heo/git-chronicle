@@ -7,8 +7,8 @@
 ## Technical Context
 
 - **심볼 분석**: Extension Host에서 파일 내용을 읽어(commitHash 있으면 `git show`, 없으면 디스크) TypeScript Compiler API 또는 정규식으로 최상위 노드 선언과 노드 간 참조 관계를 추출한다.
-- **JS/TS 분석**: `typescript` 패키지(이미 devDependency)의 `ts.createSourceFile()`로 AST를 생성하고 최상위 선언을 순회한다. 선언 본문의 Identifier 참조를 분석하여 `calls` / `uses` / `extends` / `implements` 엣지를 생성한다.
-- **Python/Go 분석**: 정규식으로 `def`/`class` (Python), `func`/`type`/`var`/`const` (Go) 선언과 참조를 파싱한다.
+- **JS/TS 분석**: `typescript` 패키지(이미 devDependency)의 `ts.createSourceFile()`로 AST를 생성하고 최상위 선언을 순회한다. 선언 본문의 Identifier 참조를 분석하여 `calls` / `uses` / `extends` / `implements` 엣지를 생성한다. 하이라이트 시작 라인은 JSDoc(`/** ... */`)을 포함하도록 계산한다.
+- **Python/Go 분석**: 정규식으로 `def`/`class` (Python), `func`/`type`/`var`/`const` (Go) 선언과 참조를 파싱한다. Python은 들여쓰기 기준으로 블록 종료 라인을 찾고, Go는 중괄호 깊이로 닫는 `}` 라인을 찾는다.
 - **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 엣지가 있으면 `@dagrejs/dagre` 기반 계층 레이아웃(`rankdir: 'LR'`), 없으면 kind 그룹 기반 앵커 배치.
 - **재사용**: F04의 `CanvasControls`, `getNearestHandles`, `getNodeHeight`, `layoutWithDagre` 패턴을 참고·재사용한다.
 
@@ -728,6 +728,7 @@ if (event.data.type === 'SYMBOL_GRAPH_FAILED') {
 6. `FileActionButtons`의 `onSymbolGraph` prop은 옵셔널이므로 기존 S02·S07 사용처에 영향 없음
 7. S05에서 S08 진입 시 `previousScreen = 'S05'` 저장 → BackButton 클릭 시 `goBackFromDetail()`로 S05 복귀
 8. 같은 심볼 쌍에 대한 중복 엣지는 `deduplicateEdges()`로 제거
+9. 심볼 라인 범위는 JS/TS의 JSDoc 포함 시작 라인, Python의 블록 종료 라인, Go의 매칭 닫는 중괄호 라인까지 포함해 계산한다
 
 ---
 
