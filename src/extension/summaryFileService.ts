@@ -79,10 +79,10 @@ export function saveCommitSummary(savePath: string, commitHash: string, content:
 export function appendSummaryQA(savedPath: string, question: string, answer: string): string {
   const existingContent = fs.readFileSync(savedPath, 'utf8');
   const separator = existingContent.endsWith('\n') ? '' : '\n';
-  const hasQASection = /\n## Q&A\s*$/m.test(existingContent) || /\n## Q&A\n/m.test(existingContent);
-  const appendedContent = hasQASection
-    ? `${separator}\n### Q. ${question}\n\n${answer}\n`
-    : `${separator}\n---\n\n## Q&A\n\n### Q. ${question}\n\n${answer}\n`;
+  const hasQABlock = /\n---\n\s*\n(?:## Q&A\s*\n\s*\n)?### Q\./m.test(existingContent);
+  const appendedContent = hasQABlock
+    ? `${separator}\n\n### Q. ${question}\n\n${answer}\n`
+    : `${separator}\n---\n\n### Q. ${question}\n\n${answer}\n`;
 
   writeSummaryFile(savedPath, `${existingContent}${appendedContent}`);
   return appendedContent;

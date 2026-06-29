@@ -25,8 +25,8 @@
 ## Outputs
 
 - 질문 제출 이벤트
-- Q&A 스트리밍 상태 렌더링
-- 완료된 Q&A 마크다운 표시
+- 답변 스트리밍 상태 렌더링
+- 완료된 질문/답변 마크다운 표시
 
 ---
 
@@ -83,7 +83,7 @@ AISummaryViewer
 
 ## Layout Rules
 
-- Q&A 영역은 `AISummaryViewer` 하단에 border-top으로 구분한다.
+- 질문/답변 영역은 `AISummaryViewer` 하단에 border-top으로 구분한다.
 - 질문 버튼은 우측 정렬의 소형 primary button을 사용한다.
 - 스트리밍 응답은 입력창 아래 별도 박스로 표시한다.
 
@@ -96,7 +96,7 @@ AISummaryViewer
 | 질문 영역 노출 | 요약 완료 | textarea + 버튼 표시 |
 | 질문 제출 | Enter / 버튼 클릭 | `START_AI_QA` 전송 |
 | 응답 스트리밍 | `AI_QA_CHUNK` 수신 | 임시 응답 박스 갱신 |
-| 완료 | `AI_QA_COMPLETE` 수신 | 최종 마크다운 본문에 append |
+| 완료 | `AI_QA_COMPLETE` 수신 | 최종 마크다운 본문에 `### Q. ...` 블록 append |
 
 ---
 

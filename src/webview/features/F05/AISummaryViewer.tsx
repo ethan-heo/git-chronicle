@@ -1,7 +1,7 @@
 import { useState, type FC, type KeyboardEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
-import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
+import { EmptyState, ErrorState } from '../../shared/components';
 import type { SummaryMode } from '../../types/commit';
 import { RegenerateButton } from './RegenerateButton';
 import { StreamingTextRenderer } from './StreamingTextRenderer';
@@ -56,7 +56,32 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   }
 
   if (isLoading) {
-    return <LoadingState label={t('ai_summary.loading')} size="sm" />;
+    return (
+      <section className="ai-summary-loading-state" role="status" aria-live="polite" aria-busy="true" aria-label={t('ai_summary.loading')}>
+        <div className="ai-summary-loading-hero">
+          <span className="ai-summary-loading-orb" aria-hidden="true" />
+          <div className="ai-summary-loading-copy">
+            <strong>{t('ai_summary.loading_title')}</strong>
+            <p>{t('ai_summary.loading')}</p>
+          </div>
+        </div>
+        <div className="ai-summary-loading-preview" aria-hidden="true">
+          <span className="ai-summary-loading-pill ai-summary-loading-shimmer" />
+          <span className="ai-summary-loading-line ai-summary-loading-line-lg ai-summary-loading-shimmer" />
+          <span className="ai-summary-loading-line ai-summary-loading-shimmer" />
+          <span className="ai-summary-loading-line ai-summary-loading-line-sm ai-summary-loading-shimmer" />
+          <div className="ai-summary-loading-section">
+            <span className="ai-summary-loading-line ai-summary-loading-line-md ai-summary-loading-shimmer" />
+            <span className="ai-summary-loading-line ai-summary-loading-shimmer" />
+            <span className="ai-summary-loading-line ai-summary-loading-line-lg ai-summary-loading-shimmer" />
+          </div>
+          <div className="ai-summary-loading-section">
+            <span className="ai-summary-loading-line ai-summary-loading-line-sm ai-summary-loading-shimmer" />
+            <span className="ai-summary-loading-line ai-summary-loading-line-md ai-summary-loading-shimmer" />
+          </div>
+        </div>
+      </section>
+    );
   }
 
   if (error) {
@@ -131,7 +156,6 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
           />
           {qaStreamingResponse ? (
             <div className="ai-summary-qa-stream" aria-live="polite">
-              <strong>{t('ai_summary.qa_answering')}</strong>
               <p>{qaStreamingResponse}</p>
             </div>
           ) : null}

@@ -36,7 +36,7 @@ interface AISummaryViewerProps {
 AISummaryViewer
 ├── [hasAIProvider = false] → EmptyState ("AI가 설정되지 않았습니다" + "설정으로 이동")
 ├── [hasSavePath = false]   → EmptyState ("저장 경로를 먼저 설정해주세요" + "설정으로 이동")
-├── [isLoading = true]      → LoadingState ("AI 정리를 불러오는 중...")
+├── [isLoading = true]      → AI 전용 로딩 프리뷰 ("AI가 변경 흐름을 정리하고 있습니다")
 ├── [error !== null]        → ErrorState (에러 메시지 + [재시도] 버튼)
 ├── [content === '' && !isGenerating] → EmptyState (AI 정리가 없음)
 └── [content 있음]          → 마크다운 렌더링 영역
@@ -68,7 +68,7 @@ const StreamingTextRenderer: React.FC<{ content: string; isStreaming: boolean }>
 
 | 상태 | 조건 | 표시 |
 |------|------|------|
-| `loading` | `isLoading = true` | LoadingState |
+| `loading` | `isLoading = true` | 상단 안내 문구 + 스켈레톤 프리뷰 카드 |
 | `streaming` | `isGenerating = true`, `content` 증가 중 | 타이핑 커서 표시 |
 | `complete` | `isGenerating = false`, `content` 완성 | react-markdown 렌더링 |
 | `qa.streaming` | `isGeneratingQA = true` | 질문 버튼 비활성화 + 임시 응답 박스 |
@@ -111,6 +111,7 @@ const StreamingTextRenderer: React.FC<{ content: string; isStreaming: boolean }>
 - [재생성] 버튼: `aria-label="AI 정리 재생성"`.
 - 질문 textarea는 Enter 제출, Shift+Enter 줄바꿈을 지원한다.
 - Q&A 스트리밍 박스는 `aria-live="polite"`로 응답 진행 상황을 전달한다.
+- 질문 답변 결과를 본문에 append할 때 `## Q&A` 제목은 렌더링하지 않고, `### Q. ...` 블록부터 바로 이어붙인다.
 
 ---
 

@@ -113,6 +113,7 @@
     "token_warning_dismiss_aria": "Dismiss token warning",
     "overwrite_title": "Overwrite the existing saved version?",
     "overwrite_body": "Run AI again with the same diff and replace the currently saved summary with the new result.",
+    "loading_title": "AI is organizing the change flow",
     "loading": "Loading AI summary...",
     "empty_commit": "No commit AI summary",
     "empty": "No AI summary",
@@ -128,8 +129,7 @@
     "qa_label": "Ask about this summary",
     "qa_placeholder": "Ask a question about the summary...",
     "qa_submit": "Ask",
-    "qa_loading": "Generating answer...",
-    "qa_answering": "Generating answer"
+    "qa_loading": "Generating answer..."
   },
   "action_bar": {
     "commit_ai_aria": "Summarize the entire commit with AI",

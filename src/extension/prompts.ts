@@ -64,7 +64,7 @@ ${diff}
 }
 
 export function buildSummaryQAPrompt(currentSummaryContent: string, diff: string, question: string): string {
-  const summaryOnly = currentSummaryContent.split(/\n---\n\s*\n## Q&A/)[0]?.trim() ?? currentSummaryContent.trim();
+  const summaryOnly = currentSummaryContent.split(/\n---\n\s*\n(?:(?:## Q&A\s*\n\s*\n)?### Q\.)/)[0]?.trim() ?? currentSummaryContent.trim();
 
   return `아래는 Git 변경 파일의 diff와 AI가 생성한 요약입니다.
 사용자의 질문에 답변해주세요.

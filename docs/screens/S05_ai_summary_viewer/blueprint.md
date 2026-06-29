@@ -51,7 +51,7 @@ S04_AISummaryViewerScreen
    │  ├─ TokenLimitWarning (조건부)
    │  └─ AISummaryViewer (스크롤 영역)
    │      ├─ RegenerateButton (저장본/저장 완료본 있을 때)
-   │      ├─ LoadingState (설정/저장본 확인 중)
+   │      ├─ AI 전용 로딩 프리뷰 (설정/저장본 확인 중)
    │      ├─ StreamingTextRenderer (생성 중)
    │      ├─ [react-markdown] (완료 후)
    │      ├─ QAInputArea (요약 완료 시)
@@ -85,9 +85,9 @@ S04_AISummaryViewerScreen
 |------|------|-----|
 | `noAI` | `activeAIProvider === null` | `EmptyState` (AI 미설정) |
 | `noPath` | `savePath === null` | `EmptyState` (경로 미설정) |
-| `loading` | 설정 또는 저장본 확인 중 | `LoadingState` |
+| `loading` | 설정 또는 저장본 확인 중 | AI 전용 로딩 프리뷰 |
 | `generating` | `isGeneratingSummary === true` | `StreamingTextRenderer` |
-| `qa.generating` | `isGeneratingQA === true` | 질문 버튼 비활성화 + Q&A 스트리밍 박스 |
+| `qa.generating` | `isGeneratingQA === true` | 질문 버튼 비활성화 + 답변 스트리밍 박스 |
 | `displaying.saved` | 저장본 존재 | react-markdown + `RegenerateButton` |
 | `displaying.new` | 새로 생성 완료 | react-markdown + `RegenerateButton` |
 | `error` | 타임아웃 또는 CLI 실패 | `ErrorState` |
@@ -118,7 +118,7 @@ S04_AISummaryViewerScreen
             → START_AI_QA
             → AI_QA_CHUNK
             → AI_QA_COMPLETE
-            → 현재 요약 + 저장된 .md 파일에 Q&A append
+            → 현재 요약 + 저장된 .md 파일에 질문/답변 블록 append (`### Q. ...`)
     → [코드 함께 보기] 클릭 시 isSplitPanelOpen 토글
     → 우측 DiffViewerPanel 슬라이드 인
     → BackButton → 이전 화면 복귀

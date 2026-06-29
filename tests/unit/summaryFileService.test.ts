@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  appendSummaryQA,
   getCommitSummaryFilePath,
   getSummaryFilePath,
   hasSavedSummary,
@@ -107,6 +108,46 @@ describe('summaryFileService', () => {
 
     expect(() => saveCommitSummary(fileSavePath, 'abc123', '# Commit Summary')).toThrow(SummarySaveError);
     expect(() => saveCommitSummary(fileSavePath, 'abc123', '# Commit Summary')).toThrow('저장 경로를 생성할 수 없습니다. 권한을 확인하세요');
+  });
+
+  it('첫 번째 질문 답변 추가 시 Q&A 헤더 없이 질문 블록만 저장한다', () => {
+    const rootPath = makeTempPath();
+    const savedPath = saveCommitSummary(rootPath, 'abc123456789', '# Summary', 'feat: add batch AI summary');
+
+    const appendedContent = appendSummaryQA(savedPath, '무엇이 바뀌었나요?', '핵심 로직이 단순화되었습니다.');
+
+    expect(appendedContent).toBe('\n\n---\n\n### Q. 무엇이 바뀌었나요?\n\n핵심 로직이 단순화되었습니다.\n');
+    expect(fs.readFileSync(savedPath, 'utf8')).toBe('# Summary\n\n---\n\n### Q. 무엇이 바뀌었나요?\n\n핵심 로직이 단순화되었습니다.\n');
+  });
+
+  it('기존 질문 블록이 있으면 헤더 없이 다음 질문만 이어서 추가한다', () => {
+    const rootPath = makeTempPath();
+    const savedPath = saveCommitSummary(
+      rootPath,
+      'abc123456789',
+      '# Summary\n---\n\n### Q. 첫 질문?\n\n첫 답변\n',
+      'feat: add batch AI summary',
+    );
+
+    const appendedContent = appendSummaryQA(savedPath, '두 번째 질문?', '두 번째 답변');
+
+    expect(appendedContent).toBe('\n\n### Q. 두 번째 질문?\n\n두 번째 답변\n');
+    expect(fs.readFileSync(savedPath, 'utf8')).toBe('# Summary\n---\n\n### Q. 첫 질문?\n\n첫 답변\n\n\n### Q. 두 번째 질문?\n\n두 번째 답변\n');
+  });
+
+  it('기존 Q&A 헤더 형식 저장본에도 다음 질문을 자연스럽게 이어서 추가한다', () => {
+    const rootPath = makeTempPath();
+    const savedPath = saveCommitSummary(
+      rootPath,
+      'abc123456789',
+      '# Summary\n---\n\n## Q&A\n\n### Q. 첫 질문?\n\n첫 답변\n',
+      'feat: add batch AI summary',
+    );
+
+    const appendedContent = appendSummaryQA(savedPath, '두 번째 질문?', '두 번째 답변');
+
+    expect(appendedContent).toBe('\n\n### Q. 두 번째 질문?\n\n두 번째 답변\n');
+    expect(fs.readFileSync(savedPath, 'utf8')).toContain('## Q&A\n\n### Q. 첫 질문?\n\n첫 답변\n\n\n### Q. 두 번째 질문?\n\n두 번째 답변\n');
   });
 });
 

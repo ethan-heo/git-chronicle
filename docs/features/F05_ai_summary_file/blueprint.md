@@ -79,7 +79,7 @@ interface AISummaryViewerProps {
 #### States
 - `generating`: `StreamingTextRenderer` 표시
 - `displaying`: react-markdown 렌더링
-- `loading`: 저장본/설정 확인 중 `LoadingState` 표시
+- `loading`: 저장본/설정 확인 중 AI 전용 로딩 프리뷰 표시
 - `empty`: 아직 생성되지 않음
 
 #### Accessibility
@@ -219,7 +219,7 @@ F05_AISummaryFile
 │   ├─ RegenerateButton (저장본/저장 완료본 있을 때)
 │   ├─ StreamingTextRenderer [streaming]
 │   ├─ [react-markdown] (완료 후)
-│   ├─ LoadingState [loading]
+│   ├─ AISummaryLoadingPreview [loading]
 │   ├─ EmptyState [noAI]
 │   └─ EmptyState [noPath]
 └─ OverwriteConfirmDialog (조건부)
@@ -233,7 +233,7 @@ F05_AISummaryFile
 - `generating`: `StreamingTextRenderer` 표시
 - `displaying.saved`: react-markdown + `RegenerateButton`
 - `displaying.new`: 새로 생성 완료 상태
-- `loading`: `LoadingState ("AI 정리를 불러오는 중...")`
+- `loading`: 상단 안내 문구 + 스켈레톤 프리뷰 카드
 - `noAI`: AI 미설정 `EmptyState`
 - `noPath`: 경로 미설정 `EmptyState`
 
@@ -279,7 +279,7 @@ S04_AISummaryViewerScreen
 |------|------|-----|
 | `noAI` | `activeAIProvider === null` | `EmptyState` (AI 미설정) |
 | `noPath` | `savePath === null` | `EmptyState` (경로 미설정) |
-| `loading` | `isLoadingSummary === true` 또는 설정 로딩 중 | `LoadingState` |
+| `loading` | `isLoadingSummary === true` 또는 설정 로딩 중 | AI 전용 로딩 프리뷰 |
 | `generating` | `isGeneratingSummary === true` | `StreamingTextRenderer` |
 | `displaying.saved` | 저장본 존재 | react-markdown + `RegenerateButton` |
 | `displaying.new` | 새로 생성 완료 | react-markdown + `RegenerateButton` |
@@ -306,7 +306,7 @@ S04_AISummaryViewerScreen
 | 상태 | 표현 방식 | 위치 |
 |------|---------|------|
 | AI 생성 중 | `StreamingTextRenderer [streaming]` | AISummaryViewer 내 실시간 타이핑 |
-| 저장본 로드 중 | `LoadingState [sm]` | AISummaryViewer 상단 (파일 읽기 중) |
+| 저장본 로드 중 | AI 전용 로딩 프리뷰 | AISummaryViewer 본문 영역 |
 
 ---
 

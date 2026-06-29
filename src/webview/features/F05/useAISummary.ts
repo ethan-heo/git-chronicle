@@ -149,7 +149,7 @@ export function useAISummary(options?: { isActive?: boolean }) {
       if (!isVSCodeRuntime()) {
         window.setTimeout(() => {
           completeAIQA({
-            appendedContent: `\n\n---\n\n## Q&A\n\n### Q. ${question}\n\n현재 데모 환경에서는 요약 본문 기준으로만 답변하며, 이번 변경은 구조 단순화와 성능 개선을 목표로 한 수정으로 보입니다.\n`,
+            appendedContent: `\n\n---\n\n### Q. ${question}\n\n현재 데모 환경에서는 요약 본문 기준으로만 답변하며, 이번 변경은 구조 단순화와 성능 개선을 목표로 한 수정으로 보입니다.\n`,
           });
         }, 500);
         return;

@@ -113,6 +113,7 @@
     "token_warning_dismiss_aria": "토큰 경고 닫기",
     "overwrite_title": "기존 저장본을 덮어쓰시겠습니까?",
     "overwrite_body": "동일한 diff로 AI를 다시 호출하여 현재 저장된 정리 내용을 새 결과로 교체합니다.",
+    "loading_title": "AI가 변경 흐름을 정리하고 있습니다",
     "loading": "AI 정리를 불러오는 중...",
     "empty_commit": "커밋 AI 정리가 없습니다",
     "empty": "AI 정리가 없습니다",
@@ -128,8 +129,7 @@
     "qa_label": "요약에 대해 질문하기",
     "qa_placeholder": "요약 내용에 대해 질문하세요...",
     "qa_submit": "질문하기",
-    "qa_loading": "답변 생성 중...",
-    "qa_answering": "답변 생성 중"
+    "qa_loading": "답변 생성 중..."
   },
   "action_bar": {
     "commit_ai_aria": "커밋 전체 AI 정리",
