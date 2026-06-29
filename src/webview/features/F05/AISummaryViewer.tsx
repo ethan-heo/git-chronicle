@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useState, type FC, type KeyboardEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
@@ -11,12 +11,16 @@ interface AISummaryViewerProps {
   error: string | null;
   isLoading: boolean;
   isGenerating: boolean;
+  isGeneratingQA: boolean;
   hasSavedSummary: boolean;
   hasAIProvider: boolean;
   hasSavePath: boolean;
   savedPath: string | null;
   providerLabel: string | null;
+  qaError: string | null;
+  qaStreamingResponse: string;
   summaryMode: SummaryMode;
+  onAskQuestion: (question: string) => void;
   onGoToSettings: () => void;
   onRegenerate: () => void;
   onRetry: () => void;
@@ -27,17 +31,22 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   error,
   isLoading,
   isGenerating,
+  isGeneratingQA,
   hasSavedSummary,
   hasAIProvider,
   hasSavePath,
   savedPath,
   providerLabel,
+  qaError,
+  qaStreamingResponse,
   summaryMode,
+  onAskQuestion,
   onGoToSettings,
   onRegenerate,
   onRetry,
 }) => {
   const { t } = useTranslation();
+  const [question, setQuestion] = useState('');
   if (!hasAIProvider) {
     return <EmptyState message={t('ai_summary.no_ai')} ctaLabel={t('ai_summary.go_to_settings')} onCtaClick={onGoToSettings} />;
   }
@@ -56,6 +65,24 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
 
   const showRegenerate = hasSavedSummary && (Boolean(content) || isGenerating);
   const showSavedPath = hasSavedSummary && Boolean(savedPath);
+  const canAskQuestion = !isGenerating && Boolean(content);
+
+  const submitQuestion = (): void => {
+    const trimmed = question.trim();
+    if (!trimmed || isGeneratingQA) {
+      return;
+    }
+
+    onAskQuestion(trimmed);
+    setQuestion('');
+  };
+
+  const handleQuestionKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      submitQuestion();
+    }
+  };
 
   return (
     <section className="ai-summary-viewer" role="region" aria-label={t('ai_summary.ai_result')} aria-live={isGenerating ? 'polite' : undefined}>
@@ -91,6 +118,31 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
           <EmptyState message={summaryMode === 'commit' ? t('ai_summary.empty_commit') : t('ai_summary.empty')} />
         )}
       </div>
+      {canAskQuestion ? (
+        <div className="ai-summary-qa-panel">
+          <textarea
+            id="ai-summary-question"
+            className="ai-summary-qa-textarea"
+            placeholder={t('ai_summary.qa_placeholder')}
+            value={question}
+            disabled={isGeneratingQA}
+            onChange={(event) => setQuestion(event.target.value)}
+            onKeyDown={handleQuestionKeyDown}
+          />
+          {qaStreamingResponse ? (
+            <div className="ai-summary-qa-stream" aria-live="polite">
+              <strong>{t('ai_summary.qa_answering')}</strong>
+              <p>{qaStreamingResponse}</p>
+            </div>
+          ) : null}
+          {qaError ? <p className="ai-summary-qa-error">{qaError}</p> : null}
+          <div className="ai-summary-qa-actions">
+            <button type="button" className="ai-summary-qa-button" disabled={isGeneratingQA || !question.trim()} onClick={submitQuestion}>
+              {isGeneratingQA ? t('ai_summary.qa_loading') : t('ai_summary.qa_submit')}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 };

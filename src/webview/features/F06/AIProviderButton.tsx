@@ -1,4 +1,4 @@
-import type { CSSProperties, FC } from 'react';
+import type { CSSProperties, FC, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AIProvider, AIProviderButtonState } from '../../types/commit';
 import { CLIInstallLink } from './CLIInstallLink';
@@ -9,9 +9,10 @@ interface AIProviderButtonProps {
   errorMessage?: string;
   onToggle: () => void;
   onOpenInstall: (url: string) => void;
+  children?: ReactNode;
 }
 
-export const AIProviderButton: FC<AIProviderButtonProps> = ({ provider, state, errorMessage, onToggle, onOpenInstall }) => {
+export const AIProviderButton: FC<AIProviderButtonProps> = ({ provider, state, errorMessage, onToggle, onOpenInstall, children }) => {
   const { t } = useTranslation();
   const isActive = state === 'active';
   const isRegistering = state === 'registering';
@@ -54,6 +55,7 @@ export const AIProviderButton: FC<AIProviderButtonProps> = ({ provider, state, e
           />
         </div>
       ) : null}
+      {children}
     </div>
   );
 };

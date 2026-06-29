@@ -62,3 +62,26 @@ Commit hash: ${commitHash.slice(0, 7)}
 ${diff}
 \`\`\``;
 }
+
+export function buildSummaryQAPrompt(currentSummaryContent: string, diff: string, question: string): string {
+  const summaryOnly = currentSummaryContent.split(/\n---\n\s*\n## Q&A/)[0]?.trim() ?? currentSummaryContent.trim();
+
+  return `아래는 Git 변경 파일의 diff와 AI가 생성한 요약입니다.
+사용자의 질문에 답변해주세요.
+
+## 조건
+- 출력 언어: 한국어
+- diff와 요약 내용을 바탕으로 답변할 것
+- 추측이 필요한 경우 "~로 보임", "~한 것으로 추정됨" 형태로 표현할 것
+
+## 기존 요약
+${summaryOnly}
+
+## diff
+\`\`\`diff
+${diff}
+\`\`\`
+
+## 질문
+${question}`;
+}

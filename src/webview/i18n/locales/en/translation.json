@@ -124,7 +124,12 @@
     "regenerate": "Regenerate",
     "ai_result": "AI summary result",
     "streaming": "Generating AI summary...",
-    "token_warning": "The diff is large. AI may omit some parts."
+    "token_warning": "The diff is large. AI may omit some parts.",
+    "qa_label": "Ask about this summary",
+    "qa_placeholder": "Ask a question about the summary...",
+    "qa_submit": "Ask",
+    "qa_loading": "Generating answer...",
+    "qa_answering": "Generating answer"
   },
   "action_bar": {
     "commit_ai_aria": "Summarize the entire commit with AI",
@@ -168,6 +173,8 @@
     "provider_cli_missing": "CLI is not detected. Check the installation page.",
     "provider_none_selected": "No AI provider selected",
     "provider_codex_missing": "Could not find the Codex CLI",
+    "summary_model_label": "Summary model",
+    "qa_model_label": "Q&A model",
     "save_path_demo": "/Users/example/git-author-summaries",
     "settings_toast": "Status message",
     "open_install_page": "Open {{name}} installation page"

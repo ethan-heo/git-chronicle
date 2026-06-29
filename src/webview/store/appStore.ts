@@ -64,11 +64,15 @@ interface AppState extends FilterState {
   savePath: string | null;
   registeredProviders: AIProviderName[];
   activeAIProvider: AIProviderName | null;
+  summaryModel: string | null;
+  qaModel: string | null;
   summaryMode: SummaryMode;
   currentSummaryContent: string;
   isLoadingSummary: boolean;
   isGeneratingSummary: boolean;
+  isGeneratingQA: boolean;
   summaryError: string | null;
+  qaError: string | null;
   summarySavedPath: string | null;
   hasCurrentSavedSummary: boolean;
   isSummaryTokenLimitExceeded: boolean;
@@ -121,7 +125,7 @@ interface AppState extends FilterState {
   pushToast: (message: string, type: ToastType) => void;
   dismissToast: (id: string) => void;
   openRepository: () => void;
-  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null }) => void;
+  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null; summaryModel?: string | null; qaModel?: string | null }) => void;
   resetAISummary: () => void;
   startAISummaryLoading: (options?: { preserveSavedSummary?: boolean }) => void;
   startAISummaryGeneration: (options?: { preserveSavedSummary?: boolean }) => void;
@@ -129,6 +133,10 @@ interface AppState extends FilterState {
   completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
   loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
   failAISummary: (message?: string) => void;
+  startAIQA: () => void;
+  appendAIQAChunk: (chunk: string) => void;
+  completeAIQA: (payload: { appendedContent: string }) => void;
+  failAIQA: (message?: string) => void;
   setSummaryTokenWarning: (isOverLimit: boolean) => void;
   handleCommitsLoaded: (payload: CommitsLoadedPayload) => void;
   handleRepositoryNotFound: () => void;
@@ -178,11 +186,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   savePath: isVSCodeRuntime() ? null : '.git-author',
   registeredProviders: isVSCodeRuntime() ? [] : ['claude', 'gemini'],
   activeAIProvider: isVSCodeRuntime() ? null : 'claude',
+  summaryModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
+  qaModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
   summaryMode: 'file',
   currentSummaryContent: '',
   isLoadingSummary: false,
   isGeneratingSummary: false,
+  isGeneratingQA: false,
   summaryError: null,
+  qaError: null,
   summarySavedPath: null,
   hasCurrentSavedSummary: false,
   isSummaryTokenLimitExceeded: false,
@@ -379,7 +391,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: false,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: null,
       hasCurrentSavedSummary: false,
       isSummaryTokenLimitExceeded: false,
@@ -428,7 +442,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: false,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: null,
       hasCurrentSavedSummary: file.hasSavedSummary,
       isSummaryTokenLimitExceeded: false,
@@ -448,7 +464,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: false,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: null,
       hasCurrentSavedSummary: file.hasSavedSummary,
       isSummaryTokenLimitExceeded: false,
@@ -540,6 +558,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         commitHash: state.selectedCommit?.hash,
         commitMessage: state.selectedCommit?.message,
         provider: state.activeAIProvider,
+        summaryModel: state.summaryModel,
         savePath: state.savePath,
         files: state.changedFiles,
       });
@@ -660,6 +679,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       ...(settings.savePath !== undefined ? { savePath: settings.savePath } : {}),
       ...(settings.registeredProviders !== undefined ? { registeredProviders: settings.registeredProviders } : {}),
       ...(settings.activeAIProvider !== undefined ? { activeAIProvider: settings.activeAIProvider } : {}),
+      ...(settings.summaryModel !== undefined ? { summaryModel: settings.summaryModel } : {}),
+      ...(settings.qaModel !== undefined ? { qaModel: settings.qaModel } : {}),
     });
   },
 
@@ -668,7 +689,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: false,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: null,
       hasCurrentSavedSummary: false,
       isSummaryTokenLimitExceeded: false,
@@ -680,7 +703,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: '',
       isLoadingSummary: true,
       isGeneratingSummary: false,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: options.preserveSavedSummary ? state.summarySavedPath : null,
       hasCurrentSavedSummary: options.preserveSavedSummary ? state.hasCurrentSavedSummary : false,
     }));
@@ -691,7 +716,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: true,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: options.preserveSavedSummary ? state.summarySavedPath : null,
       hasCurrentSavedSummary: options.preserveSavedSummary ? state.hasCurrentSavedSummary : false,
     }));
@@ -702,7 +729,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: `${state.currentSummaryContent}${chunk}`,
       isLoadingSummary: false,
       isGeneratingSummary: true,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
     }));
   },
 
@@ -714,7 +743,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: content ?? state.currentSummaryContent,
       isLoadingSummary: false,
       isGeneratingSummary: false,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: savedPath ?? null,
       hasCurrentSavedSummary: true,
       ...(provider ? { activeAIProvider: provider } : {}),
@@ -729,7 +760,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentSummaryContent: content,
       isLoadingSummary: false,
       isGeneratingSummary: false,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: savedPath ?? null,
       hasCurrentSavedSummary: true,
       isSummaryTokenLimitExceeded: false,
@@ -742,6 +775,37 @@ export const useAppStore = create<AppState>((set, get) => ({
       isLoadingSummary: false,
       isGeneratingSummary: false,
       summaryError: message,
+      isGeneratingQA: false,
+    });
+  },
+
+  startAIQA: () => {
+    set({
+      isGeneratingQA: true,
+      qaError: null,
+    });
+  },
+
+  appendAIQAChunk: (chunk) => {
+    set((state) => ({
+      currentSummaryContent: `${state.currentSummaryContent}${chunk}`,
+      isGeneratingQA: true,
+      qaError: null,
+    }));
+  },
+
+  completeAIQA: ({ appendedContent }) => {
+    set((state) => ({
+      currentSummaryContent: `${state.currentSummaryContent}${appendedContent}`,
+      isGeneratingQA: false,
+      qaError: null,
+    }));
+  },
+
+  failAIQA: (message = 'Q&A generation failed') => {
+    set({
+      isGeneratingQA: false,
+      qaError: message,
     });
   },
 

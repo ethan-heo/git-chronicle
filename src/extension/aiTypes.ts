@@ -6,3 +6,7 @@ export interface AIProviderDefinition {
   installUrl: string;
   checkCommand: string;
 }
+
+export type AIModelUsage = 'summary' | 'qa';
+
+export type AIProviderModelMap = Record<AIProviderName, string>;

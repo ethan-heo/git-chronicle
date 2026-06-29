@@ -60,11 +60,15 @@ interface AppState {
   changedFilesError: string | null;
 
   // === AI Summary ===
+  summaryModel: string | null;
+  qaModel: string | null;
   summaryMode: 'file' | 'commit';
   currentSummaryContent: string;
   isLoadingSummary: boolean;
   isGeneratingSummary: boolean;
+  isGeneratingQA: boolean;
   summaryError: string | null;
+  qaError: string | null;
   summarySavedPath: string | null;
   hasCurrentSavedSummary: boolean;
   isSummaryTokenLimitExceeded: boolean;
@@ -116,7 +120,7 @@ interface AppState {
   dismissToast: (id: string) => void;
   handleChangedFilesLoaded: (files: ChangedFile[]) => void;
   handleChangedFilesLoadFailed: (message?: string) => void;
-  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null }) => void;
+  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null; summaryModel?: string | null; qaModel?: string | null }) => void;
   resetAISummary: () => void;
   startAISummaryLoading: () => void;
   startAISummaryGeneration: () => void;
@@ -124,6 +128,9 @@ interface AppState {
   completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
   loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
   failAISummary: (message?: string) => void;
+  startAIQA: () => void;
+  completeAIQA: (payload: { appendedContent: string }) => void;
+  failAIQA: (message?: string) => void;
   setSummaryTokenWarning: (isOverLimit: boolean) => void;
 }
 ```
@@ -358,10 +365,12 @@ S05 의존성 캔버스는 전역 상태의 `dependencyEdges`, `isLoadingDepende
 S04 파일 단위 AI 정리 화면은 전역 상태로 저장본 로딩, AI 생성, 스트리밍 청크, 저장 완료, 에러 상태를 구분한다. Extension Host 메시지는 `features/F05/S04_AISummaryViewerScreen.tsx`에서 직접 구독한다.
 
 ```typescript
-setAISummarySettings: ({ savePath, registeredProviders, activeAIProvider }) => set({
+setAISummarySettings: ({ savePath, registeredProviders, activeAIProvider, summaryModel, qaModel }) => set({
   ...(savePath !== undefined ? { savePath } : {}),
   ...(registeredProviders !== undefined ? { registeredProviders } : {}),
   ...(activeAIProvider !== undefined ? { activeAIProvider } : {}),
+  ...(summaryModel !== undefined ? { summaryModel } : {}),
+  ...(qaModel !== undefined ? { qaModel } : {}),
 }),
 
 startAISummaryLoading: () => set({
@@ -422,14 +431,32 @@ failAISummary: (message = '생성에 실패했습니다') => set({
   summaryError: message,
 }),
 
+startAIQA: () => set({
+  isGeneratingQA: true,
+  qaError: null,
+}),
+
+completeAIQA: ({ appendedContent }) => set((state) => ({
+  currentSummaryContent: `${state.currentSummaryContent}${appendedContent}`,
+  isGeneratingQA: false,
+  qaError: null,
+})),
+
+failAIQA: (message = 'Q&A 생성에 실패했습니다') => set({
+  isGeneratingQA: false,
+  qaError: message,
+}),
+
 setSummaryTokenWarning: (isOverLimit) => set({
   isSummaryTokenLimitExceeded: isOverLimit,
 }),
 ```
 
-S04 진입 시 파일 단위 정리는 `FETCH_AI_SUMMARY_SETTINGS`로 Extension Host의 `globalState` 설정값을 먼저 복원하고, `activeAIProvider`와 `savePath`가 모두 있으면 `START_AI_SUMMARY_FILE`을 보낸다. 커밋 단위 정리는 `summaryMode = 'commit'`일 때 동일한 설정 복원 후 `START_AI_SUMMARY_COMMIT`을 보낸다. 설정 응답에는 `savePath`, `registeredProviders`, `activeAIProvider`가 포함된다. 저장본 확인 중에는 `isLoadingSummary = true`, AI stdout 청크가 시작되면 `isGeneratingSummary = true`로 전환된다.
+S04 진입 시 파일 단위 정리는 `FETCH_AI_SUMMARY_SETTINGS`로 Extension Host의 `globalState` 설정값을 먼저 복원하고, `activeAIProvider`와 `savePath`가 모두 있으면 `START_AI_SUMMARY_FILE`을 보낸다. 커밋 단위 정리는 `summaryMode = 'commit'`일 때 동일한 설정 복원 후 `START_AI_SUMMARY_COMMIT`을 보낸다. 설정 응답에는 `savePath`, `registeredProviders`, `activeAIProvider`, `summaryModel`, `qaModel`이 포함된다. 저장본 확인 중에는 `isLoadingSummary = true`, AI stdout 청크가 시작되면 `isGeneratingSummary = true`로 전환된다.
 
 AI 응답 완료 후 저장 디렉토리 생성 또는 파일 쓰기에 실패하면 Extension Host는 `AI_SUMMARY_ERROR`를 보내고, Webview는 `failAISummary()`로 `summaryError = "저장 경로를 생성할 수 없습니다. 권한을 확인하세요"`를 표시한다. 저장 경로가 미설정된 경우에는 S04의 `EmptyState`가 "저장 경로를 먼저 설정해주세요"와 "설정으로 이동" CTA를 보여준다.
+
+요약이 완료된 뒤 사용자가 질문을 입력하면 `START_AI_QA`가 전송된다. Extension Host는 활성 프로바이더의 `qaModel`로 응답을 생성하고, `AI_QA_CHUNK` / `AI_QA_COMPLETE` / `AI_QA_ERROR` 메시지로 상태를 전달한다. 완료 시 `currentSummaryContent`와 저장된 `.md` 파일이 동시에 갱신된다.
 
 ### startBatchAISummary
 
@@ -443,6 +470,7 @@ startBatchAISummary: () => {
   postMessage('START_BATCH_AI_SUMMARY', {
     commitHash: selectedCommit?.hash,
     provider: activeAIProvider,
+    summaryModel,
     savePath,
     files: changedFiles,
   });
@@ -485,7 +513,9 @@ handleBatchCancelled: ({ batchCompleted, batchFailedCount }) => {
 
 ### F06/F07 설정 액션
 
-F06 구현은 `REGISTER_AI_PROVIDER`로 CLI 버전 확인과 등록을 요청하고, 등록된 제공자는 `ACTIVATE_AI_PROVIDER`로 활성/비활성을 토글한다. 하나를 활성화하면 나머지는 자동으로 비활성 상태가 되며, F05/F05b는 `FETCH_AI_SUMMARY_SETTINGS` 응답의 `registeredProviders`, `activeAIProvider`, `savePath`를 `setAISummarySettings`에 반영한다.
+F06 구현은 `REGISTER_AI_PROVIDER`로 CLI 버전 확인과 등록을 요청하고, 등록된 제공자는 `ACTIVATE_AI_PROVIDER`로 활성/비활성을 토글한다. 하나를 활성화하면 나머지는 자동으로 비활성 상태가 되며, 활성 버튼 하단에는 요약용/Q&A용 모델 드롭다운이 노출된다. F05/F05b는 `FETCH_AI_SUMMARY_SETTINGS` 응답의 `registeredProviders`, `activeAIProvider`, `savePath`, `summaryModel`, `qaModel`을 `setAISummarySettings`에 반영한다.
+
+모델 드롭다운 변경은 `SET_AI_MODEL` 메시지로 전달되며, Host는 `AI_MODEL_UPDATED` 응답으로 현재 활성 프로바이더의 `summaryModel`, `qaModel`을 다시 내려준다.
 
 F07 저장 경로 설정은 S06에서 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시지로 Extension Host에 요청한다. 경로 선택은 `vscode.window.showOpenDialog({ canSelectFolders: true })`로 처리하며, 선택/삭제 결과는 `SAVE_PATH_SET` / `SAVE_PATH_CLEARED` 응답으로 Webview에 전달된다.
 
@@ -495,13 +525,15 @@ F07 저장 경로 설정은 S06에서 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시
 
 ## ExtensionContext.globalState (영속 설정)
 
-Extension Host 재시작 후에도 유지해야 하는 설정은 F06/F07 구현에서 `ExtensionContext.globalState`에 저장한다. `loadAISettingsState()`는 `globalState`를 우선 사용하고, 기존 VSCode configuration의 `gitRewind.savePath`, `gitRewind.activeAIProvider`는 fallback으로만 읽는다.
+Extension Host 재시작 후에도 유지해야 하는 설정은 F06/F07 구현에서 `ExtensionContext.globalState`에 저장한다. `loadAISettingsState()`는 `globalState`를 우선 사용하고, 기존 VSCode configuration의 `gitChronicle.savePath`, `gitChronicle.activeAIProvider`는 fallback으로만 읽는다.
 
 | 키 | 타입 | 설명 |
 |---|------|------|
-| `gitRewind.savePath` | `string \| undefined` | AI 정리 저장 경로 |
-| `gitRewind.registeredProviders` | `AIProviderName[]` | 등록된 AI CLI 목록 |
-| `gitRewind.activeAIProvider` | `AIProviderName \| undefined` | 활성화된 AI CLI |
+| `gitChronicle.savePath` | `string \| undefined` | AI 정리 저장 경로 |
+| `gitChronicle.registeredProviders` | `AIProviderName[]` | 등록된 AI CLI 목록 |
+| `gitChronicle.activeAIProvider` | `AIProviderName \| undefined` | 활성화된 AI CLI |
+| `gitRewind.summaryModelPerProvider` | `Record<AIProviderName, string>` | provider별 요약용 모델 |
+| `gitRewind.qaModelPerProvider` | `Record<AIProviderName, string>` | provider별 Q&A용 모델 |
 
 Extension 활성화 시 `globalState`에서 값을 읽어 Webview에 초기 상태로 전달한다.
 

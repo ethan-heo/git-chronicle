@@ -2,14 +2,19 @@ import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AIProviderButtonState, AIProviderName } from '../../types/commit';
 import { AIProviderButton } from './AIProviderButton';
-import { AI_PROVIDERS } from './providers';
+import { ModelSelectorGroup } from './ModelSelectorGroup';
+import { AI_PROVIDERS, AI_PROVIDER_MODELS } from './providers';
 
 interface AIProviderSectionProps {
   activeAIProvider: AIProviderName | null;
   registeredProviders: AIProviderName[];
   registeringProvider: AIProviderName | null;
   providerErrors: Partial<Record<AIProviderName, string>>;
+  summaryModel: string | null;
+  qaModel: string | null;
   onProviderClick: (providerName: AIProviderName) => void;
+  onSummaryModelChange: (providerName: AIProviderName, model: string) => void;
+  onQAModelChange: (providerName: AIProviderName, model: string) => void;
   onOpenInstall: (url: string) => void;
 }
 
@@ -18,7 +23,11 @@ export const AIProviderSection: FC<AIProviderSectionProps> = ({
   registeredProviders,
   registeringProvider,
   providerErrors,
+  summaryModel,
+  qaModel,
   onProviderClick,
+  onSummaryModelChange,
+  onQAModelChange,
   onOpenInstall,
 }) => {
   const { t } = useTranslation();
@@ -45,7 +54,17 @@ export const AIProviderSection: FC<AIProviderSectionProps> = ({
             errorMessage={providerErrors[provider.name]}
             onToggle={() => onProviderClick(provider.name)}
             onOpenInstall={onOpenInstall}
-          />
+          >
+            {activeAIProvider === provider.name ? (
+              <ModelSelectorGroup
+                summaryModel={summaryModel}
+                qaModel={qaModel}
+                models={AI_PROVIDER_MODELS[provider.name]}
+                onChangeSummaryModel={(model) => onSummaryModelChange(provider.name, model)}
+                onChangeQAModel={(model) => onQAModelChange(provider.name, model)}
+              />
+            ) : null}
+          </AIProviderButton>
         ))}
       </div>
     </section>

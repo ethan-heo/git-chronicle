@@ -72,6 +72,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **F06** AI 설정 | [spec](features/F06_ai_settings/spec.md) | [blueprint](features/F06_ai_settings/blueprint.md) | [design](features/F06_ai_settings/design_prompt.md) | [impl](features/F06_ai_settings/implementation_prompt.md) |
 | **F07** 저장 경로 설정 | [spec](features/F07_save_path_settings/spec.md) | [blueprint](features/F07_save_path_settings/blueprint.md) | [design](features/F07_save_path_settings/design_prompt.md) | [impl](features/F07_save_path_settings/implementation_prompt.md) |
 | **F08** 일괄 AI 요약 | [spec](features/F08_batch_ai_summary/spec.md) | [blueprint](features/F08_batch_ai_summary/blueprint.md) | [design](features/F08_batch_ai_summary/design_prompt.md) | [impl](features/F08_batch_ai_summary/implementation_prompt.md) |
+| **F09** AI 요약 Q&A | [spec](features/F09_ai_summary_qa/spec.md) | [blueprint](features/F09_ai_summary_qa/blueprint.md) | - | - |
 | **F10** 파일 내부 심볼 의존성 캔버스 | [spec](features/F10_intra_file_symbol_dependency_canvas/spec.md) | [blueprint](features/F10_intra_file_symbol_dependency_canvas/blueprint.md) | [design](features/F10_intra_file_symbol_dependency_canvas/design_prompt.md) | [impl](features/F10_intra_file_symbol_dependency_canvas/implementation_prompt.md) |
 
 > - **spec**: 기능 요구사항 및 동작 명세
@@ -138,7 +139,7 @@ UI 컴포넌트별 Props 정의, 동작 명세, 사용 예시입니다.
 
 | 파일 | 설명 |
 |------|------|
-| [components/AISummaryViewer.md](components/AISummaryViewer.md) | AI 요약 마크다운 뷰어 (스트리밍 타이핑 효과) |
+| [components/AISummaryViewer.md](components/AISummaryViewer.md) | AI 요약 마크다운 뷰어 (스트리밍 타이핑 효과 + 질문 입력 영역) |
 | [components/AIProviderButton.md](components/AIProviderButton.md) | AI 프로바이더 선택 버튼 (Claude·GPT 등) |
 | [components/BatchProgressBar.md](components/BatchProgressBar.md) | 일괄 AI 요약 진행률 표시 바 |
 | [components/ResizableSplitPane.md](components/ResizableSplitPane.md) | 좌우 패널 분할 및 드래그 리사이즈 컨테이너 |

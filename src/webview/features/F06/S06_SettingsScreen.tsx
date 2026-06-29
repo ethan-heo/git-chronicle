@@ -4,8 +4,9 @@ import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
-import type { AIProviderName } from '../../types/commit';
+import type { AIModelUsage, AIProviderName } from '../../types/commit';
 import { AIProviderSection } from './AIProviderSection';
+import { AI_PROVIDER_MODELS } from './providers';
 import { SavePathSection } from './SavePathSection';
 
 type ProviderErrors = Partial<Record<AIProviderName, string>>;
@@ -14,6 +15,8 @@ interface AISettingsPayload {
   savePath?: string | null;
   registeredProviders?: AIProviderName[];
   activeAIProvider?: AIProviderName | null;
+  summaryModel?: string | null;
+  qaModel?: string | null;
   providerName?: AIProviderName;
   message?: string;
 }
@@ -23,6 +26,8 @@ export const S06SettingsScreen: FC = () => {
   const savePath = useAppStore((state) => state.savePath);
   const registeredProviders = useAppStore((state) => state.registeredProviders);
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
+  const summaryModel = useAppStore((state) => state.summaryModel);
+  const qaModel = useAppStore((state) => state.qaModel);
   const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const setAISummarySettings = useAppStore((state) => state.setAISummarySettings);
   const isRouteSlotActive = useRouteSlotActive();
@@ -52,6 +57,7 @@ export const S06SettingsScreen: FC = () => {
         type === 'AI_SUMMARY_SETTINGS_LOADED' ||
         type === 'AI_PROVIDER_REGISTERED' ||
         type === 'AI_PROVIDER_STATE_UPDATED' ||
+        type === 'AI_MODEL_UPDATED' ||
         type === 'SAVE_PATH_SET' ||
         type === 'SAVE_PATH_CLEARED'
       ) {
@@ -59,6 +65,8 @@ export const S06SettingsScreen: FC = () => {
           savePath: payload?.savePath ?? null,
           registeredProviders: payload?.registeredProviders ?? [],
           activeAIProvider: payload?.activeAIProvider ?? null,
+          summaryModel: payload?.summaryModel ?? null,
+          qaModel: payload?.qaModel ?? null,
         });
         setRegisteringProvider(null);
         setProviderErrors({});
@@ -124,6 +132,8 @@ export const S06SettingsScreen: FC = () => {
         setAISummarySettings({
           registeredProviders: Array.from(new Set([...registeredProviders, providerName])),
           activeAIProvider: providerName,
+          summaryModel: AI_PROVIDER_MODELS[providerName][0],
+          qaModel: AI_PROVIDER_MODELS[providerName][0],
         });
         setStatusMessage(t('settings.msg_provider_registered', { name: providerName }));
       }, 700);
@@ -133,6 +143,7 @@ export const S06SettingsScreen: FC = () => {
     setAISummarySettings({
       registeredProviders,
       activeAIProvider: activeAIProvider === providerName ? null : providerName,
+      ...(activeAIProvider === providerName ? {} : { summaryModel: AI_PROVIDER_MODELS[providerName][0], qaModel: AI_PROVIDER_MODELS[providerName][0] }),
     });
     setStatusMessage(activeAIProvider === providerName ? t('settings.msg_ai_deactivated') : t('settings.msg_provider_activated', { name: providerName }));
   };
@@ -144,6 +155,20 @@ export const S06SettingsScreen: FC = () => {
     }
 
     window.open(url, '_blank', 'noopener');
+  };
+
+  const handleModelChange = (providerName: AIProviderName, usage: AIModelUsage, model: string): void => {
+    if (!isVSCodeRuntime()) {
+      setAISummarySettings(usage === 'summary' ? { summaryModel: model } : { qaModel: model });
+      return;
+    }
+
+    postMessage('SET_AI_MODEL', {
+      provider: providerName,
+      providerName,
+      usage,
+      model,
+    });
   };
 
   const handlePathSelect = (): void => {
@@ -175,7 +200,11 @@ export const S06SettingsScreen: FC = () => {
           activeAIProvider={activeAIProvider}
           registeringProvider={registeringProvider}
           providerErrors={providerErrors}
+          summaryModel={summaryModel}
+          qaModel={qaModel}
           onProviderClick={handleProviderClick}
+          onSummaryModelChange={(providerName, model) => handleModelChange(providerName, 'summary', model)}
+          onQAModelChange={(providerName, model) => handleModelChange(providerName, 'qa', model)}
           onOpenInstall={handleOpenInstall}
         />
         <SavePathSection savePath={savePath} onPathSelect={handlePathSelect} onPathDelete={handlePathDelete} />

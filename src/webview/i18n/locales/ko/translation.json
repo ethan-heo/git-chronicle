@@ -124,7 +124,12 @@
     "regenerate": "다시 생성",
     "ai_result": "AI 정리 결과",
     "streaming": "AI 정리를 생성하는 중입니다...",
-    "token_warning": "diff가 큽니다. AI가 일부를 생략할 수 있습니다."
+    "token_warning": "diff가 큽니다. AI가 일부를 생략할 수 있습니다.",
+    "qa_label": "요약에 대해 질문하기",
+    "qa_placeholder": "요약 내용에 대해 질문하세요...",
+    "qa_submit": "질문하기",
+    "qa_loading": "답변 생성 중...",
+    "qa_answering": "답변 생성 중"
   },
   "action_bar": {
     "commit_ai_aria": "커밋 전체 AI 정리",
@@ -168,6 +173,8 @@
     "provider_cli_missing": "CLI가 감지되지 않습니다. 설치 페이지를 확인하세요",
     "provider_none_selected": "선택된 AI 제공자가 없습니다",
     "provider_codex_missing": "Codex CLI를 찾을 수 없습니다",
+    "summary_model_label": "요약용 모델",
+    "qa_model_label": "Q&A용 모델",
     "save_path_demo": "/Users/example/git-author-summaries",
     "settings_toast": "상태 메시지",
     "open_install_page": "{{name}} 설치 페이지 열기"

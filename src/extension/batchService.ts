@@ -11,6 +11,7 @@ interface RunBatchAISummaryOptions {
   provider: AIProviderName;
   savePath: string;
   commitHash: string;
+  summaryModel?: string | null;
   commitMessage?: string;
   onProgress: (progress: BatchAISummaryProgress) => void;
   isCancelled: () => boolean;
@@ -58,6 +59,7 @@ export async function runBatchAISummary(options: RunBatchAISummaryOptions): Prom
       const prompt = buildFileSummaryPrompt(file.path, diff.rawDiff);
       const content = await collectAISummary({
         provider: options.provider,
+        model: options.summaryModel,
         prompt,
       });
 
@@ -80,12 +82,13 @@ export async function runBatchAISummary(options: RunBatchAISummaryOptions): Prom
   };
 }
 
-function collectAISummary(options: { provider: AIProviderName; prompt: string }): Promise<string> {
+function collectAISummary(options: { provider: AIProviderName; prompt: string; model?: string | null }): Promise<string> {
   return new Promise((resolve, reject) => {
     let content = '';
 
     streamAISummary({
       provider: options.provider,
+      model: options.model,
       prompt: options.prompt,
       onChunk: (chunk) => {
         content += chunk;

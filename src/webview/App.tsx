@@ -51,6 +51,19 @@ export const App: FC = () => {
           savePath: event.data.payload?.savePath ?? null,
           activeAIProvider: event.data.payload?.activeAIProvider ?? null,
           registeredProviders: event.data.payload?.registeredProviders ?? [],
+          summaryModel: event.data.payload?.summaryModel ?? null,
+          qaModel: event.data.payload?.qaModel ?? null,
+        });
+        return;
+      }
+
+      if (event.data.type === 'AI_MODEL_UPDATED') {
+        setAISummarySettings({
+          savePath: event.data.payload?.savePath ?? null,
+          activeAIProvider: event.data.payload?.activeAIProvider ?? null,
+          registeredProviders: event.data.payload?.registeredProviders ?? [],
+          summaryModel: event.data.payload?.summaryModel ?? null,
+          qaModel: event.data.payload?.qaModel ?? null,
         });
         return;
       }

@@ -4,6 +4,7 @@ import type { AIProviderName } from './aiTypes';
 interface StreamAISummaryOptions {
   provider: AIProviderName;
   prompt: string;
+  model?: string | null;
   timeoutMs?: number;
   onChunk: (chunk: string) => void;
   onComplete: () => void;
@@ -15,7 +16,7 @@ const DEFAULT_TIMEOUT_MS = 120_000;
 export function streamAISummary(options: StreamAISummaryOptions): () => void {
   const { provider, prompt, onChunk, onComplete, onError } = options;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const [command, args] = getProviderCommand(provider);
+  const [command, args] = getProviderCommand(provider, options.model ?? null);
   let settled = false;
   let stderr = '';
 
@@ -86,14 +87,14 @@ export function streamAISummary(options: StreamAISummaryOptions): () => void {
   };
 }
 
-function getProviderCommand(provider: AIProviderName): [string, string[]] {
+function getProviderCommand(provider: AIProviderName, model: string | null): [string, string[]] {
   if (provider === 'claude') {
-    return ['claude', ['-p']];
+    return ['claude', model ? ['--model', model, '-p'] : ['-p']];
   }
 
   if (provider === 'gemini') {
-    return ['gemini', ['-p']];
+    return ['gemini', model ? ['--model', model, '-p'] : ['-p']];
   }
 
-  return ['codex', ['exec', '-']];
+  return ['codex', model ? ['exec', '--model', model, '-'] : ['exec', '-']];
 }

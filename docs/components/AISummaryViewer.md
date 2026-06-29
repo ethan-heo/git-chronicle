@@ -12,12 +12,16 @@ interface AISummaryViewerProps {
   error: string | null;            // 에러 메시지. null이면 정상
   isLoading: boolean;              // 설정/저장본 확인 중 로딩 상태
   isGenerating: boolean;           // true: AI stdout 스트리밍 중
+  isGeneratingQA: boolean;         // true: Q&A 응답 스트리밍 중
   hasSavedSummary: boolean;        // 저장본 또는 저장 완료본 여부
   hasAIProvider: boolean;          // activeAIProvider 존재 여부
   hasSavePath: boolean;            // savePath 존재 여부
   savedPath: string | null;        // 현재 저장 파일 경로
   providerLabel: string | null;    // 표시할 provider 이름
+  qaError: string | null;          // Q&A 에러 메시지
+  qaStreamingResponse: string;     // Q&A 임시 스트리밍 텍스트
   summaryMode: "file" | "commit";
+  onAskQuestion: (question: string) => void;
   onGoToSettings: () => void;
   onRegenerate: () => void;        // [재생성] 버튼 클릭 콜백
   onRetry: () => void;
@@ -37,10 +41,11 @@ AISummaryViewer
 ├── [content === '' && !isGenerating] → EmptyState (AI 정리가 없음)
 └── [content 있음]          → 마크다운 렌더링 영역
     ├── [isGenerating = true]  → StreamingTextRenderer (타이핑 커서 표시)
-    └── [isGenerating = false] → ReactMarkdown 렌더링 (완성본)
+    ├── [isGenerating = false] → ReactMarkdown 렌더링 (완성본)
+    └── [isGenerating = false && content !== ''] → QAInputArea
 ```
 
-상단 action bar에는 provider/source tag를 표시한다. [재생성] 버튼은 `hasSavedSummary && content !== "" && !isGenerating`일 때만 노출한다.
+상단 action bar에는 provider/source tag를 표시한다. [재생성] 버튼은 `hasSavedSummary && content !== "" && !isGenerating`일 때만 노출한다. 요약 완료 후에는 하단에 질문 입력 영역이 추가되며, Q&A 응답 완료 시 동일 마크다운 본문에 append된 결과가 다시 렌더링된다.
 
 ---
 
@@ -66,6 +71,8 @@ const StreamingTextRenderer: React.FC<{ content: string; isStreaming: boolean }>
 | `loading` | `isLoading = true` | LoadingState |
 | `streaming` | `isGenerating = true`, `content` 증가 중 | 타이핑 커서 표시 |
 | `complete` | `isGenerating = false`, `content` 완성 | react-markdown 렌더링 |
+| `qa.streaming` | `isGeneratingQA = true` | 질문 버튼 비활성화 + 임시 응답 박스 |
+| `qa.error` | `qaError !== null` | 질문 영역 하단 에러 텍스트 |
 | `error` | `error !== null` | ErrorState + [재시도] |
 | `empty` | `content === ''`, `!isGenerating`, `!isLoading`, `!error` | EmptyState |
 | `noAI` | `hasAIProvider = false` | EmptyState + 설정 CTA |
@@ -102,6 +109,8 @@ const StreamingTextRenderer: React.FC<{ content: string; isStreaming: boolean }>
 - 스트리밍 중 커서는 `aria-hidden="true"` (스크린 리더 제외).
 - 완료 후 react-markdown이 생성하는 헤딩(`h2`, `h3`)에 자동 포커스는 하지 않는다.
 - [재생성] 버튼: `aria-label="AI 정리 재생성"`.
+- 질문 textarea는 Enter 제출, Shift+Enter 줄바꿈을 지원한다.
+- Q&A 스트리밍 박스는 `aria-live="polite"`로 응답 진행 상황을 전달한다.
 
 ---
 
@@ -109,6 +118,7 @@ const StreamingTextRenderer: React.FC<{ content: string; isStreaming: boolean }>
 
 - [F05_AISummaryFile spec.md](../features/F05_ai_summary_file/spec.md)
 - [F05b_AISummaryCommit spec.md](../features/F05b_ai_summary_commit/spec.md)
+- [F09_AISummaryQA spec.md](../features/F09_ai_summary_qa/spec.md)
 - [S04_AISummaryViewerScreen blueprint.md](../screens/S04_ai_summary_viewer/blueprint.md)
 - [EmptyState.md](./EmptyState.md)
 - [LoadingState.md](./LoadingState.md)

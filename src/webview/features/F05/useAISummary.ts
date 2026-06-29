@@ -51,10 +51,14 @@ export function useAISummary(options?: { isActive?: boolean }) {
   const summaryMode = useAppStore((state) => state.summaryMode);
   const savePath = useAppStore((state) => state.savePath);
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
+  const summaryModel = useAppStore((state) => state.summaryModel);
+  const qaModel = useAppStore((state) => state.qaModel);
   const currentSummaryContent = useAppStore((state) => state.currentSummaryContent);
   const isLoadingSummary = useAppStore((state) => state.isLoadingSummary);
   const isGeneratingSummary = useAppStore((state) => state.isGeneratingSummary);
+  const isGeneratingQA = useAppStore((state) => state.isGeneratingQA);
   const summaryError = useAppStore((state) => state.summaryError);
+  const qaError = useAppStore((state) => state.qaError);
   const summarySavedPath = useAppStore((state) => state.summarySavedPath);
   const hasCurrentSavedSummary = useAppStore((state) => state.hasCurrentSavedSummary);
   const isSummaryTokenLimitExceeded = useAppStore((state) => state.isSummaryTokenLimitExceeded);
@@ -65,11 +69,15 @@ export function useAISummary(options?: { isActive?: boolean }) {
   const completeAISummary = useAppStore((state) => state.completeAISummary);
   const loadSavedAISummary = useAppStore((state) => state.loadSavedAISummary);
   const failAISummary = useAppStore((state) => state.failAISummary);
+  const startAIQA = useAppStore((state) => state.startAIQA);
+  const completeAIQA = useAppStore((state) => state.completeAIQA);
+  const failAIQA = useAppStore((state) => state.failAIQA);
   const setSummaryTokenWarning = useAppStore((state) => state.setSummaryTokenWarning);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTokenWarningDismissed, setIsTokenWarningDismissed] = useState(false);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(!isVSCodeRuntime());
+  const [qaStreamingResponse, setQAStreamingResponse] = useState('');
 
   const canStartSummary = Boolean(selectedCommit && activeAIProvider && savePath && (summaryMode === 'commit' || selectedFile));
 
@@ -109,6 +117,7 @@ export function useAISummary(options?: { isActive?: boolean }) {
           commitHash: selectedCommit.hash,
           commitMessage: selectedCommit.message,
           provider: activeAIProvider,
+          summaryModel,
           savePath,
           forceRegenerate,
         });
@@ -120,11 +129,45 @@ export function useAISummary(options?: { isActive?: boolean }) {
         commitMessage: selectedCommit.message,
         filePath: selectedFile?.path,
         provider: activeAIProvider,
+        summaryModel,
         savePath,
         forceRegenerate,
       });
     },
-    [activeAIProvider, appendAISummaryChunk, completeAISummary, savePath, selectedCommit, selectedFile, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryMode],
+    [activeAIProvider, appendAISummaryChunk, completeAISummary, savePath, selectedCommit, selectedFile, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryMode, summaryModel],
+  );
+
+  const askQuestion = useCallback(
+    (question: string): void => {
+      if (!selectedCommit || !activeAIProvider || !savePath || !currentSummaryContent || !qaModel) {
+        return;
+      }
+
+      startAIQA();
+      setQAStreamingResponse('');
+
+      if (!isVSCodeRuntime()) {
+        window.setTimeout(() => {
+          completeAIQA({
+            appendedContent: `\n\n---\n\n## Q&A\n\n### Q. ${question}\n\n현재 데모 환경에서는 요약 본문 기준으로만 답변하며, 이번 변경은 구조 단순화와 성능 개선을 목표로 한 수정으로 보입니다.\n`,
+          });
+        }, 500);
+        return;
+      }
+
+      postMessage('START_AI_QA', {
+        question,
+        summaryContent: currentSummaryContent,
+        commitHash: selectedCommit.hash,
+        commitMessage: selectedCommit.message,
+        filePath: summaryMode === 'file' ? selectedFile?.path : undefined,
+        summaryMode,
+        provider: activeAIProvider,
+        qaModel,
+        savePath,
+      });
+    },
+    [activeAIProvider, completeAIQA, currentSummaryContent, qaModel, savePath, selectedCommit, selectedFile?.path, startAIQA, summaryMode],
   );
 
   useEffect(() => {
@@ -134,12 +177,14 @@ export function useAISummary(options?: { isActive?: boolean }) {
   }, []);
 
   useEffect(() => {
-    const handler = (event: MessageEvent<{ type: string; payload?: { activeAIProvider?: AIProviderName | null; registeredProviders?: AIProviderName[]; savePath?: string | null; isOverLimit?: boolean; chunk?: string; content?: string; savedPath?: string | null; provider?: AIProviderName | null; message?: string } }>): void => {
+    const handler = (event: MessageEvent<{ type: string; payload?: { activeAIProvider?: AIProviderName | null; registeredProviders?: AIProviderName[]; savePath?: string | null; summaryModel?: string | null; qaModel?: string | null; isOverLimit?: boolean; chunk?: string; content?: string; savedPath?: string | null; provider?: AIProviderName | null; message?: string; appendedContent?: string } }>): void => {
       if (event.data.type === 'AI_SUMMARY_SETTINGS_LOADED') {
         setAISummarySettings({
           savePath: event.data.payload?.savePath ?? null,
           registeredProviders: event.data.payload?.registeredProviders ?? [],
           activeAIProvider: event.data.payload?.activeAIProvider ?? null,
+          summaryModel: event.data.payload?.summaryModel ?? null,
+          qaModel: event.data.payload?.qaModel ?? null,
         });
         setHasLoadedSettings(true);
         return;
@@ -166,12 +211,26 @@ export function useAISummary(options?: { isActive?: boolean }) {
       }
       if (event.data.type === 'AI_SUMMARY_ERROR') {
         failAISummary(event.data.payload?.message);
+        return;
+      }
+      if (event.data.type === 'AI_QA_CHUNK') {
+        setQAStreamingResponse((current) => `${current}${event.data.payload?.chunk ?? ''}`);
+        return;
+      }
+      if (event.data.type === 'AI_QA_COMPLETE') {
+        setQAStreamingResponse('');
+        completeAIQA({ appendedContent: event.data.payload?.appendedContent ?? '' });
+        return;
+      }
+      if (event.data.type === 'AI_QA_ERROR') {
+        setQAStreamingResponse('');
+        failAIQA(event.data.payload?.message);
       }
     };
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [appendAISummaryChunk, completeAISummary, failAISummary, hasCurrentSavedSummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration]);
+  }, [appendAISummaryChunk, completeAIQA, completeAISummary, failAIQA, failAISummary, hasCurrentSavedSummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration]);
 
   useEffect(() => {
     if (!isActive || !hasLoadedSettings || !canStartSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) return;
@@ -193,10 +252,12 @@ export function useAISummary(options?: { isActive?: boolean }) {
     hasCurrentSavedSummary,
     hasLoadedSettings,
     isDialogOpen,
+    isGeneratingQA,
     isGeneratingSummary,
     isLoadingSummary,
     isSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
+    onAskQuestion: askQuestion,
     onConfirmRegenerate: () => {
       setIsDialogOpen(false);
       startSummary(true);
@@ -209,6 +270,8 @@ export function useAISummary(options?: { isActive?: boolean }) {
     selectedFile,
     setIsDialogOpen,
     setIsTokenWarningDismissed,
+    qaError,
+    qaStreamingResponse,
     summaryError,
     summaryMode,
     summarySavedPath,

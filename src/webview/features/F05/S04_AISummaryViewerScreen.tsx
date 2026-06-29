@@ -24,13 +24,17 @@ export const S04AISummaryViewerScreen: FC = () => {
     hasCurrentSavedSummary,
     hasLoadedSettings,
     isDialogOpen,
+    isGeneratingQA,
     isGeneratingSummary,
     isLoadingSummary,
     isSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
+    onAskQuestion,
     onConfirmRegenerate,
     onRegenerate,
     onRetry,
+    qaError,
+    qaStreamingResponse,
     savePath,
     selectedCommit,
     selectedFile,
@@ -67,12 +71,16 @@ export const S04AISummaryViewerScreen: FC = () => {
             error={summaryError}
             isLoading={!hasLoadedSettings || isLoadingSummary || !isRouteSlotActive}
             isGenerating={isGeneratingSummary}
+            isGeneratingQA={isGeneratingQA}
             hasSavedSummary={hasCurrentSavedSummary}
             hasAIProvider={Boolean(activeAIProvider)}
             hasSavePath={Boolean(savePath)}
             savedPath={summarySavedPath}
             providerLabel={activeAIProvider}
+            qaError={qaError}
+            qaStreamingResponse={qaStreamingResponse}
             summaryMode={summaryMode}
+            onAskQuestion={onAskQuestion}
             onGoToSettings={goToSettingsView}
             onRegenerate={onRegenerate}
             onRetry={onRetry}

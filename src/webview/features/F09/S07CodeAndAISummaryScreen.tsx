@@ -26,13 +26,17 @@ export const S07CodeAndAISummaryScreen: FC = () => {
     headerContext,
     hasCurrentSavedSummary,
     hasLoadedSettings,
+    isGeneratingQA,
     isGeneratingSummary,
     isLoadingSummary,
     isSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
     dismissTokenWarning,
+    onAskQuestion,
     onRegenerate,
     onRetry,
+    qaError,
+    qaStreamingResponse,
     savePath,
     summaryError,
     summaryMode,
@@ -73,12 +77,16 @@ export const S07CodeAndAISummaryScreen: FC = () => {
             error={summaryError}
             isLoading={!hasLoadedSettings || isLoadingSummary}
             isGenerating={isGeneratingSummary}
+            isGeneratingQA={isGeneratingQA}
             hasSavedSummary={hasCurrentSavedSummary}
             hasAIProvider={Boolean(activeAIProvider)}
             hasSavePath={Boolean(savePath)}
             savedPath={summarySavedPath}
             providerLabel={activeAIProvider}
+            qaError={qaError}
+            qaStreamingResponse={qaStreamingResponse}
             summaryMode={summaryMode}
+            onAskQuestion={onAskQuestion}
             onGoToSettings={goToSettingsView}
             onRegenerate={onRegenerate}
             onRetry={onRetry}

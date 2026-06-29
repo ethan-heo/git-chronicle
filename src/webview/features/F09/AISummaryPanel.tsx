@@ -18,13 +18,17 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isOpen, filePath, onCl
     currentSummaryContent,
     hasCurrentSavedSummary,
     hasLoadedSettings,
+    isGeneratingQA,
     isGeneratingSummary,
     isLoadingSummary,
     isSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
     dismissTokenWarning,
+    onAskQuestion,
     onRegenerate,
     onRetry,
+    qaError,
+    qaStreamingResponse,
     savePath,
     summaryError,
     summaryMode,
@@ -49,12 +53,16 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isOpen, filePath, onCl
           error={summaryError}
           isLoading={!hasLoadedSettings || isLoadingSummary}
           isGenerating={isGeneratingSummary}
+          isGeneratingQA={isGeneratingQA}
           hasSavedSummary={hasCurrentSavedSummary}
           hasAIProvider={Boolean(activeAIProvider)}
           hasSavePath={Boolean(savePath)}
           savedPath={summarySavedPath}
           providerLabel={activeAIProvider}
+          qaError={qaError}
+          qaStreamingResponse={qaStreamingResponse}
           summaryMode={summaryMode}
+          onAskQuestion={onAskQuestion}
           onGoToSettings={onGoToSettings}
           onRegenerate={onRegenerate}
           onRetry={onRetry}
