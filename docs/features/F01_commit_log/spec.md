@@ -31,6 +31,7 @@
    - **작성자(Author):** 드롭다운 자동완성 (커밋 로드 시 작성자 목록 추출)
    - **커밋 메시지 포함 키워드:** 텍스트 입력창에 키워드 입력 후 300ms 디바운싱
    - **커밋 메시지 제외 키워드:** 쉼표로 구분한 키워드를 입력하면 해당 문자열을 포함한 커밋을 제외
+   - 포함 키워드는 대소문자를 구분하지 않는다.
 4. 커밋 항목을 클릭하면 이력 조회 화면(S-02)으로 전환된다.
 5. S-02 또는 다른 상세 화면에서 S-01로 돌아오면 이전에 적용한 필터 값을 유지한다.
 6. VSCode에서 패널이 숨김 처리되어 Webview 런타임이 재생성되어도 기간·작성자·키워드 필터는 복원되고, 복원된 조건으로 커밋 목록을 다시 로드한다.
@@ -46,12 +47,15 @@
 | 로딩 전략 | git 명령어 레벨 필터 (`--max-count`, `--after`, `--before`, `--author`, `--grep`) + 무한 스크롤 |
 | 초기 로드 | 200개. 스크롤 하단 도달 시 200개씩 추가 로드 |
 | 날짜 필터 | `<input type="date">` × 2 (시작일 / 종료일) |
+| 종료일 포함 | `--before=<date>T23:59:59` 형태로 전달하여 종료일 당일 커밋을 포함 |
 | 작성자 필터 | 드롭다운 선택. 커밋 로드 시 작성자 목록 추출하여 선택지 표시 |
-| 키워드 검색 | 커밋 메시지 대상 (`--grep`). 입력 후 300ms 디바운싱 |
+| 키워드 검색 | 커밋 메시지 대상 (`--grep`). 입력 후 300ms 디바운싱. 대소문자 구분 없음 |
 | 필터 조합 | 세 조건(기간·작성자·키워드) AND 고정 |
 | 필터 상태 복원 | `vscode.getState()` / `setState()`에 필터 값만 저장하여 Webview 재생성 후 복원 |
 | 목록 스크롤 복원 | S-01 재진입 시 커밋 목록이 이미 로드되어 있으면 목록은 재사용하고 스크롤 위치만 복원 |
-| 정렬 | 기본값은 커밋 생성 시간 기준 내림차순. 사용자는 `sortOrder`로 오래된순 전환 가능. `asc`일 때는 전체 `git log`를 오래된 순으로 읽은 뒤 페이지를 분할한다 |
+| 정렬 | 기본값은 커밋 생성 시간 기준 내림차순. 사용자는 `sortOrder`로 오래된순 전환 가능. `asc`일 때는 전체 건수를 먼저 계산한 뒤 역산된 페이지 기준으로 가져온다 |
+| 추가 로드 판정 | Extension Host가 `hasMore` 플래그를 함께 내려주며, Webview는 이를 그대로 사용한다 |
+| 응답 순서 제어 | 요청마다 `requestId`를 부여하고, 응답 수신 시 최신 요청인지 확인한다 |
 
 ---
 
@@ -85,11 +89,11 @@
 |------|------|------|
 | Git 저장소 | simple-git | Extension Host에서 현재 워크스페이스 경로 기준으로 `git log` 실행 |
 | `filterDateStart` | `string \| null` | 전역 상태. `--after` 옵션으로 git 명령에 전달 |
-| `filterDateEnd` | `string \| null` | 전역 상태. `--before` 옵션으로 git 명령에 전달 |
+| `filterDateEnd` | `string \| null` | 전역 상태. `--before=<date>T23:59:59` 형태로 git 명령에 전달 |
 | `filterAuthor` | `string \| null` | 전역 상태. `--author` 옵션으로 git 명령에 전달 |
-| `filterKeyword` | `string` | 전역 상태. `--grep` 옵션으로 git 명령에 전달 |
+| `filterKeyword` | `string` | 전역 상태. `--regexp-ignore-case --grep` 옵션으로 git 명령에 전달 |
 | `filterExcludeKeyword` | `string` | 전역 상태. 쉼표 구분 후 Extension Host에서 후처리 필터로 적용 |
-| `sortOrder` | `'desc' \| 'asc'` | 전역 상태. `asc`일 때 `--reverse` 옵션 적용 |
+| `sortOrder` | `'desc' \| 'asc'` | 전역 상태. `asc`일 때 전체 카운트를 기반으로 오래된순 페이지를 계산 |
 | `commitPage` | `number` | 전역 상태. `--max-count`, `--skip` 기반 페이지 오프셋 |
 
 ---
@@ -102,6 +106,7 @@
 | `authorList` | `string[]` | 전역 상태 업데이트. 드롭다운용 작성자 목록 (로드된 커밋에서 중복 제거 후 추출) |
 | `selectedCommit` | `Commit` | 전역 상태 업데이트. 커밋 항목 클릭 시 설정 |
 | `commitListScrollTop` | `number` | 전역 상태 업데이트. S-01 커밋 목록의 마지막 스크롤 위치 |
+| `hasMoreCommits` | `boolean` | 전역 상태 업데이트. 추가 로드 가능 여부 |
 
 ---
 
@@ -111,7 +116,7 @@
 |------|--------|------|
 | `commitList` 전역 상태 업데이트 | 커밋 로드 완료 / 필터 변경 | 기존 목록 교체 또는 추가 (무한 스크롤) |
 | `authorList` 전역 상태 업데이트 | 커밋 로드 완료 시 | 현재 로드된 커밋 목록에서 중복 제거 후 작성자 목록 추출 |
-| `hasMoreCommits` 업데이트 | 로드 결과 < 200개 시 | 무한 스크롤 종료 신호 |
+| `hasMoreCommits` 업데이트 | `hasMore` 판정값 수신 시 | 무한 스크롤 종료 신호 |
 | Webview State 업데이트 | 필터 변경 / 필터 초기화 | 기간·작성자·포함/제외 키워드·정렬 순서만 `{ filter }` 구조로 저장. `commitList`, `selectedCommit`, 로딩 상태는 저장하지 않음 |
 | S-02 화면 전환 | `selectedCommit` 설정 | `currentScreen = "S02"` 업데이트. F01 구현에서는 선택 커밋 요약 화면으로 진입하고, S02 상세 파일 트리는 F02에서 확장 |
 | S-01 스크롤 복원 | S-01 재진입 | 이미 로드된 커밋이 있으면 재로드를 생략하고 저장된 `scrollTop`을 복원 |

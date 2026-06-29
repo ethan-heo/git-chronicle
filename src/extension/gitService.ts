@@ -30,6 +30,14 @@ export interface FetchCommitsOptions {
   excludeKeywords?: string[];
 }
 
+export interface FetchCommitCountOptions {
+  repoPath: string;
+  dateStart?: string | null;
+  dateEnd?: string | null;
+  author?: string | null;
+  keyword?: string;
+}
+
 export interface FileDiffResult {
   rawDiff: string;
   isBinary: boolean;
@@ -47,7 +55,12 @@ export class GitRepositoryNotFoundError extends Error {
   }
 }
 
-export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit[]> {
+export interface FetchCommitsResult {
+  commits: Commit[];
+  rawCount: number;
+}
+
+export async function fetchCommits(options: FetchCommitsOptions): Promise<FetchCommitsResult> {
   const git = simpleGit(options.repoPath);
   const isRepo = await git.checkIsRepo();
 
@@ -69,7 +82,7 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
   }
 
   if (options.dateEnd) {
-    args.push(`--before=${options.dateEnd}`);
+    args.push(`--before=${options.dateEnd}T23:59:59`);
   }
 
   if (options.author) {
@@ -77,6 +90,7 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
   }
 
   if (options.keyword?.trim()) {
+    args.push('--regexp-ignore-case');
     args.push(`--grep=${options.keyword.trim()}`);
   }
 
@@ -85,8 +99,7 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
   }
 
   const output = await git.raw(args);
-
-  const commits = output
+  const rawCommits = output
     .split(RECORD_SEPARATOR)
     .map((record) => record.trim())
     .filter(Boolean)
@@ -100,7 +113,9 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
         author,
         date,
       };
-    })
+    });
+
+  const commits = rawCommits
     .filter((commit) => {
       const excludeKeywords = options.excludeKeywords?.filter(Boolean).map((item) => item.toLowerCase()) ?? [];
 
@@ -114,13 +129,44 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<Commit
     });
 
   if (!shouldReverse) {
-    return commits;
+    return { commits, rawCount: rawCommits.length };
   }
 
   const start = Math.max(options.page, 0) * pageSize;
   const end = start + pageSize;
 
-  return commits.slice(start, end);
+  return { commits: commits.slice(start, end), rawCount: rawCommits.length };
+}
+
+export async function fetchCommitCount(options: FetchCommitCountOptions): Promise<number> {
+  const git = simpleGit(options.repoPath);
+  const isRepo = await git.checkIsRepo();
+
+  if (!isRepo) {
+    throw new GitRepositoryNotFoundError(options.repoPath);
+  }
+
+  const args = ['rev-list', '--count', 'HEAD'];
+
+  if (options.dateStart) {
+    args.push(`--after=${options.dateStart}`);
+  }
+
+  if (options.dateEnd) {
+    args.push(`--before=${options.dateEnd}T23:59:59`);
+  }
+
+  if (options.author) {
+    args.push(`--author=${options.author}`);
+  }
+
+  if (options.keyword?.trim()) {
+    args.push('--regexp-ignore-case');
+    args.push(`--grep=${options.keyword.trim()}`);
+  }
+
+  const output = await git.raw(args);
+  return Number.parseInt(output.trim(), 10) || 0;
 }
 
 export async function fetchChangedFiles(repoPath: string, commitHash: string, savePath: string | null, commitMessage?: string): Promise<ChangedFile[]> {

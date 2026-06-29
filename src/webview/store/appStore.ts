@@ -34,6 +34,8 @@ interface CommitsLoadedPayload {
   commits: Commit[];
   page: number;
   pageSize: number;
+  hasMore?: boolean;
+  requestId?: number;
 }
 
 interface AppState extends FilterState {
@@ -80,6 +82,9 @@ interface AppState extends FilterState {
   hasMoreCommits: boolean;
   isLoadingCommits: boolean;
   isGitRepoDetected: boolean;
+  lastRequestId: number;
+  pendingRequestId: number | null;
+  hasPendingCommitReload: boolean;
   currentScreen: ScreenID;
   previousScreen: ScreenID | null;
   transitionDirection: RouteTransitionDirection;
@@ -191,6 +196,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   hasMoreCommits: true,
   isLoadingCommits: false,
   isGitRepoDetected: true,
+  lastRequestId: 0,
+  pendingRequestId: null,
+  hasPendingCommitReload: false,
   currentScreen: 'S01',
   previousScreen: null,
   transitionDirection: 'forward',
@@ -204,13 +212,20 @@ export const useAppStore = create<AppState>((set, get) => ({
     const state = get();
 
     if (state.isLoadingCommits) {
+      if (reset) {
+        set({ hasPendingCommitReload: true });
+      }
       return;
     }
 
     const page = reset ? 0 : state.commitPage;
+    const requestId = state.lastRequestId + 1;
 
     set({
       isLoadingCommits: true,
+      lastRequestId: requestId,
+      pendingRequestId: requestId,
+      hasPendingCommitReload: false,
       commitLoadError: reset ? null : state.commitLoadError,
       loadMoreError: null,
       isGitRepoDetected: true,
@@ -220,7 +235,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!isVSCodeRuntime()) {
       window.setTimeout(() => {
         const commits = getDemoCommitsPage(get(), page, DEMO_PAGE_SIZE);
-        get().handleCommitsLoaded({ commits, page, pageSize: DEMO_PAGE_SIZE });
+        get().handleCommitsLoaded({ commits, page, pageSize: DEMO_PAGE_SIZE, hasMore: commits.length >= DEMO_PAGE_SIZE, requestId });
       }, 260);
       return;
     }
@@ -234,6 +249,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       filterKeyword: state.filterKeyword,
       filterExcludeKeyword: state.filterExcludeKeyword,
       sortOrder: state.sortOrder,
+      requestId,
     });
   },
 
@@ -727,21 +743,31 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  handleCommitsLoaded: ({ commits, page, pageSize }) => {
+  handleCommitsLoaded: ({ commits, page, pageSize, hasMore, requestId }) => {
     const current = get();
+    if (requestId !== undefined && current.pendingRequestId !== requestId) {
+      return;
+    }
+
     const nextCommitList = page === 0 ? commits : [...current.commitList, ...commits];
 
     set({
       commitList: nextCommitList,
       authorList: extractAuthors(nextCommitList),
       commitPage: page + 1,
-      hasMoreCommits: commits.length >= pageSize,
+      hasMoreCommits: hasMore ?? commits.length >= pageSize,
       isLoadingCommits: false,
       isGitRepoDetected: true,
       commitLoadError: null,
       loadMoreError: null,
       hasLoadedCommits: true,
+      pendingRequestId: null,
     });
+
+    if (get().hasPendingCommitReload) {
+      set({ hasPendingCommitReload: false });
+      get().loadCommits(true);
+    }
   },
 
   handleRepositoryNotFound: () => {

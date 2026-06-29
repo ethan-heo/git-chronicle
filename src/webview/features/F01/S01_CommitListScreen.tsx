@@ -62,6 +62,8 @@ export const S01CommitListScreen: FC = () => {
           commits?: Commit[];
           page?: number;
           pageSize?: number;
+          hasMore?: boolean;
+          requestId?: number;
           message?: string;
         };
       }>,
@@ -73,6 +75,8 @@ export const S01CommitListScreen: FC = () => {
           commits: event.data.payload.commits ?? [],
           page: event.data.payload.page ?? 0,
           pageSize: event.data.payload.pageSize ?? 200,
+          hasMore: event.data.payload.hasMore,
+          requestId: event.data.payload.requestId,
         });
         return;
       }

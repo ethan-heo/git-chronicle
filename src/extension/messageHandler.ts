@@ -5,7 +5,7 @@ import type { AIProviderName } from './aiTypes';
 import { runBatchAISummary } from './batchService';
 import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
 import { analyzeSymbolGraph } from './intraFileDependencyService';
-import { fetchChangedFiles, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError, type ChangedFile } from './gitService';
+import { fetchChangedFiles, fetchCommitCount, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError, type ChangedFile } from './gitService';
 import { buildCommitSummaryPrompt, buildFileSummaryPrompt } from './prompts';
 import { loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from './summaryFileService';
 
@@ -26,6 +26,7 @@ interface WebviewMessage {
 interface FetchCommitsPayload {
   page?: number;
   pageSize?: number;
+  requestId?: number;
   filterDateStart?: string | null;
   filterDateEnd?: string | null;
   filterAuthor?: string | null;
@@ -364,11 +365,12 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
   try {
     const page = payload.page ?? 0;
     const pageSize = payload.pageSize ?? 200;
+    const requestId = payload.requestId;
     const excludeKeywords = (payload.filterExcludeKeyword ?? '')
       .split(',')
       .map((keyword) => keyword.trim())
       .filter(Boolean);
-    const commits = await fetchCommits({
+    const result = await fetchCommits({
       repoPath,
       page,
       pageSize,
@@ -379,13 +381,25 @@ async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchComm
       sortOrder: payload.sortOrder,
       excludeKeywords,
     });
+    const filteredCount = result.rawCount;
+    const hasMore = payload.sortOrder === 'asc'
+      ? (await fetchCommitCount({
+          repoPath,
+          dateStart: payload.filterDateStart,
+          dateEnd: payload.filterDateEnd,
+          author: payload.filterAuthor,
+          keyword: payload.filterKeyword,
+        })) > (page + 1) * pageSize
+      : filteredCount >= pageSize;
 
     await panel.webview.postMessage({
       type: 'COMMITS_LOADED',
       payload: {
-        commits,
+        commits: result.commits,
         page,
         pageSize,
+        ...(requestId !== undefined ? { requestId } : {}),
+        hasMore,
       },
     });
   } catch (error) {
