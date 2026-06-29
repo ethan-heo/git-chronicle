@@ -68,6 +68,7 @@ interface SymbolGraphProps {
   activeNodeId?: string | null;
   onNodeClick?: (nodeId: string) => void;
   onNodeHover?: (nodeId: string | null) => void;
+  onPaneClick?: () => void;
 }
 ```
 
@@ -77,6 +78,7 @@ interface SymbolGraphProps {
 - 노드 드래그: 노드 위치 직접 조정
 - 노드 호버: 연결 엣지 강조 + 비연결 엣지 감쇠, hover 콜백 전달
 - 노드 클릭: 활성 노드 변경 및 코드 패널 스크롤 타겟 설정
+- 빈 영역 클릭: hover/활성 노드 선택 해제 및 엣지 강조 원복
 - 노드 드래그 후: 현재 위치 기준 엣지 연결 면 재계산
 - 캔버스 리사이즈: `fitView()` 재적용
 
@@ -366,6 +368,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 | 노드 호버 | `SymbolNode` 마우스 진입 | 연결 엣지 강조 + 비연결 엣지 감쇠 |
 | 노드 호버 해제 | 마우스 이탈 | 강조 해제 + 감쇠 해제 |
 | 노드 드래그 | `SymbolNode` 드래그 | 위치 이동 + 엣지 연결 면 재계산 |
+| 빈 영역 클릭 | `ReactFlow` pane 클릭 | hover/활성 선택 해제 + 엣지 원복 |
 | 줌 | 마우스 휠 | React Flow 내장 |
 | 패닝 | 빈 영역 드래그 | React Flow 내장 |
 | [맞춤] | CanvasControls 버튼 | `fitView()` |

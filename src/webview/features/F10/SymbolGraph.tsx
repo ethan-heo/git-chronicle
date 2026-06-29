@@ -19,21 +19,31 @@ interface Props {
   activeNodeId?: string | null;
   onNodeClick?: (nodeId: string) => void;
   onNodeHover?: (nodeId: string | null) => void;
+  onPaneClick?: () => void;
 }
 
 const nodeTypes = { symbolNode: SymbolNode };
 const edgeTypes = { symbolEdge: SymbolEdge };
 
-export const SymbolGraph: FC<Props> = ({ symbolNodes, symbolEdges, isLoading, error, onRetry, activeNodeId, onNodeClick, onNodeHover }) => {
+export const SymbolGraph: FC<Props> = ({ symbolNodes, symbolEdges, isLoading, error, onRetry, activeNodeId, onNodeClick, onNodeHover, onPaneClick }) => {
   const { t } = useTranslation();
 
   if (isLoading) return <section className="dependency-canvas-state"><LoadingState label={t('symbol_graph.loading')} size="lg" /></section>;
   if (error) return <section className="dependency-canvas-state"><ErrorState message={error} onRetry={onRetry} /></section>;
   if (symbolNodes.length === 0) return <section className="dependency-canvas-state"><EmptyState message={t('symbol_graph.empty')} /></section>;
-  return <SymbolGraphCanvas symbolNodes={symbolNodes} symbolEdges={symbolEdges} activeNodeId={activeNodeId} onNodeClick={onNodeClick} onNodeHover={onNodeHover} />;
+  return (
+    <SymbolGraphCanvas
+      symbolNodes={symbolNodes}
+      symbolEdges={symbolEdges}
+      activeNodeId={activeNodeId}
+      onNodeClick={onNodeClick}
+      onNodeHover={onNodeHover}
+      onPaneClick={onPaneClick}
+    />
+  );
 };
 
-const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeNodeId' | 'onNodeClick' | 'onNodeHover'>> = ({ symbolNodes, symbolEdges, activeNodeId, onNodeClick, onNodeHover }) => {
+const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeNodeId' | 'onNodeClick' | 'onNodeHover' | 'onPaneClick'>> = ({ symbolNodes, symbolEdges, activeNodeId, onNodeClick, onNodeHover, onPaneClick }) => {
   const { t } = useTranslation();
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
@@ -89,6 +99,7 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
         onPaneClick={() => {
           setHighlightedNodeId(null);
           onNodeHover?.(null);
+          onPaneClick?.();
         }}
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />

@@ -113,6 +113,10 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
               onNodeHover={(nodeId) => {
                 setHoveredSymbolNode(nodeId);
               }}
+              onPaneClick={() => {
+                setActiveSymbolNode(null);
+                setHoveredSymbolNode(null);
+              }}
             />
           </ReactFlowProvider>
         </div>
