@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SplitViewButton, TopHeader } from '../../shared/components';
+import { ResizableSplitPane, SplitViewButton, TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { DiffViewer } from './DiffViewer';
@@ -39,8 +39,10 @@ export const S03CodeViewerScreen: FC = () => {
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />
-      <section className={['code-split-workspace', isSplitPanelOpen ? 'code-split-workspace-open' : ''].filter(Boolean).join(' ')}>
-        <div className="code-split-main-panel">
+      <ResizableSplitPane
+        isOpen={isSplitPanelOpen}
+        className="code-split-workspace"
+        left={(
           <DiffViewer
             diffLines={diffState.diffLines}
             filePath={selectedFile.path}
@@ -50,9 +52,9 @@ export const S03CodeViewerScreen: FC = () => {
             isDeletedFile={diffState.isDeletedFile}
             onRetry={loadFileDiff}
           />
-        </div>
-        <AISummaryPanel isOpen={isSplitPanelOpen} filePath={selectedFile.path} onClose={closeSplitPanel} onGoToSettings={goToSettingsView} />
-      </section>
+        )}
+        right={<AISummaryPanel isOpen={isSplitPanelOpen} filePath={selectedFile.path} onClose={closeSplitPanel} onGoToSettings={goToSettingsView} />}
+      />
     </main>
   );
 };

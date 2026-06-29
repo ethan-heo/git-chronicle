@@ -1,7 +1,7 @@
 import { ReactFlowProvider } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SplitViewButton, TopHeader } from '../../shared/components';
+import { ResizableSplitPane, SplitViewButton, TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { SymbolCodePanel } from './SymbolCodePanel';
@@ -96,8 +96,12 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
           />
         )}
       />
-      <section className={['symbol-graph-workspace', isCodePanelOpen ? 'symbol-graph-workspace-open' : ''].filter(Boolean).join(' ')}>
-        <div className="symbol-graph-canvas-panel">
+      <ResizableSplitPane
+        isOpen={isCodePanelOpen}
+        className="symbol-graph-workspace"
+        defaultLeftPercent={62}
+        left={(
+          <div className="symbol-graph-canvas-panel">
           <ReactFlowProvider>
             <SymbolGraph
               symbolNodes={symbolNodes}
@@ -119,18 +123,21 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
               }}
             />
           </ReactFlowProvider>
-        </div>
-        <SymbolCodePanel
-          isOpen={isCodePanelOpen}
-          filePath={selectedFileForSymbolGraph.path}
-          fileContent={symbolFileContent ?? ''}
-          language={selectedFileForSymbolGraph.path}
-          highlightRange={highlightedRange ? { start: highlightedRange.lineStart, end: highlightedRange.lineEnd } : null}
-          scrollToRange={scrollToRange}
-          scrollRequestId={scrollRequestId}
-          onClose={closeCodePanel}
-        />
-      </section>
+          </div>
+        )}
+        right={(
+          <SymbolCodePanel
+            isOpen={isCodePanelOpen}
+            filePath={selectedFileForSymbolGraph.path}
+            fileContent={symbolFileContent ?? ''}
+            language={selectedFileForSymbolGraph.path}
+            highlightRange={highlightedRange ? { start: highlightedRange.lineStart, end: highlightedRange.lineEnd } : null}
+            scrollToRange={scrollToRange}
+            scrollRequestId={scrollRequestId}
+            onClose={closeCodePanel}
+          />
+        )}
+      />
     </main>
   );
 };

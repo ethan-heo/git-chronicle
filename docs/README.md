@@ -141,6 +141,7 @@ UI 컴포넌트별 Props 정의, 동작 명세, 사용 예시입니다.
 | [components/AISummaryViewer.md](components/AISummaryViewer.md) | AI 요약 마크다운 뷰어 (스트리밍 타이핑 효과) |
 | [components/AIProviderButton.md](components/AIProviderButton.md) | AI 프로바이더 선택 버튼 (Claude·GPT 등) |
 | [components/BatchProgressBar.md](components/BatchProgressBar.md) | 일괄 AI 요약 진행률 표시 바 |
+| [components/ResizableSplitPane.md](components/ResizableSplitPane.md) | 좌우 패널 분할 및 드래그 리사이즈 컨테이너 |
 | [components/SplitViewButton.md](components/SplitViewButton.md) | 코드/요약 분할 화면 진입용 아이콘 버튼 |
 
 ### 의존성 캔버스

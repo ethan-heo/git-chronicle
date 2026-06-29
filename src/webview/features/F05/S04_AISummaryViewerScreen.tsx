@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SplitViewButton, TopHeader } from '../../shared/components';
+import { ResizableSplitPane, SplitViewButton, TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { AISummaryViewer } from './AISummaryViewer';
@@ -56,8 +56,11 @@ export const S04AISummaryViewerScreen: FC = () => {
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />
-      <section className={['ai-split-workspace', isSplitPanelOpen ? 'ai-split-workspace-open' : ''].filter(Boolean).join(' ')}>
-        <div className="ai-split-main-panel">
+      <ResizableSplitPane
+        isOpen={isSplitPanelOpen}
+        className="ai-split-workspace"
+        left={(
+          <>
           <TokenLimitWarning isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed} onDismiss={() => setIsTokenWarningDismissed(true)} />
           <AISummaryViewer
             content={currentSummaryContent}
@@ -74,9 +77,10 @@ export const S04AISummaryViewerScreen: FC = () => {
             onRegenerate={onRegenerate}
             onRetry={onRetry}
           />
-        </div>
-        {selectedFile ? <DiffViewerPanel isOpen={isSplitPanelOpen} filePath={selectedFile.path} commitHash={selectedCommit.hash} isDeletedFile={selectedFile.status === 'D'} onClose={closeSplitPanel} /> : null}
-      </section>
+        </>
+        )}
+        right={selectedFile ? <DiffViewerPanel isOpen={isSplitPanelOpen} filePath={selectedFile.path} commitHash={selectedCommit.hash} isDeletedFile={selectedFile.status === 'D'} onClose={closeSplitPanel} /> : null}
+      />
       <OverwriteConfirmDialog isOpen={isDialogOpen} onCancel={() => setIsDialogOpen(false)} onConfirm={onConfirmRegenerate} />
     </main>
   );
