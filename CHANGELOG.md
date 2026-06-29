@@ -1,3 +1,20 @@
+## Unreleased (2026-06-29)
+
+## [0.6.0](https://github.com/ethan-heo/git-chronicle/compare/v0.5.2...v0.6.0) (2026-06-29)
+
+### Features
+
+* add AI model switching and summary Q&A ([0fbffca](https://github.com/ethan-heo/git-chronicle/commit/0fbffca85164fcc67545ef3c2ec18f96f473d156))
+* add resizable split pane ([c4b7503](https://github.com/ethan-heo/git-chronicle/commit/c4b7503aa9c7f8dd9669f7b9ed5e325c71ac7e29))
+
+### Bug Fixes
+
+* prevent code viewer loading from hanging ([a741898](https://github.com/ethan-heo/git-chronicle/commit/a7418982b313f98ecfb90835c6600e47fb32bd99))
+* reset code viewer ai summary state ([36c8d53](https://github.com/ethan-heo/git-chronicle/commit/36c8d535a08b3928eb4656f9797b9a8113df7a2b))
+
+### Documentation
+
+* update CHANGELOG ([12f708c](https://github.com/ethan-heo/git-chronicle/commit/12f708cc73c283dbd33f0d0d359dc0292aca4f27))
 
 ## [0.5.2](https://github.com/ethan-heo/git-chronicle/compare/v0.5.1...v0.5.2) (2026-06-29)
 
