@@ -81,11 +81,11 @@ export default {
 {
   "scripts": {
     "changelog": "conventional-changelog -p conventionalcommits -n scripts/changelog.config.cjs -u -r 0 > CHANGELOG.md",
-    "changelog:release": "conventional-changelog -p conventionalcommits -n scripts/changelog.config.cjs -i CHANGELOG.md -s -r 1",
-    "release": "bumpp && pnpm changelog:release && git add CHANGELOG.md && git commit -m \"docs: update CHANGELOG\"",
-    "release:patch": "bumpp patch && pnpm changelog:release && git add CHANGELOG.md && git commit -m \"docs: update CHANGELOG\"",
-    "release:minor": "bumpp minor && pnpm changelog:release && git add CHANGELOG.md && git commit -m \"docs: update CHANGELOG\"",
-    "release:major": "bumpp major && pnpm changelog:release && git add CHANGELOG.md && git commit -m \"docs: update CHANGELOG\""
+    "changelog:release": "conventional-changelog -p conventionalcommits -n scripts/changelog.config.cjs -r 0 > CHANGELOG.md",
+    "release": "bumpp && pnpm changelog:release && git add CHANGELOG.md && git diff --cached --quiet || git commit -m \"docs: update CHANGELOG\"",
+    "release:patch": "bumpp patch && pnpm changelog:release && git add CHANGELOG.md && git diff --cached --quiet || git commit -m \"docs: update CHANGELOG\"",
+    "release:minor": "bumpp minor && pnpm changelog:release && git add CHANGELOG.md && git diff --cached --quiet || git commit -m \"docs: update CHANGELOG\"",
+    "release:major": "bumpp major && pnpm changelog:release && git add CHANGELOG.md && git diff --cached --quiet || git commit -m \"docs: update CHANGELOG\""
   }
 }
 ```
@@ -95,7 +95,7 @@ export default {
 | 스크립트 | 설명 |
 |----------|------|
 | `changelog` | 태그되지 않은 최신 커밋까지 포함해 `CHANGELOG.md`를 다시 작성하고, 커밋은 날짜 내림차순으로 정렬한다. 단독 실행 시 최상단은 `Unreleased`가 된다. |
-| `changelog:release` | 태그가 생성된 뒤 `CHANGELOG.md`에 새 릴리스 섹션을 추가한다. |
+| `changelog:release` | 태그가 생성된 뒤 전체 `CHANGELOG.md`를 다시 생성해 최신 릴리스 섹션을 반영한다. |
 | `release` | 인터랙티브 UI로 버전 타입을 선택한 뒤 릴리스를 수행하고, 끝난 뒤 CHANGELOG를 커밋한다. |
 | `release:patch` | `0.5.1 → 0.5.2` 같은 patch 릴리스를 수행하고 CHANGELOG 커밋까지 만든다. |
 | `release:minor` | `0.5.1 → 0.6.0` 같은 minor 릴리스를 수행하고 CHANGELOG 커밋까지 만든다. |
@@ -115,7 +115,7 @@ git commit -m "docs: add CHANGELOG"
 
 `-u -r 0` 옵션은 마지막 태그 이후의 릴리스 히스토리와 태그되지 않은 최신 커밋을 함께 반영한다. `scripts/changelog.config.cjs`는 커밋 정렬을 날짜 내림차순으로 고정한다.
 
-릴리즈가 끝난 뒤 새 태그를 기준으로 `pnpm changelog:release`를 실행하면 `CHANGELOG.md`에 새 릴리스 섹션이 추가된다. 그래서 `pnpm changelog`는 미리보기용, `pnpm release`는 릴리스 후 체인지로그 커밋까지 포함하는 명령으로 역할이 나뉜다.
+릴리즈가 끝난 뒤 새 태그를 기준으로 `pnpm changelog:release`를 실행하면 전체 `CHANGELOG.md`가 다시 생성되고 최신 릴리스 섹션이 반영된다. `git diff --cached --quiet` 검사를 함께 두어 변경이 없으면 체인지로그 커밋을 생략한다. 그래서 `pnpm changelog`는 미리보기용, `pnpm release`는 릴리스 후 체인지로그 반영까지 포함하는 명령으로 역할이 나뉜다.
 
 이후부터는 `pnpm release` 명령이 CHANGELOG를 자동으로 증분 갱신한다.
 
@@ -136,8 +136,8 @@ pnpm release
 1. `package.json` 버전을 새 버전으로 변경한다.
 2. `git commit -m "chore(release): v0.5.2"`로 릴리스 커밋을 만든다.
 3. `git tag v0.5.2`를 생성한다.
-4. `pnpm changelog:release`를 실행해 `CHANGELOG.md`를 갱신한다.
-5. `git add CHANGELOG.md`와 `git commit -m "docs: update CHANGELOG"`로 체인지로그 커밋을 만든다.
+4. `pnpm changelog:release`를 실행해 전체 `CHANGELOG.md`를 다시 생성한다.
+5. `git add CHANGELOG.md` 후 변경이 있을 때만 `git commit -m "docs: update CHANGELOG"`로 체인지로그 커밋을 만든다.
 
 ### 릴리스 후 원격 반영
 
