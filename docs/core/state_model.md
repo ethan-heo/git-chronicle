@@ -140,6 +140,7 @@ interface AIProvider {
 ## 상태 초기화 규칙
 
 - `selectedCommit` 변경 시: `selectedFile`, `changedFiles`, 의존성 상태, `currentSummaryContent`, `isLoadingSummary`, `isGeneratingSummary`, `summaryError`, `summarySavedPath`, `hasCurrentSavedSummary`, `isSummaryTokenLimitExceeded` 초기화.
+- `selectFileForCode` 진입 시: `summaryMode = "file"`로 고정하고 `currentSummaryContent`, `isLoadingSummary`, `isGeneratingSummary`, `summaryError`, `summarySavedPath`, `hasCurrentSavedSummary`, `isSummaryTokenLimitExceeded`를 파일 기준으로 초기화한다.
 - `savePath` null 설정 시: `isGeneratingSummary`가 true이면 진행 중인 생성을 중단하지 않음 (이미 시작된 작업은 완료 후 저장 불가 토스트 표시).
 - `isBatchRunning` false 전환 시: `isBatchCancelling`을 false로 되돌린다. 마지막 `batchTotal`, `batchCompleted`, `batchFailedCount` 값은 완료/취소 Toast 계산을 위해 유지한다.
 - 확장 프로그램 재활성화 시: 네비게이션 상태는 S-01로 리셋. AI 프로바이더·저장 경로 상태는 VSCode ExtensionContext에서 복원.

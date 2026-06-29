@@ -15,6 +15,7 @@
 ## Entry Condition
 
 다음 화면에서 [코드 보기] 버튼 클릭 시 진입. `selectedFile` 전역 상태 설정 후 진입.
+진입 시 AI 요약 관련 상태는 현재 파일 기준으로 초기화되며, 우측 패널은 새 요약을 생성하는 전제로 동작한다.
 
 - [S02_HistoryViewScreen](../S02_history_view/blueprint.md) — 파일 트리 노드 호버 → [코드 보기]
 - [S05_DependencyCanvasScreen](../S04_dependency_canvas/blueprint.md) — 캔버스 노드 호버 → [코드 보기]

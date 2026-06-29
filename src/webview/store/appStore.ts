@@ -424,6 +424,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({
       selectedFile: file,
+      summaryMode: 'file',
+      currentSummaryContent: '',
+      isLoadingSummary: false,
+      isGeneratingSummary: false,
+      summaryError: null,
+      summarySavedPath: null,
+      hasCurrentSavedSummary: file.hasSavedSummary,
+      isSummaryTokenLimitExceeded: false,
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S03',
       transitionDirection: 'forward',
