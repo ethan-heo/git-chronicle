@@ -57,7 +57,7 @@
 
 ```js
 export default {
-  execute: 'pnpm changelog && git add CHANGELOG.md',
+  execute: 'pnpm changelog && node scripts/finalize-release-changelog.mjs && git add CHANGELOG.md',
   commit: 'chore(release): v%s',
   tag: 'v%s',
   push: false,
@@ -68,7 +68,7 @@ export default {
 
 | 옵션 | 값 | 설명 |
 |------|----|------|
-| `execute` | `pnpm changelog && git add CHANGELOG.md` | 버전 bump 직후, commit 직전에 실행한다. 이 시점에 `package.json`은 이미 새 버전이므로 CHANGELOG 헤더가 정확한 버전으로 기록된다. |
+| `execute` | `pnpm changelog && node scripts/finalize-release-changelog.mjs && git add CHANGELOG.md` | 버전 bump 직후, commit 직전에 실행한다. `CHANGELOG.md`를 갱신한 뒤 `Unreleased` 헤더를 현재 버전으로 바꾸고 스테이징한다. |
 | `commit` | `chore(release): v%s` | 릴리스 커밋 메시지를 Conventional Commits 형식으로 통일한다. |
 | `tag` | `v%s` | `v0.6.0` 같은 형식의 git 태그를 만든다. |
 | `push` | `false` | 커밋과 태그를 원격 저장소로 자동 push하지 않는다. |
@@ -82,7 +82,7 @@ export default {
 ```json
 {
   "scripts": {
-    "changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s",
+    "changelog": "conventional-changelog -p conventionalcommits -n scripts/changelog.config.cjs -u -r 0 > CHANGELOG.md",
     "release": "bumpp",
     "release:patch": "bumpp patch",
     "release:minor": "bumpp minor",
@@ -95,7 +95,8 @@ export default {
 
 | 스크립트 | 설명 |
 |----------|------|
-| `changelog` | 마지막 git 태그 이후 커밋을 파싱해 `CHANGELOG.md` 최상단에 새 섹션을 추가한다. |
+| `changelog` | 태그되지 않은 최신 커밋까지 포함해 `CHANGELOG.md`를 다시 작성하고, 커밋은 날짜 내림차순으로 정렬한다. 단독 실행 시 최상단은 `Unreleased`가 된다. |
+| `changelog:finalize-release` | 릴리즈 직전 생성된 `CHANGELOG.md`에서 `Unreleased` 헤더를 새 버전 헤더로 바꾼다. |
 | `release` | 인터랙티브 UI로 버전 타입을 선택한 뒤 자동 릴리스를 수행한다. |
 | `release:patch` | `0.5.1 → 0.5.2` 같은 patch 릴리스를 수행한다. |
 | `release:minor` | `0.5.1 → 0.6.0` 같은 minor 릴리스를 수행한다. |
@@ -108,12 +109,14 @@ export default {
 처음 한 번은 전체 커밋 히스토리를 기반으로 `CHANGELOG.md`를 생성해야 한다.
 
 ```bash
-pnpm conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 0
+pnpm conventional-changelog -p conventionalcommits -u -r 0 > CHANGELOG.md
 git add CHANGELOG.md
 git commit -m "docs: add CHANGELOG"
 ```
 
-`-r 0` 옵션은 마지막 태그뿐 아니라 전체 히스토리를 파싱한다.
+`-u -r 0` 옵션은 마지막 태그 이후의 릴리스 히스토리와 태그되지 않은 최신 커밋을 함께 반영한다. `scripts/changelog.config.cjs`는 커밋 정렬을 날짜 내림차순으로 고정한다.
+
+릴리즈 커밋에서는 아직 새 태그가 없기 때문에 `conventional-changelog`가 `Unreleased` 헤더를 만들 수 있다. 이를 방지하기 위해 `scripts/finalize-release-changelog.mjs`가 현재 `package.json` 버전으로 헤더를 치환한다. 그래서 `pnpm changelog`는 미리보기용, `pnpm release`는 커밋용으로 역할이 나뉜다.
 
 이후부터는 `pnpm release` 명령이 CHANGELOG를 자동으로 증분 갱신한다.
 
