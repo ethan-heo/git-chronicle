@@ -34,7 +34,9 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 
 - **File-level summary** — summarizes the diff of a single file
 - **Commit-level summary** — summarizes all changes in a commit at once
-- **Batch generation** — auto-generates summaries for every file in a commit
+- **Batch generation** — auto-generates summaries for every file in a commit; runs in the background with a progress bar and can be cancelled at any time
+- **Regenerate** — re-run AI generation on demand with an overwrite confirmation; previously generated files are skipped in batch mode
+- **Split view** — view the code diff and AI summary side by side in a resizable panel
 - **Q&A** — ask follow-up questions about any summary; answers stream in real time and are appended to the saved `.md` file
 
 ## Requirements
@@ -51,9 +53,22 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 
 ## Extension Settings
 
-| Setting                      | Default | Description                                            |
-| ---------------------------- | ------- | ------------------------------------------------------ |
+The following settings can be configured in `settings.json`:
+
+| Setting                         | Default | Description                                            |
+| ------------------------------- | ------- | ------------------------------------------------------ |
 | `gitChronicle.activeAIProvider` | `""`    | Active AI CLI provider (`claude` / `gemini` / `codex`) |
 | `gitChronicle.savePath`         | `""`    | Local directory path where AI summaries are saved      |
 
-Settings can also be configured from the in-extension settings screen (⚙ icon).
+The in-extension settings screen (⚙ icon) exposes additional options not available in `settings.json`:
+
+- **AI provider registration** — detect and register installed CLI tools; only one provider can be active at a time
+- **Model selection** — choose separate models for summary generation and Q&A per provider
+
+| Provider | Default summary model    | Default Q&A model        |
+| -------- | ------------------------ | ------------------------ |
+| Claude   | `claude-haiku-4-5`       | `claude-haiku-4-5`       |
+| Gemini   | `gemini-2.5-flash`       | `gemini-2.5-flash`       |
+| Codex    | `gpt-5.4-mini`           | `gpt-5.4-mini`           |
+
+**Per-project isolation**: active provider, model choices, and save path are workspace-scoped — each project keeps its own configuration. CLI registration is shared globally across all projects.
