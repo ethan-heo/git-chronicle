@@ -104,13 +104,14 @@ interface AIProviderButtonProps {
 - **비활성화 상태에서 클릭**: `{cli} --version` 실행 → 성공 시 활성화, 실패 시 인라인 에러 표시
 - **활성화 상태에서 클릭**: 비활성화
 - 하나가 활성화되면 나머지 버튼은 자동으로 비활성화
+- 실제 요약 실행 시 로그인/인증이 필요하면 설정 버튼 상태는 유지하되, 요약 화면에서 provider별 로그인 안내 메시지를 표시한다.
 
 #### States
 - `unregistered`: 미등록 (등록 시도 가능)
 - `registering`: CLI 버전 확인 중 (로딩 스피너)
 - `active`: 활성화 상태 (선택된 AI)
 - `inactive`: 등록되었으나 비활성화
-- `error`: CLI 연동 실패
+- `error`: CLI 미설치 또는 등록 시 연동 실패
 
 #### Accessibility
 - `aria-label="{provider명} 활성화"` / `"{provider명} 비활성화"`
@@ -210,7 +211,7 @@ F06_AISettings
 - `registering`: CLI 확인 중 (로딩 스피너)
 - `active`: 활성화 (선택된 AI)
 - `inactive`: 등록 후 비활성화
-- `error`: CLI 연동 실패 + `CLIInstallLink` 표시
+- `error`: CLI 미설치 또는 등록 시 연동 실패 + `CLIInstallLink` 표시
 
 ---
 

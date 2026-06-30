@@ -40,6 +40,7 @@
 |------|------|
 | 입력 | 커밋 내 전체 파일 diff 합산 |
 | 처리 | 설정된 AI CLI에 커밋 단위 프롬프트 + 전체 diff 전달 (`child_process.spawn` 스트리밍) |
+| CLI 실행 옵션 | Claude는 `-p`, Gemini는 `--skip-trust --prompt`, Codex는 `exec --skip-git-repo-check` 조합으로 비대화형 실행 |
 | 출력 | 마크다운 형식의 커밋 종합 요약 (스트리밍 타이핑 효과로 실시간 표시) |
 | 저장 | `{설정경로}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md` 로컬 저장. 상세 디렉토리 생성 규칙은 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming)을 따른다 |
 | 기존 저장본 | 신규 경로를 먼저 확인하고, 없으면 신규 폴더의 `_commit_summary.md`, 기존 `{설정경로}/{커밋해시}/_commit_summary.md` 순서로 폴백하여 즉시 표시 |
@@ -92,6 +93,7 @@ F05_AISummaryFile과 동일한 오류 정책을 따른다.
 | 저장 경로 미설정 | `EmptyState`: "저장 경로를 먼저 설정해주세요" + "설정으로 이동" CTA |
 | 타임아웃 (120초) | `ErrorState`: "생성에 실패했습니다" + [재시도] 버튼 |
 | CLI 실행 실패 | `ErrorState`: "연결된 CLI를 찾을 수 없습니다. 설정을 확인하세요" |
+| CLI 로그인/인증 필요 | `ErrorState`: provider별 로그인 안내 메시지 표시 (`claude login`, `gemini` 로그인 플로우, `codex login`) |
 | 토큰 초과 | 경고 배너 표시 후 AI 호출 계속 진행 |
 
 ---

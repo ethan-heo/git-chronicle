@@ -26,6 +26,6 @@ export const AI_PROVIDERS: AIProvider[] = [
 
 export const AI_PROVIDER_MODELS = {
   claude: ['claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-8'],
-  gemini: ['gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'],
-  codex: ['gpt-4o-mini', 'gpt-4o', 'o4-mini'],
+  gemini: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.1-flash', 'gemini-3.1-pro'],
+  codex: ['gpt-5.4-mini', 'gpt-5.4', 'gpt-5.5'],
 } as const;

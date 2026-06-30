@@ -13,20 +13,20 @@ const QA_MODEL_KEY = 'gitRewind.qaModelPerProvider';
 
 export const AI_PROVIDER_MODELS: Record<AIProviderName, readonly string[]> = {
   claude: ['claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-8'],
-  gemini: ['gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'],
-  codex: ['gpt-4o-mini', 'gpt-4o', 'o4-mini'],
+  gemini: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.1-flash', 'gemini-3.1-pro'],
+  codex: ['gpt-5.4-mini', 'gpt-5.4', 'gpt-5.5'],
 };
 
 const DEFAULT_SUMMARY_MODELS: AIProviderModelMap = {
   claude: 'claude-haiku-4-5',
-  gemini: 'gemini-2.0-flash-lite',
-  codex: 'gpt-4o-mini',
+  gemini: 'gemini-2.5-flash',
+  codex: 'gpt-5.4-mini',
 };
 
 const DEFAULT_QA_MODELS: AIProviderModelMap = {
   claude: 'claude-haiku-4-5',
-  gemini: 'gemini-2.0-flash-lite',
-  codex: 'gpt-4o-mini',
+  gemini: 'gemini-2.5-flash',
+  codex: 'gpt-5.4-mini',
 };
 
 export const AI_PROVIDERS: AIProviderDefinition[] = [
