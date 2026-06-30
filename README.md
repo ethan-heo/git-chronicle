@@ -20,9 +20,13 @@ View file-level unified diffs with syntax highlighting powered by [Shiki](https:
 
 Visualize import/require relationships between changed files as an interactive node-edge graph. Zoom, pan, and select nodes to explore how files connect.
 
+Supported languages: **JavaScript/TypeScript**, **Python**, **Go** (other file types appear as nodes without dependency edges).
+
 ### Intra-file Symbol Dependency Canvas
 
-Inspect the internal structure of a single file by visualizing functions, classes, variables, and types as a symbol graph. Hover and click symbols to explore calls, references, inheritance, and implementation relationships, then open the code panel to jump to the relevant lines.
+Inspect the internal structure of a single file by visualizing functions, classes, variables, types, and imported symbols as a symbol graph. Hover and click symbols to explore calls, references, inheritance, and implementation relationships, then open the code panel to jump to the relevant lines.
+
+Supported languages: **JavaScript/TypeScript** (`.js .jsx .ts .tsx .mjs .cjs .mts .cts`), **Python**, **Go**.
 
 ### AI Summary
 
@@ -31,6 +35,7 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 - **File-level summary** — summarizes the diff of a single file
 - **Commit-level summary** — summarizes all changes in a commit at once
 - **Batch generation** — auto-generates summaries for every file in a commit
+- **Q&A** — ask follow-up questions about any summary; answers stream in real time and are appended to the saved `.md` file
 
 ## Requirements
 
