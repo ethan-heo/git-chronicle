@@ -1,4 +1,16 @@
 
+## [0.7.1](https://github.com/ethan-heo/git-chronicle/compare/v0.7.0...v0.7.1) (2026-06-30)
+
+### Features
+
+* update ai provider models and cli handling ([c8f3f6a](https://github.com/ethan-heo/git-chronicle/commit/c8f3f6a8815effdf8c88ee79a50954acf6ae1083))
+* add import nodes to symbol graph ([96caa53](https://github.com/ethan-heo/git-chronicle/commit/96caa53f5e1d46bc767878b2efc19a4458107dda))
+
+### Documentation
+
+* update README feature and settings details ([7cd626a](https://github.com/ethan-heo/git-chronicle/commit/7cd626a0962e66588f5b12434ab8c0a7408fc7c5))
+* clarify README feature support ([0ac5f13](https://github.com/ethan-heo/git-chronicle/commit/0ac5f135031866f29a55cb85479bb81e9f7e2946))
+
 ## [0.7.0](https://github.com/ethan-heo/git-chronicle/compare/v0.6.0...v0.7.0) (2026-06-29)
 
 ### Features
