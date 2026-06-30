@@ -27,12 +27,14 @@ interface NodeGeometry {
   height: number;
 }
 
+type SymbolGroup = SymbolKind | 'import';
+
 export function buildSymbolGraphData(symbolNodes: SymbolNode[], symbolEdges: SymbolEdge[]): { nodes: SymbolNodeType[]; edges: SymbolEdgeType[] } {
   const positions = layoutSymbols(symbolNodes, symbolEdges);
   const geometryById = new Map(
     symbolNodes.map((symbolNode) => {
       const position = positions.get(symbolNode.id) ?? { x: 0, y: 0 };
-      return [symbolNode.id, { ...position, width: 240, height: 88 }];
+      return [symbolNode.id, { ...position, ...getNodeDimensions(symbolNode) }];
     }),
   );
   return {
@@ -73,34 +75,52 @@ export function layoutSymbols(symbolNodes: SymbolNode[], symbolEdges: SymbolEdge
   const graph = new graphlib.Graph();
   graph.setGraph({ rankdir: 'LR', nodesep: 70, ranksep: 150, marginx: 40, marginy: 40 });
   graph.setDefaultEdgeLabel(() => ({}));
-  for (const node of symbolNodes) graph.setNode(node.id, { width: 240, height: 88 });
+  for (const node of symbolNodes) {
+    const size = getNodeDimensions(node);
+    graph.setNode(node.id, {
+      width: size.width,
+      height: size.height,
+      rank: node.nodeCategory === 'import' ? 'min' : undefined,
+    });
+  }
   for (const edge of symbolEdges) if (graph.hasNode(edge.from) && graph.hasNode(edge.to)) graph.setEdge(edge.from, edge.to);
   layoutGraph(graph);
   const positions = new Map<string, { x: number; y: number }>();
   for (const node of symbolNodes) {
     const layoutNode = graph.node(node.id) as { x?: number; y?: number } | undefined;
     if (layoutNode?.x === undefined || layoutNode?.y === undefined) continue;
-    positions.set(node.id, { x: layoutNode.x - 120, y: layoutNode.y - 44 });
+    const size = getNodeDimensions(node);
+    positions.set(node.id, { x: layoutNode.x - size.width / 2, y: layoutNode.y - size.height / 2 });
   }
   return normalizePositions(positions);
 }
 
 function layoutByKind(symbolNodes: SymbolNode[]): Map<string, { x: number; y: number }> {
-  const groups = new Map<SymbolKind, SymbolNode[]>();
+  const groups = new Map<SymbolGroup, SymbolNode[]>();
   for (const node of symbolNodes) {
-    const nodes = groups.get(node.kind) ?? [];
+    const groupKey: SymbolGroup = node.nodeCategory === 'import' ? 'import' : node.kind;
+    const nodes = groups.get(groupKey) ?? [];
     nodes.push(node);
-    groups.set(node.kind, nodes);
+    groups.set(groupKey, nodes);
   }
 
-  const order: SymbolKind[] = ['function', 'class', 'interface', 'type', 'variable', 'constant', 'enum'];
+  const order: SymbolGroup[] = ['import', 'function', 'class', 'interface', 'type', 'variable', 'constant', 'enum'];
   const positions = new Map<string, { x: number; y: number }>();
   order.forEach((kind, groupIndex) => {
     (groups.get(kind) ?? []).forEach((node, nodeIndex) => {
-      positions.set(node.id, { x: 80 + groupIndex * 210, y: 80 + nodeIndex * 120 });
+      const size = getNodeDimensions(node);
+      positions.set(node.id, { x: 80 + groupIndex * 220, y: 80 + nodeIndex * (size.height + 32) });
     });
   });
   return normalizePositions(positions);
+}
+
+function getNodeDimensions(symbolNode: SymbolNode): { width: number; height: number } {
+  if (symbolNode.nodeCategory === 'import') {
+    return { width: 200, height: 72 };
+  }
+
+  return { width: 240, height: 88 };
 }
 
 function normalizePositions(positions: Map<string, { x: number; y: number }>): Map<string, { x: number; y: number }> {

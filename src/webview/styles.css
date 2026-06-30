@@ -31,6 +31,7 @@
   --gae-color-symbol-uses: #4ea8ff;
   --gae-color-symbol-extends: #4ea8ff;
   --gae-color-symbol-implements: #4ea8ff;
+  --gae-color-symbol-imp: #7d8794;
   --gae-border-color-default: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
   --gae-border-color-focus: var(--vscode-focusBorder, #007fd4);
   --gae-border-radius-sm: 3px;
@@ -1675,6 +1676,12 @@ button:focus-visible,
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
 }
 
+.symbol-node-import {
+  min-width: 200px;
+  border-style: dashed;
+  padding: 12px 14px 10px;
+}
+
 .symbol-node-handle {
   width: 0;
   height: 0;
@@ -1709,6 +1716,27 @@ button:focus-visible,
   font-weight: 700;
 }
 
+.symbol-node-import .symbol-node-name {
+  margin-top: 8px;
+}
+
+.symbol-node-module {
+  margin-top: 8px;
+  overflow: hidden;
+  color: var(--gae-color-text-secondary);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.symbol-node-import-kind {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: lowercase;
+  color: var(--gae-color-symbol-imp);
+}
+
 .symbol-node-range {
   margin-top: 4px;
   font-size: 12px;
@@ -1735,6 +1763,7 @@ button:focus-visible,
 .symbol-kind-badge-variable { background: #77808f; }
 .symbol-kind-badge-constant { background: #f08a24; }
 .symbol-kind-badge-enum { background: #d85aa0; }
+.symbol-kind-badge-import { background: var(--gae-color-symbol-imp); }
 
 .symbol-node-exported {
   margin-left: auto;

@@ -8,8 +8,8 @@
 
 ```typescript
 interface SymbolKindBadgeProps {
-  kind: SymbolKind;
-  // 'function' | 'class' | 'interface' | 'type' | 'variable' | 'constant' | 'enum'
+  kind: SymbolKind | 'import';
+  // 'function' | 'class' | 'interface' | 'type' | 'variable' | 'constant' | 'enum' | 'import'
 }
 ```
 
@@ -32,13 +32,14 @@ interface SymbolKindBadgeProps {
 | `variable` | `var` | `--color-symbol-var` (회색 계열) |
 | `constant` | `cst` | `--color-symbol-cst` (주황색 계열) |
 | `enum` | `enm` | `--color-symbol-enm` (분홍색 계열) |
+| `import` | `imp` | `--color-symbol-imp` (회색 계열) |
 
 ---
 
 ## Implementation
 
 ```tsx
-const KIND_CONFIG: Record<SymbolKind, { label: string; className: string }> = {
+const KIND_CONFIG: Record<SymbolKind | 'import', { label: string; className: string }> = {
   function:  { label: 'fn',  className: 'symbol-kind-badge--fn' },
   class:     { label: 'cls', className: 'symbol-kind-badge--cls' },
   interface: { label: 'ifc', className: 'symbol-kind-badge--ifc' },
@@ -46,6 +47,7 @@ const KIND_CONFIG: Record<SymbolKind, { label: string; className: string }> = {
   variable:  { label: 'var', className: 'symbol-kind-badge--var' },
   constant:  { label: 'cst', className: 'symbol-kind-badge--cst' },
   enum:      { label: 'enm', className: 'symbol-kind-badge--enm' },
+  import:    { label: 'imp', className: 'symbol-kind-badge--import' },
 };
 
 export const SymbolKindBadge: FC<SymbolKindBadgeProps> = ({ kind }) => {

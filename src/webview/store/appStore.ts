@@ -1106,13 +1106,15 @@ const demoDependencyEdges: DependencyEdge[] = [
 ];
 
 const demoSymbolNodes: SymbolNode[] = [
-  { id: 'buildGraph:3', name: 'buildGraph', kind: 'function', lineStart: 3, lineEnd: 28, isExported: true },
-  { id: 'resolveNodes:30', name: 'resolveNodes', kind: 'function', lineStart: 30, lineEnd: 56, isExported: false },
-  { id: 'GraphState:58', name: 'GraphState', kind: 'interface', lineStart: 58, lineEnd: 64, isExported: true },
-  { id: 'GRAPH_LIMIT:66', name: 'GRAPH_LIMIT', kind: 'constant', lineStart: 66, lineEnd: 66, isExported: true },
+  { id: 'import:filter:1', name: 'filter', kind: 'variable', lineStart: 1, lineEnd: 1, isExported: false, nodeCategory: 'import', modulePath: './array', importKind: 'named' },
+  { id: 'buildGraph:3', name: 'buildGraph', kind: 'function', lineStart: 3, lineEnd: 28, isExported: true, nodeCategory: 'local' },
+  { id: 'resolveNodes:30', name: 'resolveNodes', kind: 'function', lineStart: 30, lineEnd: 56, isExported: false, nodeCategory: 'local' },
+  { id: 'GraphState:58', name: 'GraphState', kind: 'interface', lineStart: 58, lineEnd: 64, isExported: true, nodeCategory: 'local' },
+  { id: 'GRAPH_LIMIT:66', name: 'GRAPH_LIMIT', kind: 'constant', lineStart: 66, lineEnd: 66, isExported: true, nodeCategory: 'local' },
 ];
 
 const demoSymbolEdges: SymbolEdge[] = [
+  { from: 'buildGraph:3', to: 'import:filter:1', kind: 'calls' },
   { from: 'buildGraph:3', to: 'resolveNodes:30', kind: 'calls' },
   { from: 'buildGraph:3', to: 'GraphState:58', kind: 'uses' },
   { from: 'resolveNodes:30', to: 'GRAPH_LIMIT:66', kind: 'uses' },

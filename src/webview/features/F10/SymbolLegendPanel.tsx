@@ -51,6 +51,7 @@ export const SymbolLegendPanel: FC<Props> = ({ isMinimized = false, onToggleMini
           <div className="symbol-legend-row"><span className="symbol-kind-badge symbol-kind-badge-variable">var</span><span>{t('symbol_graph.kind_variable')}</span></div>
           <div className="symbol-legend-row"><span className="symbol-kind-badge symbol-kind-badge-constant">cst</span><span>{t('symbol_graph.kind_constant')}</span></div>
           <div className="symbol-legend-row"><span className="symbol-kind-badge symbol-kind-badge-enum">enm</span><span>{t('symbol_graph.kind_enum')}</span></div>
+          <div className="symbol-legend-row"><span className="symbol-kind-badge symbol-kind-badge-import">imp</span><span>{t('symbol_graph.legend.kind.import')}</span></div>
           <div className="symbol-legend-divider" />
           <div className="symbol-legend-row"><span className="symbol-edge-sample symbol-edge-sample-calls" /><span>{t('symbol_graph.edge_calls')}</span></div>
           <div className="symbol-legend-row"><span className="symbol-edge-sample symbol-edge-sample-uses" /><span>{t('symbol_graph.edge_uses')}</span></div>

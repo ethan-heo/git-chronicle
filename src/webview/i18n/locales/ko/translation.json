@@ -90,6 +90,11 @@
     "legend_label_range": "라인 범위",
     "legend_label_export": "외부에 공개된 노드",
     "legend_section_kind": "노드 종류",
+    "legend": {
+      "kind": {
+        "import": "외부 import 심볼"
+      }
+    },
     "symbol_count_context": "심볼 {{count}}개",
     "kind_function": "function",
     "kind_class": "class",

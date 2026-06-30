@@ -4,6 +4,7 @@ import * as ts from 'typescript';
 import { fetchFileContentAtCommit } from './gitService';
 
 type SymbolKind = 'function' | 'class' | 'interface' | 'type' | 'variable' | 'constant' | 'enum';
+type ImportKind = 'named' | 'default' | 'namespace';
 type SymbolDependencyKind = 'calls' | 'uses' | 'extends' | 'implements';
 
 interface SymbolNode {
@@ -13,6 +14,9 @@ interface SymbolNode {
   lineStart: number;
   lineEnd: number;
   isExported: boolean;
+  nodeCategory: 'local' | 'import';
+  modulePath?: string;
+  importKind?: ImportKind;
 }
 
 interface SymbolEdge {
@@ -73,42 +77,67 @@ function analyzeJsTs(content: string, filePath: string): { nodes: SymbolNode[]; 
   const byName = new Map<string, SymbolNode>();
 
   ts.forEachChild(sourceFile, (node) => {
-    const symbol = extractJsTsNode(node, sourceFile);
-    if (symbol) {
+    const symbols = extractJsTsNodes(node, sourceFile);
+    symbols.forEach((symbol) => {
       nodes.push(symbol);
       byName.set(symbol.name, symbol);
-    }
+    });
   });
 
   const edges: SymbolEdge[] = [];
   for (const node of sourceFile.statements) {
-    const from = extractJsTsNode(node, sourceFile);
-    if (!from) continue;
-    collectJsTsEdges(node, from, byName, edges);
+    if (ts.isImportDeclaration(node)) continue;
+    const symbols = extractJsTsNodes(node, sourceFile);
+    symbols.forEach((from) => collectJsTsEdges(node, from, byName, edges));
   }
 
   return { nodes, edges: dedupeEdges(edges) };
 }
 
-function extractJsTsNode(node: ts.Node, sourceFile: ts.SourceFile): SymbolNode | null {
+function extractJsTsNodes(node: ts.Node, sourceFile: ts.SourceFile): SymbolNode[] {
   const lineStart = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile, true)).line + 1;
   const lineEnd = sourceFile.getLineAndCharacterOfPosition(node.getEnd()).line + 1;
   const isExported = ts.canHaveModifiers(node) ? (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) : false;
 
-  if (ts.isFunctionDeclaration(node) && node.name) return makeNode(node.name.text, 'function', lineStart, lineEnd, isExported);
-  if (ts.isClassDeclaration(node) && node.name) return makeNode(node.name.text, 'class', lineStart, lineEnd, isExported);
-  if (ts.isInterfaceDeclaration(node)) return makeNode(node.name.text, 'interface', lineStart, lineEnd, isExported);
-  if (ts.isTypeAliasDeclaration(node)) return makeNode(node.name.text, 'type', lineStart, lineEnd, isExported);
-  if (ts.isEnumDeclaration(node)) return makeNode(node.name.text, 'enum', lineStart, lineEnd, isExported);
+  if (ts.isFunctionDeclaration(node) && node.name) return [makeLocalNode(node.name.text, 'function', lineStart, lineEnd, isExported)];
+  if (ts.isClassDeclaration(node) && node.name) return [makeLocalNode(node.name.text, 'class', lineStart, lineEnd, isExported)];
+  if (ts.isInterfaceDeclaration(node)) return [makeLocalNode(node.name.text, 'interface', lineStart, lineEnd, isExported)];
+  if (ts.isTypeAliasDeclaration(node)) return [makeLocalNode(node.name.text, 'type', lineStart, lineEnd, isExported)];
+  if (ts.isEnumDeclaration(node)) return [makeLocalNode(node.name.text, 'enum', lineStart, lineEnd, isExported)];
   if (ts.isVariableStatement(node)) {
     const decl = node.declarationList.declarations[0];
     if (decl && ts.isIdentifier(decl.name)) {
       const kind: SymbolKind = (node.declarationList.flags & ts.NodeFlags.Const) !== 0 ? 'constant' : 'variable';
-      return makeNode(decl.name.text, kind, lineStart, lineEnd, isExported);
+      return [makeLocalNode(decl.name.text, kind, lineStart, lineEnd, isExported)];
     }
   }
+  if (ts.isImportDeclaration(node)) {
+    return extractImportNodes(node, lineStart, lineEnd);
+  }
 
-  return null;
+  return [];
+}
+
+function extractImportNodes(node: ts.ImportDeclaration, lineStart: number, lineEnd: number): SymbolNode[] {
+  const modulePath = ts.isStringLiteral(node.moduleSpecifier) ? node.moduleSpecifier.text : '';
+  const importClause = node.importClause;
+  if (!importClause) return [];
+
+  const nodes: SymbolNode[] = [];
+  if (importClause.name) {
+    nodes.push(makeImportNode(importClause.name.text, lineStart, lineEnd, modulePath, 'default'));
+  }
+
+  const namedBindings = importClause.namedBindings;
+  if (namedBindings && ts.isNamedImports(namedBindings)) {
+    namedBindings.elements.forEach((element) => {
+      nodes.push(makeImportNode(element.name.text, lineStart, lineEnd, modulePath, 'named'));
+    });
+  } else if (namedBindings && ts.isNamespaceImport(namedBindings)) {
+    nodes.push(makeImportNode(namedBindings.name.text, lineStart, lineEnd, modulePath, 'namespace'));
+  }
+
+  return nodes;
 }
 
 function collectJsTsEdges(node: ts.Node, from: SymbolNode, byName: Map<string, SymbolNode>, edges: SymbolEdge[]): void {
@@ -260,8 +289,26 @@ function findGoBlockEnd(lines: string[], startLine: number): number {
   return lines.length;
 }
 
+function makeLocalNode(name: string, kind: SymbolKind, lineStart: number, lineEnd: number, isExported: boolean): SymbolNode {
+  return { id: `${name}:${lineStart}`, name, kind, lineStart, lineEnd, isExported, nodeCategory: 'local' };
+}
+
+function makeImportNode(name: string, lineStart: number, lineEnd: number, modulePath: string, importKind: ImportKind): SymbolNode {
+  return {
+    id: `import:${name}:${lineStart}`,
+    name,
+    kind: 'variable',
+    lineStart,
+    lineEnd,
+    isExported: false,
+    nodeCategory: 'import',
+    modulePath,
+    importKind,
+  };
+}
+
 function makeNode(name: string, kind: SymbolKind, lineStart: number, lineEnd: number, isExported: boolean): SymbolNode {
-  return { id: `${name}:${lineStart}`, name, kind, lineStart, lineEnd, isExported };
+  return makeLocalNode(name, kind, lineStart, lineEnd, isExported);
 }
 
 function pushEdge(from: SymbolNode, byName: Map<string, SymbolNode>, edges: SymbolEdge[], name: string, kind: SymbolDependencyKind): void {

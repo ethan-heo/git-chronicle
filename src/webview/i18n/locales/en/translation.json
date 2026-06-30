@@ -90,6 +90,11 @@
     "legend_label_range": "Line range",
     "legend_label_export": "Exported node",
     "legend_section_kind": "Node kinds",
+    "legend": {
+      "kind": {
+        "import": "External import"
+      }
+    },
     "symbol_count_context": "Symbols {{count}}",
     "kind_function": "function",
     "kind_class": "class",

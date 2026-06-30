@@ -1,7 +1,9 @@
 import type { FC } from 'react';
 import type { SymbolKind } from '../../types/commit';
 
-const LABELS: Record<SymbolKind, string> = {
+type BadgeKind = SymbolKind | 'import';
+
+const LABELS: Record<BadgeKind, string> = {
   function: 'fn',
   class: 'cls',
   interface: 'ifc',
@@ -9,8 +11,9 @@ const LABELS: Record<SymbolKind, string> = {
   variable: 'var',
   constant: 'cst',
   enum: 'enm',
+  import: 'imp',
 };
 
-export const SymbolKindBadge: FC<{ kind: SymbolKind }> = ({ kind }) => {
+export const SymbolKindBadge: FC<{ kind: BadgeKind }> = ({ kind }) => {
   return <span className={`symbol-kind-badge symbol-kind-badge-${kind}`}>{LABELS[kind]}</span>;
 };

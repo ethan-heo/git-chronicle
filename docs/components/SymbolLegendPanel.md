@@ -34,6 +34,7 @@ interface SymbolLegendPanelProps {
 | `cst` | 상수 (constant) |
 | `var` | 변수 (variable) |
 | `enm` | 열거형 (enum) |
+| `imp` | 외부 import 심볼 |
 
 ### 엣지 종류
 
@@ -43,6 +44,8 @@ interface SymbolLegendPanelProps {
 | 점선 화살표 (회색) | uses — 참조 |
 | 굵은 실선 (초록색) | extends — 상속 |
 | 굵은 점선 (보라색) | implements — 구현 |
+
+import 노드끼리의 관계는 범례 및 그래프에서 표현하지 않는다. 로컬 심볼이 import 심볼을 사용할 때만 엣지가 생성된다.
 
 ---
 

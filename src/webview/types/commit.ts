@@ -33,6 +33,7 @@ export interface DependencyEdge {
 }
 
 export type SymbolKind = 'function' | 'class' | 'interface' | 'type' | 'variable' | 'constant' | 'enum';
+export type ImportKind = 'named' | 'default' | 'namespace';
 
 export type SymbolDependencyKind = 'calls' | 'uses' | 'extends' | 'implements';
 
@@ -43,6 +44,9 @@ export interface SymbolNode {
   lineStart: number;
   lineEnd: number;
   isExported: boolean;
+  nodeCategory: 'local' | 'import';
+  modulePath?: string;
+  importKind?: ImportKind;
 }
 
 export interface SymbolEdge {
