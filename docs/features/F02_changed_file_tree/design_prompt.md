@@ -40,7 +40,7 @@ S02_HistoryViewScreen
 - `DirectoryNode`: 화살표(▶/▼) + 폴더명. 클릭 시 펼침/접힘
 - `FileTreeNode`: `FileStatusBadge` + 파일명 + `SavedBadge`(조건부) + `FileActionButtons`(호버 시)
 - `FileStatusBadge`: `A`(추가) / `M`(수정) / `D`(삭제) / `R`(이름변경) 레터 + 색상
-- `SavedBadge`: "저장됨" 텍스트 뱃지 (AI 정리 저장본 있을 때)
+- `SavedBadge`: "AI 요약됨" 텍스트 뱃지 (AI 정리 저장본 있을 때)
 - `FileActionButtons`: [코드 보기] [AI 정리 보기] 두 개 버튼 (호버 시만 표시)
 
 ---
@@ -87,7 +87,7 @@ S02_HistoryViewScreen
 
 - 트리 들여쓰기: `spacing.md` (12px) per depth
 - `FileStatusBadge`: 작은 정사각형 뱃지, 상태별 색상 (추가=초록, 수정=파랑, 삭제=빨강, 이름변경=주황)
-- `SavedBadge`: 작은 텍스트 "저장됨" — `color.semantic.info` 색상, `font.size.xs`
+- `SavedBadge`: 작은 텍스트 "AI 요약됨" — `color.semantic.info` 색상, `font.size.xs`
 - `FileActionButtons`: 호버 시 파일명 오른쪽에 나타나는 소형 버튼 두 개 (회색 배경)
 - `CommitActionBar`는 `FileTree`와 구분을 위해 하단 border-bottom 1px
 - 폰트: 기본 파일명 `font.size.base`, 경로 구분자 `color.text.secondary`

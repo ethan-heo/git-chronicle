@@ -28,7 +28,7 @@ export const QAInputArea: FC<QAInputAreaProps> = ({ isGeneratingQA, onAskQuestio
   };
 
   return (
-    <div className="flex items-stretch gap-2 border-t border-line bg-panel px-6 py-3">
+    <div className="flex items-stretch gap-2 border-t border-line bg-panel px-3 py-3">
       <textarea
         id="ai-summary-question"
         className="h-[52px] min-h-[52px] flex-1 resize-none rounded-md border border-line bg-elevated px-3 py-2.5 text-text outline-none focus:border-focus"

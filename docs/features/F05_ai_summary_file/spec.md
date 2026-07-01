@@ -141,6 +141,6 @@
 | `isGeneratingSummary = true` | AI 호출 시작 | 로딩 상태 전환 |
 | `isGeneratingSummary = false` | AI 완료 / 실패 / 타임아웃 | 로딩 상태 해제 |
 | `currentSummaryContent` 스트리밍 업데이트 | `child_process.spawn` stdout | 청크 단위로 전역 상태 누적 업데이트 |
-| `changedFiles[].hasSavedSummary = true` | 저장 완료 | 파일 트리의 "저장됨" 뱃지 트리거 |
+| `changedFiles[].hasSavedSummary = true` | 저장 완료 | 파일 트리의 "AI 요약됨" 뱃지 트리거 |
 | 로컬 파일 쓰기 | AI 생성 완료 | `fs.writeFileSync`로 `.md` 저장 (경로 없으면 `fs.mkdirSync` 선행) |
 | `summaryError` 업데이트 | 타임아웃 / CLI 실패 | 오류 메시지 전역 상태 설정 |

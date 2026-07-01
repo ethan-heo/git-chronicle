@@ -36,9 +36,9 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
         </svg>
       </button>
       <button className={buttonClassName} type="button" aria-label={t('shared.file_ai_view')} title={t('shared.file_ai_view')} onClick={onAISummary}>
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-          <path d="M8 1.5 9.4 5l3.6.3-2.7 2.4.8 3.5L8 9.3 4.9 11.2l.8-3.5L3 5.3 6.6 5z" />
-        </svg>
+        <span className="text-[10px] font-semibold leading-none tracking-[0.04em]" aria-hidden="true">
+          AI
+        </span>
       </button>
       {onSymbolGraph ? (
         <button

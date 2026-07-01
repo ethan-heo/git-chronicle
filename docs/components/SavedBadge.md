@@ -27,8 +27,8 @@ export const SavedBadge: React.FC<SavedBadgeProps> = ({ isVisible = true }) => {
   if (!isVisible) return null;
 
   return (
-    <span className="saved-badge" aria-label="AI 정리 저장됨" title="AI 정리 저장됨">
-      저장됨
+    <span className="saved-badge" aria-label="AI 요약됨" title="AI 요약됨">
+      AI 요약됨
     </span>
   );
 };

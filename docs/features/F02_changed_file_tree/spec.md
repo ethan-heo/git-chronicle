@@ -27,7 +27,7 @@
 2. 파일 항목에 마우스를 호버링하면 두 개의 액션 버튼이 활성화된다.
    - **[코드 보기]** → `selectedFile` 설정 후 S-03으로 전환
    - **[AI 정리 보기]** → `selectedFile` 설정 후 S-04로 전환, `summaryMode = "file"` 설정
-     - 해당 파일의 AI 정리 저장본이 이미 존재하면 파일명 옆에 **"저장됨"** 뱃지가 표시된다.
+     - 해당 파일의 AI 정리 저장본이 이미 존재하면 파일명 옆에 **"AI 요약됨"** 뱃지가 표시된다.
      - 저장본 로드 또는 AI 생성은 F03/F05 구현 단계에서 연결한다.
 3. 화면 상단에는 커밋 단위 액션 버튼이 위치한다.
    - **[커밋 AI 정리]** → S-04로 전환, `summaryMode = "commit"` 설정
@@ -43,7 +43,7 @@
 | 항목 | 내용 |
 |------|------|
 | 파일 상태 표시 | 파일명 앞 뱃지 레터로 구분: `A` 추가 / `M` 수정 / `D` 삭제 / `R` 이름 변경 |
-| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, `{savePath}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md` 저장본이 존재할 때만 표시. 구 형식 `{savePath}/{commitHash}/{normalizedFilePath}.md`도 폴백으로 인정한다. `normalizedFilePath`는 파일 경로의 `/` 또는 `\`를 `__`로 치환 |
+| 저장됨 뱃지 조건 | 저장 경로가 설정되어 있고, `{savePath}/{shortHash}_{sanitizedCommitMessage}/{normalizedFilePath}.md` 저장본이 존재할 때만 `AI 요약됨` 뱃지를 표시한다. 구 형식 `{savePath}/{commitHash}/{normalizedFilePath}.md`도 폴백으로 인정한다. `normalizedFilePath`는 파일 경로의 `/` 또는 `\`를 `__`로 치환 |
 | 대용량 커밋 처리 | 변경 파일 수 무관하게 전체 렌더링. 성능 문제 발생 시 추후 가상 리스트(react-window) 적용 검토 |
 | 트리 구조 | 디렉토리 경로 기준으로 계층 분리. 디렉토리 노드는 토글 가능 |
 
