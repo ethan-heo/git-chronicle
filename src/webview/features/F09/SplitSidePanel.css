@@ -1,0 +1,10 @@
+.split-side-panel {
+  transform: translateX(100%);
+  transition:
+    transform 220ms ease-out,
+    opacity 220ms ease-out;
+}
+
+.split-side-panel-open {
+  transform: translateX(0);
+}

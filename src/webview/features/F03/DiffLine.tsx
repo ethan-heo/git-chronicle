@@ -12,18 +12,30 @@ const LINE_PREFIX: Record<DiffLineType, string> = {
 };
 
 export const DiffLine: FC<DiffLineProps> = ({ line }) => {
+  const prefixColorClassName =
+    line.type === 'added' ? 'text-added' : line.type === 'removed' ? 'text-deleted' : 'text-muted';
+  const backgroundClassName =
+    line.type === 'added'
+      ? 'diff-line-added bg-[var(--gae-color-diff-added)]'
+      : line.type === 'removed'
+        ? 'diff-line-removed bg-[var(--gae-color-diff-removed)]'
+        : 'diff-line-context';
+
   return (
-    <div className={`diff-line diff-line-${line.type}`} role="listitem">
-      <span className="diff-line-number" aria-hidden="true">
+    <div
+      className={`grid min-h-5 grid-cols-[48px_48px_18px_minmax(0,1fr)] whitespace-pre max-[320px]:grid-cols-[18px_minmax(0,1fr)] ${backgroundClassName}`}
+      role="listitem"
+    >
+      <span className="border-r border-r-[color-mix(in_srgb,var(--color-line)_58%,transparent)] px-[9px] text-right [font-variant-numeric:tabular-nums] text-[var(--vscode-editorLineNumber-foreground,var(--color-muted))] select-none max-[320px]:hidden" aria-hidden="true">
         {line.oldLineNumber ?? ''}
       </span>
-      <span className="diff-line-number" aria-hidden="true">
+      <span className="border-r border-r-[color-mix(in_srgb,var(--color-line)_58%,transparent)] px-[9px] text-right [font-variant-numeric:tabular-nums] text-[var(--vscode-editorLineNumber-foreground,var(--color-muted))] select-none max-[320px]:hidden" aria-hidden="true">
         {line.newLineNumber ?? ''}
       </span>
-      <span className="diff-line-prefix" aria-hidden="true">
+      <span className={`text-center select-none ${prefixColorClassName}`} aria-hidden="true">
         {LINE_PREFIX[line.type]}
       </span>
-      <code className="diff-line-content">
+      <code className="min-w-0 px-[4px] pr-[14px] font-inherit">
         {line.tokens.map((token, index) => (
           <span key={`${index}-${token.content}`} style={token.color ? { color: token.color } : undefined}>
             {token.content || ' '}

@@ -13,6 +13,7 @@ import langTsx from 'shiki/langs/tsx.mjs';
 import langTypescript from 'shiki/langs/typescript.mjs';
 import langYaml from 'shiki/langs/yaml.mjs';
 import themeDarkPlus from 'shiki/themes/dark-plus.mjs';
+import './SymbolFileCodeViewer.css';
 
 export interface LineRange {
   start: number;
@@ -95,8 +96,8 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ fileConten
   }, [scrollRequestId, scrollToRange]);
 
   return (
-    <section ref={viewerRef} className="symbol-code-viewer" aria-label={t('symbol_graph.code_viewer_aria')} tabIndex={0}>
-      <div className="symbol-code-lines">
+    <section ref={viewerRef} className="flex-1 min-h-0 overflow-auto py-md font-mono text-sm" aria-label={t('symbol_graph.code_viewer_aria')} tabIndex={0}>
+      <div className="min-w-full w-max">
         {lines.map((line, index) => {
           const lineNumber = index + 1;
           const isHighlighted = highlightRange ? lineNumber >= highlightRange.start && lineNumber <= highlightRange.end : false;
@@ -108,10 +109,10 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ fileConten
               ref={(element) => {
                 lineRefs.current[index] = element;
               }}
-              className={['symbol-code-line', isHighlighted ? 'symbol-code-line-highlighted' : ''].filter(Boolean).join(' ')}
+              className={['symbol-code-line relative z-0 grid min-w-full w-max grid-cols-[56px_minmax(0,1fr)] gap-md px-lg leading-[1.7]', isHighlighted ? 'symbol-code-line-highlighted' : ''].filter(Boolean).join(' ')}
             >
-              <span className="symbol-code-line-number">{lineNumber}</span>
-              <span className="symbol-code-line-content">
+              <span className="text-right text-muted select-none">{lineNumber}</span>
+              <span className="block min-w-0 w-max whitespace-pre">
                 {tokens.map((token, tokenIndex) => (
                   <span key={`${lineNumber}-${tokenIndex}`} style={token.color ? { color: token.color } : undefined}>
                     {token.content || ' '}

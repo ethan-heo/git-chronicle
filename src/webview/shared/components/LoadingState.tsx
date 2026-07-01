@@ -8,10 +8,20 @@ interface LoadingStateProps {
 
 export const LoadingState: FC<LoadingStateProps> = ({ label = null, size = 'md' }) => {
   const { t } = useTranslation();
+  const spinnerSizeClassName =
+    size === 'sm' ? 'size-[13px]' : size === 'lg' ? 'size-5' : 'size-[15px]';
 
   return (
-    <div className="loading-state" aria-busy="true" aria-label={label ?? t('common.loading')} role="status">
-      <span className={`loading-state-spinner loading-state-spinner-${size}`} aria-hidden="true" />
+    <div
+      className="inline-flex items-center gap-[9px] text-sm text-muted"
+      aria-busy="true"
+      aria-label={label ?? t('common.loading')}
+      role="status"
+    >
+      <span
+        className={`inline-block rounded-full border-2 border-line border-t-link motion-safe:animate-spin ${spinnerSizeClassName}`}
+        aria-hidden="true"
+      />
       {label ? <span>{label}</span> : null}
     </div>
   );

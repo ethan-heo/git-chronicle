@@ -9,6 +9,7 @@ import { SymbolEdge } from './SymbolEdge';
 import { SymbolLegendPanel } from './SymbolLegendPanel';
 import { SymbolNode } from './SymbolNode';
 import type { SymbolEdge as SymbolEdgeModel, SymbolNode as SymbolNodeModel } from '../../types/commit';
+import './SymbolGraph.css';
 
 interface Props {
   symbolNodes: SymbolNodeModel[];
@@ -28,9 +29,9 @@ const edgeTypes = { symbolEdge: SymbolEdge };
 export const SymbolGraph: FC<Props> = ({ symbolNodes, symbolEdges, isLoading, error, onRetry, activeNodeId, onNodeClick, onNodeHover, onPaneClick }) => {
   const { t } = useTranslation();
 
-  if (isLoading) return <section className="dependency-canvas-state"><LoadingState label={t('symbol_graph.loading')} size="lg" /></section>;
-  if (error) return <section className="dependency-canvas-state"><ErrorState message={error} onRetry={onRetry} /></section>;
-  if (symbolNodes.length === 0) return <section className="dependency-canvas-state"><EmptyState message={t('symbol_graph.empty')} /></section>;
+  if (isLoading) return <section className="flex min-h-0 flex-1 items-center justify-center p-8"><LoadingState label={t('symbol_graph.loading')} size="lg" /></section>;
+  if (error) return <section className="flex min-h-0 flex-1 items-center justify-center p-8"><ErrorState message={error} onRetry={onRetry} /></section>;
+  if (symbolNodes.length === 0) return <section className="flex min-h-0 flex-1 items-center justify-center p-8"><EmptyState message={t('symbol_graph.empty')} /></section>;
   return (
     <SymbolGraphCanvas
       symbolNodes={symbolNodes}
@@ -74,7 +75,7 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
   }, [edges.length, fitView, nodes.length, nodesInitialized]);
 
   return (
-    <section className="dependency-graph symbol-graph" aria-label={t('symbol_graph.graph_aria')}>
+    <section className="dependency-graph symbol-graph relative min-h-0 flex-1 overflow-hidden bg-surface" aria-label={t('symbol_graph.graph_aria')}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

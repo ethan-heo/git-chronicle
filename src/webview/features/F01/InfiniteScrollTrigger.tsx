@@ -29,5 +29,5 @@ export const InfiniteScrollTrigger: FC<InfiniteScrollTriggerProps> = ({ isEnable
     return () => observer.disconnect();
   }, [isEnabled, onTrigger]);
 
-  return <div ref={triggerRef} className="infinite-scroll-trigger" aria-hidden="true" />;
+  return <div ref={triggerRef} className="h-px" aria-hidden="true" />;
 };

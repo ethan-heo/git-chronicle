@@ -12,9 +12,16 @@ const STATUS_LABELS: Record<FileStatus, string> = {
 
 export const FileStatusBadge: FC<{ status: FileStatus }> = ({ status }) => {
   const { t } = useTranslation();
+  const statusColorClassName = {
+    A: 'text-added',
+    M: 'text-modified',
+    D: 'text-deleted',
+    R: 'text-renamed',
+  }[status];
+
   return (
     <span
-      className={`file-status-badge file-status-badge-${status.toLowerCase()}`}
+      className={`inline-flex size-4 shrink-0 items-center justify-center rounded-sm bg-[color-mix(in_srgb,currentColor_14%,transparent)] font-mono text-xs font-bold ${statusColorClassName}`}
       aria-label={t('dependency.file_status', { status: STATUS_LABELS[status] })}
       title={STATUS_LABELS[status]}
     >

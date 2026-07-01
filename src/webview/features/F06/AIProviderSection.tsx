@@ -34,18 +34,18 @@ export const AIProviderSection: FC<AIProviderSectionProps> = ({
   const activeProvider = AI_PROVIDERS.find((provider) => provider.name === activeAIProvider);
 
   return (
-    <section className="ai-provider-section" role="group" aria-label={t('settings.ai_section_label')}>
-      <div className="settings-section-heading">
+    <section className="border-b border-line px-[14px] pt-4 pb-[18px]" role="group" aria-label={t('settings.ai_section_label')}>
+      <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <h2>{t('settings.ai_section_heading')}</h2>
-          <p>{t('settings.ai_section_desc')}</p>
+          <h2 className="m-0 text-sm font-bold text-muted">{t('settings.ai_section_heading')}</h2>
+          <p className="mt-1 mb-0 text-[11.5px] leading-[1.5] text-muted">{t('settings.ai_section_desc')}</p>
         </div>
-        <span className="ai-provider-active-summary">
-          <span className={activeProvider ? 'active-summary-dot active-summary-dot-on' : 'active-summary-dot'} />
+        <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[11px] text-muted">
+          <span className={`size-1.5 rounded-full ${activeProvider ? 'bg-renamed' : 'bg-muted'}`} />
           {activeProvider ? t('settings.ai_active', { name: activeProvider.label }) : t('settings.ai_no_active')}
         </span>
       </div>
-      <div className="ai-provider-list">
+      <div className="flex flex-col gap-2">
         {AI_PROVIDERS.map((provider) => (
           <AIProviderButton
             key={provider.name}

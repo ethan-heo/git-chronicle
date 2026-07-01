@@ -147,13 +147,13 @@ export const App: FC = () => {
   return (
     <>
       <BatchProgressBar batchTotal={batchTotal} batchCompleted={batchCompleted} isBatchRunning={isBatchRunning} isCancelling={isBatchCancelling} onCancel={cancelBatchAISummary} />
-      <div className="screen-container">
+      <div className="relative h-screen overflow-hidden bg-surface">
         {outgoingScreen && (
-          <div className={`screen-slot screen-slot-exiting-${outgoingScreen.direction}`} aria-hidden="true">
+          <div className={getScreenSlotClassName(outgoingScreen.direction, 'exiting')} aria-hidden="true">
             <RouteSlotProvider isActive={false}>{renderScreen(outgoingScreen.screen)}</RouteSlotProvider>
           </div>
         )}
-        <div className={`screen-slot ${outgoingScreen ? `screen-slot-entering-${outgoingScreen.direction}` : ''}`}>
+        <div className={getScreenSlotClassName(transitionDirection, outgoingScreen ? 'entering' : null)}>
           <RouteSlotProvider isActive>{renderScreen(currentScreen)}</RouteSlotProvider>
         </div>
       </div>
@@ -188,4 +188,21 @@ function renderScreen(currentScreen: ScreenID): ReactElement {
   }
 
   return <S01CommitListScreen />;
+}
+
+function getScreenSlotClassName(
+  direction: RouteTransitionDirection,
+  state: 'entering' | 'exiting' | null,
+): string {
+  const baseClassName = 'absolute inset-0 overflow-y-auto bg-surface';
+
+  if (state === 'entering') {
+    return `${baseClassName} ${direction === 'forward' ? 'motion-safe-route-in-forward motion-safe:animate-route-in-forward' : 'motion-safe-route-in-back motion-safe:animate-route-in-back'}`;
+  }
+
+  if (state === 'exiting') {
+    return `${baseClassName} pointer-events-none ${direction === 'forward' ? 'motion-safe-route-out-forward motion-safe:animate-route-out-forward' : 'motion-safe-route-out-back motion-safe:animate-route-out-back'}`;
+  }
+
+  return baseClassName;
 }

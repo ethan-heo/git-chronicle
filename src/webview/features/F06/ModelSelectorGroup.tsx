@@ -19,10 +19,14 @@ export const ModelSelectorGroup: FC<ModelSelectorGroupProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className="model-selector-group">
-      <label className="model-selector-field">
+    <div className="grid gap-2 border-t border-line px-3 pb-3">
+      <label className="grid gap-1.5 pt-2 text-[11.5px] text-muted">
         <span>{t('settings.summary_model_label')}</span>
-        <select value={summaryModel ?? models[0] ?? ''} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChangeSummaryModel(event.target.value)}>
+        <select
+          className="w-full rounded-sm border border-line bg-elevated px-2.5 py-2 text-text"
+          value={summaryModel ?? models[0] ?? ''}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => onChangeSummaryModel(event.target.value)}
+        >
           {models.map((model) => (
             <option key={model} value={model}>
               {model}
@@ -30,9 +34,13 @@ export const ModelSelectorGroup: FC<ModelSelectorGroupProps> = ({
           ))}
         </select>
       </label>
-      <label className="model-selector-field">
+      <label className="grid gap-1.5 text-[11.5px] text-muted">
         <span>{t('settings.qa_model_label')}</span>
-        <select value={qaModel ?? models[0] ?? ''} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChangeQAModel(event.target.value)}>
+        <select
+          className="w-full rounded-sm border border-line bg-elevated px-2.5 py-2 text-text"
+          value={qaModel ?? models[0] ?? ''}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => onChangeQAModel(event.target.value)}
+        >
           {models.map((model) => (
             <option key={model} value={model}>
               {model}

@@ -29,7 +29,7 @@ export const S03CodeViewerScreen: FC = () => {
   }
 
   return (
-    <main className="app-shell commit-log-shell code-viewer-shell">
+    <main className="app-shell flex h-screen min-h-0 flex-col overflow-hidden bg-[var(--vscode-editor-background,var(--color-surface))]">
       <TopHeader
         title={selectedCommit.message}
         context={`${selectedCommit.shortHash} > ${selectedFile.path}`}
@@ -41,7 +41,7 @@ export const S03CodeViewerScreen: FC = () => {
       />
       <ResizableSplitPane
         isOpen={isSplitPanelOpen}
-        className="code-split-workspace"
+        className="min-h-0 flex-1"
         left={(
           <DiffViewer
             diffLines={diffState.diffLines}

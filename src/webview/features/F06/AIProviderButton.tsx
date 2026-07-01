@@ -17,35 +17,60 @@ export const AIProviderButton: FC<AIProviderButtonProps> = ({ provider, state, e
   const isActive = state === 'active';
   const isRegistering = state === 'registering';
   const isError = state === 'error';
+  const containerClassName = [
+    'overflow-hidden rounded-md border bg-panel transition-colors duration-100 ease-in-out',
+    isActive ? 'border-accent bg-selected' : 'border-line',
+    isError
+      ? 'border-[color-mix(in_srgb,var(--color-error)_54%,transparent)] bg-[color-mix(in_srgb,var(--color-error)_8%,var(--color-panel))]'
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const markClassName = [
+    'inline-flex size-7 shrink-0 items-center justify-center rounded-[7px] border',
+    isActive || state === 'inactive' || isError
+      ? 'border-transparent bg-[var(--provider-brand-color)] text-white'
+      : 'border-[var(--provider-brand-color)] text-[var(--provider-brand-color)]',
+  ].join(' ');
+  const statePillClassName = [
+    'inline-flex min-w-[54px] shrink-0 items-center justify-center gap-1.5 rounded-full border px-[9px] py-[3px] text-[11px] whitespace-nowrap',
+    isActive
+      ? 'border-transparent bg-accent font-bold text-on-accent'
+      : isError
+        ? 'border-transparent font-medium text-error'
+        : 'border-line text-muted',
+  ].join(' ');
 
   return (
-    <div className={`ai-provider-button ai-provider-button-${state}`} style={{ '--provider-brand-color': provider.brandColor } as CSSProperties}>
+    <div className={containerClassName} style={{ '--provider-brand-color': provider.brandColor } as CSSProperties}>
       <button
         type="button"
-        className="ai-provider-main-button"
+        className="flex min-h-12 w-full items-center gap-[11px] bg-transparent px-3 py-[9px] text-left text-text hover:bg-hover disabled:cursor-default disabled:hover:bg-transparent"
         disabled={isRegistering}
         aria-label={`${provider.label} ${isActive ? t('provider.click_disable') : t('provider.click_enable')}`}
         aria-pressed={isActive}
         title={getTitle(state, t)}
         onClick={onToggle}
       >
-        <span className="ai-provider-mark" aria-hidden="true">
+        <span className={markClassName} aria-hidden="true">
           <ProviderIcon providerName={provider.name} />
         </span>
-        <span className="ai-provider-copy">
-          <span className="ai-provider-name-row">
-            <span className="ai-provider-label">{provider.label}</span>
-            <span className="ai-provider-cli">{provider.cli}</span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="flex min-w-0 items-center gap-[7px]">
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-base font-bold text-text">{provider.label}</span>
+            <span className="shrink-0 font-mono text-[10.5px] text-muted">{provider.cli}</span>
           </span>
-          <span className="ai-provider-status">{getStatusText(state, t)}</span>
+          <span className={`overflow-hidden text-ellipsis whitespace-nowrap text-[11px] ${isActive ? 'text-renamed' : isError ? 'text-error' : 'text-muted'}`}>
+            {getStatusText(state, t)}
+          </span>
         </span>
-        <span className="ai-provider-state-pill">
-          {isRegistering ? <span className="ai-provider-spinner" aria-hidden="true" /> : null}
+        <span className={statePillClassName}>
+          {isRegistering ? <span className="size-[13px] rounded-full border-2 border-line border-t-link motion-safe:animate-spin" aria-hidden="true" /> : null}
           {getStateLabel(state, t)}
         </span>
       </button>
       {isError ? (
-        <div className="ai-provider-error" role="alert">
+        <div className="flex flex-col gap-[7px] px-3 pb-[11px] pl-[51px] text-[11.5px] leading-[1.5] text-error" role="alert">
           <span>{errorMessage || t('settings.provider_cli_missing')}</span>
           <CLIInstallLink
             url={provider.installUrl}

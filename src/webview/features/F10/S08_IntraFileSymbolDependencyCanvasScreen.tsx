@@ -74,7 +74,7 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
   if (!selectedCommit || !selectedFileForSymbolGraph) return null;
 
   return (
-    <main className="app-shell commit-log-shell dependency-canvas-shell symbol-graph-shell">
+    <main className="app-shell flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
       <TopHeader
         title={selectedFileForSymbolGraph.path}
         context={`${selectedCommit.shortHash} · ${t('symbol_graph.symbol_count_context', { count: symbolNodes.length })}`}
@@ -98,31 +98,31 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
       />
       <ResizableSplitPane
         isOpen={isCodePanelOpen}
-        className="symbol-graph-workspace"
+        className="flex-1 min-h-0"
         defaultLeftPercent={62}
         left={(
-          <div className="symbol-graph-canvas-panel">
-          <ReactFlowProvider>
-            <SymbolGraph
-              symbolNodes={symbolNodes}
-              symbolEdges={symbolEdges}
-              isLoading={isLoadingSymbolGraph}
-              error={symbolGraphError}
-              onRetry={retry}
-              activeNodeId={activeSymbolNodeId ?? hoveredSymbolNodeId}
-              onNodeClick={(nodeId) => {
-                setActiveSymbolNode(nodeId);
-                setScrollRequestId((current) => current + 1);
-              }}
-              onNodeHover={(nodeId) => {
-                setHoveredSymbolNode(nodeId);
-              }}
-              onPaneClick={() => {
-                setActiveSymbolNode(null);
-                setHoveredSymbolNode(null);
-              }}
-            />
-          </ReactFlowProvider>
+          <div className="flex h-full min-h-0 w-full min-w-0 flex-1 overflow-hidden">
+            <ReactFlowProvider>
+              <SymbolGraph
+                symbolNodes={symbolNodes}
+                symbolEdges={symbolEdges}
+                isLoading={isLoadingSymbolGraph}
+                error={symbolGraphError}
+                onRetry={retry}
+                activeNodeId={activeSymbolNodeId ?? hoveredSymbolNodeId}
+                onNodeClick={(nodeId) => {
+                  setActiveSymbolNode(nodeId);
+                  setScrollRequestId((current) => current + 1);
+                }}
+                onNodeHover={(nodeId) => {
+                  setHoveredSymbolNode(nodeId);
+                }}
+                onPaneClick={() => {
+                  setActiveSymbolNode(null);
+                  setHoveredSymbolNode(null);
+                }}
+              />
+            </ReactFlowProvider>
           </div>
         )}
         right={(

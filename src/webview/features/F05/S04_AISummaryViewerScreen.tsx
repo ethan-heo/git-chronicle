@@ -49,7 +49,7 @@ export const S04AISummaryViewerScreen: FC = () => {
   }
 
   return (
-    <main className="app-shell commit-log-shell ai-summary-shell">
+    <main className="app-shell relative flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
       <TopHeader
         title={selectedCommit.message}
         context={headerContext}
@@ -61,7 +61,7 @@ export const S04AISummaryViewerScreen: FC = () => {
       />
       <ResizableSplitPane
         isOpen={isSplitPanelOpen}
-        className="ai-split-workspace"
+        className="min-h-0 flex-1"
         left={(
           <>
           <TokenLimitWarning isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed} onDismiss={() => setIsTokenWarningDismissed(true)} />

@@ -1,0 +1,10 @@
+.symbol-node:hover,
+.symbol-node-selected {
+  border-color: var(--gae-color-symbol-highlight);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gae-color-symbol-highlight) 60%, transparent), 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.symbol-node-handle::before,
+.symbol-node-handle::after {
+  display: none;
+}

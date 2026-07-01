@@ -7,6 +7,7 @@ import type { SummaryMode } from '../../types/commit';
 import { QAInputArea } from '../F09/QAInputArea';
 import { RegenerateButton } from './RegenerateButton';
 import { StreamingTextRenderer } from './StreamingTextRenderer';
+import './AISummaryViewer.css';
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 type DisplayHeadingLevel = 2 | 3 | 4 | 5;
@@ -68,26 +69,29 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   if (isLoading) {
     return (
       <section className="ai-summary-loading-state" role="status" aria-live="polite" aria-busy="true" aria-label={t('ai_summary.loading')}>
-        <div className="ai-summary-loading-hero">
+        <div className="flex items-center gap-3.5">
           <span className="ai-summary-loading-orb" aria-hidden="true" />
-          <div className="ai-summary-loading-copy">
-            <strong>{t('ai_summary.loading_title')}</strong>
-            <p>{t('ai_summary.loading')}</p>
+          <div className="flex min-w-0 flex-col gap-[3px]">
+            <strong className="text-sm font-bold text-text">{t('ai_summary.loading_title')}</strong>
+            <p className="m-0 text-sm text-muted">{t('ai_summary.loading')}</p>
           </div>
         </div>
-        <div className="ai-summary-loading-preview" aria-hidden="true">
-          <span className="ai-summary-loading-pill ai-summary-loading-shimmer" />
-          <span className="ai-summary-loading-line ai-summary-loading-line-lg ai-summary-loading-shimmer" />
-          <span className="ai-summary-loading-line ai-summary-loading-shimmer" />
-          <span className="ai-summary-loading-line ai-summary-loading-line-sm ai-summary-loading-shimmer" />
-          <div className="ai-summary-loading-section">
-            <span className="ai-summary-loading-line ai-summary-loading-line-md ai-summary-loading-shimmer" />
-            <span className="ai-summary-loading-line ai-summary-loading-shimmer" />
-            <span className="ai-summary-loading-line ai-summary-loading-line-lg ai-summary-loading-shimmer" />
+        <div
+          className="flex flex-col gap-3 rounded-[14px] border border-[color-mix(in_srgb,var(--color-line)_82%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-panel)_88%,transparent),color-mix(in_srgb,var(--color-surface)_92%,transparent))] p-[18px] shadow-[0_18px_44px_rgba(0,0,0,0.12)]"
+          aria-hidden="true"
+        >
+          <span className="ai-summary-loading-shimmer block h-[22px] w-[120px] rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
+          <span className="ai-summary-loading-shimmer block h-2.5 w-[78%] rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
+          <span className="ai-summary-loading-shimmer block h-2.5 w-full rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
+          <span className="ai-summary-loading-shimmer block h-2.5 w-[42%] rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
+          <div className="flex flex-col gap-2.5 pt-0.5">
+            <span className="ai-summary-loading-shimmer block h-2.5 w-[58%] rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
+            <span className="ai-summary-loading-shimmer block h-2.5 w-full rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
+            <span className="ai-summary-loading-shimmer block h-2.5 w-[78%] rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
           </div>
-          <div className="ai-summary-loading-section">
-            <span className="ai-summary-loading-line ai-summary-loading-line-sm ai-summary-loading-shimmer" />
-            <span className="ai-summary-loading-line ai-summary-loading-line-md ai-summary-loading-shimmer" />
+          <div className="flex flex-col gap-2.5 pt-0.5">
+            <span className="ai-summary-loading-shimmer block h-2.5 w-[42%] rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
+            <span className="ai-summary-loading-shimmer block h-2.5 w-[58%] rounded-full bg-[color-mix(in_srgb,var(--color-elevated)_86%,white_14%)]" />
           </div>
         </div>
       </section>
@@ -101,14 +105,17 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const showRegenerate = hasSavedSummary && (Boolean(content) || isGenerating);
   const showSavedPath = hasSavedSummary && Boolean(savedPath);
   const canAskQuestion = !isGenerating && Boolean(content);
+  const isCommitSummary = summaryMode === 'commit';
 
   return (
-    <section className="ai-summary-viewer" role="region" aria-label={t('ai_summary.ai_result')} aria-live={isGenerating ? 'polite' : undefined}>
-      <div className="ai-summary-action-bar">
-        <div className="ai-summary-source-group">
-          <span className="ai-summary-source-tag">{formatSourceTag(t, hasSavedSummary, isGenerating, providerLabel, savedPath)}</span>
+    <section className="flex min-h-0 flex-1 flex-col" role="region" aria-label={t('ai_summary.ai_result')} aria-live={isGenerating ? 'polite' : undefined}>
+      <div className="flex items-center justify-between gap-3 border-b border-line bg-panel px-6 py-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted">
+            {formatSourceTag(t, hasSavedSummary, isGenerating, providerLabel, savedPath)}
+          </span>
           {showSavedPath ? (
-            <span className="ai-summary-saved-path" title={savedPath ?? undefined}>
+            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm text-muted [direction:rtl]" title={savedPath ?? undefined}>
               {savedPath}
             </span>
           ) : null}
@@ -116,8 +123,8 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
         {showRegenerate ? <RegenerateButton disabled={isGenerating} onClick={onRegenerate} /> : null}
       </div>
 
-      <div className="ai-summary-content">
-        <div className="ai-summary-body">
+      <div className={`ai-summary-content flex min-h-0 flex-1 flex-col${isCommitSummary ? ' ai-summary-content-commit' : ''}`}>
+        <div className={`min-h-0 flex-1 overflow-auto ${isCommitSummary ? 'px-7 pt-5 pb-16 sm:px-8' : 'px-6 pt-[14px] pb-12'}`}>
           {isGenerating ? (
             <StreamingTextRenderer content={content} isStreaming />
           ) : content ? (
@@ -141,11 +148,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
             <EmptyState message={summaryMode === 'commit' ? t('ai_summary.empty_commit') : t('ai_summary.empty')} />
           )}
         </div>
-        {canAskQuestion ? (
-          <>
-            <QAInputArea isGeneratingQA={isGeneratingQA} onAskQuestion={onAskQuestion} />
-          </>
-        ) : null}
+        {canAskQuestion ? <QAInputArea isGeneratingQA={isGeneratingQA} onAskQuestion={onAskQuestion} /> : null}
       </div>
     </section>
   );

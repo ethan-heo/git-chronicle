@@ -22,7 +22,7 @@
 | UI 프레임워크 | React | 19.x | Concurrent Features 활용 |
 | 언어 | TypeScript | 5.x | strict 모드 필수 |
 | 빌드 도구 | Vite | 6.x | Webview SPA 번들링. `vite-plugin-vscode` 사용 |
-| 스타일링 | TailwindCSS | 4.x | VSCode CSS 변수(`--vscode-*`)와 병행 사용 |
+| 스타일링 | TailwindCSS | 4.x | `src/webview/global.css`의 `@theme inline`으로 VSCode CSS 변수(`--vscode-*`)를 유틸리티 토큰에 매핑 |
 | UI 컴포넌트 | Shadcn UI | 최신 | 필요한 컴포넌트만 선택적 도입 |
 
 ### 상태 관리
@@ -128,6 +128,13 @@
 - Webview 의존성과 Extension Host 의존성을 `package.json`에서 구분하지 않는다. Extension Host에서 필요한 패키지는 일반 dependencies로 관리하고, `dependency-cruiser`는 runner와 함께 `dist/node_modules/dependency-cruiser/`에 복사해 실행한다.
 - `scripts/copy-dependency-cruiser.mjs`는 pnpm의 실제 설치 레이아웃을 따라 `require.resolve()` 기반으로 `dependency-cruiser`의 transitive dependency까지 dist로 복사한다. 런타임 에러 `Cannot find package 'commander'`는 이 복사 누락 신호다.
 - Webview 번들(`dist/webview/`) 내에는 `react`, `react-dom`, `zustand`, `@xyflow/react`, `react-markdown`, `shiki`, `tailwindcss` 등이 포함된다.
+
+## Webview 스타일링 기준
+
+- Webview 스타일 엔트리는 `src/webview/global.css`다.
+- 기본 스타일링 방식은 TSX 내부 Tailwind 유틸리티 클래스다.
+- 공존 `.css` 파일은 컴포넌트와 같은 디렉터리에 두며, 애니메이션/복잡한 선택자/외부 라이브러리 override처럼 예외적인 경우에만 사용한다.
+- VSCode 테마 연동은 `global.css`의 `@theme inline` 토큰과 legacy `--gae-*` alias를 통해 유지한다.
 
 ---
 

@@ -28,10 +28,10 @@ export const QAInputArea: FC<QAInputAreaProps> = ({ isGeneratingQA, onAskQuestio
   };
 
   return (
-    <div className="ai-summary-qa-panel">
+    <div className="flex items-stretch gap-2 border-t border-line bg-panel px-6 py-3">
       <textarea
         id="ai-summary-question"
-        className="ai-summary-qa-textarea"
+        className="h-[52px] min-h-[52px] flex-1 resize-none rounded-md border border-line bg-elevated px-3 py-2.5 text-text outline-none focus:border-focus"
         rows={1}
         placeholder={t('ai_summary.qa_placeholder')}
         value={question}
@@ -39,8 +39,13 @@ export const QAInputArea: FC<QAInputAreaProps> = ({ isGeneratingQA, onAskQuestio
         onChange={(event) => setQuestion(event.target.value)}
         onKeyDown={handleQuestionKeyDown}
       />
-      <div className="ai-summary-qa-actions">
-        <button type="button" className="ai-summary-qa-button" disabled={isGeneratingQA || !question.trim()} onClick={submitQuestion}>
+      <div className="flex shrink-0">
+        <button
+          type="button"
+          className="box-border h-[52px] min-h-[52px] rounded-sm border border-transparent bg-accent px-3.5 text-[11.5px] leading-[1.2] font-bold text-on-accent disabled:cursor-default disabled:opacity-50"
+          disabled={isGeneratingQA || !question.trim()}
+          onClick={submitQuestion}
+        >
           {isGeneratingQA ? t('ai_summary.qa_loading') : t('ai_summary.qa_submit')}
         </button>
       </div>

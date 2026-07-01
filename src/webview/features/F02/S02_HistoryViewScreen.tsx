@@ -70,7 +70,7 @@ export const S02HistoryViewScreen: FC = () => {
   }
 
   return (
-    <main className="app-shell commit-log-shell history-view-shell">
+    <main className="app-shell relative flex h-screen min-h-0 flex-col overflow-hidden">
       <TopHeader title={selectedCommit.message} context={`${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`} showBackButton onBackClick={goToCommitList} showSettingsIcon onSettingsClick={goToSettingsView} />
       <CommitActionBar
         selectedCommit={selectedCommit}

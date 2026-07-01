@@ -9,6 +9,7 @@ import { DependencyEdge } from './DependencyEdge';
 import { FileNode } from './FileNode';
 import { LegendPanel } from './LegendPanel';
 import { buildGraphData } from './graph';
+import './DependencyGraph.css';
 
 interface DependencyGraphProps {
   files: ChangedFile[];
@@ -42,7 +43,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
   const { t } = useTranslation();
   if (isLoading) {
     return (
-      <section className="dependency-canvas-state">
+      <section className="flex min-h-0 flex-1 items-center justify-center p-8">
         <LoadingState label={t('dependency.loading')} size="lg" />
       </section>
     );
@@ -50,7 +51,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
 
   if (error) {
     return (
-      <section className="dependency-canvas-state">
+      <section className="flex min-h-0 flex-1 items-center justify-center p-8">
         <ErrorState message={error} onRetry={onRetry} />
       </section>
     );
@@ -58,7 +59,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
 
   if (files.length === 0) {
     return (
-      <section className="dependency-canvas-state">
+      <section className="flex min-h-0 flex-1 items-center justify-center p-8">
         <EmptyState message={t('dependency.empty')} />
       </section>
     );
@@ -159,8 +160,12 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   }, [fitCanvas]);
 
   return (
-    <section className="dependency-graph" aria-label={t('dependency.graph_aria')} ref={graphRef}>
-      {hasOnlyUnanalyzableFiles ? <div className="dependency-canvas-notice">JS/TS 외 파일은 노드로만 표시됩니다.</div> : null}
+    <section className="dependency-graph relative min-h-0 flex-1 overflow-hidden bg-surface" aria-label={t('dependency.graph_aria')} ref={graphRef}>
+      {hasOnlyUnanalyzableFiles ? (
+        <div className="absolute top-3 left-3 z-[5] rounded-sm border border-line border-l-[3px] border-l-warning bg-elevated px-[11px] py-[7px] text-[11px] text-muted">
+          JS/TS 외 파일은 노드로만 표시됩니다.
+        </div>
+      ) : null}
       <ReactFlow
         nodes={nodes}
         edges={edges}

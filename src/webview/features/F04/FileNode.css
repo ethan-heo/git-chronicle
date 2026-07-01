@@ -1,0 +1,21 @@
+.react-flow__node:has(.dependency-file-node:hover),
+.react-flow__node:has(.dependency-file-node:focus-within),
+.react-flow__node:has(.dependency-file-node--selected) {
+  z-index: 1000 !important;
+}
+
+.dependency-file-node-no-analysis {
+  border-style: dashed;
+  opacity: 0.78;
+}
+
+.dependency-file-node-deleted .dependency-file-node-name {
+  color: var(--gae-color-text-secondary);
+  text-decoration: line-through;
+}
+
+.dependency-file-node--selected .dependency-file-node-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}

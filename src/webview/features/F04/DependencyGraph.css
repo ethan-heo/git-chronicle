@@ -1,0 +1,21 @@
+.dependency-graph .react-flow {
+  background: var(--gae-color-surface-primary);
+}
+
+.dependency-graph .react-flow__background {
+  color: color-mix(in srgb, var(--gae-color-text-secondary) 38%, transparent);
+}
+
+.dependency-graph .react-flow__node {
+  border-radius: var(--gae-border-radius-md);
+  cursor: grab;
+}
+
+.dependency-graph .react-flow__node.dragging {
+  cursor: grabbing;
+}
+
+.dependency-graph .react-flow__node:focus,
+.dependency-graph .react-flow__node:focus-visible {
+  outline: none;
+}

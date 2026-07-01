@@ -26,7 +26,7 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeV
 
   return (
     <div
-      className={`changed-file-row changed-file-row-${file.status.toLowerCase()}`}
+      className="group flex min-w-0 items-center gap-1.5 py-[3px] pr-2 hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
       style={{ paddingLeft: `${10 + depth * 16}px` }}
       role="treeitem"
       tabIndex={0}
@@ -34,17 +34,27 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeV
       onKeyDown={onKeyDown}
     >
       <FileStatusBadge status={file.status} />
-      <span className="changed-file-icon" aria-hidden="true">
+      <span className="inline-flex shrink-0 text-muted opacity-82" aria-hidden="true">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
           <path d="M4 1.75h5l3 3v9.5H4z" />
           <path d="M9 1.75v3h3" />
         </svg>
       </span>
-      <span className="changed-file-name" title={file.oldPath ? `${file.oldPath} -> ${file.path}` : file.path}>
+      <span
+        className={`min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-text ${
+          file.status === 'D' ? 'text-muted line-through' : ''
+        }`}
+        title={file.oldPath ? `${file.oldPath} -> ${file.path}` : file.path}
+      >
         {name}
       </span>
       <SavedBadge isVisible={file.hasSavedSummary} />
-      <FileActionButtons isVisible={false} onCodeView={() => onCodeView(file)} onAISummary={() => onAISummary(file)} />
+      <FileActionButtons
+        className="group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+        isVisible={false}
+        onCodeView={() => onCodeView(file)}
+        onAISummary={() => onAISummary(file)}
+      />
     </div>
   );
 };

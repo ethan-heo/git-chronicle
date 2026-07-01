@@ -47,7 +47,7 @@ export const S07CodeAndAISummaryScreen: FC = () => {
   }
 
   return (
-    <main className="app-shell commit-log-shell split-view-shell">
+    <main className="app-shell flex h-screen min-h-0 flex-col">
       <TopHeader
         title={selectedCommit.message}
         context={headerContext}
@@ -57,8 +57,8 @@ export const S07CodeAndAISummaryScreen: FC = () => {
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />
-      <section className="split-view-panels">
-        <div className="split-view-panel">
+      <section className="flex flex-1 min-h-0 overflow-hidden">
+        <div className="min-w-[220px] flex-1 overflow-y-auto">
           <DiffViewer
             diffLines={diffState.diffLines}
             filePath={selectedFile.path}
@@ -69,7 +69,7 @@ export const S07CodeAndAISummaryScreen: FC = () => {
             onRetry={loadFileDiff}
           />
         </div>
-        <div className="split-view-panel">
+        <div className="min-w-[220px] flex-1 overflow-y-auto border-l border-line">
           <TokenLimitWarning isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed} onDismiss={dismissTokenWarning} />
           <AISummaryViewer
             content={currentSummaryContent}

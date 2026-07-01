@@ -104,7 +104,7 @@ export const S05DependencyCanvasScreen: FC = () => {
   }
 
   return (
-    <main className="app-shell commit-log-shell dependency-canvas-shell">
+    <main className="app-shell flex min-h-0 h-screen flex-col overflow-hidden bg-surface">
       <TopHeader
         title={selectedCommit.message}
         context={`${selectedCommit.shortHash} · 변경 파일 ${changedFiles.length}개 · 의존 ${dependencyEdges.length}개`}

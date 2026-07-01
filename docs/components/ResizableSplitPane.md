@@ -32,4 +32,5 @@ interface ResizableSplitPaneProps {
 ## 관련 파일
 
 - [`src/webview/shared/components/ResizableSplitPane.tsx`](/Users/ethanheo/Desktop/2026/projects/git-author-explorer/src/webview/shared/components/ResizableSplitPane.tsx)
-- [`src/webview/styles.css`](/Users/ethanheo/Desktop/2026/projects/git-author-explorer/src/webview/styles.css)
+- [`src/webview/shared/components/ResizableSplitPane.css`](/Users/ethanheo/Desktop/2026/projects/git-author-explorer/src/webview/shared/components/ResizableSplitPane.css)
+- [`src/webview/global.css`](/Users/ethanheo/Desktop/2026/projects/git-author-explorer/src/webview/global.css)

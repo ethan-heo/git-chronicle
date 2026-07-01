@@ -192,9 +192,9 @@ export const S06SettingsScreen: FC = () => {
   };
 
   return (
-    <main className="app-shell commit-log-shell settings-shell">
+    <main className="app-shell relative flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
       <TopHeader title={t('settings.title')} context={t('settings.context')} showBackButton onBackClick={goBackFromDetail} />
-      <div className="settings-screen">
+      <div className="min-h-0 flex-1 overflow-auto bg-surface">
         <AIProviderSection
           registeredProviders={registeredProviders}
           activeAIProvider={activeAIProvider}
@@ -210,7 +210,10 @@ export const S06SettingsScreen: FC = () => {
         <SavePathSection savePath={savePath} onPathSelect={handlePathSelect} onPathDelete={handlePathDelete} />
       </div>
       {statusMessage ? (
-        <div className="settings-toast" role="status">
+        <div
+          className="absolute bottom-3 left-1/2 z-30 max-w-[88%] -translate-x-1/2 overflow-hidden rounded-sm border border-line border-l-[3px] border-l-accent bg-elevated px-[13px] py-2 text-sm text-text shadow-[0_3px_12px_rgba(0,0,0,0.45)] text-ellipsis whitespace-nowrap"
+          role="status"
+        >
           {statusMessage}
         </div>
       ) : null}

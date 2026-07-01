@@ -1,0 +1,228 @@
+@import 'tailwindcss';
+
+@theme inline {
+  --color-surface: var(--vscode-editor-background, #1e1e1e);
+  --color-panel: var(--vscode-sideBar-background, #252526);
+  --color-elevated: var(--vscode-editorWidget-background, #2a2a2b);
+  --color-hover: var(--vscode-list-hoverBackground, #2a2d2e);
+  --color-selected: var(--vscode-list-activeSelectionBackground, #094771);
+
+  --color-text: var(--vscode-editor-foreground, #d4d4d4);
+  --color-muted: var(--vscode-descriptionForeground, #8c8c8c);
+  --color-dim: var(--vscode-disabledForeground, #656565);
+  --color-link: var(--vscode-textLink-foreground, #3794ff);
+  --color-on-accent: var(--vscode-button-foreground, #ffffff);
+
+  --color-added: var(--vscode-gitDecoration-addedResourceForeground, #81b88b);
+  --color-modified: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
+  --color-deleted: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39);
+  --color-renamed: var(--vscode-gitDecoration-renamedResourceForeground, #73c991);
+
+  --color-accent: var(--vscode-button-background, #0e639c);
+  --color-accent-hi: var(--vscode-button-hoverBackground, #1177bb);
+  --color-secondary: var(--vscode-button-secondaryBackground, #313131);
+  --color-secondary-hi: var(--vscode-button-secondaryHoverBackground, #3c3c3c);
+
+  --color-error: var(--vscode-errorForeground, #f48771);
+  --color-warning: var(--vscode-editorWarning-foreground, #cca700);
+  --color-info: var(--vscode-notificationsInfoIcon-foreground, #3794ff);
+
+  --color-line: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  --color-focus: var(--vscode-focusBorder, #007fd4);
+
+  --font-sans: var(--vscode-font-family, system-ui, sans-serif);
+  --font-mono: var(
+    --vscode-editor-font-family,
+    ui-monospace,
+    'SF Mono',
+    Menlo,
+    Monaco,
+    monospace
+  );
+
+  --text-xs: 10px;
+  --text-sm: 12px;
+  --text-base: var(--vscode-font-size, 13px);
+  --text-md: 15px;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-full: 999px;
+
+  --animate-route-in-forward: gae-slide-in-from-right 200ms ease-in-out both;
+  --animate-route-out-forward: gae-slide-out-to-left 200ms ease-in-out both;
+  --animate-route-in-back: gae-slide-in-from-left 200ms ease-in-out both;
+  --animate-route-out-back: gae-slide-out-to-right 200ms ease-in-out both;
+  --animate-toast-enter: gae-fade 200ms ease-in-out;
+}
+
+:root {
+  --gae-color-surface-primary: var(--color-surface);
+  --gae-color-surface-secondary: var(--color-panel);
+  --gae-color-surface-elevated: var(--color-elevated);
+  --gae-color-surface-tertiary: color-mix(in srgb, var(--color-elevated) 82%, var(--color-surface));
+  --gae-color-surface-hover: var(--color-hover);
+  --gae-color-surface-selected: var(--color-selected);
+  --gae-color-text-primary: var(--color-text);
+  --gae-color-text-secondary: var(--color-muted);
+  --gae-color-text-disabled: var(--color-dim);
+  --gae-color-text-link: var(--color-link);
+  --gae-color-text-on-accent: var(--color-on-accent);
+  --gae-color-status-added: var(--color-added);
+  --gae-color-status-modified: var(--color-modified);
+  --gae-color-status-deleted: var(--color-deleted);
+  --gae-color-status-renamed: var(--color-renamed);
+  --gae-color-diff-added: var(
+    --vscode-diffEditor-insertedLineBackground,
+    rgba(155, 185, 85, 0.2)
+  );
+  --gae-color-diff-removed: var(
+    --vscode-diffEditor-removedLineBackground,
+    rgba(255, 0, 0, 0.22)
+  );
+  --gae-color-accent-primary: var(--color-accent);
+  --gae-color-accent-primary-hover: var(--color-accent-hi);
+  --gae-color-accent-secondary: var(--color-secondary);
+  --gae-color-accent-secondary-hover: var(--color-secondary-hi);
+  --gae-color-semantic-error: var(--color-error);
+  --gae-color-semantic-warning: var(--color-warning);
+  --gae-color-semantic-info: var(--color-info);
+  --gae-color-symbol-highlight: #4ea8ff;
+  --gae-color-symbol-default: #ffffff;
+  --gae-color-symbol-dimmed: #5f6b7a;
+  --gae-color-symbol-calls: #4ea8ff;
+  --gae-color-symbol-uses: #4ea8ff;
+  --gae-color-symbol-extends: #4ea8ff;
+  --gae-color-symbol-implements: #4ea8ff;
+  --gae-color-symbol-imp: #7d8794;
+  --gae-border-color-default: var(--color-line);
+  --gae-border-color-focus: var(--color-focus);
+  --gae-border-radius-sm: var(--radius-sm);
+  --gae-border-radius-md: var(--radius-md);
+  --gae-border-radius-round: var(--radius-full);
+  --gae-font-family-base: var(--font-sans);
+  --gae-font-family-mono: var(--font-mono);
+  --gae-font-size-xs: var(--text-xs);
+  --gae-font-size-sm: var(--text-sm);
+  --gae-font-size-base: var(--text-base);
+  --gae-font-size-md: var(--text-md);
+  --gae-font-weight-regular: 400;
+  --gae-font-weight-medium: 500;
+  --gae-font-weight-semibold: 600;
+  --gae-font-weight-bold: 700;
+  --gae-spacing-xs: 4px;
+  --gae-spacing-sm: 8px;
+  --gae-spacing-md: 12px;
+  --gae-spacing-lg: 16px;
+  --gae-spacing-xl: 24px;
+  --gae-motion-duration-fast: 100ms;
+  --gae-motion-duration-base: 200ms;
+  --gae-motion-easing-default: ease-in-out;
+  color: var(--color-text);
+  background: var(--color-surface);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: var(--color-selected);
+}
+
+button:focus-visible,
+[role='button']:focus-visible {
+  outline: 1px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+@keyframes gae-slide-in-from-right {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes gae-slide-out-to-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes gae-slide-in-from-left {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes gae-slide-out-to-right {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes gae-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe-route-in-forward,
+  .motion-safe-route-out-forward,
+  .motion-safe-route-in-back,
+  .motion-safe-route-out-back,
+  .ai-summary-loading-orb,
+  .ai-summary-loading-shimmer::after,
+  .streaming-cursor {
+    animation: none !important;
+  }
+}

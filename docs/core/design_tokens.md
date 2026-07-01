@@ -11,18 +11,30 @@
 
 | 레이어 | 파일 | 역할 |
 |--------|------|------|
-| CSS 변수 | `src/webview/styles.css` | VSCode 테마 변수를 `--gae-*` 의미 토큰으로 매핑하고 실제 컴포넌트 스타일에 사용 |
-| TypeScript 상수 | `src/webview/shared/design/tokens.ts` | 컴포넌트에서 인라인 스타일이 필요할 때 동일 토큰을 타입 안전하게 참조 |
+| Tailwind 테마 토큰 | `src/webview/global.css` | `@theme inline`으로 VSCode 테마 변수를 Tailwind 유틸리티 토큰(`bg-panel`, `text-muted`, `border-line`)에 매핑 |
+| Legacy CSS alias | `src/webview/global.css` | 기존 인라인 스타일 및 일부 예외 CSS 호환을 위해 `--gae-*` 의미 토큰 alias 유지 |
+| TypeScript 상수 | `src/webview/shared/design/tokens.ts` | 컴포넌트에서 인라인 스타일이 필요할 때 `--gae-*` alias를 타입 안전하게 참조 |
 
-기능/컴포넌트 코드는 가능한 한 `--gae-*` 토큰 또는 `tokens.ts`를 사용한다.
+기능/컴포넌트 코드는 가능한 한 Tailwind 토큰 유틸리티를 사용하고, 동적 인라인 스타일이나 예외 CSS에서만 `--gae-*` alias 또는 `tokens.ts`를 사용한다.
 
 ```css
+@theme inline {
+  --color-surface: var(--vscode-editor-background, #1e1e1e);
+  --color-text: var(--vscode-editor-foreground, #d4d4d4);
+  --color-accent: var(--vscode-button-background, #0e639c);
+}
+
 :root {
-  --gae-color-surface-primary: var(--vscode-editor-background, #1e1e1e);
-  --gae-color-text-primary: var(--vscode-editor-foreground, #d4d4d4);
-  --gae-color-accent-primary: var(--vscode-button-background, #0e639c);
+  --gae-color-surface-primary: var(--color-surface);
+  --gae-color-text-primary: var(--color-text);
+  --gae-color-accent-primary: var(--color-accent);
 }
 ```
+
+예시:
+
+- `bg-surface`, `bg-panel`, `text-text`, `text-muted`, `border-line`
+- `font-mono`, `rounded-md`
 
 ---
 

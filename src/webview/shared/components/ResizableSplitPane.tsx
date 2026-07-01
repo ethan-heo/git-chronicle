@@ -1,5 +1,6 @@
 import type { CSSProperties, FC, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import './ResizableSplitPane.css';
 
 interface ResizableSplitPaneProps {
   isOpen: boolean;
@@ -75,22 +76,22 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
     : { flex: '1 1 auto', width: '100%' };
 
   return (
-    <section ref={containerRef} className={['resizable-split-pane', className].filter(Boolean).join(' ')}>
-      <div className="split-pane-panel split-pane-panel-left" style={leftStyle}>
+    <section ref={containerRef} className={['flex h-full min-h-0 w-full flex-1 overflow-hidden', className].filter(Boolean).join(' ')}>
+      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden flex-[1_1_auto]" style={leftStyle}>
         {left}
       </div>
       {isOpen ? (
         <div
-          className={['split-pane-divider', isDragging ? 'split-pane-divider--dragging' : ''].filter(Boolean).join(' ')}
+          className={['split-pane-divider relative flex-[0_0_6px] cursor-col-resize bg-transparent transition-colors duration-[var(--gae-motion-duration-fast)] ease-[var(--gae-motion-easing-default)] hover:bg-[color-mix(in_srgb,var(--gae-color-accent-primary)_20%,transparent)]', isDragging ? 'split-pane-divider--dragging' : ''].filter(Boolean).join(' ')}
           role="separator"
           aria-orientation="vertical"
           tabIndex={0}
           onMouseDown={() => setIsDragging(true)}
         >
-          <span className="split-pane-divider-line" />
+          <span className="split-pane-divider-line absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line" />
         </div>
       ) : null}
-      {isOpen ? <div className="split-pane-panel split-pane-panel-right">{right}</div> : null}
+      {isOpen ? <div className="flex min-h-0 min-w-0 flex-[1_1_auto] flex-col overflow-hidden">{right}</div> : null}
     </section>
   );
 };

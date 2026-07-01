@@ -22,14 +22,28 @@ export const CommitActionBar: FC<CommitActionBarProps> = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <div className="commit-action-bar" role="toolbar" aria-label={`${selectedCommit.shortHash} ${t('action_bar.commit_ai_aria')}`}>
+    <div
+      className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-line bg-surface px-2.5 py-2"
+      role="toolbar"
+      aria-label={`${selectedCommit.shortHash} ${t('action_bar.commit_ai_aria')}`}
+    >
       <PrimaryButton aria-label={t('action_bar.commit_ai_aria')} onClick={onCommitAISummary}>
         {t('action_bar.commit_ai_aria')}
       </PrimaryButton>
-      <PrimaryButton className="primary-button-secondary" aria-label={t('action_bar.batch_ai_aria')} disabled={isBatchRunning} onClick={onBatchAISummary}>
+      <PrimaryButton
+        className="border-line !bg-secondary !text-text hover:!bg-secondary-hi"
+        aria-label={t('action_bar.batch_ai_aria')}
+        disabled={isBatchRunning}
+        onClick={onBatchAISummary}
+      >
         {isBatchRunning ? t('batch.in_progress') : t('action_bar.batch_ai_aria')}
       </PrimaryButton>
-      <PrimaryButton className="primary-button-secondary" aria-label={t('action_bar.canvas_aria')} isLoading={isLoadingChangedFiles} onClick={onCanvasView}>
+      <PrimaryButton
+        className="border-line !bg-secondary !text-text hover:!bg-secondary-hi"
+        aria-label={t('action_bar.canvas_aria')}
+        isLoading={isLoadingChangedFiles}
+        onClick={onCanvasView}
+      >
         {isLoadingChangedFiles ? t('file_tree.loading') : t('action_bar.canvas_aria')}
       </PrimaryButton>
     </div>

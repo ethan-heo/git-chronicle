@@ -33,17 +33,19 @@ export const DateRangeFilter: FC<DateRangeFilterProps> = ({
   };
 
   return (
-    <div className="commit-filter-field">
-      <span className="commit-filter-label">{t('commit.filter_title')}</span>
-      <div className="date-range-filter">
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="text-[11px] text-muted">{t('commit.filter_title')}</span>
+      <div className="flex items-center gap-1.5">
         <input
+          className="min-w-0 flex-1 rounded-sm border border-transparent bg-[var(--vscode-input-background,#3c3c3c)] px-1.5 py-[3px] text-sm text-[var(--vscode-input-foreground,var(--color-text))] [color-scheme:dark] focus:border-focus focus:outline-none"
           type="date"
           aria-label={t('common.start_date')}
           value={startDate ?? ''}
           onChange={(event) => handleStartDateChange(event.target.value)}
         />
-        <span aria-hidden="true">~</span>
+        <span className="text-sm text-muted" aria-hidden="true">~</span>
         <input
+          className="min-w-0 flex-1 rounded-sm border border-transparent bg-[var(--vscode-input-background,#3c3c3c)] px-1.5 py-[3px] text-sm text-[var(--vscode-input-foreground,var(--color-text))] [color-scheme:dark] focus:border-focus focus:outline-none"
           type="date"
           aria-label={t('common.end_date')}
           value={endDate ?? ''}

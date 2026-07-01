@@ -35,11 +35,14 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
   const isActive = activeFilterCount > 0;
 
   return (
-    <section className={`commit-filter-panel ${isActive ? 'commit-filter-panel-active' : ''}`} role="search">
-      <div className="commit-filter-header">
-        <div className="commit-filter-header-leading">
+    <section
+      className={`shrink-0 border-b border-line bg-panel ${isActive ? 'shadow-[inset_2px_0_0_var(--color-accent)]' : ''}`}
+      role="search"
+    >
+      <div className="flex min-h-[31px] items-center justify-between gap-2 px-2.5 py-1">
+        <div className="flex min-w-0 items-center gap-1.5">
           <button
-            className="commit-filter-toggle"
+            className="inline-flex min-w-0 items-center gap-1.5 bg-transparent py-[3px] text-left text-text"
             type="button"
             onClick={() => setIsCollapsed((current) => !current)}
             aria-expanded={!isCollapsed}
@@ -52,15 +55,25 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
             onSortOrderChange={(nextSortOrder) => onFilterChange({ sortOrder: nextSortOrder })}
           />
         </div>
-        <div className="active-filter-summary">
-          {isActive ? <span>{t('commit.filter_applied', { count: activeFilterCount })}</span> : <span>{t('commit.filter_none')}</span>}
-          <button className="filter-reset-button" type="button" onClick={onClearFilters}>
+        <div className="ml-auto inline-flex shrink-0 items-center gap-1.5 text-[11px] text-link">
+          {isActive ? (
+            <span className="rounded-full bg-accent px-[7px] py-px text-xs font-medium text-on-accent">
+              {t('commit.filter_applied', { count: activeFilterCount })}
+            </span>
+          ) : (
+            <span>{t('commit.filter_none')}</span>
+          )}
+          <button
+            className="bg-transparent px-1 py-0.5 text-[11px] text-link hover:underline"
+            type="button"
+            onClick={onClearFilters}
+          >
             {t('commit.clear_filters')}
           </button>
         </div>
       </div>
       {!isCollapsed ? (
-        <div className="commit-filter-body">
+        <div className="grid grid-cols-2 gap-2.5 px-2.5 pt-0.5 pb-3">
           <DateRangeFilter
             startDate={filterDateStart}
             endDate={filterDateEnd}

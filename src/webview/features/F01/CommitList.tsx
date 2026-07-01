@@ -83,7 +83,7 @@ export const CommitList: FC<CommitListProps> = ({
 
   if (isLoadingCommits && commitList.length === 0) {
     return (
-      <div className="commit-list-state">
+      <div className="flex flex-1 items-center justify-center p-8 text-center">
         <LoadingState label={t('commit.loading')} size="lg" />
       </div>
     );
@@ -91,7 +91,7 @@ export const CommitList: FC<CommitListProps> = ({
 
   if (commitLoadError) {
     return (
-      <div className="commit-list-state">
+      <div className="flex flex-1 items-center justify-center p-8 text-center">
         <ErrorState message={t('commit.error')} onRetry={onRetry} />
       </div>
     );
@@ -99,7 +99,7 @@ export const CommitList: FC<CommitListProps> = ({
 
   if (!isGitRepoDetected) {
     return (
-      <div className="commit-list-state">
+      <div className="flex flex-1 items-center justify-center p-8 text-center">
         <EmptyState message={t('commit.empty_no_repo')} ctaLabel={t('commit.open_repo')} onCtaClick={onOpenRepository} />
       </div>
     );
@@ -107,7 +107,7 @@ export const CommitList: FC<CommitListProps> = ({
 
   if (hasLoadedCommits && commitList.length === 0 && isFilterActive) {
     return (
-      <div className="commit-list-state">
+      <div className="flex flex-1 items-center justify-center p-8 text-center">
         <EmptyState message={t('commit.empty_no_result')} ctaLabel={t('commit.clear_filters')} onCtaClick={onClearFilters} />
       </div>
     );
@@ -115,27 +115,31 @@ export const CommitList: FC<CommitListProps> = ({
 
   if (hasLoadedCommits && commitList.length === 0) {
     return (
-      <div className="commit-list-state">
+      <div className="flex flex-1 items-center justify-center p-8 text-center">
         <EmptyState message={t('commit.empty_no_history')} />
       </div>
     );
   }
 
   return (
-    <div className="commit-list-scroll" ref={scrollContainerRef} onScroll={handleScroll}>
-      <div className="commit-list" role="list">
+    <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollContainerRef} onScroll={handleScroll}>
+      <div className="flex flex-col" role="list">
         {commitList.map((commit) => (
           <CommitListItem key={commit.hash} commit={commit} onClick={onCommitClick} />
         ))}
       </div>
-      {loadMoreError ? <div className="commit-list-inline-error">{loadMoreError}</div> : null}
+      {loadMoreError ? <div className="flex items-center justify-center px-3 py-3 text-[11px] text-error">{loadMoreError}</div> : null}
       {isLoadingCommits ? (
-        <div className="commit-list-footer">
+        <div className="flex items-center justify-center px-3 py-3 text-[11px] text-muted">
           <LoadingState label={t('commit.load_more')} size="sm" />
         </div>
       ) : null}
       <InfiniteScrollTrigger isEnabled={!isLoadingCommits && hasMoreCommits} onTrigger={onLoadMore} />
-      {!hasMoreCommits && commitList.length > 0 ? <div className="commit-list-end">{t('commit.all_loaded')}</div> : null}
+      {!hasMoreCommits && commitList.length > 0 ? (
+        <div className="flex items-center justify-center px-3 py-3 text-[11px] text-muted opacity-72">
+          {t('commit.all_loaded')}
+        </div>
+      ) : null}
     </div>
   );
 };

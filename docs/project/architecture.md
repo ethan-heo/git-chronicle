@@ -137,6 +137,7 @@ src/
 - 각 Feature 디렉토리는 자신의 UI 컴포넌트, 커스텀 훅, 타입을 자체적으로 포함한다.
 - Feature 간 직접 import를 금지한다. 공통 로직은 반드시 `shared/`로 추출한다.
 - Feature 컴포넌트는 Screen 컴포넌트에서 조합한다. 현재 F01은 `src/webview/features/F01/S01_CommitListScreen.tsx`에 화면 조합 컴포넌트를 함께 둔다.
+- 스타일은 컴포넌트와 최대한 가까이 둔다. 기본은 TSX 내부 Tailwind 유틸리티이며, 예외 CSS는 해당 feature/shared 디렉터리에 colocate한다.
 
 ### Shared Component Rule (공유 컴포넌트 규칙)
 
@@ -157,7 +158,7 @@ src/
 - `App.tsx`는 화면 전환 시 incoming 화면과 outgoing 화면을 `.screen-container` 내부의 두 `.screen-slot`으로 200ms 동안 동시에 렌더링한다.
 - `transitionDirection = 'forward'`이면 incoming 화면은 오른쪽에서 들어오고 outgoing 화면은 왼쪽으로 나간다. `transitionDirection = 'back'`이면 incoming 화면은 왼쪽에서 들어오고 outgoing 화면은 오른쪽으로 나간다.
 - outgoing 슬롯은 `aria-hidden="true"`와 `RouteSlotProvider isActive={false}`를 사용한다. 최상위 화면 컴포넌트는 `useRouteSlotActive()`가 false일 때 초기 데이터 로딩 effect와 Extension 메시지 listener 등록을 건너뛴다.
-- 라우트 전환 animation은 `styles.css`의 `--gae-motion-duration-base`와 `App.tsx`의 `ROUTE_TRANSITION_DURATION_MS`가 같은 200ms 값으로 동작한다.
+- 라우트 전환 animation은 `global.css`의 전역 motion 토큰(`--gae-motion-duration-base`)과 `App.tsx`의 `ROUTE_TRANSITION_DURATION_MS`가 같은 200ms 값으로 동작한다.
 - `BatchProgressBar`와 `ToastContainer`는 라우트 슬롯 밖에 렌더링해 화면 전환 중에도 전역 피드백을 유지한다.
 - `dependency-cruiser`는 패키지 자체뿐 아니라 transitive dependency까지 `dist/node_modules/dependency-cruiser/`에 복사한 뒤 runner가 참조한다. pnpm symlink에 직접 의존하지 않는다. 복사 스크립트는 `require.resolve()` 기반으로 실제 설치 레이아웃을 따라가며, 누락 시 `commander` 같은 런타임 패키지 에러가 발생할 수 있다.
 

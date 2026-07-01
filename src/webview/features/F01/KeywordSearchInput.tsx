@@ -45,18 +45,19 @@ export const KeywordSearchInput: FC<KeywordSearchInputProps> = ({
   };
 
   return (
-    <div className={`commit-filter-field ${className ?? ''}`.trim()}>
-      <label className="commit-filter-label" htmlFor={id}>
+    <div className={['flex min-w-0 flex-col gap-1', className].filter(Boolean).join(' ')}>
+      <label className="text-[11px] text-muted" htmlFor={id}>
         {label}
       </label>
-      <div className="keyword-search-input">
-        <span className="keyword-search-icon" aria-hidden="true">
+      <div className="relative flex items-center">
+        <span className="pointer-events-none absolute left-2 inline-flex text-muted" aria-hidden="true">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
             <circle cx="7" cy="7" r="4.5" />
             <path d="m10.5 10.5 3 3" />
           </svg>
         </span>
         <input
+          className="w-full min-w-0 rounded-sm border border-transparent bg-[var(--vscode-input-background,#3c3c3c)] py-[5px] pr-[26px] pl-7 text-sm text-[var(--vscode-input-foreground,var(--color-text))] [color-scheme:dark] focus:border-focus focus:outline-none"
           id={id}
           type="search"
           value={localValue}
@@ -65,7 +66,12 @@ export const KeywordSearchInput: FC<KeywordSearchInputProps> = ({
           placeholder={placeholder ?? t('commit.filter_include_placeholder')}
         />
         {localValue ? (
-          <button className="keyword-clear-button" type="button" onClick={clearKeyword} aria-label={t('commit.search_clear_aria')}>
+          <button
+            className="absolute right-1.5 inline-flex size-4 items-center justify-center rounded-sm bg-transparent text-[11px] leading-none text-muted hover:bg-hover hover:text-text"
+            type="button"
+            onClick={clearKeyword}
+            aria-label={t('commit.search_clear_aria')}
+          >
             x
           </button>
         ) : null}

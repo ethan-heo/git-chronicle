@@ -41,10 +41,17 @@ export const DependencyEdge: FC<EdgeProps<DependencyEdgeType>> = ({
         path={edgePath}
         markerEnd={markerEnd}
         className={className}
+        style={{
+          strokeWidth: highlighted ? 2.4 : 1.6,
+          opacity: dimmed ? 0.2 : 1,
+          stroke: highlighted ? 'var(--gae-color-text-link)' : 'var(--gae-color-text-secondary)',
+          strokeDasharray: kind === 'require' ? '5 5' : undefined,
+          transition: 'opacity var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+        }}
       />
       <EdgeLabelRenderer>
         <span
-          className="dependency-edge-label"
+          className="pointer-events-none absolute rounded-full border border-line bg-elevated px-1.5 py-[3px] font-mono text-[9px] leading-none text-muted"
           style={{
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
           }}

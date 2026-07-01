@@ -17,6 +17,7 @@ git-chronicle/
 ├── src/                              # 소스 코드
 │   ├── extension/                    # Extension Host (Node.js)
 │   └── webview/                      # Webview SPA (React)
+│       ├── global.css                # Tailwind v4 엔트리 + @theme inline 토큰 + 전역 reset/motion
 │       ├── i18n/                     # 로컬 번역 리소스 및 최소 런타임
 │       ├── i18next.ts                # i18next 호환 로컬 엔트리
 │       └── react-i18next.ts          # react-i18next 호환 로컬 엔트리
@@ -27,7 +28,7 @@ git-chronicle/
 ├── tsconfig.json                     # Webview 타입스크립트 설정
 ├── tsconfig.extension.json           # Extension Host 타입스크립트 설정
 ├── vite.config.ts                    # Vite 빌드 설정
-├── tailwind.config.ts                # TailwindCSS 설정
+├── tailwind.config.ts                # TailwindCSS 보조 설정 파일(현재 스타일 토큰의 기준은 `src/webview/global.css`)
 └── .vscodeignore                     # 패키징 제외 파일 목록
 ```
 
@@ -69,6 +70,7 @@ src/extension/
 
 ```
 src/webview/
+├── global.css                        # Tailwind v4 엔트리, VSCode 토큰 매핑, 전역 reset/keyframes
 ├── main.tsx                          # ReactDOM.createRoot 진입점
 ├── App.tsx                           # currentScreen에 따라 Screen 렌더링 + 라우트 전환 슬롯 관리
 ├── store/
@@ -138,8 +140,6 @@ src/webview/
 ├── screens/                          # 향후 독립 Screen 컴포넌트 확장 위치
 │   └── 현재 화면 컴포넌트는 각 feature 디렉터리에서 구현
 └── shared/
-    ├── design/
-    │   └── tokens.ts                 # --gae-* 디자인 토큰의 TypeScript 참조 상수
     ├── components/
     │   ├── TopHeader.tsx
     │   ├── BackButton.tsx
@@ -160,10 +160,19 @@ src/webview/
     │   └── useDebounce.ts            # 300ms 디바운싱 훅
     ├── route/
     │   └── RouteSlotContext.tsx      # active/inactive 라우트 슬롯 컨텍스트
+    ├── design/
+    │   └── tokens.ts                 # legacy `--gae-*` alias의 TypeScript 참조 상수
     └── utils/
         ├── fileStatus.ts             # getStatusLabel(status) → 'A' | 'M' | 'D' | 'R'
         └── formatDate.ts             # ISO 8601 → 'YYYY.MM.DD' 포매터
 ```
+
+### Webview 스타일 구조 규칙
+
+- `global.css`는 전역 스타일과 Tailwind 토큰 정의만 담당한다.
+- 대부분의 UI 스타일은 각 `.tsx` 컴포넌트의 Tailwind 유틸리티 클래스에서 직접 관리한다.
+- 컴포넌트 전용 `.css` 파일은 같은 디렉터리에 colocate하며, 애니메이션/선택자/외부 라이브러리 override처럼 Tailwind만으로 표현하기 어려운 경우에만 추가한다.
+- 더 이상 `src/webview/styles.css` 같은 단일 대형 스타일 파일을 기준 구조로 사용하지 않는다.
 
 ---
 

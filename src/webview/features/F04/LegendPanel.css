@@ -1,0 +1,19 @@
+.dependency-legend-line {
+  position: relative;
+}
+
+.dependency-legend-line::after {
+  position: absolute;
+  top: -3px;
+  right: -1px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 7px solid var(--gae-color-text-secondary);
+  content: '';
+}
+
+.dependency-legend-line-dashed {
+  background: repeating-linear-gradient(to right, var(--gae-color-text-secondary) 0 5px, transparent 5px 9px);
+}

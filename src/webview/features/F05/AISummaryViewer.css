@@ -1,0 +1,283 @@
+.ai-summary-loading-state {
+  display: flex;
+  min-height: 320px;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gae-spacing-lg);
+  padding: 28px var(--gae-spacing-lg) 36px;
+}
+
+.ai-summary-loading-orb {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, color-mix(in srgb, white 82%, var(--gae-color-text-link)), var(--gae-color-text-link));
+  box-shadow:
+    0 0 0 6px color-mix(in srgb, var(--gae-color-text-link) 12%, transparent),
+    0 0 18px color-mix(in srgb, var(--gae-color-text-link) 30%, transparent);
+  animation: ai-summary-loading-breathe 1.8s ease-in-out infinite;
+}
+
+.ai-summary-loading-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-summary-loading-shimmer::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, white 20%, transparent), transparent);
+  content: '';
+  transform: translateX(-100%);
+  animation: ai-summary-loading-shimmer 1.7s ease-in-out infinite;
+}
+
+.ai-summary-content .ai-summary-heading {
+  color: var(--gae-color-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.ai-summary-content .ai-summary-heading-h2,
+.ai-summary-content .ai-summary-heading-h3,
+.ai-summary-content .ai-summary-heading-h4 {
+  display: flex;
+  align-items: center;
+  gap: var(--gae-spacing-sm);
+}
+
+.ai-summary-content .ai-summary-heading-h2 {
+  margin: 28px 0 12px;
+  font-size: 24px;
+  font-weight: 780;
+  line-height: 1.24;
+}
+
+.ai-summary-content .ai-summary-heading-h3 {
+  margin: 24px 0 10px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.28;
+}
+
+.ai-summary-content .ai-summary-heading-h4 {
+  margin: 20px 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.34;
+}
+
+.ai-summary-content .ai-summary-heading-h5 {
+  margin: 16px 0 7px;
+  color: color-mix(in srgb, var(--gae-color-text-primary) 88%, var(--gae-color-text-secondary));
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.ai-summary-content .ai-summary-heading:first-child {
+  margin-top: 0;
+}
+
+.ai-summary-content-commit .ai-summary-heading-h2 {
+  margin: 36px 0 16px;
+}
+
+.ai-summary-content-commit .ai-summary-heading-h3 {
+  margin: 30px 0 14px;
+}
+
+.ai-summary-content-commit .ai-summary-heading-h4 {
+  margin: 24px 0 10px;
+}
+
+.ai-summary-content-commit .ai-summary-heading-h5 {
+  margin: 20px 0 10px;
+}
+
+.ai-summary-content-commit .ai-summary-heading-question {
+  margin: 24px 0 12px;
+}
+
+.ai-summary-content .ai-summary-heading-h2 > span,
+.ai-summary-content .ai-summary-heading-h3 > span,
+.ai-summary-content .ai-summary-heading-h4 > span {
+  width: 3px;
+  flex-shrink: 0;
+  border-radius: var(--gae-border-radius-sm);
+}
+
+.ai-summary-content .ai-summary-heading-h2 > span {
+  height: 22px;
+  background: color-mix(in srgb, var(--gae-color-text-link) 82%, white 18%);
+}
+
+.ai-summary-content .ai-summary-heading-h3 > span {
+  height: 18px;
+  background: color-mix(in srgb, var(--gae-color-text-link) 92%, white 8%);
+}
+
+.ai-summary-content .ai-summary-heading-h4 > span {
+  height: 14px;
+  background: var(--gae-color-text-link);
+}
+
+.ai-summary-content .ai-summary-heading-question {
+  margin: 18px 0 10px;
+  color: var(--gae-color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.ai-summary-content p,
+.ai-summary-content li {
+  color: color-mix(in srgb, var(--gae-color-text-primary) 94%, var(--gae-color-text-secondary));
+  font-size: 12.5px;
+  line-height: 1.68;
+}
+
+.ai-summary-content p {
+  margin: 0 0 11px;
+}
+
+.ai-summary-content-commit p {
+  margin: 0 0 15px;
+}
+
+.ai-summary-content ul,
+.ai-summary-content ol {
+  margin: 0 0 var(--gae-spacing-md);
+  padding-left: 20px;
+}
+
+.ai-summary-content-commit ul,
+.ai-summary-content-commit ol {
+  margin: 2px 0 18px;
+  padding-left: 24px;
+}
+
+.ai-summary-content table {
+  width: 100%;
+  margin: 0 0 var(--gae-spacing-md);
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-md);
+}
+
+.ai-summary-content-commit table {
+  margin: 6px 0 20px;
+}
+
+.ai-summary-content th,
+.ai-summary-content td {
+  border: 1px solid var(--gae-border-color-default);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ai-summary-content th {
+  background: var(--gae-color-surface-secondary);
+  color: var(--gae-color-text-primary);
+  font-size: var(--gae-font-size-sm);
+  font-weight: var(--gae-font-weight-bold);
+}
+
+.ai-summary-content td {
+  color: color-mix(in srgb, var(--gae-color-text-primary) 94%, var(--gae-color-text-secondary));
+  font-size: var(--gae-font-size-sm);
+}
+
+.ai-summary-content li {
+  margin-bottom: 6px;
+}
+
+.ai-summary-content-commit li {
+  margin-bottom: 8px;
+}
+
+.ai-summary-content code {
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-sm);
+  background: var(--gae-color-surface-elevated);
+  padding: 1px 5px;
+  color: #ce9178;
+  font-family: var(--gae-font-family-mono);
+  font-size: 11.5px;
+}
+
+.ai-summary-content pre {
+  overflow-x: auto;
+  margin: var(--gae-spacing-xs) 0 var(--gae-spacing-md);
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-md);
+  background: var(--gae-color-surface-secondary);
+  padding: 10px var(--gae-spacing-md);
+}
+
+.ai-summary-content-commit pre {
+  margin: 8px 0 20px;
+  padding: 12px 14px;
+}
+
+.ai-summary-content pre code {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--gae-color-text-primary);
+  font-size: var(--gae-font-size-sm);
+  line-height: 1.55;
+}
+
+.qa-thread {
+  margin-top: var(--gae-spacing-xl);
+}
+
+.ai-summary-content-commit .qa-thread {
+  margin-top: 34px;
+}
+
+.qa-thread-divider {
+  border: none;
+  border-top: 1px solid var(--gae-border-color-default);
+  margin: 0 0 var(--gae-spacing-xl);
+}
+
+.ai-summary-content-commit .qa-thread-divider {
+  margin: 0 0 28px;
+}
+
+.qa-entry + .qa-entry {
+  margin-top: var(--gae-spacing-xl);
+}
+
+.ai-summary-content-commit .qa-entry + .qa-entry {
+  margin-top: 28px;
+}
+
+.qa-entry p {
+  white-space: pre-wrap;
+}
+
+@keyframes ai-summary-loading-breathe {
+  0%,
+  100% {
+    transform: scale(0.95);
+    opacity: 0.78;
+  }
+
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+@keyframes ai-summary-loading-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

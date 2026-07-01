@@ -15,7 +15,12 @@ export const BackButton: FC<BackButtonProps> = ({
   return (
     <button
       {...buttonProps}
-      className={['back-button', className].filter(Boolean).join(' ')}
+      className={[
+        'inline-flex items-center justify-center gap-1 rounded-sm border-none bg-transparent px-2 py-[5px] text-[12.5px] text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       type={type}
       aria-label={resolvedAriaLabel}
     >

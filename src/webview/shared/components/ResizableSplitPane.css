@@ -1,0 +1,7 @@
+.split-pane-divider--dragging {
+  background: color-mix(in srgb, var(--gae-color-accent-primary) 20%, transparent);
+}
+
+.split-pane-divider--dragging .split-pane-divider-line {
+  background: color-mix(in srgb, var(--gae-color-accent-primary) 70%, var(--gae-border-color-default));
+}

@@ -15,5 +15,21 @@ const LABELS: Record<BadgeKind, string> = {
 };
 
 export const SymbolKindBadge: FC<{ kind: BadgeKind }> = ({ kind }) => {
-  return <span className={`symbol-kind-badge symbol-kind-badge-${kind}`}>{LABELS[kind]}</span>;
+  return (
+    <span
+      className={[
+        'inline-flex h-5 min-w-[34px] items-center justify-center rounded-full px-2 text-[11px] font-bold text-white',
+        kind === 'function' ? 'bg-[#4b93ff]' : '',
+        kind === 'class' ? 'bg-[#4caf72]' : '',
+        kind === 'interface' ? 'bg-[#26b7b7]' : '',
+        kind === 'type' ? 'bg-[#7d61d6]' : '',
+        kind === 'variable' ? 'bg-[#77808f]' : '',
+        kind === 'constant' ? 'bg-[#f08a24]' : '',
+        kind === 'enum' ? 'bg-[#d85aa0]' : '',
+        kind === 'import' ? 'bg-[var(--gae-color-symbol-imp)]' : '',
+      ].filter(Boolean).join(' ')}
+    >
+      {LABELS[kind]}
+    </span>
+  );
 };

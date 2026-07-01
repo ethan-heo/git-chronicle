@@ -22,7 +22,7 @@ export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, on
 
   if (isLoading) {
     return (
-      <section className="history-view-state">
+      <section className="flex flex-1 items-center justify-center p-8 text-center">
         <LoadingState label={t('file_tree.loading')} size="lg" />
       </section>
     );
@@ -30,7 +30,7 @@ export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, on
 
   if (error) {
     return (
-      <section className="history-view-state">
+      <section className="flex flex-1 items-center justify-center p-8 text-center">
         <ErrorState message={t('file_tree.error')} onRetry={onRetry} />
       </section>
     );
@@ -38,25 +38,25 @@ export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, on
 
   if (changedFiles.length === 0) {
     return (
-      <section className="history-view-state">
+      <section className="flex flex-1 items-center justify-center p-8 text-center">
         <EmptyState message={t('file_tree.empty')} />
       </section>
     );
   }
 
   return (
-    <section className="file-tree-panel" aria-label={t('file_tree.panel_aria')}>
-      <div className="file-tree-summary">
-        <span>{t('file_tree.panel_aria')}</span>
-        <strong>{changedFiles.length}</strong>
-        <div className="file-tree-stats" aria-label={t('file_tree.stats_aria')}>
-          {stats.A > 0 ? <span className="file-tree-stat file-tree-stat-a">+{stats.A}</span> : null}
-          {stats.M > 0 ? <span className="file-tree-stat file-tree-stat-m">~{stats.M}</span> : null}
-          {stats.D > 0 ? <span className="file-tree-stat file-tree-stat-d">-{stats.D}</span> : null}
-          {stats.R > 0 ? <span className="file-tree-stat file-tree-stat-r">R{stats.R}</span> : null}
+    <section className="min-h-0 flex-1 overflow-y-auto bg-surface" aria-label={t('file_tree.panel_aria')}>
+      <div className="flex items-center gap-[7px] px-2.5 pt-1.5 pb-[5px] text-[11px] text-muted">
+        <span className="font-bold uppercase">{t('file_tree.panel_aria')}</span>
+        <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">{changedFiles.length}</strong>
+        <div className="inline-flex flex-1 justify-end gap-2 font-mono text-xs" aria-label={t('file_tree.stats_aria')}>
+          {stats.A > 0 ? <span className="text-added">+{stats.A}</span> : null}
+          {stats.M > 0 ? <span className="text-modified">~{stats.M}</span> : null}
+          {stats.D > 0 ? <span className="text-deleted">-{stats.D}</span> : null}
+          {stats.R > 0 ? <span className="text-renamed">R{stats.R}</span> : null}
         </div>
       </div>
-      <div className="file-tree" role="tree" aria-label={t('file_tree.tree_aria')}>
+      <div className="px-0 pt-0.5 pb-2" role="tree" aria-label={t('file_tree.tree_aria')}>
         {tree.children.map((child) =>
           isDirectoryNode(child) ? (
             <DirectoryNode key={child.path} node={child} depth={0} onCodeView={onFileCodeView} onAISummary={onFileAISummary} />

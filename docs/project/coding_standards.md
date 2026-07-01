@@ -56,6 +56,22 @@ export const MyComponent: React.FC<MyComponentProps> = ({ value, onChange }) => 
 - 상수: UPPER_SNAKE_CASE (`DEBOUNCE_DELAY_MS`, `INITIAL_COMMIT_COUNT`)
 - CSS 클래스: kebab-case (`commit-list-item`, `file-tree-node`)
 
+### 스타일 작성 규칙
+
+- Webview 스타일 엔트리 파일은 `src/webview/global.css`다. `main.tsx`에서 한 번만 import한다.
+- 스타일 구현의 기본값은 Tailwind CSS v4 유틸리티 클래스다. 일반 레이아웃, 색상, 여백, 타이포그래피는 TSX `className`에서 직접 표현한다.
+- `global.css`에는 다음만 둔다:
+  - `@import 'tailwindcss';`
+  - `@theme inline` 기반 VSCode 테마 토큰 매핑
+  - app shell/reset, 공용 keyframes, 접근성/모션 전역 규칙
+- 컴포넌트 전용 `.css` 파일은 예외적인 경우에만 허용한다:
+  - `@keyframes`
+  - 외부 라이브러리 오버라이드
+  - `:has()`, 복잡한 `::before/::after`, 부모 hover 기반 자식 노출 같은 선택자 로직
+- 공존 CSS 파일은 해당 컴포넌트와 같은 디렉터리에 둔다. 예: `SymbolCodePanel.tsx` + `SymbolCodePanel.css`
+- 인라인 스타일은 동적 값이 꼭 필요할 때만 사용한다. 정적인 값은 Tailwind 클래스 또는 토큰 기반 CSS로 옮긴다.
+- VSCode 테마 값 참조가 필요하면 Tailwind 토큰(`bg-panel`, `text-muted`, `border-line`)을 우선 사용하고, 부득이한 경우에만 `--gae-*` alias 또는 `shared/design/tokens.ts`를 사용한다.
+
 ### Props
 
 - 이벤트 핸들러 prop은 `on` 접두사: `onClick`, `onChange`, `onClose`.

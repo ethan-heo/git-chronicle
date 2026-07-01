@@ -99,7 +99,7 @@ export const S01CommitListScreen: FC = () => {
   const retry = useCallback(() => loadCommits(commitList.length === 0), [commitList.length, loadCommits]);
 
   return (
-    <main className="app-shell commit-log-shell">
+    <main className="app-shell flex h-screen min-h-0 flex-col overflow-hidden">
       <TopHeader title="GitChronicle" context={t('commit.list_title')} showSettingsIcon onSettingsClick={goToSettingsView} />
       <CommitFilterPanel
         filterDateStart={filterDateStart}
