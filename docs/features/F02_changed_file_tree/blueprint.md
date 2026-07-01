@@ -179,7 +179,7 @@ interface FileTreeNodeProps {
 - `role="treeitem"`, `aria-label="{파일경로} — {상태}"`, `tabIndex={0}`
 
 #### Reusability
-F02_ChangedFileTree 전용. FileTree 내에서만 사용. → 상세 문서: [components/FileTreeNode.md](../../components/FileTreeNode.md)
+F02_ChangedFileTree 전용. FileTree 내에서만 사용.
 
 ---
 
@@ -208,7 +208,7 @@ interface FileStatusBadgeProps {
 - `aria-label="추가됨"` / `"수정됨"` / `"삭제됨"` / `"이름변경됨"`
 
 #### Reusability
-**재사용 가능.** FileTreeNode(S02)와 FileNode(S05 캔버스) 모두에서 사용. → 상세 문서: [components/FileStatusBadge.md](../../components/FileStatusBadge.md)
+**재사용 가능.** FileTreeNode(S02)와 FileNode(S05 캔버스) 모두에서 사용. → [core/global_components.md](../../core/global_components.md#filestatusbadge)
 
 ---
 

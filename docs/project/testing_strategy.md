@@ -168,7 +168,7 @@ it('[취소] 클릭 시 cancelBatchAISummary 액션이 호출된다', ...);
 
 - `gitService.ts`: `git log`, `git diff` 실행 결과 파싱
 - `summaryFileService.ts`: 파일 존재 여부 확인, 저장, 읽기
-- `cliDetector.ts`: `--version` 실행으로 CLI 감지
+- `aiProviderService.ts`: `--version` 실행으로 CLI 감지, globalState/workspaceState 영속 상태 관리
 
 ### 실행 방법
 

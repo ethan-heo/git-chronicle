@@ -28,7 +28,7 @@ S01_CommitListScreen에서 커밋 항목 클릭 시 진입. `selectedCommit` 전
 ## Child Screens
 
 - [S03_CodeViewerScreen](../S03_code_viewer/blueprint.md) — 파일 [코드 보기] 클릭 시
-- [S04_AISummaryViewerScreen](../S04_ai_summary_viewer/blueprint.md) — 파일 [AI 정리 보기] 또는 [커밋 AI 정리] 클릭 시
+- [S04_AISummaryViewerScreen](../S05_ai_summary_viewer/blueprint.md) — 파일 [AI 정리 보기] 또는 [커밋 AI 정리] 클릭 시
 - [S05_DependencyCanvasScreen](../S04_dependency_canvas/blueprint.md) — [캔버스 보기] 클릭 시
 
 ---

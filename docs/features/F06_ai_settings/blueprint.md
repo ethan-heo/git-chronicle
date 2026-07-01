@@ -118,7 +118,7 @@ interface AIProviderButtonProps {
 - `aria-pressed` — 토글 상태 표현
 
 #### Reusability
-F06_AISettings 전용. AIProviderSection 내에서만 사용 (Claude/Gemini/Codex 3개 인스턴스). → 상세 문서: [components/AIProviderButton.md](../../components/AIProviderButton.md)
+F06_AISettings 전용. AIProviderSection 내에서만 사용 (Claude/Gemini/Codex 3개 인스턴스).
 
 ---
 

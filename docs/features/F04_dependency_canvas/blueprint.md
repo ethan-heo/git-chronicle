@@ -79,7 +79,7 @@ interface DependencyGraphProps {
 - `aria-label="의존 관계 그래프"`
 
 #### Reusability
-F04_DependencyCanvas 전용. S05_DependencyCanvasScreen에서만 사용. → 상세 문서: [components/DependencyGraph.md](../../components/DependencyGraph.md)
+F04_DependencyCanvas 전용. S05_DependencyCanvasScreen에서만 사용.
 
 ---
 
@@ -121,7 +121,7 @@ interface FileNodeProps {
 - 지원 언어 외 파일: `title="의존 관계 분석 불가"`
 
 #### Reusability
-F04_DependencyCanvas 전용. DependencyGraph 내 React Flow 커스텀 노드로만 사용. → 상세 문서: [components/FileNode.md](../../components/FileNode.md)
+F04_DependencyCanvas 전용. DependencyGraph 내 React Flow 커스텀 노드로만 사용.
 
 ---
 
@@ -157,7 +157,7 @@ interface DependencyEdgeProps {
 - `dimmed`: 노드 호버 중 비연결 엣지 감쇠
 
 #### Reusability
-F04_DependencyCanvas 전용. DependencyGraph 내 React Flow 커스텀 엣지로만 사용. → 상세 문서: [components/DependencyEdge.md](../../components/DependencyEdge.md)
+F04_DependencyCanvas 전용. DependencyGraph 내 React Flow 커스텀 엣지로만 사용.
 
 ---
 

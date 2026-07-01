@@ -108,7 +108,7 @@ F05_AISummaryFile과 동일한 오류 정책을 따른다.
 
 ## Related Screens
 
-- [S04_AISummaryViewerScreen](../../screens/S04_ai_summary_viewer/blueprint.md)
+- [S04_AISummaryViewerScreen](../../screens/S05_ai_summary_viewer/blueprint.md)
 
 ---
 

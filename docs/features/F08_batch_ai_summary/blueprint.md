@@ -73,7 +73,7 @@ interface BatchProgressBarProps {
 - `aria-label="AI 정리 일괄 생성 진행 중"`
 
 #### Reusability
-**전역 고정 컴포넌트.** 화면 최상단에 항상 마운트. 모든 Screen 위에 오버레이. `isBatchRunning`이 false이면 렌더링 스킵. → 상세 문서: [components/BatchProgressBar.md](../../components/BatchProgressBar.md)
+**전역 고정 컴포넌트.** 화면 최상단에 항상 마운트. 모든 Screen 위에 오버레이. `isBatchRunning`이 false이면 렌더링 스킵.
 
 ---
 

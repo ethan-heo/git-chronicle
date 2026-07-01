@@ -94,7 +94,7 @@ interface SavePathSelectorProps {
 - `role="button"`, `aria-label="저장 경로 선택"`
 
 #### Reusability
-F07_SavePathSettings 전용. SavePathSection 내에서만 사용. → 상세 문서: [components/SavePathSelector.md](../../components/SavePathSelector.md)
+F07_SavePathSettings 전용. SavePathSection 내에서만 사용.
 
 ---
 

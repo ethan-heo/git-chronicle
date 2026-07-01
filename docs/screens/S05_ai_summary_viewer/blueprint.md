@@ -75,7 +75,7 @@ S04_AISummaryViewerScreen
 | `RegenerateButton` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) |
 | `TokenLimitWarning` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) |
 | `OverwriteConfirmDialog` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) |
-| `DiffViewerPanel` | [S07 blueprint](../S07_code_and_ai_summary/blueprint.md) |
+| `DiffViewerPanel` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) (인라인 `ResizableSplitPane` 우측 패널) |
 
 ---
 

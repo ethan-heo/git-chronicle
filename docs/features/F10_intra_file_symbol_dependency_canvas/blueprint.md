@@ -93,7 +93,7 @@ interface SymbolGraphProps {
 - `LoadingState`, `EmptyState`, 코드 패널, 범례 패널, 코드 뷰어의 접근성 라벨은 `symbol_graph.*` 번역 키를 사용한다
 
 #### Reusability
-F10 전용. S08_IntraFileSymbolDependencyCanvasScreen에서만 사용. → 상세 문서: [components/SymbolGraph.md](../../components/SymbolGraph.md)
+F10 전용. S08_IntraFileSymbolDependencyCanvasScreen에서만 사용.
 
 ---
 
@@ -137,7 +137,7 @@ type SymbolNodeType = Node<SymbolNodeData, 'symbolNode'>;
 - `role="button"`
 
 #### Reusability
-F10 전용. SymbolGraph 내 React Flow 커스텀 노드로만 사용. → 상세 문서: [components/SymbolNode.md](../../components/SymbolNode.md)
+F10 전용. SymbolGraph 내 React Flow 커스텀 노드로만 사용.
 
 ---
 
@@ -182,7 +182,7 @@ type SymbolEdgeType = Edge<SymbolEdgeData, 'symbolEdge'>;
 | `implements` | 굵은 점선 | accent.info 계열 |
 
 #### Reusability
-F10 전용. SymbolGraph 내 React Flow 커스텀 엣지로만 사용. → 상세 문서: [components/SymbolEdge.md](../../components/SymbolEdge.md)
+F10 전용. SymbolGraph 내 React Flow 커스텀 엣지로만 사용.
 
 ---
 
@@ -202,17 +202,19 @@ interface SymbolKindBadgeProps {
 
 | kind | 표시 텍스트 | 색상 변수 |
 |------|------------|-----------|
-| `function` | `fn` | `--color-symbol-fn` (파란색 계열) |
-| `class` | `cls` | `--color-symbol-cls` (초록색 계열) |
-| `interface` | `ifc` | `--color-symbol-ifc` (청록색 계열) |
-| `type` | `typ` | `--color-symbol-typ` (보라색 계열) |
-| `variable` | `var` | `--color-symbol-var` (회색 계열) |
-| `constant` | `cst` | `--color-symbol-cst` (주황색 계열) |
-| `enum` | `enm` | `--color-symbol-enm` (분홍색 계열) |
-| `import` | `imp` | `--color-symbol-imp` (회색 계열) |
+| `function` | `fn` | `--gae-color-symbol-function` (파란색 계열) |
+| `class` | `cls` | `--gae-color-symbol-class` (초록색 계열) |
+| `interface` | `ifc` | `--gae-color-symbol-interface` (청록색 계열) |
+| `type` | `typ` | `--gae-color-symbol-type` (보라색 계열) |
+| `variable` | `var` | `--gae-color-symbol-variable` (회색 계열) |
+| `constant` | `cst` | `--gae-color-symbol-constant` (주황색 계열) |
+| `enum` | `enm` | `--gae-color-symbol-enum` (분홍색 계열) |
+| `import` | `imp` | `--gae-color-symbol-imp` (회색 계열) |
+
+> 실제 토큰 정의는 [core/design_tokens.md](../../core/design_tokens.md#symbol-f10-파일-내부-심볼-캔버스-전용)와 `src/webview/global.css`를 기준으로 한다.
 
 #### Reusability
-F10 전용. SymbolNode 내부에서만 사용. → 상세 문서: [components/SymbolKindBadge.md](../../components/SymbolKindBadge.md)
+F10 전용. SymbolNode 내부에서만 사용.
 
 ---
 
@@ -244,7 +246,7 @@ interface SymbolLegendPanelProps {
 - 접기/펼치기 버튼을 통해 `isMinimized` 상태를 전환한다
 
 #### Reusability
-F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 우측 하단 오버레이에서만 사용. → 상세 문서: [components/SymbolLegendPanel.md](../../components/SymbolLegendPanel.md)
+F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 우측 하단 오버레이에서만 사용.
 
 #### Legend Contents
 

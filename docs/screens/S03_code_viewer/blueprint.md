@@ -64,7 +64,7 @@ S03_CodeViewerScreen
 | `DiffLine` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
 | `BinaryFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
 | `DeletedFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
-| `AISummaryPanel` | [S07 blueprint](../S07_code_and_ai_summary/blueprint.md) |
+| `AISummaryPanel` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) (인라인 `ResizableSplitPane` 우측 패널) |
 | `LoadingState` | [global_components](../../core/global_components.md#loadingstate) |
 | `ErrorState` | [global_components](../../core/global_components.md#errorstate) |
 

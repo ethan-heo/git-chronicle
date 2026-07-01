@@ -93,6 +93,30 @@
 | `color.semantic.warning` | `--gae-color-semantic-warning` | `var(--vscode-editorWarning-foreground)` | 경고 메시지 |
 | `color.semantic.info` | `--gae-color-semantic-info` | `var(--vscode-notificationsInfoIcon-foreground)` | 안내 메시지 |
 
+### Symbol (F10 파일 내부 심볼 캔버스 전용)
+
+VSCode 테마 변수 매핑 없이 고정 색상값을 사용한다. 실제 정의는 `src/webview/global.css`가 유일한 진실이다.
+
+| 토큰 이름 | CSS 변수 | 값 | 설명 |
+|----------|----------|-----|------|
+| `color.symbol.highlight` | `--gae-color-symbol-highlight` | `#4ea8ff` | 호버 시 강조 엣지 |
+| `color.symbol.default` | `--gae-color-symbol-default` | `#ffffff` | 기본 텍스트 |
+| `color.symbol.dimmed` | `--gae-color-symbol-dimmed` | `#5f6b7a` | 비연결 엣지 감쇠 |
+| `color.symbol.edge.calls` | `--gae-color-symbol-calls` | `#4ea8ff` | `calls` 엣지 |
+| `color.symbol.edge.uses` | `--gae-color-symbol-uses` | `#9b8fff` | `uses` 엣지 |
+| `color.symbol.edge.extends` | `--gae-color-symbol-extends` | `#4caf72` | `extends` 엣지 |
+| `color.symbol.edge.implements` | `--gae-color-symbol-implements` | `#26b7b7` | `implements` 엣지 |
+| `color.symbol.kind.function` | `--gae-color-symbol-function` | `#4b93ff` | `SymbolKindBadge` fn |
+| `color.symbol.kind.class` | `--gae-color-symbol-class` | `#4caf72` | `SymbolKindBadge` cls |
+| `color.symbol.kind.interface` | `--gae-color-symbol-interface` | `#26b7b7` | `SymbolKindBadge` ifc |
+| `color.symbol.kind.type` | `--gae-color-symbol-type` | `#7d61d6` | `SymbolKindBadge` typ |
+| `color.symbol.kind.variable` | `--gae-color-symbol-variable` | `#77808f` | `SymbolKindBadge` var |
+| `color.symbol.kind.constant` | `--gae-color-symbol-constant` | `#f08a24` | `SymbolKindBadge` cst |
+| `color.symbol.kind.enum` | `--gae-color-symbol-enum` | `#d85aa0` | `SymbolKindBadge` enm |
+| `color.symbol.kind.import` | `--gae-color-symbol-imp` | `#7d8794` | `SymbolKindBadge` imp |
+
+> F10 관련 문서(`features/F10_.../blueprint.md`)에 `--color-symbol-fn` 등으로 표기된 부분은 실제 CSS 변수명(`--gae-color-symbol-function` 등)과 다르다. 실제 변수명은 이 토큰 표와 `src/webview/global.css`를 기준으로 한다.
+
 ---
 
 ## Typography Tokens

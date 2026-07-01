@@ -1,6 +1,6 @@
 # Architecture — GitRewind
 
-> **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
+> **버전** v1.1 | **작성일** 2026-06-26 | **갱신** 2026-07-01 (F09/F10 디렉토리·메시지 프로토콜 반영) | **상태** 확정
 
 ---
 
@@ -22,15 +22,18 @@ src/
 ├── extension/                        # Extension Host (Node.js)
 │   ├── index.ts                      # Extension 진입점 (activate / deactivate)
 │   ├── webviewPanel.ts               # WebviewPanel 생성·관리
-│   ├── messageHandler.ts             # Webview → Extension 메시지 라우터
+│   ├── messageHandler.ts             # Webview → Extension 메시지 라우터 (모든 메시지 타입의 유일한 진실)
 │   ├── gitService.ts                 # simple-git 기반 커밋 조회 서비스
 │   ├── dependencyService.ts          # depcruiser runner 실행·결과 파싱, tsconfig alias/상대 경로/확장자 복원 보조
 │   ├── depcruiser-runner.mjs         # dependency-cruiser API 호출용 runner 소스
 │   ├── scripts/copy-dependency-cruiser.mjs # dependency-cruiser 및 transitive deps를 dist로 복사
+│   ├── intraFileDependencyService.ts # F10 파일 내부 심볼 의존성 분석 (TS Compiler API / 정규식 파서)
 │   ├── aiService.ts                  # child_process.spawn 기반 AI CLI 스트리밍 실행
 │   ├── aiTypes.ts                    # AIProviderName 타입
-│   ├── prompts.ts                    # 파일/커밋 AI 정리 프롬프트 빌더
-│   └── summaryFileService.ts         # AI 정리 파일 읽기/쓰기/존재 확인
+│   ├── aiProviderService.ts          # AI 프로바이더 등록/활성화/모델 선택 상태(AISettingsState) 관리
+│   ├── batchService.ts               # F08 파일 단위 AI 정리 일괄 순차 실행
+│   ├── prompts.ts                    # 파일/커밋/QA AI 정리 프롬프트 빌더
+│   └── summaryFileService.ts         # AI 정리 파일 읽기/쓰기/존재 확인/QA 답변 append
 │
 └── webview/                          # Webview SPA (React + TypeScript)
     ├── main.tsx                      # React 진입점 (ReactDOM.createRoot)
@@ -97,17 +100,36 @@ src/
     │   │   ├── SavePathSection.tsx
     │   │   ├── providers.ts
     │   │   └── index.ts
-    │   └── F08_batch_ai_summary/
-    │       ├── BatchAISummaryFeature.tsx
-    │       ├── BatchProgressBar.tsx
-    │       └── useBatchAISummary.ts
+    │   ├── F08/
+    │   │   ├── BatchCancelButton.tsx
+    │   │   ├── BatchProgressBar.tsx      # 상단 고정 프로그레스 바
+    │   │   └── BatchProgressBar.css
+    │   ├── F09/                          # AI 요약 Q&A + 인라인 분할 패널 (S03/S04에서 사용)
+    │   │   ├── S07CodeAndAISummaryScreen.tsx # 미참조 레거시 파일 (더 이상 라우팅되지 않음)
+    │   │   ├── AISummaryPanel.tsx        # S03 우측 인라인 AI 요약 패널
+    │   │   ├── DiffViewerPanel.tsx       # S04 우측 인라인 코드 패널
+    │   │   ├── QAInputArea.tsx           # 요약 완료 후 질문 입력 영역
+    │   │   ├── SplitSidePanel.css
+    │   │   └── index.ts
+    │   └── F10/                          # 파일 내부 심볼 의존성 캔버스 (S08)
+    │       ├── S08_IntraFileSymbolDependencyCanvasScreen.tsx
+    │       ├── SymbolGraph.tsx           # React Flow 캔버스 컨테이너
+    │       ├── SymbolNode.tsx            # 커스텀 노드
+    │       ├── SymbolEdge.tsx            # 커스텀 엣지
+    │       ├── SymbolKindBadge.tsx
+    │       ├── SymbolLegendPanel.tsx
+    │       ├── SymbolCodePanel.tsx       # 우측 슬라이드 인 코드 패널
+    │       ├── SymbolFileCodeViewer.tsx  # Shiki 기반 코드 뷰어
+    │       ├── symbolGraphUtils.ts       # Dagre/kind 그룹 레이아웃 계산
+    │       └── index.ts
     ├── screens/                      # 향후 독립 Screen 컴포넌트 확장 위치
     │   ├── S01_CommitListScreen.tsx  # 현재 F01/S01_CommitListScreen.tsx에서 구현
     │   ├── S02_HistoryViewScreen.tsx
     │   ├── S03_CodeViewerScreen.tsx
     │   ├── S04_AISummaryViewerScreen.tsx
     │   ├── S05_DependencyCanvasScreen.tsx
-    │   └── S06_SettingsScreen.tsx
+    │   ├── S06_SettingsScreen.tsx
+    │   └── S08_IntraFileSymbolDependencyCanvasScreen.tsx
     └── shared/
         ├── components/
         │   ├── TopHeader.tsx
@@ -189,67 +211,93 @@ Webview UI 문자열은 컴포넌트 내부 하드코딩을 줄이고 `react-i18
 
 ### Extension ↔ Webview 메시지 프로토콜
 
-모든 메시지는 `{ type: string, payload: unknown }` 구조를 따른다.
+모든 메시지는 `{ type: string, payload?: unknown }` 구조를 따른다. 실제 정의는 `src/extension/messageHandler.ts`를 유일한 진실로 삼는다.
 
 ```typescript
 // Webview → Extension (요청)
 type WebviewToExtensionMessage =
-  | { type: 'FETCH_COMMITS'; payload: CommitFilter & { page: number; pageSize: number } }
-  | { type: 'FETCH_CHANGED_FILES'; payload: { commitHash: string; savePath?: string | null } }
+  | { type: 'PING' }
+  | { type: 'FETCH_COMMITS'; payload: CommitFilter & { page?: number; pageSize?: number; requestId?: number } }
+  | { type: 'FETCH_CHANGED_FILES'; payload: { commitHash: string; commitMessage?: string; savePath?: string | null } }
   | { type: 'OPEN_REPOSITORY' }
   | { type: 'FETCH_FILE_DIFF'; payload: { commitHash: string; filePath: string } }
+  | { type: 'ANALYZE_DEPENDENCIES'; payload: { filePaths: string[]; commitHash?: string } }
+  | { type: 'ANALYZE_SYMBOL_GRAPH'; payload: { filePath: string; commitHash?: string } }
   | { type: 'FETCH_AI_SUMMARY_SETTINGS' }
-  | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; filePath: string; provider?: AIProviderName | null; savePath?: string | null; forceRegenerate?: boolean } }
-  | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string; provider?: AIProviderName | null; savePath?: string | null; forceRegenerate?: boolean } }
-  | { type: 'START_BATCH_AI_SUMMARY'; payload: { commitHash: string; provider: AIProviderName; savePath: string; files: ChangedFile[] } }
+  | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; commitMessage?: string; filePath: string; provider?: AIProviderName | null; summaryModel?: string | null; savePath?: string | null; forceRegenerate?: boolean } }
+  | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string; commitMessage?: string; provider?: AIProviderName | null; summaryModel?: string | null; savePath?: string | null; forceRegenerate?: boolean } }
+  | { type: 'START_BATCH_AI_SUMMARY'; payload: { commitHash: string; commitMessage?: string; provider: AIProviderName; summaryModel?: string | null; savePath: string; files: ChangedFile[] } }
   | { type: 'CANCEL_BATCH_AI_SUMMARY' }
-  | { type: 'LOAD_DEPENDENCY_GRAPH'; payload: { commitHash: string } }
+  | { type: 'START_AI_QA'; payload: { question: string; diff?: string; summaryContent: string; commitHash: string; commitMessage?: string; filePath?: string; summaryMode: 'file' | 'commit'; provider?: AIProviderName | null; qaModel?: string | null; savePath?: string | null } }
   | { type: 'REGISTER_AI_PROVIDER'; payload: { name: AIProviderName } }
-  | { type: 'ACTIVATE_AI_PROVIDER'; payload: { name: AIProviderName } }
+  | { type: 'ACTIVATE_AI_PROVIDER' | 'SET_ACTIVE_AI_PROVIDER'; payload: { name: AIProviderName } }
+  | { type: 'SET_AI_MODEL'; payload: { name: AIProviderName; usage: 'summary' | 'qa'; model: string } }
+  | { type: 'OPEN_EXTERNAL_URL'; payload: { url: string } }
   | { type: 'SET_SAVE_PATH' }
   | { type: 'CLEAR_SAVE_PATH' };
 
 // Extension → Webview (응답/이벤트)
 type ExtensionToWebviewMessage =
-  | { type: 'COMMITS_LOADED'; payload: { commits: Commit[]; page: number; pageSize: number } }
+  | { type: 'PONG'; payload: { message: string } }
+  | { type: 'UNKNOWN_MESSAGE'; payload: { message: string } }
+  | { type: 'COMMITS_LOADED'; payload: { commits: Commit[]; page: number; pageSize: number; requestId?: number; hasMore: boolean } }
   | { type: 'GIT_REPOSITORY_NOT_FOUND'; payload: { message: string } }
   | { type: 'COMMITS_LOAD_FAILED'; payload: { message: string } }
   | { type: 'CHANGED_FILES_LOADED'; payload: { files: ChangedFile[] } }
   | { type: 'CHANGED_FILES_LOAD_FAILED'; payload: { message: string } }
   | { type: 'FILE_DIFF_LOADED'; payload: { rawDiff: string; isBinary: boolean; isDeleted: boolean } }
   | { type: 'FILE_DIFF_LOAD_FAILED'; payload: { message: string } }
-  | { type: 'AI_SUMMARY_SETTINGS_LOADED'; payload: { savePath: string | null; registeredProviders: AIProviderName[]; activeAIProvider: AIProviderName | null } }
+  | { type: 'DEPENDENCIES_LOADED'; payload: { edges: DependencyEdge[] } }
+  | { type: 'DEPENDENCIES_LOAD_FAILED'; payload: { message: string } }
+  | { type: 'SYMBOL_GRAPH_LOADED'; payload: { nodes: SymbolNode[]; edges: SymbolEdge[] } }
+  | { type: 'SYMBOL_GRAPH_LOAD_FAILED'; payload: { message: string } }
+  | { type: 'AI_SUMMARY_SETTINGS_LOADED'; payload: AISettingsState }
   | { type: 'AI_SUMMARY_LOADED'; payload: { content: string; savedPath: string; provider: AIProviderName; fromSaved: true } }
   | { type: 'AI_SUMMARY_STARTED'; payload: { provider: AIProviderName } }
   | { type: 'AI_SUMMARY_TOKEN_WARNING'; payload: { isOverLimit: boolean } }
   | { type: 'AI_SUMMARY_CHUNK'; payload: { chunk: string } }
   | { type: 'AI_SUMMARY_DONE'; payload: { content: string; savedPath: string; provider: AIProviderName } }
   | { type: 'AI_SUMMARY_ERROR'; payload: { message: string } }
+  | { type: 'AI_QA_CHUNK'; payload: { chunk: string } }
+  | { type: 'AI_QA_COMPLETE'; payload: { appendedContent: string } }
+  | { type: 'AI_QA_ERROR'; payload: { message: string } }
   | { type: 'BATCH_AI_SUMMARY_STARTED'; payload: { batchTotal: number } }
   | { type: 'BATCH_AI_SUMMARY_PROGRESS'; payload: { batchCompleted: number; batchFailedCount: number; completedFilePath: string; hasSavedSummary: boolean } }
   | { type: 'BATCH_AI_SUMMARY_CANCELLING' }
   | { type: 'BATCH_AI_SUMMARY_DONE'; payload: { batchCompleted: number; batchFailedCount: number } }
   | { type: 'BATCH_AI_SUMMARY_CANCELLED'; payload: { batchCompleted: number; batchFailedCount: number } }
   | { type: 'BATCH_AI_SUMMARY_ERROR'; payload: { message: string } }
-  | { type: 'DEPENDENCY_GRAPH_LOADED'; payload: { nodes: GraphNode[]; edges: GraphEdge[] } }
-  | { type: 'AI_PROVIDER_REGISTERED'; payload: { registeredProviders: AIProviderName[]; activeAIProvider: AIProviderName | null; providerName: AIProviderName } }
+  | { type: 'AI_PROVIDER_REGISTERED'; payload: AISettingsState & { providerName: AIProviderName } }
   | { type: 'AI_PROVIDER_REGISTRATION_FAILED'; payload: { providerName: AIProviderName; message: string; installUrl?: string } }
-  | { type: 'AI_PROVIDER_STATE_UPDATED'; payload: { registeredProviders: AIProviderName[]; activeAIProvider: AIProviderName | null; providerName: AIProviderName } }
-  | { type: 'SAVE_PATH_SET'; payload: { savePath: string; registeredProviders: AIProviderName[]; activeAIProvider: AIProviderName | null } }
-  | { type: 'SAVE_PATH_CLEARED'; payload: { savePath: null; registeredProviders: AIProviderName[]; activeAIProvider: AIProviderName | null } };
+  | { type: 'AI_PROVIDER_STATE_UPDATED'; payload: AISettingsState & { providerName: AIProviderName } }
+  | { type: 'AI_MODEL_UPDATED'; payload: AISettingsState & { providerName: AIProviderName } }
+  | { type: 'AI_SETTINGS_ERROR'; payload: { message: string } }
+  | { type: 'SAVE_PATH_SET'; payload: AISettingsState }
+  | { type: 'SAVE_PATH_CLEARED'; payload: AISettingsState };
+
+// AISettingsState (src/extension/aiProviderService.ts)
+interface AISettingsState {
+  registeredProviders: AIProviderName[];
+  activeAIProvider: AIProviderName | null;
+  savePath: string | null;
+  summaryModel: string | null;
+  qaModel: string | null;
+  summaryModelPerProvider: Record<AIProviderName, string | undefined>;
+  qaModelPerProvider: Record<AIProviderName, string | undefined>;
+}
 ```
 
 ### Zustand 상태 관리 (Webview 전용)
 
 - Webview 내 전역 상태는 Zustand 단일 스토어(`useAppStore`, 구현 파일: `src/webview/store/appStore.ts`)에서 관리한다.
-- Extension에서 받은 메시지는 현재 `App.tsx`(AI 설정 초기화, F08 전역 배치 상태), `features/F01/S01_CommitListScreen.tsx`, `features/F02/S02_HistoryViewScreen.tsx`, `features/F03/S03_CodeViewerScreen.tsx`, `features/F05/S04_AISummaryViewerScreen.tsx`, `features/F06/S06_SettingsScreen.tsx`에서 구독하여 화면 또는 Zustand 상태를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
+- Extension에서 받은 메시지는 현재 `App.tsx`(AI 설정 초기화, F08 전역 배치 상태), `features/F01/S01_CommitListScreen.tsx`, `features/F02/S02_HistoryViewScreen.tsx`, `features/F03/S03_CodeViewerScreen.tsx`, `features/F04/S05_DependencyCanvasScreen.tsx`, `features/F05/S04_AISummaryViewerScreen.tsx`, `features/F06/S06_SettingsScreen.tsx`, `features/F10/S08_IntraFileSymbolDependencyCanvasScreen.tsx`에서 구독하여 화면 또는 Zustand 상태를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
 - 화면 전환(`currentScreen`)도 Zustand 상태로 관리한다. `react-router`는 사용하지 않는다.
 
 ### Browser Dev Fallback
 
 - `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
 - 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록과 F02 변경 파일 트리용 데모 데이터를 사용해 UI를 확인할 수 있게 한다.
-- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES` / `START_BATCH_AI_SUMMARY`, F03이 `FETCH_FILE_DIFF`, F05/F05b가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` / `START_AI_SUMMARY_COMMIT` 메시지를 보낸다. F08 취소는 App 전역 `BatchProgressBar`에서 `CANCEL_BATCH_AI_SUMMARY`로 요청한다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
+- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES` / `START_BATCH_AI_SUMMARY`, F03이 `FETCH_FILE_DIFF`, F04가 `ANALYZE_DEPENDENCIES`, F05/F05b가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` / `START_AI_SUMMARY_COMMIT`, F09가 `START_AI_QA`, F10이 `ANALYZE_SYMBOL_GRAPH` 메시지를 보낸다. F08 취소는 App 전역 `BatchProgressBar`에서 `CANCEL_BATCH_AI_SUMMARY`로 요청한다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`/`SET_ACTIVE_AI_PROVIDER`, `SET_AI_MODEL`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
 - Browser dev fallback에서는 VSCode 파일 다이얼로그를 열 수 없으므로 S06 저장 경로 선택이 데모 경로를 설정한다. 실제 디렉토리 선택은 Extension Host의 `vscode.window.showOpenDialog()`에서만 동작한다.
 
 ### child_process (Extension Host 전용)

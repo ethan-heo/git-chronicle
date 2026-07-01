@@ -139,6 +139,8 @@
 |------|------|------|
 | `onCodeView` | `() => void` | [코드 보기] 클릭 핸들러 → S-03 진입 |
 | `onAISummary` | `() => void` | [AI 정리 보기] 클릭 핸들러 → S-04 진입 |
+| `onSymbolGraph` | `() => void \| undefined` | [심볼 그래프] 클릭 핸들러 → S-08 진입. 미전달 시 버튼 미표시 (F04에서만 사용) |
+| `isSymbolGraphDisabled` | `boolean \| undefined` | 미지원 파일 유형일 때 [심볼 그래프] 버튼 비활성화 |
 | `isVisible` | `boolean` | 호버 상태 여부로 표시 제어 |
 
 **States:** `hidden` (기본), `visible` (호버 시)
@@ -198,6 +200,40 @@
 **구현 파일:** `src/webview/shared/components/TopHeader.tsx`
 
 **Figma 이름:** `TopHeader`
+
+---
+
+## ResizableSplitPane
+
+**용도:** 좌우 두 패널 사이에 드래그 가능한 Divider를 제공하는 공용 레이아웃 컨테이너. F03 코드 뷰어, F05 AI 요약 뷰어, F10 파일 내부 심볼 캔버스에서 인라인 분할 패널 용도로 공통 사용한다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `isOpen` | `boolean` | `false`면 Divider와 우측 패널을 렌더링하지 않음 |
+| `defaultLeftPercent` | `number \| undefined` | `isOpen`이 `true`가 될 때 좌측 너비 초기값 |
+| `minLeftPx` / `minRightPx` | `number \| undefined` | 좌/우 패널 최소 너비 제한 |
+| `left` / `right` | `React.ReactNode` | 좌/우 패널 콘텐츠 |
+| `className` | `string \| undefined` | 추가 클래스 |
+
+**동작:** Divider 드래그는 `mousemove`/`mouseup` 이벤트로 처리하며, 드래그 중에는 텍스트 선택을 막고 커서를 `col-resize`로 바꾼다.
+
+**구현 파일:** `src/webview/shared/components/ResizableSplitPane.tsx`, `ResizableSplitPane.css`
+
+---
+
+## SplitViewButton
+
+**용도:** 코드 뷰어(S03)와 AI 요약 뷰어(S04)의 우측 상단에서 인라인 분할 패널을 열고 닫는 아이콘 버튼. `TopHeader`의 `endSlot`에 배치한다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `label` | `string` | 버튼 라벨 겸 `title`/`aria-label` |
+| `disabled` | `boolean \| undefined` | `selectedFile`이 없거나 진입 조건이 맞지 않을 때 비활성화 |
+| `onClick` | `() => void` | 분할 패널 열기/닫기 토글 |
+
+**사용 예:** S03 — "AI 요약 함께 보기" / "패널 닫기", S04 — "코드 함께 보기" / "패널 닫기"
+
+**구현 파일:** `src/webview/shared/components/SplitViewButton.tsx`
 
 ---
 

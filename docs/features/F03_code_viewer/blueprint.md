@@ -9,7 +9,7 @@
 ## Purpose
 
 선택된 파일의 Git diff를 unified diff 형식 + Shiki 신텍스 하이라이팅으로 렌더링한다.
-헤더 우측에는 분할 화면(S07)으로 이동하는 [AI 요약 함께 보기] 아이콘 버튼이 추가된다.
+헤더 우측에는 `ResizableSplitPane` 기반 인라인 우측 패널로 F05 AI 요약을 함께 여는 [AI 요약 함께 보기] 아이콘 버튼(`SplitViewButton`)이 추가된다.
 
 ---
 
@@ -71,7 +71,7 @@ interface DiffViewerProps {
 - `role="region"`, `aria-label="코드 변경 내역"`, `tabIndex={0}` (포커스 가능)
 
 #### Reusability
-F03_CodeViewer 전용. S03_CodeViewerScreen에서만 사용. → 상세 문서: [components/DiffViewer.md](../../components/DiffViewer.md)
+F03_CodeViewer 전용. S03_CodeViewerScreen에서만 사용.
 
 ---
 

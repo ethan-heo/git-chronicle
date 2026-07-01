@@ -59,6 +59,21 @@ interface AppState {
   isLoadingChangedFiles: boolean;
   changedFilesError: string | null;
 
+  // === Dependency Canvas (F04, S05) ===
+  dependencyEdges: DependencyEdge[];
+  isLoadingDependencies: boolean;
+  dependenciesError: string | null;
+
+  // === Symbol Graph (F10, S08) ===
+  selectedFileForSymbolGraph: ChangedFile | null;
+  symbolNodes: SymbolNode[];
+  symbolEdges: SymbolEdge[];
+  isLoadingSymbolGraph: boolean;
+  symbolGraphError: string | null;
+  isCodePanelOpen: boolean;
+  activeSymbolNodeId: string | null;
+  hoveredSymbolNodeId: string | null;
+
   // === AI Summary ===
   summaryModel: string | null;
   qaModel: string | null;
@@ -72,6 +87,7 @@ interface AppState {
   summarySavedPath: string | null;
   hasCurrentSavedSummary: boolean;
   isSummaryTokenLimitExceeded: boolean;
+  isSplitPanelOpen: boolean; // F09: S03/S04 우측 인라인 패널(AISummaryPanel/DiffViewerPanel) 표시 여부
 
   // === Batch AI Summary ===
   isBatchRunning: boolean;
@@ -107,6 +123,10 @@ interface AppState {
   selectFileForAI: (file: ChangedFile) => void;
   goToCommitAISummary: () => void;
   goToCanvasView: () => void;
+  goToSymbolGraphView: (file: ChangedFile) => void;
+  loadSymbolGraph: () => void;
+  handleSymbolGraphLoaded: (nodes: SymbolNode[], edges: SymbolEdge[]) => void;
+  handleSymbolGraphLoadFailed: (message?: string) => void;
   goToSettingsView: () => void;
   startBatchAISummary: () => void;
   cancelBatchAISummary: () => void;
@@ -239,7 +259,7 @@ clearFilters: () => {
 | 상태 | 설명 |
 |------|------|
 | `currentScreen` | 현재 active 화면 |
-| `previousScreen` | S03/S04/S06에서 뒤로가기 대상 화면. S05에서 S03/S04로 진입하면 `"S05"`를 저장한다. |
+| `previousScreen` | S03/S04/S06에서 뒤로가기 대상 화면. S05에서 S03/S04로 진입하면 `"S05"`를 저장한다. S05에서 S08(F10 심볼 그래프)로 진입하면 `"S05"`를 저장한다. |
 | `transitionDirection` | 라우트 전환 애니메이션 방향. `'forward'` 또는 `'back'` |
 
 `App.tsx`는 `transitionDirection`을 읽어 incoming/outgoing 라우트 슬롯에 CSS animation class를 적용한다. `transitionDirection`은 화면 전환 동작의 시각적 방향만 표현하며, 데이터 로딩 상태를 직접 변경하지 않는다.
@@ -620,6 +640,5 @@ const store = useAppStore();
 
 ## 관련 문서
 
-- [../core/state_model.md](../core/state_model.md)
 - [architecture.md](./architecture.md)
 - [coding_standards.md](./coding_standards.md)

@@ -84,7 +84,7 @@ interface CommitFilterPanelProps {
 - 각 입력 요소에 `aria-label` 명시
 
 #### Reusability
-F01_CommitLog 전용. S01_CommitListScreen에서만 사용. → 상세 문서: [components/CommitFilterPanel.md](../../components/CommitFilterPanel.md)
+F01_CommitLog 전용. S01_CommitListScreen에서만 사용.
 
 ---
 
@@ -259,7 +259,7 @@ interface CommitListItemProps {
 - `role="listitem"`, `aria-label="{커밋메시지} by {작성자} on {날짜}"`, `tabIndex={0}`
 
 #### Reusability
-F01_CommitLog 전용. CommitList 내에서만 사용. → 상세 문서: [components/CommitListItem.md](../../components/CommitListItem.md)
+F01_CommitLog 전용. CommitList 내에서만 사용.
 
 ---
 

@@ -86,7 +86,7 @@ interface AISummaryViewerProps {
 - `role="region"`, `aria-label="AI 정리 결과"`, `aria-live="polite"` (스트리밍 중)
 
 #### Reusability
-**재사용.** F05_AISummaryFile과 F05b_AISummaryCommit이 동일 컴포넌트를 공유. `summaryMode`로 동작 분기. → 상세 문서: [components/AISummaryViewer.md](../../components/AISummaryViewer.md)
+**재사용.** F05_AISummaryFile과 F05b_AISummaryCommit이 동일 컴포넌트를 공유. `summaryMode`로 동작 분기.
 
 ---
 

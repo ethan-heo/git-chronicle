@@ -1,6 +1,6 @@
 # Product Overview: GitRewind
 
-> **버전** v1.2 | **작성일** 2026-06-25 | **상태** 확정
+> **버전** v1.3 | **작성일** 2026-06-25 | **갱신** 2026-07-01 (F09/F10, S08 반영) | **상태** 각 기능 spec.md를 최신 기준으로 삼음
 
 ---
 
@@ -34,10 +34,13 @@ GitRewind는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을
 |---------|--------|-----------|-----------|
 | S-01 | 커밋 목록 | 확장 프로그램 활성화 | — |
 | S-02 | 이력 조회 | 커밋 목록에서 항목 클릭 | S-01 |
-| S-03 | 코드 뷰어 | 파일/노드 호버 → [코드 보기] 버튼 클릭 | S-02 |
-| S-04 | AI 정리 뷰어 | 파일/노드 호버 → [AI 정리 보기] 버튼 클릭, 또는 [커밋 AI 정리] 클릭 | S-02 |
+| S-03 | 코드 뷰어 | 파일/노드 호버 → [코드 보기] 버튼 클릭 | S-02 / S-05 |
+| S-04 | AI 정리 뷰어 | 파일/노드 호버 → [AI 정리 보기] 버튼 클릭, 또는 [커밋 AI 정리] 클릭 | S-02 / S-05 |
 | S-05 | 캔버스 | 이력 조회 화면 내 [캔버스 보기] 버튼 클릭 | S-02 |
 | S-06 | 설정 | 우측 상단 설정(⚙) 아이콘 클릭 | 어디서든 |
+| S-08 | 파일 내부 심볼 캔버스 | S-05 캔버스 노드에서 [심볼 그래프] 버튼 클릭 | S-05 |
+
+> S-03과 S-04는 각각 우측 인라인 패널(`AISummaryPanel`/`DiffViewerPanel`, F09)로 서로를 함께 열 수 있다. 과거 별도 화면이었던 S-07(코드+AI 요약 분할)은 이 인라인 패널 방식으로 대체되어 더 이상 존재하지 않는다.
 
 ---
 
@@ -63,12 +66,13 @@ GitRewind는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을
   [S-01: 커밋 목록] ◄────────────────────────────────────┐
        ↓ 커밋 클릭                               뒤로가기 │
   [S-02: 이력 조회] ──────────────────────────────────────┘
-       ├─ 파일 호버 → [코드 보기]    → [S-03: 코드 뷰어]
-       ├─ 파일 호버 → [AI 정리 보기] → [S-04: AI 정리 뷰어]
+       ├─ 파일 호버 → [코드 보기]    → [S-03: 코드 뷰어] ⇄ (인라인 패널) AI 요약
+       ├─ 파일 호버 → [AI 정리 보기] → [S-04: AI 정리 뷰어] ⇄ (인라인 패널) 코드
        ├─ [커밋 AI 정리]             → [S-04: AI 정리 뷰어]
        └─ [캔버스 보기]              → [S-05: 캔버스]
-                                          ├─ 노드 호버 → [코드 보기]    → [S-03]
-                                          └─ 노드 호버 → [AI 정리 보기] → [S-04]
+                                          ├─ 노드 호버 → [코드 보기]      → [S-03]
+                                          ├─ 노드 호버 → [AI 정리 보기]   → [S-04]
+                                          └─ 노드 호버 → [심볼 그래프]    → [S-08: 파일 내부 심볼 캔버스]
 
   [⚙ 아이콘 (어디서든)] → [S-06: 설정]
 ```
@@ -83,11 +87,13 @@ GitRewind는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을
 | [F02_ChangedFileTree](../features/F02_changed_file_tree/spec.md) | 변경 파일 트리 | 커밋 선택 시 변경 파일을 디렉토리 트리로 표시. 상태 뱃지·저장됨 뱃지 포함 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F03_CodeViewer](../features/F03_code_viewer/spec.md) | 코드 변경이력 | 파일 단위 unified diff 뷰어. Shiki 신텍스 하이라이팅 | [S03](../screens/S03_code_viewer/blueprint.md) |
 | [F04_DependencyCanvas](../features/F04_dependency_canvas/spec.md) | 의존 관계 캔버스 | 변경 파일 간 의존 관계를 노드-엣지 그래프로 시각화. React Flow 기반 | [S05](../screens/S04_dependency_canvas/blueprint.md) |
-| [F05_AISummaryFile](../features/F05_ai_summary_file/spec.md) | AI 정리 (파일 단위) | 파일 diff를 AI가 마크다운으로 요약. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S04_ai_summary_viewer/blueprint.md) |
-| [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S04_ai_summary_viewer/blueprint.md) |
+| [F05_AISummaryFile](../features/F05_ai_summary_file/spec.md) | AI 정리 (파일 단위) | 파일 diff를 AI가 마크다운으로 요약. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
+| [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
 | [F06_AISettings](../features/F06_ai_settings/spec.md) | AI 설정 | Claude/Gemini/Codex CLI 등록·활성화·비활성화 | [S06](../screens/S06_settings/blueprint.md) |
 | [F07_SavePathSettings](../features/F07_save_path_settings/spec.md) | 저장 경로 설정 | AI 정리 결과물 저장 경로 지정·삭제 | [S06](../screens/S06_settings/blueprint.md) |
 | [F08_BatchAISummary](../features/F08_batch_ai_summary/spec.md) | AI 정리 일괄 생성 | 커밋 내 모든 파일에 대해 파일 단위 AI 정리를 순차 자동 생성 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문 입력, 답변을 기존 요약 문서 하단에 append. S03/S04 인라인 분할 패널도 포함 | [S03](../screens/S03_code_viewer/blueprint.md) / [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
+| [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S08](../screens/S08_intra_file_dependency_canvas/blueprint.md) |
 
 ---
 
@@ -96,9 +102,10 @@ GitRewind는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을
 - [S-01: 커밋 목록](#s-01) → [screens/S01_commit_list/blueprint.md](../screens/S01_commit_list/blueprint.md)
 - [S-02: 이력 조회](#s-02) → [screens/S02_history_view/blueprint.md](../screens/S02_history_view/blueprint.md)
 - [S-03: 코드 뷰어](#s-03) → [screens/S03_code_viewer/blueprint.md](../screens/S03_code_viewer/blueprint.md)
-- [S-04: AI 정리 뷰어](#s-04) → [screens/S04_ai_summary_viewer/blueprint.md](../screens/S04_ai_summary_viewer/blueprint.md)
+- [S-04: AI 정리 뷰어](#s-04) → [screens/S05_ai_summary_viewer/blueprint.md](../screens/S05_ai_summary_viewer/blueprint.md)
 - [S-05: 캔버스](#s-05) → [screens/S04_dependency_canvas/blueprint.md](../screens/S04_dependency_canvas/blueprint.md)
 - [S-06: 설정](#s-06) → [screens/S06_settings/blueprint.md](../screens/S06_settings/blueprint.md)
+- [S-08: 파일 내부 심볼 캔버스](#s-08) → [screens/S08_intra_file_dependency_canvas/blueprint.md](../screens/S08_intra_file_dependency_canvas/blueprint.md)
 - [F-01: 커밋 로그 조회](#f-01) → [features/F01_commit_log/spec.md](../features/F01_commit_log/spec.md)
 - [F-02: 변경 파일 트리](#f-02) → [features/F02_changed_file_tree/spec.md](../features/F02_changed_file_tree/spec.md)
 - [F-03: 코드 변경이력](#f-03) → [features/F03_code_viewer/spec.md](../features/F03_code_viewer/spec.md)
@@ -108,3 +115,5 @@ GitRewind는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을
 - [F-06: AI 설정](#f-06) → [features/F06_ai_settings/spec.md](../features/F06_ai_settings/spec.md)
 - [F-07: 저장 경로 설정](#f-07) → [features/F07_save_path_settings/spec.md](../features/F07_save_path_settings/spec.md)
 - [F-08: AI 정리 일괄 생성](#f-08) → [features/F08_batch_ai_summary/spec.md](../features/F08_batch_ai_summary/spec.md)
+- [F-09: AI 요약 Q&A](#f-09) → [features/F09_ai_summary_qa/spec.md](../features/F09_ai_summary_qa/spec.md)
+- [F-10: 파일 내부 심볼 의존성 캔버스](#f-10) → [features/F10_intra_file_symbol_dependency_canvas/spec.md](../features/F10_intra_file_symbol_dependency_canvas/spec.md)

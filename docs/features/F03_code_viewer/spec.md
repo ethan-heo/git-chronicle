@@ -62,8 +62,7 @@
 
 ## Related Screens
 
-- [S03_CodeViewerScreen](../../screens/S03_code_viewer/blueprint.md)
-- [S07_CodeAndAISummaryScreen](../../screens/S07_code_and_ai_summary/blueprint.md) - 기존 독립 분할 화면 문서. 현재 구현에서는 인라인 패널 방식으로 대체되었지만, 레이아웃 비교용 참조로 남겨둔다.
+- [S03_CodeViewerScreen](../../screens/S03_code_viewer/blueprint.md) — 우측 인라인 `AISummaryPanel`로 F05 요약을 함께 표시
 
 ---
 

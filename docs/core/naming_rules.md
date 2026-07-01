@@ -16,6 +16,9 @@
 | S04 | S04_AISummaryViewerScreen |
 | S05 | S05_DependencyCanvasScreen |
 | S06 | S06_SettingsScreen |
+| S08 | S08_IntraFileSymbolDependencyCanvasScreen |
+
+> S07(코드+AI 요약 분할)은 인라인 분할 패널 방식으로 대체되어 더 이상 존재하지 않는다.
 
 - 번호는 2자리 zero-padding (`S01`, `S02`, ...).
 - 이름은 PascalCase, 반드시 `Screen` 접미사로 끝낸다.
@@ -38,6 +41,8 @@
 | F06 | F06_AISettings |
 | F07 | F07_SavePathSettings |
 | F08 | F08_BatchAISummary |
+| F09 | F09_AISummaryQA |
+| F10 | F10_IntraFileSymbolDependencyCanvas |
 
 - 번호는 2자리 zero-padding (`F01`, `F02`, ...).
 - 알파벳 suffix는 소문자로 붙인다 (`F05b`).

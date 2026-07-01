@@ -1,6 +1,6 @@
 # Directory Structure — GitRewind
 
-> **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
+> **버전** v1.1 | **작성일** 2026-06-26 | **갱신** 2026-07-01 (F09/F10, docs 색인 정리) | **상태** 확정
 
 ---
 
@@ -22,6 +22,12 @@ git-chronicle/
 │       ├── i18next.ts                # i18next 호환 로컬 엔트리
 │       └── react-i18next.ts          # react-i18next 호환 로컬 엔트리
 ├── tests/                            # 테스트 코드
+├── scripts/                          # 빌드/릴리스/문서 검증용 스크립트
+│   ├── copy-dependency-cruiser.mjs   # dependency-cruiser 및 transitive deps를 dist로 복사
+│   ├── changelog.config.cjs          # conventional-changelog 커밋 정렬 설정
+│   └── check-docs-sync.mjs           # docs/가 소스 코드와 어긋나지 않았는지 검증 (pre-commit 훅에서 실행)
+├── .husky/
+│   └── pre-commit                    # `pnpm docs:check` 실행, 실패 시 커밋 차단
 ├── package.json
 ├── package.nls.json                  # VSCode manifest 기본 언어 문자열
 ├── package.nls.ko.json               # VSCode manifest 한국어 문자열
@@ -47,13 +53,20 @@ src/extension/
 ├── dependencyService.ts              # 언어별 의존 관계 분석 서비스
 │   - analyzeDependencies(repoPath, files[]) → DependencyEdge[]
 │   - JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통한 dependency-cruiser API, Python/Go는 텍스트 파싱 사용
+├── intraFileDependencyService.ts     # F10 파일 내부 심볼 의존성 분석
+│   - analyzeSymbolGraph(repoPath, filePath, commitHash) → { nodes: SymbolNode[], edges: SymbolEdge[] }
+│   - JS/TS는 TypeScript Compiler API, Python/Go는 정규식 파서 사용
 ├── aiService.ts                      # child_process.spawn 기반 AI CLI 스트리밍 실행
 │   - streamAISummary(options)        # stdout chunk 전달, 120초 타임아웃, 취소 함수 반환
 ├── aiTypes.ts                        # AIProviderName 타입 ('claude' | 'gemini' | 'codex')
+├── aiProviderService.ts              # AI 프로바이더/모델 선택 상태(AISettingsState) 관리
+│   - registerAIProvider / setActiveAIProvider / setAIModel / setSavePath
 ├── batchService.ts                   # 파일 단위 AI 정리 일괄 순차 실행
 │   - runBatchAISummary(options)      # 저장본 스킵, 실패 계속 진행, 취소 플래그 확인
 ├── prompts.ts                        # AI 정리 프롬프트 빌더
 │   - buildFileSummaryPrompt(filePath, diff)
+│   - buildCommitSummaryPrompt(commitHash, diff)
+│   - buildSummaryQAPrompt(summaryContent, diff, question)  # F09 Q&A
 └── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인
     - SummarySaveError                # 저장 경로 생성/쓰기 실패 전용 오류
     - loadSummary(savePath, hash, file) → { content, savedPath } | null
@@ -61,6 +74,7 @@ src/extension/
     - loadCommitSummary(savePath, hash) → { content, savedPath } | null
     - saveCommitSummary(savePath, hash, content) → savedPath
     - hasSavedSummary(savePath, hash, file) → boolean
+    - appendSummaryQA(savedPath, question, answer) → string  # F09 질문/답변 append
     - 파일명 규칙: filePath의 / 또는 \ 를 __로 치환 후 .md 추가
 ```
 
@@ -133,10 +147,26 @@ src/webview/
 │   │   ├── SavePathSection.tsx       # F07 저장 경로 표시·선택·삭제 UI
 │   │   ├── providers.ts              # AI provider UI 메타데이터
 │   │   └── index.ts                  # F06 barrel export
-│   └── F08_batch_ai_summary/
-│       ├── BatchAISummaryFeature.tsx
-│       ├── BatchProgressBar.tsx      # 상단 고정 프로그레스 바
-│       └── useBatchAISummary.ts
+│   ├── F08/
+│   │   ├── BatchCancelButton.tsx
+│   │   ├── BatchProgressBar.tsx      # 상단 고정 프로그레스 바
+│   │   └── BatchProgressBar.css
+│   ├── F09/                          # AI 요약 Q&A + 인라인 분할 패널
+│   │   ├── S07CodeAndAISummaryScreen.tsx # 미참조 레거시 파일 (더 이상 라우팅되지 않음)
+│   │   ├── AISummaryPanel.tsx        # S03 우측 인라인 AI 요약 패널
+│   │   ├── DiffViewerPanel.tsx       # S04 우측 인라인 코드 패널
+│   │   ├── QAInputArea.tsx           # 요약 완료 후 질문 입력 영역
+│   │   ├── SplitSidePanel.css
+│   │   └── index.ts
+│   └── F10/                          # 파일 내부 심볼 의존성 캔버스 (S08)
+│       ├── S08_IntraFileSymbolDependencyCanvasScreen.tsx
+│       ├── SymbolGraph.tsx           # React Flow 캔버스 컨테이너
+│       ├── SymbolNode.tsx / SymbolEdge.tsx / SymbolKindBadge.tsx
+│       ├── SymbolLegendPanel.tsx
+│       ├── SymbolCodePanel.tsx       # 우측 슬라이드 인 코드 패널
+│       ├── SymbolFileCodeViewer.tsx  # Shiki 기반 코드 뷰어
+│       ├── symbolGraphUtils.ts       # Dagre/kind 그룹 레이아웃 계산
+│       └── index.ts
 ├── screens/                          # 향후 독립 Screen 컴포넌트 확장 위치
 │   └── 현재 화면 컴포넌트는 각 feature 디렉터리에서 구현
 └── shared/
@@ -178,59 +208,12 @@ src/webview/
 
 ## docs/ 구조
 
-```
-docs/
-├── product/
-│   └── product_overview.md
-├── project/
-│   ├── architecture.md
-│   ├── development_environment.md
-│   ├── coding_standards.md
-│   ├── state_management.md
-│   ├── directory_structure.md      ← 이 파일
-│   └── testing_strategy.md
-├── core/
-│   ├── design_principles.md
-│   ├── naming_rules.md
-│   ├── interaction_model.md
-│   ├── state_model.md
-│   ├── design_tokens.md
-│   └── global_components.md
-├── features/
-│   ├── F01_commit_log/
-│   │   ├── spec.md
-│   │   ├── blueprint.md
-│   │   └── design_prompt.md
-│   ├── F02_changed_file_tree/
-│   ├── F03_code_viewer/
-│   ├── F04_dependency_canvas/
-│   ├── F05_ai_summary_file/
-│   ├── F05b_ai_summary_commit/
-│   ├── F06_ai_settings/
-│   ├── F07_save_path_settings/      # 문서 전용. 실제 UI는 src/webview/features/F06/SavePathSection.tsx
-│   └── F08_batch_ai_summary/
-├── screens/
-│   ├── S01_commit_list/blueprint.md
-│   ├── S02_history_view/blueprint.md
-│   ├── S03_code_viewer/blueprint.md
-│   ├── S04_ai_summary_viewer/blueprint.md
-│   ├── S04_dependency_canvas/blueprint.md
-│   └── S06_settings/blueprint.md
-└── components/
-    ├── TopHeader.md
-    ├── BackButton.md
-    ├── CommitListItem.md
-    ├── CommitFilterPanel.md
-    ├── FileTreeNode.md
-    ├── AISummaryViewer.md
-    ├── DiffViewer.md
-    ├── DependencyGraph.md
-    ├── FileNode.md
-    ├── DependencyEdge.md
-    ├── BatchProgressBar.md
-    ├── AIProviderButton.md
-    └── SavePathSelector.md
-```
+전체 문서 색인은 [docs/README.md](../README.md)를 기준으로 한다(이 섹션에 중복 나열하지 않는다 — 목록이 실제 파일과 어긋나는 것을 방지하기 위함). 요약하면:
+
+- `product/`, `project/`, `core/`: 프로젝트 전반의 고정 규칙 문서.
+- `features/F##_*/`: 기능별 `spec.md`(요구사항) + `blueprint.md`(UI/컴포넌트 계약) 2개 파일만 유지한다. AI 생성용 프롬프트나 구현 상세는 영구 문서로 두지 않고, 작업 시 계획서(Plan)로 생성 후 완료 시 spec/blueprint에 반영하고 폐기한다.
+- `screens/S##_*/blueprint.md`: 화면 단위 진입 조건·상태·내비게이션 흐름. 여러 Feature를 조합하는 화면(S04, S06)만 별도로 조합 관계를 문서화하고, 단일 Feature 화면은 해당 Feature `blueprint.md`와 함께 참고한다.
+- Feature 전용 컴포넌트는 별도 `components/*.md`를 두지 않고 해당 `blueprint.md`의 Component Definitions 섹션이 유일한 문서다. 여러 Feature가 공유하는 컴포넌트만 [core/global_components.md](../core/global_components.md)에 문서화한다.
 
 ---
 
@@ -241,8 +224,15 @@ tests/
 ├── unit/
 │   ├── smoke.test.ts
 │   ├── parseDiff.test.ts
+│   ├── graph.test.ts
 │   ├── dependencyGraph.test.ts
-│   └── summaryFileService.test.ts
+│   ├── dependencyService.test.ts
+│   ├── intraFileDependencyService.test.ts    # F10
+│   ├── summaryFileService.test.ts
+│   ├── aiService.test.ts
+│   ├── aiProviderService.test.ts
+│   ├── appStorePersistence.test.ts
+│   └── batchService.test.ts
 └── setup.ts
 ```
 
