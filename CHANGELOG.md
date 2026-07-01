@@ -1,4 +1,15 @@
 
+## [0.8.0](https://github.com/ethan-heo/git-chronicle/compare/v0.7.1...v0.8.0) (2026-07-01)
+
+### Features
+
+* refine ai summary action labels ([62e2406](https://github.com/ethan-heo/git-chronicle/commit/62e24063c5d2a4aaf6a75425f71207ae1135d660))
+* improve ai summary qa viewer ux ([20a8b4c](https://github.com/ethan-heo/git-chronicle/commit/20a8b4c0be63274bfd72598459aedf471a714b4d))
+
+### Bug Fixes
+
+* improve F10 symbol rendering ([dfe8b66](https://github.com/ethan-heo/git-chronicle/commit/dfe8b66b029b13237b07cf43fc0cfd08318d4860))
+
 ## [0.7.1](https://github.com/ethan-heo/git-chronicle/compare/v0.7.0...v0.7.1) (2026-06-30)
 
 ### Features
