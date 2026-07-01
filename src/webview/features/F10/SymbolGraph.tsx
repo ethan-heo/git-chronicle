@@ -1,5 +1,5 @@
 import '@xyflow/react/dist/style.css';
-import { Background, BackgroundVariant, MarkerType, ReactFlow, useEdgesState, useNodesInitialized, useNodesState, useReactFlow } from '@xyflow/react';
+import { Background, BackgroundVariant, ReactFlow, useEdgesState, useNodesInitialized, useNodesState, useReactFlow } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
@@ -87,7 +87,6 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
         minZoom={0.3}
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
-        defaultEdgeOptions={{ markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: 'var(--gae-color-text-secondary)' } }}
         onNodeMouseEnter={(_, node) => {
           setHighlightedNodeId(node.id);
           onNodeHover?.(node.id);

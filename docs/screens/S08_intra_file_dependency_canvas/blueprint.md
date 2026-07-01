@@ -42,6 +42,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 │   ├─ SymbolNode × N
 │   │   ├─ SymbolKindBadge (fn/cls/ifc/typ/var/cst/enm)
 │   │   ├─ 노드 이름 텍스트
+│   │   ├─ 시그니처/멤버/타입/enum 값 보조 정보
 │   │   └─ 라인 범위 텍스트
 │   └─ SymbolEdge × M (방향 있는 엣지)
 ├─ SymbolCodePanel  ← 우측 슬라이드 인 코드 패널
@@ -113,3 +114,4 @@ S08_IntraFileSymbolDependencyCanvasScreen
 - 우측 코드 패널이 열리면 캔버스 영역이 축소되고, 닫히면 원래 크기로 복원
 - `SymbolLegendPanel`은 너비 < 350px에서 최소화 상태로 전환
 - `CanvasControls`는 항상 표시
+- 코드 패널은 라인 번호와 본문 사이에 충분한 간격을 유지해 번호가 본문에 붙어 보이지 않도록 한다

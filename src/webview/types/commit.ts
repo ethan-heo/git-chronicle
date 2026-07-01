@@ -36,6 +36,18 @@ export type SymbolKind = 'function' | 'class' | 'interface' | 'type' | 'variable
 export type ImportKind = 'named' | 'default' | 'namespace';
 
 export type SymbolDependencyKind = 'calls' | 'uses' | 'extends' | 'implements';
+export type MemberVisibility = '+' | '-' | '#';
+
+export interface SymbolMember {
+  name: string;
+  visibility: MemberVisibility;
+  memberKind: 'attribute' | 'operation';
+  isOptional?: boolean;
+  type?: string;
+  params?: string;
+  isStatic?: boolean;
+  isAbstract?: boolean;
+}
 
 export interface SymbolNode {
   id: string;
@@ -47,6 +59,10 @@ export interface SymbolNode {
   nodeCategory: 'local' | 'import';
   modulePath?: string;
   importKind?: ImportKind;
+  signature?: string;
+  typeAnnotation?: string;
+  members?: SymbolMember[];
+  enumValues?: string[];
 }
 
 export interface SymbolEdge {

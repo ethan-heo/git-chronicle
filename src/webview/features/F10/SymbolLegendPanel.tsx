@@ -49,10 +49,10 @@ export const SymbolLegendPanel: FC<Props> = ({ isMinimized = false, onToggleMini
           <LegendRow badge={<SymbolKindBadge kind="enum" />} label={t('symbol_graph.kind_enum')} />
           <LegendRow badge={<SymbolKindBadge kind="import" />} label={t('symbol_graph.legend.kind.import')} />
           <div className="my-[9px] h-px bg-line" />
-          <LegendRow badge={<span className="symbol-edge-sample symbol-edge-sample-calls" />} label={t('symbol_graph.edge_calls')} />
-          <LegendRow badge={<span className="symbol-edge-sample symbol-edge-sample-uses" />} label={t('symbol_graph.edge_uses')} />
-          <LegendRow badge={<span className="symbol-edge-sample symbol-edge-sample-extends" />} label={t('symbol_graph.edge_extends')} />
-          <LegendRow badge={<span className="symbol-edge-sample symbol-edge-sample-implements" />} label={t('symbol_graph.edge_implements')} />
+          <LegendRow badge={<EdgeSample kind="calls" />} label={t('symbol_graph.edge_calls')} />
+          <LegendRow badge={<EdgeSample kind="uses" />} label={t('symbol_graph.edge_uses')} />
+          <LegendRow badge={<EdgeSample kind="extends" />} label={t('symbol_graph.edge_extends')} />
+          <LegendRow badge={<EdgeSample kind="implements" />} label={t('symbol_graph.edge_implements')} />
         </>
       )}
     </aside>
@@ -65,3 +65,28 @@ const LegendRow: FC<{ badge: ReactNode; label: string }> = ({ badge, label }) =>
     <span>{label}</span>
   </div>
 );
+
+const EdgeSample: FC<{ kind: 'calls' | 'uses' | 'extends' | 'implements' }> = ({ kind }) => {
+  const color = `var(--gae-color-symbol-${kind})`;
+  const dashed = kind === 'uses' || kind === 'implements';
+  const triangle = kind === 'extends' || kind === 'implements';
+  const strokeWidth = triangle ? 2.5 : kind === 'uses' ? 1.5 : 2;
+
+  return (
+    <svg className="symbol-edge-sample" viewBox="0 0 44 14" aria-hidden="true">
+      <path
+        d={triangle ? 'M1 7 H30' : 'M1 7 H32'}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={dashed ? (triangle ? '6 4' : '4 4') : undefined}
+        strokeLinecap="round"
+      />
+      {triangle ? (
+        <polygon points="42,7 30,1 30,13" fill="var(--gae-color-surface-primary)" stroke={color} strokeWidth={strokeWidth} />
+      ) : (
+        <polyline points="32,2 42,7 32,12" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      )}
+    </svg>
+  );
+};

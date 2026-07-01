@@ -1,7 +1,33 @@
+.symbol-node {
+  overflow: hidden;
+}
+
+.symbol-node-accent {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--symbol-node-accent);
+}
+
 .symbol-node:hover,
 .symbol-node-selected {
   border-color: var(--gae-color-symbol-highlight);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--gae-color-symbol-highlight) 60%, transparent), 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.symbol-node-member {
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.symbol-node-member-static {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 .symbol-node-handle::before,

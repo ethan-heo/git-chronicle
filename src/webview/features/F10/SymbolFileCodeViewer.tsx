@@ -109,10 +109,10 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ fileConten
               ref={(element) => {
                 lineRefs.current[index] = element;
               }}
-              className={['symbol-code-line relative z-0 grid min-w-full w-max grid-cols-[56px_minmax(0,1fr)] gap-md px-lg leading-[1.7]', isHighlighted ? 'symbol-code-line-highlighted' : ''].filter(Boolean).join(' ')}
+              className={['symbol-code-line relative z-0 grid min-w-full w-max grid-cols-[72px_minmax(0,1fr)] gap-5 px-xl leading-[1.75]', isHighlighted ? 'symbol-code-line-highlighted' : ''].filter(Boolean).join(' ')}
             >
-              <span className="text-right text-muted select-none">{lineNumber}</span>
-              <span className="block min-w-0 w-max whitespace-pre">
+              <span className="pr-2 text-right text-muted select-none">{lineNumber}</span>
+              <span className="block min-w-0 w-max whitespace-pre pl-2">
                 {tokens.map((token, tokenIndex) => (
                   <span key={`${lineNumber}-${tokenIndex}`} style={token.color ? { color: token.color } : undefined}>
                     {token.content || ' '}

@@ -6,6 +6,18 @@ import { fetchFileContentAtCommit } from './gitService';
 type SymbolKind = 'function' | 'class' | 'interface' | 'type' | 'variable' | 'constant' | 'enum';
 type ImportKind = 'named' | 'default' | 'namespace';
 type SymbolDependencyKind = 'calls' | 'uses' | 'extends' | 'implements';
+type MemberVisibility = '+' | '-' | '#';
+
+interface SymbolMember {
+  name: string;
+  visibility: MemberVisibility;
+  memberKind: 'attribute' | 'operation';
+  isOptional?: boolean;
+  type?: string;
+  params?: string;
+  isStatic?: boolean;
+  isAbstract?: boolean;
+}
 
 interface SymbolNode {
   id: string;
@@ -17,6 +29,10 @@ interface SymbolNode {
   nodeCategory: 'local' | 'import';
   modulePath?: string;
   importKind?: ImportKind;
+  signature?: string;
+  typeAnnotation?: string;
+  members?: SymbolMember[];
+  enumValues?: string[];
 }
 
 interface SymbolEdge {
@@ -29,6 +45,8 @@ const SUPPORTED_FILE_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx|py|go)$/i;
 const JS_TS_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i;
 const PY_PATTERN = /\.py$/i;
 const GO_PATTERN = /\.go$/i;
+const TYPE_TEXT_LIMIT = 24;
+const ENUM_LIMIT = 6;
 
 export async function analyzeSymbolGraph(
   repoPath: string,
@@ -75,20 +93,25 @@ function analyzeJsTs(content: string, filePath: string): { nodes: SymbolNode[]; 
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, filePath.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
   const nodes: SymbolNode[] = [];
   const byName = new Map<string, SymbolNode>();
+  const nodeById = new Map<string, ts.Node>();
 
   ts.forEachChild(sourceFile, (node) => {
     const symbols = extractJsTsNodes(node, sourceFile);
     symbols.forEach((symbol) => {
       nodes.push(symbol);
       byName.set(symbol.name, symbol);
+      if (symbol.nodeCategory === 'local') {
+        nodeById.set(symbol.id, node);
+      }
     });
   });
 
   const edges: SymbolEdge[] = [];
-  for (const node of sourceFile.statements) {
-    if (ts.isImportDeclaration(node)) continue;
-    const symbols = extractJsTsNodes(node, sourceFile);
-    symbols.forEach((from) => collectJsTsEdges(node, from, byName, edges));
+  for (const symbol of nodes) {
+    if (symbol.nodeCategory !== 'local') continue;
+    const sourceNode = nodeById.get(symbol.id);
+    if (!sourceNode) continue;
+    collectJsTsEdges(sourceNode, symbol, byName, edges);
   }
 
   return { nodes, edges: dedupeEdges(edges) };
@@ -99,16 +122,27 @@ function extractJsTsNodes(node: ts.Node, sourceFile: ts.SourceFile): SymbolNode[
   const lineEnd = sourceFile.getLineAndCharacterOfPosition(node.getEnd()).line + 1;
   const isExported = ts.canHaveModifiers(node) ? (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) : false;
 
-  if (ts.isFunctionDeclaration(node) && node.name) return [makeLocalNode(node.name.text, 'function', lineStart, lineEnd, isExported)];
-  if (ts.isClassDeclaration(node) && node.name) return [makeLocalNode(node.name.text, 'class', lineStart, lineEnd, isExported)];
-  if (ts.isInterfaceDeclaration(node)) return [makeLocalNode(node.name.text, 'interface', lineStart, lineEnd, isExported)];
-  if (ts.isTypeAliasDeclaration(node)) return [makeLocalNode(node.name.text, 'type', lineStart, lineEnd, isExported)];
-  if (ts.isEnumDeclaration(node)) return [makeLocalNode(node.name.text, 'enum', lineStart, lineEnd, isExported)];
+  if (ts.isFunctionDeclaration(node) && node.name) {
+    return [makeLocalNode(node.name.text, 'function', lineStart, lineEnd, isExported, { signature: buildFunctionSignature(node, sourceFile) })];
+  }
+  if (ts.isClassDeclaration(node) && node.name) {
+    return [makeLocalNode(node.name.text, 'class', lineStart, lineEnd, isExported, { members: extractClassMembers(node, sourceFile) })];
+  }
+  if (ts.isInterfaceDeclaration(node)) {
+    return [makeLocalNode(node.name.text, 'interface', lineStart, lineEnd, isExported, { members: extractInterfaceMembers(node, sourceFile) })];
+  }
+  if (ts.isTypeAliasDeclaration(node)) {
+    return [makeLocalNode(node.name.text, 'type', lineStart, lineEnd, isExported, { typeAnnotation: clampText(node.type.getText(sourceFile)) })];
+  }
+  if (ts.isEnumDeclaration(node)) {
+    return [makeLocalNode(node.name.text, 'enum', lineStart, lineEnd, isExported, { enumValues: extractEnumValues(node, sourceFile) })];
+  }
   if (ts.isVariableStatement(node)) {
     const decl = node.declarationList.declarations[0];
     if (decl && ts.isIdentifier(decl.name)) {
       const kind: SymbolKind = (node.declarationList.flags & ts.NodeFlags.Const) !== 0 ? 'constant' : 'variable';
-      return [makeLocalNode(decl.name.text, kind, lineStart, lineEnd, isExported)];
+      const typeAnnotation = decl.type ? `: ${clampText(decl.type.getText(sourceFile))}` : undefined;
+      return [makeLocalNode(decl.name.text, kind, lineStart, lineEnd, isExported, { typeAnnotation })];
     }
   }
   if (ts.isImportDeclaration(node)) {
@@ -141,7 +175,7 @@ function extractImportNodes(node: ts.ImportDeclaration, lineStart: number, lineE
 }
 
 function collectJsTsEdges(node: ts.Node, from: SymbolNode, byName: Map<string, SymbolNode>, edges: SymbolEdge[]): void {
-  if (ts.isClassDeclaration(node)) {
+  if (ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node)) {
     node.heritageClauses?.forEach((clause) => {
       const kind: SymbolDependencyKind = clause.token === ts.SyntaxKind.ExtendsKeyword ? 'extends' : 'implements';
       clause.types.forEach((typeExpr) => {
@@ -151,6 +185,10 @@ function collectJsTsEdges(node: ts.Node, from: SymbolNode, byName: Map<string, S
   }
 
   const visit = (child: ts.Node): void => {
+    if (shouldSkipIdentifier(child, from, node)) {
+      return;
+    }
+
     if (ts.isIdentifier(child)) {
       const parent = child.parent;
       const kind: SymbolDependencyKind = parent && (ts.isCallExpression(parent) || ts.isNewExpression(parent)) && parent.expression === child ? 'calls' : 'uses';
@@ -162,28 +200,79 @@ function collectJsTsEdges(node: ts.Node, from: SymbolNode, byName: Map<string, S
   ts.forEachChild(node, visit);
 }
 
+function shouldSkipIdentifier(node: ts.Node, symbol: SymbolNode, declarationNode: ts.Node): boolean {
+  if (!ts.isIdentifier(node)) return false;
+  if (node.text === symbol.name && node.parent === declarationNode) return true;
+
+  const parent = node.parent;
+  if (!parent) return false;
+
+  if (
+    (ts.isFunctionDeclaration(parent) ||
+      ts.isClassDeclaration(parent) ||
+      ts.isInterfaceDeclaration(parent) ||
+      ts.isTypeAliasDeclaration(parent) ||
+      ts.isEnumDeclaration(parent)) &&
+    parent.name === node
+  ) {
+    return true;
+  }
+
+  if (ts.isVariableDeclaration(parent) && parent.name === node) {
+    return true;
+  }
+
+  if (ts.isPropertyDeclaration(parent) || ts.isPropertySignature(parent) || ts.isMethodDeclaration(parent) || ts.isMethodSignature(parent)) {
+    if (parent.name === node) {
+      return true;
+    }
+  }
+
+  if (ts.isParameter(parent) && parent.name === node) {
+    return true;
+  }
+
+  if (ts.isImportSpecifier(parent) || ts.isImportClause(parent) || ts.isNamespaceImport(parent)) {
+    return true;
+  }
+
+  return false;
+}
+
 function analyzePython(content: string): { nodes: SymbolNode[]; edges: SymbolEdge[] } {
   const nodes: SymbolNode[] = [];
   const lines = content.split('\n');
   const blocks: Array<{ start: number; indent: number; nodeIndex: number }> = [];
+  const classes: Array<{ name: string; indent: number; startLine: number; nodeIndex: number }> = [];
 
   lines.forEach((line, index) => {
     const lineNumber = index + 1;
-    const func = /^\s*def\s+([A-Za-z_]\w*)\s*\(/.exec(line);
-    const cls = /^\s*class\s+([A-Za-z_]\w*)/.exec(line);
-    const assign = /^\s*([A-Za-z_]\w*)\s*=/.exec(line);
     const indent = (line.match(/^\s*/)?.[0] ?? '').length;
-    if (func) {
-      blocks.push({ start: lineNumber, indent, nodeIndex: nodes.push(makeNode(func[1], 'function', lineNumber, lineNumber, false)) - 1 });
+    const func = /^\s*def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?:->\s*([^:]+))?:/.exec(line);
+    const cls = /^\s*class\s+([A-Za-z_]\w*)/.exec(line);
+    const assign = /^\s*([A-Za-z_]\w*)\s*:\s*([^=]+?)\s*=/.exec(line) ?? /^\s*([A-Za-z_]\w*)\s*=/.exec(line);
+
+    if (func && !isInsidePythonClass(indent, classes, lineNumber, lines)) {
+      const signature = formatPythonSignature(func[2] ?? '', func[3]?.trim());
+      blocks.push({ start: lineNumber, indent, nodeIndex: nodes.push(makeNode(func[1], 'function', lineNumber, lineNumber, false, { signature })) - 1 });
     }
     if (cls) {
-      blocks.push({ start: lineNumber, indent, nodeIndex: nodes.push(makeNode(cls[1], 'class', lineNumber, lineNumber, false)) - 1 });
+      const nodeIndex = nodes.push(makeNode(cls[1], 'class', lineNumber, lineNumber, false, { members: [] })) - 1;
+      blocks.push({ start: lineNumber, indent, nodeIndex });
+      classes.push({ name: cls[1], indent, startLine: lineNumber, nodeIndex });
     }
-    if (assign) nodes.push(makeNode(assign[1], 'variable', lineNumber, lineNumber, false));
+    if (assign && indent === 0) {
+      const typeAnnotation = assign[2] ? `: ${clampText(assign[2].trim())}` : undefined;
+      nodes.push(makeNode(assign[1], 'variable', lineNumber, lineNumber, false, { typeAnnotation }));
+    }
   });
 
   for (const block of blocks) {
     nodes[block.nodeIndex].lineEnd = findPythonBlockEnd(lines, block.start, block.indent);
+  }
+  for (const cls of classes) {
+    const classNode = nodes[cls.nodeIndex];
+    classNode.members = extractPythonClassMembers(lines, cls.startLine, classNode.lineEnd, cls.indent);
   }
 
   return { nodes, edges: [] };
@@ -193,19 +282,84 @@ function analyzeGo(content: string): { nodes: SymbolNode[]; edges: SymbolEdge[] 
   const nodes: SymbolNode[] = [];
   const lines = content.split('\n');
   const blocks: Array<{ start: number; nodeIndex: number }> = [];
+  let currentStruct: { name: string; members: SymbolMember[]; startLine: number } | null = null;
+  const classNodeByName = new Map<string, SymbolNode>();
+  const pendingGoMethods = new Map<string, SymbolMember[]>();
 
   lines.forEach((line, index) => {
     const lineNumber = index + 1;
-    const func = /^\s*func\s+([A-Za-z_]\w*)\s*\(/.exec(line);
-    const type = /^\s*type\s+([A-Za-z_]\w*)\s+/.exec(line);
-    const variable = /^\s*var\s+([A-Za-z_]\w*)\s*=/.exec(line);
-    const constant = /^\s*const\s+([A-Za-z_]\w*)\s*=/.exec(line);
-    if (func) {
-      blocks.push({ start: lineNumber, nodeIndex: nodes.push(makeNode(func[1], 'function', lineNumber, lineNumber, false)) - 1 });
+    const func = /^\s*func(?:\s+\([^)]+\))?\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?:([A-Za-z0-9_*[\].]+))?\s*\{/.exec(line);
+    const method = /^\s*func\s+\(([^)]+)\)\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?:([A-Za-z0-9_*[\].]+))?\s*\{/.exec(line);
+    const typeStruct = /^\s*type\s+([A-Za-z_]\w*)\s+struct\s*\{/.exec(line);
+    const typeAlias = /^\s*type\s+([A-Za-z_]\w*)\s+(.+)$/.exec(line);
+    const variable = /^\s*var\s+([A-Za-z_]\w*)(?:\s+([^=]+?))?\s*=/.exec(line);
+    const constant = /^\s*const\s+([A-Za-z_]\w*)(?:\s+([^=]+?))?\s*=/.exec(line);
+
+    if (currentStruct) {
+      if (/^\s*\}/.test(line)) {
+        const mergedMembers = [
+          ...currentStruct.members,
+          ...(pendingGoMethods.get(currentStruct.name) ?? []),
+        ];
+        const classNode = makeNode(currentStruct.name, 'class', currentStruct.startLine, lineNumber, false, { members: mergedMembers });
+        nodes.push(classNode);
+        classNodeByName.set(currentStruct.name, classNode);
+        pendingGoMethods.delete(currentStruct.name);
+        currentStruct = null;
+      } else {
+        const field = /^\s*([A-Za-z_]\w*)\s+(.+)$/.exec(line.trim());
+        if (field) {
+          currentStruct.members.push({
+            name: field[1],
+            visibility: /^[A-Z]/.test(field[1]) ? '+' : '-',
+            memberKind: 'attribute',
+            type: clampText(field[2].trim()),
+          });
+        }
+      }
+      return;
     }
-    if (type) nodes.push(makeNode(type[1], 'type', lineNumber, lineNumber, false));
-    if (variable) nodes.push(makeNode(variable[1], 'variable', lineNumber, lineNumber, false));
-    if (constant) nodes.push(makeNode(constant[1], 'constant', lineNumber, lineNumber, false));
+
+    if (typeStruct) {
+      currentStruct = { name: typeStruct[1], members: [], startLine: lineNumber };
+      return;
+    }
+
+    if (method) {
+      const receiver = extractGoReceiverType(method[1]);
+      const goMethodMember: SymbolMember = {
+        name: method[2],
+        visibility: /^[A-Z]/.test(method[2]) ? '+' : '-',
+        memberKind: 'operation',
+        params: clampText(method[3].trim()),
+        type: method[4] ? clampText(method[4].trim()) : undefined,
+      };
+      const receiverNode = classNodeByName.get(receiver);
+      if (receiverNode) {
+        receiverNode.members = [
+          ...(receiverNode.members ?? []),
+          goMethodMember,
+        ];
+      } else {
+        pendingGoMethods.set(receiver, [...(pendingGoMethods.get(receiver) ?? []), goMethodMember]);
+      }
+      return;
+    }
+
+    if (func) {
+      blocks.push({ start: lineNumber, nodeIndex: nodes.push(makeNode(func[1], 'function', lineNumber, lineNumber, false, { signature: formatGoSignature(func[2], func[3]) })) - 1 });
+      return;
+    }
+
+    if (typeAlias && !typeStruct) {
+      nodes.push(makeNode(typeAlias[1], 'type', lineNumber, lineNumber, false, { typeAnnotation: clampText(typeAlias[2].trim()) }));
+    }
+    if (variable) {
+      nodes.push(makeNode(variable[1], 'variable', lineNumber, lineNumber, false, { typeAnnotation: variable[2] ? `: ${clampText(variable[2].trim())}` : undefined }));
+    }
+    if (constant) {
+      nodes.push(makeNode(constant[1], 'constant', lineNumber, lineNumber, false, { typeAnnotation: constant[2] ? `: ${clampText(constant[2].trim())}` : undefined }));
+    }
   });
 
   for (const block of blocks) {
@@ -213,6 +367,119 @@ function analyzeGo(content: string): { nodes: SymbolNode[]; edges: SymbolEdge[] 
   }
 
   return { nodes, edges: [] };
+}
+
+function extractClassMembers(node: ts.ClassDeclaration, sourceFile: ts.SourceFile): SymbolMember[] {
+  const members: SymbolMember[] = [];
+
+  node.members.forEach((member) => {
+    if ((ts.isPropertyDeclaration(member) || ts.isMethodDeclaration(member)) && member.name && isSupportedMemberName(member.name)) {
+      const memberName = member.name.getText(sourceFile);
+      const base = {
+        name: memberName,
+        visibility: getTsVisibility(member),
+        isStatic: hasModifier(member, ts.SyntaxKind.StaticKeyword),
+      };
+
+      if (ts.isPropertyDeclaration(member)) {
+        members.push({
+          ...base,
+          memberKind: 'attribute',
+          isOptional: Boolean(member.questionToken),
+          type: member.type ? clampText(member.type.getText(sourceFile)) : undefined,
+        });
+      } else {
+        members.push({
+          ...base,
+          memberKind: 'operation',
+          isOptional: Boolean(member.questionToken),
+          params: clampText(formatParameterList(member.parameters, sourceFile)),
+          type: member.type ? clampText(member.type.getText(sourceFile)) : undefined,
+          isAbstract: hasModifier(member, ts.SyntaxKind.AbstractKeyword),
+        });
+      }
+    }
+  });
+
+  return members;
+}
+
+function extractInterfaceMembers(node: ts.InterfaceDeclaration, sourceFile: ts.SourceFile): SymbolMember[] {
+  const members: SymbolMember[] = [];
+
+  node.members.forEach((member) => {
+    if ((ts.isPropertySignature(member) || ts.isMethodSignature(member)) && member.name && ts.isIdentifier(member.name)) {
+      if (ts.isPropertySignature(member)) {
+        members.push({
+          name: member.name.text,
+          visibility: '+',
+          memberKind: 'attribute',
+          isOptional: Boolean(member.questionToken),
+          type: member.type ? clampText(member.type.getText(sourceFile)) : undefined,
+        });
+      } else {
+        members.push({
+          name: member.name.text,
+          visibility: '+',
+          memberKind: 'operation',
+          isOptional: Boolean(member.questionToken),
+          params: clampText(formatParameterList(member.parameters, sourceFile)),
+          type: member.type ? clampText(member.type.getText(sourceFile)) : undefined,
+        });
+      }
+    }
+  });
+
+  return members;
+}
+
+function extractEnumValues(node: ts.EnumDeclaration, sourceFile: ts.SourceFile): string[] {
+  return node.members.slice(0, ENUM_LIMIT).map((member) => {
+    const name = member.name.getText(sourceFile);
+    if (!member.initializer) return name;
+    return clampText(`${name} = ${member.initializer.getText(sourceFile)}`);
+  });
+}
+
+function buildFunctionSignature(node: ts.FunctionDeclaration, sourceFile: ts.SourceFile): string {
+  const params = formatParameterList(node.parameters, sourceFile);
+  const returnType = node.type ? node.type.getText(sourceFile) : inferJsDocReturn(node);
+  return `(${params})${returnType ? `: ${returnType}` : ''}`;
+}
+
+function formatParameterList(parameters: readonly ts.ParameterDeclaration[], sourceFile: ts.SourceFile): string {
+  return parameters.map((parameter) => {
+    const name = `${parameter.name.getText(sourceFile)}${parameter.questionToken ? '?' : ''}`;
+    const type = parameter.type?.getText(sourceFile) ?? inferJsDocParam(parameter, sourceFile);
+    return type ? `${name}: ${type}` : name;
+  }).join(', ');
+}
+
+function inferJsDocParam(parameter: ts.ParameterDeclaration, sourceFile: ts.SourceFile): string | undefined {
+  const tag = ts.getJSDocParameterTags(parameter).at(0);
+  if (!tag?.typeExpression) return undefined;
+  return tag.typeExpression.getFullText(sourceFile).replace(/[{}]/g, '').trim();
+}
+
+function inferJsDocReturn(node: ts.FunctionDeclaration): string | undefined {
+  return ts.getJSDocReturnType(node)?.getText();
+}
+
+function getTsVisibility(node: ts.Node): MemberVisibility {
+  if (ts.isPropertyDeclaration(node) || ts.isMethodDeclaration(node)) {
+    if (node.name && ts.isPrivateIdentifier(node.name)) return '-';
+  }
+  if (hasModifier(node, ts.SyntaxKind.PrivateKeyword)) return '-';
+  if (hasModifier(node, ts.SyntaxKind.ProtectedKeyword)) return '#';
+  return '+';
+}
+
+function isSupportedMemberName(name: ts.PropertyName): boolean {
+  return ts.isIdentifier(name) || ts.isPrivateIdentifier(name);
+}
+
+function hasModifier(node: ts.Node, kind: ts.SyntaxKind): boolean {
+  return ts.canHaveModifiers(node) ? (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === kind) : false;
 }
 
 function findPythonBlockEnd(lines: string[], startLine: number, startIndent: number): number {
@@ -289,8 +556,8 @@ function findGoBlockEnd(lines: string[], startLine: number): number {
   return lines.length;
 }
 
-function makeLocalNode(name: string, kind: SymbolKind, lineStart: number, lineEnd: number, isExported: boolean): SymbolNode {
-  return { id: `${name}:${lineStart}`, name, kind, lineStart, lineEnd, isExported, nodeCategory: 'local' };
+function makeLocalNode(name: string, kind: SymbolKind, lineStart: number, lineEnd: number, isExported: boolean, extras: Partial<SymbolNode> = {}): SymbolNode {
+  return { id: `${name}:${lineStart}`, name, kind, lineStart, lineEnd, isExported, nodeCategory: 'local', ...extras };
 }
 
 function makeImportNode(name: string, lineStart: number, lineEnd: number, modulePath: string, importKind: ImportKind): SymbolNode {
@@ -307,8 +574,8 @@ function makeImportNode(name: string, lineStart: number, lineEnd: number, module
   };
 }
 
-function makeNode(name: string, kind: SymbolKind, lineStart: number, lineEnd: number, isExported: boolean): SymbolNode {
-  return makeLocalNode(name, kind, lineStart, lineEnd, isExported);
+function makeNode(name: string, kind: SymbolKind, lineStart: number, lineEnd: number, isExported: boolean, extras: Partial<SymbolNode> = {}): SymbolNode {
+  return makeLocalNode(name, kind, lineStart, lineEnd, isExported, extras);
 }
 
 function pushEdge(from: SymbolNode, byName: Map<string, SymbolNode>, edges: SymbolEdge[], name: string, kind: SymbolDependencyKind): void {
@@ -325,4 +592,102 @@ function dedupeEdges(edges: SymbolEdge[]): SymbolEdge[] {
     seen.add(key);
     return true;
   });
+}
+
+function clampText(value: string): string {
+  const compact = value.replace(/\s+/g, ' ').trim();
+  if (compact.length <= TYPE_TEXT_LIMIT) return compact;
+  return `${compact.slice(0, TYPE_TEXT_LIMIT - 1).trimEnd()}…`;
+}
+
+function formatPythonSignature(params: string, returnType?: string): string {
+  const compactParams = clampText(params.trim());
+  return `(${compactParams})${returnType ? `: ${returnType}` : ''}`;
+}
+
+function formatGoSignature(params: string, returnType?: string): string {
+  return `(${params.trim()})${returnType ? `: ${returnType.trim()}` : ''}`;
+}
+
+function extractGoReceiverType(receiver: string): string {
+  return receiver.replace(/^\s*[\w]+\s+/, '').replace(/[*\s]/g, '');
+}
+
+function isInsidePythonClass(
+  indent: number,
+  classes: Array<{ name: string; indent: number; startLine: number; nodeIndex: number }>,
+  lineNumber: number,
+  lines: string[],
+): boolean {
+  return classes.some((cls) => indent > cls.indent && lineNumber <= findPythonBlockEnd(lines, cls.startLine, cls.indent));
+}
+
+function extractPythonClassMembers(lines: string[], startLine: number, endLine: number, classIndent: number): SymbolMember[] {
+  const members: SymbolMember[] = [];
+  let insideInit = false;
+  let initIndent = -1;
+
+  for (let index = startLine; index < endLine; index += 1) {
+    const line = lines[index];
+    const trimmed = line.trim();
+    if (trimmed === '' || trimmed.startsWith('#')) continue;
+
+    const indent = (line.match(/^\s*/)?.[0] ?? '').length;
+    if (indent <= classIndent) continue;
+
+    const method = /^\s*def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*(?:->\s*([^:]+))?:/.exec(line);
+    if (method && indent === classIndent + 4) {
+      insideInit = method[1] === '__init__';
+      initIndent = indent;
+      members.push({
+        name: method[1],
+        visibility: getPythonVisibility(method[1]),
+        memberKind: 'operation',
+        params: clampText(formatPythonMemberParams(method[2])),
+        type: method[3] ? clampText(method[3].trim()) : undefined,
+      });
+      continue;
+    }
+
+    if (insideInit && indent > initIndent) {
+      const attr = /^\s*self\.([A-Za-z_]\w*)\s*(?::\s*([^=]+?))?\s*=/.exec(line);
+      if (attr) {
+        const attributeName = attr[1];
+        if (!members.some((member) => member.memberKind === 'attribute' && member.name === attributeName)) {
+          members.push({
+            name: attributeName,
+            visibility: getPythonVisibility(attributeName),
+            memberKind: 'attribute',
+            type: attr[2] ? clampText(attr[2].trim()) : undefined,
+          });
+        }
+        continue;
+      }
+    }
+
+    if (insideInit && indent <= initIndent) {
+      insideInit = false;
+      initIndent = -1;
+    }
+  }
+
+  const attributes = members.filter((member) => member.memberKind === 'attribute');
+  const operations = members.filter((member) => member.memberKind === 'operation');
+  return [...attributes, ...operations];
+}
+
+function getPythonVisibility(name: string): MemberVisibility {
+  if (/^__.*__$/.test(name)) return '+';
+  if (/^__[^_]/.test(name)) return '-';
+  if (/^_[^_]/.test(name)) return '#';
+  return '+';
+}
+
+function formatPythonMemberParams(params: string): string {
+  return params
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => part !== 'self' && !part.startsWith('self:'))
+    .join(', ');
 }

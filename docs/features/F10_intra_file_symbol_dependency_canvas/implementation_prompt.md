@@ -11,6 +11,7 @@
 - **Python/Go 분석**: 정규식으로 `def`/`class` (Python), `func`/`type`/`var`/`const` (Go) 선언과 참조를 파싱한다. Python은 들여쓰기 기준으로 블록 종료 라인을 찾고, Go는 중괄호 깊이로 닫는 `}` 라인을 찾는다.
 - **시각화**: Webview에서 `React Flow` (`@xyflow/react`) 사용. 엣지가 있으면 `@dagrejs/dagre` 기반 계층 레이아웃(`rankdir: 'LR'`), 없으면 kind 그룹 기반 앵커 배치.
 - **재사용**: F04의 `CanvasControls`, `getNearestHandles`, `getNodeHeight`, `layoutWithDagre` 패턴을 참고·재사용한다.
+- **표기 규칙**: 함수 시그니처와 class/interface 멤버명에 옵셔널(`?`)이 있으면 그대로 보존해 렌더링한다. 코드 패널은 라인 번호와 본문 사이에 충분한 간격을 두어 가독성을 확보한다.
 
 ---
 
@@ -609,11 +610,11 @@ export const SymbolNode: FC<NodeProps<SymbolNodeType>> = ({ data, selected }) =>
 
 ### `src/webview/features/F10/SymbolEdge.tsx`
 
-F04 `DependencyEdge.tsx`와 동일한 구조로 작성. `kind`에 따라 `strokeDasharray`와 `strokeWidth`를 다르게 적용.
+F04 `DependencyEdge.tsx`와 동일한 구조로 작성하되, `kind`에 따라 `strokeDasharray`와 `strokeWidth`를 다르게 적용하고 열린 V형/빈 삼각형 화살촉을 함께 렌더링한다.
 
 ### `src/webview/features/F10/SymbolGraph.tsx`
 
-F04 `DependencyGraph.tsx`와 동일한 React Flow 설정. `nodeTypes = { symbolNode: SymbolNode }`, `edgeTypes = { symbolEdge: SymbolEdge }`.
+F04 `DependencyGraph.tsx`와 동일한 React Flow 설정을 따르되, `nodeTypes = { symbolNode: SymbolNode }`, `edgeTypes = { symbolEdge: SymbolEdge }`를 사용한다. 엣지의 강조/감쇠 상태는 `highlighted`/`dimmed`로 제어한다.
 
 ### `src/webview/features/F10/S08_IntraFileSymbolDependencyCanvasScreen.tsx`
 
@@ -792,6 +793,7 @@ if (event.data.type === 'SYMBOL_GRAPH_FAILED') {
 | `appStore.ts` | 중간 | 상태 5개 + 액션 4개 추가 |
 | `types/commit.ts` | 낮음 | 신규 타입 추가, 기존 타입 무변경 |
 | `App.tsx` | 낮음 | 라우트 1개 + 메시지 2개 추가 |
+| `SymbolFileCodeViewer` | 낮음 | 라인 번호와 본문 간격 조정, 긴 라인 가독성 개선 |
 | F10 (신규) | 신규 | 기존 코드 영향 없음 |
 
 ---

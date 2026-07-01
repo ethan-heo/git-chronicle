@@ -6,6 +6,8 @@ export interface SymbolNodeData extends Record<string, unknown> {
   symbolNode: SymbolNode;
   label: string;
   lineRange: string;
+  accentColor: string;
+  width: number;
 }
 
 export type SymbolNodeType = Node<SymbolNodeData, 'symbolNode'>;
@@ -45,7 +47,13 @@ export function buildSymbolGraphData(symbolNodes: SymbolNode[], symbolEdges: Sym
           id: symbolNode.id,
           type: 'symbolNode',
           position,
-          data: { symbolNode, label: symbolNode.name, lineRange: `L${symbolNode.lineStart}–${symbolNode.lineEnd}` },
+          data: {
+            symbolNode,
+            label: symbolNode.name,
+            lineRange: `L${symbolNode.lineStart}–${symbolNode.lineEnd}`,
+            accentColor: getSymbolAccentColor(symbolNode),
+            width: getNodeDimensions(symbolNode).width,
+          },
           draggable: true,
           selectable: true,
         } as SymbolNodeType;
@@ -116,11 +124,36 @@ function layoutByKind(symbolNodes: SymbolNode[]): Map<string, { x: number; y: nu
 }
 
 function getNodeDimensions(symbolNode: SymbolNode): { width: number; height: number } {
+  const width = getNodeWidth(symbolNode);
   if (symbolNode.nodeCategory === 'import') {
-    return { width: 200, height: 72 };
+    return { width, height: 84 };
   }
 
-  return { width: 240, height: 88 };
+  const rowHeight = 18;
+  const dividerHeight = 10;
+  let height = 84;
+
+  if (symbolNode.signature) {
+    height += rowHeight;
+  }
+  if (symbolNode.typeAnnotation) {
+    height += rowHeight;
+  }
+
+  const attributes = symbolNode.members?.filter((member) => member.memberKind === 'attribute') ?? [];
+  const operations = symbolNode.members?.filter((member) => member.memberKind === 'operation') ?? [];
+
+  if (attributes.length > 0) {
+    height += dividerHeight + attributes.length * rowHeight;
+  }
+  if (operations.length > 0) {
+    height += dividerHeight + operations.length * rowHeight;
+  }
+  if ((symbolNode.enumValues?.length ?? 0) > 0) {
+    height += dividerHeight + (symbolNode.enumValues?.length ?? 0) * rowHeight;
+  }
+
+  return { width, height };
 }
 
 function normalizePositions(positions: Map<string, { x: number; y: number }>): Map<string, { x: number; y: number }> {
@@ -162,4 +195,56 @@ function getSourceHandleId(face: NodeFace): string {
 
 function getTargetHandleId(face: NodeFace): string {
   return `target-${face}`;
+}
+
+function getSymbolAccentColor(symbolNode: SymbolNode): string {
+  if (symbolNode.nodeCategory === 'import') {
+    return 'var(--gae-color-symbol-imp)';
+  }
+
+  return {
+    function: 'var(--gae-color-symbol-function)',
+    class: 'var(--gae-color-symbol-class)',
+    interface: 'var(--gae-color-symbol-interface)',
+    type: 'var(--gae-color-symbol-type)',
+    variable: 'var(--gae-color-symbol-variable)',
+    constant: 'var(--gae-color-symbol-constant)',
+    enum: 'var(--gae-color-symbol-enum)',
+  }[symbolNode.kind];
+}
+
+function getNodeWidth(symbolNode: SymbolNode): number {
+  const minWidth = symbolNode.nodeCategory === 'import' ? 208 : symbolNode.kind === 'function' ? 248 : 232;
+  const horizontalPadding = symbolNode.nodeCategory === 'import' ? 52 : 56;
+  const charWidth = 7.4;
+  const candidateLines: string[] = [symbolNode.name];
+
+  if (symbolNode.modulePath) {
+    candidateLines.push(symbolNode.modulePath);
+  }
+  if (symbolNode.signature) {
+    candidateLines.push(symbolNode.signature);
+  }
+  if (symbolNode.typeAnnotation) {
+    candidateLines.push(symbolNode.typeAnnotation);
+  }
+  for (const member of symbolNode.members ?? []) {
+    candidateLines.push(formatMemberLine(member));
+  }
+  for (const enumValue of symbolNode.enumValues ?? []) {
+    candidateLines.push(enumValue);
+  }
+
+  const longestLine = candidateLines.reduce((max, current) => Math.max(max, current.length), 0);
+  const estimatedWidth = Math.ceil(longestLine * charWidth + horizontalPadding);
+  return Math.max(minWidth, estimatedWidth);
+}
+
+function formatMemberLine(member: NonNullable<SymbolNode['members']>[number]): string {
+  const name = `${member.name}${member.isOptional ? '?' : ''}`;
+  if (member.memberKind === 'operation') {
+    return `${member.visibility} ${name}(${member.params ?? ''})${member.type ? `: ${member.type}` : ''}`;
+  }
+
+  return `${member.visibility} ${name}${member.type ? `: ${member.type}` : ''}`;
 }

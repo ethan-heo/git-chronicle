@@ -22,6 +22,8 @@ interface SymbolFileCodeViewerProps {
 - `scrollToRange`와 `scrollRequestId`가 바뀌면 해당 라인으로 스크롤합니다.
 - 호버는 스크롤을 유발하지 않습니다.
 - 확장자에 따라 Shiki 언어를 추론합니다.
+- 라인 번호와 본문 사이의 간격을 충분히 두어 코드가 번호에 붙어 보이지 않도록 렌더링합니다.
+- 코드 줄은 고정 폭 번호 컬럼과 본문 시작 여백을 분리해 가독성을 확보합니다.
 
 ## 사용 위치
 

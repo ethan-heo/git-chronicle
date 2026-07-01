@@ -1,6 +1,6 @@
 # Component: SymbolEdge
 
-두 심볼 노드 간의 의존 관계를 방향 있는 SmoothStep 엣지로 표시한다. 관계 종류(`kind`)에 따라 선 스타일이 다르다. F10 전용.
+두 심볼 노드 간의 의존 관계를 방향 있는 Bezier 엣지로 표시한다. 관계 종류(`kind`)에 따라 선 스타일과 화살촉 모양이 다르다. F10 전용.
 
 ---
 
@@ -29,10 +29,16 @@ type SymbolEdgeType = Edge<SymbolEdgeData, 'symbolEdge'>;
 
 | kind | strokeWidth | strokeDasharray | 색상 |
 |------|------------|-----------------|------|
-| `calls` | 1.5 | 없음 (실선) | `--vscode-charts-blue` |
-| `uses` | 1.5 | `4 2` (점선) | `--vscode-panel-border` 계열 |
-| `extends` | 2.5 | 없음 (굵은 실선) | `--vscode-charts-green` |
-| `implements` | 2.5 | `6 3` (굵은 점선) | `--vscode-charts-purple` |
+| `calls` | 2.0 내외 | 없음 (실선) | 열린 V형 화살촉 |
+| `uses` | 1.5 내외 | `4 4` (점선) | 열린 V형 화살촉 |
+| `extends` | 2.5 내외 | 없음 (굵은 실선) | 속이 빈 삼각형 |
+| `implements` | 2.5 내외 | `6 4` (굵은 점선) | 속이 빈 삼각형 |
+
+## 화살촉 규칙
+
+- `calls` / `uses`는 열린 V형 화살촉을 사용한다.
+- `extends` / `implements`는 속이 빈 삼각형 화살촉을 사용한다.
+- 화살촉은 엣지 끝점이 삼각형 내부로 파고들지 않도록 대상 방향으로 약간 오프셋해 렌더링한다.
 
 ## 상태 스타일
 

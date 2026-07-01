@@ -12,7 +12,7 @@ GitRewind VSCode Extension. S05 의존성 캔버스에서 파일 노드의 `[심
 
 ## Design Goal
 
-단일 파일 내부의 함수·클래스·변수·타입 등 노드들과 노드 간 호출·참조·상속 관계를 캔버스 그래프로 시각화하는 화면을 디자인한다. 노드는 종류별 색상 배지를 포함하고, 엣지는 관계 종류(calls/uses/extends/implements)에 따라 선 스타일이 다르다. 범례는 노드 라벨의 의미와 노드 종류 7종(function/class/interface/type/variable/constant/enum)을 모두 설명해야 한다. 전체 화면을 캔버스가 채우며, 범례 패널과 줌 컨트롤은 오버레이로 고정 배치된다.
+단일 파일 내부의 함수·클래스·변수·타입 등 노드들과 노드 간 호출·참조·상속 관계를 캔버스 그래프로 시각화하는 화면을 디자인한다. 노드는 종류별 색상 배지를 포함하고, 기능에 따라 시그니처·멤버 목록·타입 어노테이션·enum 값도 함께 보여준다. 엣지는 관계 종류(calls/uses/extends/implements)에 따라 선 스타일과 화살촉 모양이 다르다. 범례는 노드 라벨의 의미와 노드 종류 7종(function/class/interface/type/variable/constant/enum)을 모두 설명해야 한다. 전체 화면을 캔버스가 채우며, 범례 패널과 줌 컨트롤은 오버레이로 고정 배치된다.
 
 ---
 
@@ -22,11 +22,12 @@ GitRewind VSCode Extension. S05 의존성 캔버스에서 파일 노드의 `[심
 S08_IntraFileSymbolDependencyCanvasScreen
 ├─ TopHeader ({파일 경로} + BackButton + ⚙)
 ├─ SymbolGraph (전체 캔버스 영역)
-│   ├─ SymbolNode × N (Dagre 계층 또는 kind 그룹 배치)
+│   ├─ SymbolNode × N (Dagre 계층 또는 kind 그룹 배치, 노드 폭은 내용 길이에 따라 가변)
 │   │   ├─ SymbolKindBadge (fn/cls/ifc/typ/var/cst/enm)
 │   │   ├─ 노드 이름
+│   │   ├─ 시그니처/멤버/타입/enum 값 보조 정보
 │   │   └─ 라인 범위 (L12–28)
-│   └─ SymbolEdge × M (방향 화살표, 관계 종류별 선 스타일)
+│   └─ SymbolEdge × M (방향 화살표, 관계 종류별 선 스타일과 화살촉)
 ├─ SymbolLegendPanel (우측 하단 오버레이)
 └─ CanvasControls (우측 상단 오버레이)
 ```
@@ -94,10 +95,10 @@ S08_IntraFileSymbolDependencyCanvasScreen
 - `SymbolKindBadge`: 작은 pill 형태, 종류별 고유 색상 (F04 `FileStatusBadge`와 유사한 크기)
 - 라인 범위 텍스트: `font-size: 10px`, `color: var(--vscode-descriptionForeground)`, 우측 하단 정렬
 - export 인디케이터: `↑` 또는 `⬆` 아이콘, `color: var(--vscode-symbolIcon-functionForeground)`
-- `SymbolEdge` calls: `strokeWidth: 1.5`, `color: var(--vscode-charts-blue)`
-- `SymbolEdge` uses: `strokeWidth: 1.5`, `strokeDasharray: 4 2`, `color: var(--vscode-panel-border)` 계열
-- `SymbolEdge` extends: `strokeWidth: 2.5`, `color: var(--vscode-charts-green)`
-- `SymbolEdge` implements: `strokeWidth: 2.5`, `strokeDasharray: 6 3`, `color: var(--vscode-charts-purple)`
+- `SymbolEdge` calls: `strokeWidth: 2.0` 내외, `color: var(--vscode-charts-blue)`, 열린 V형 화살촉
+- `SymbolEdge` uses: `strokeWidth: 1.5` 내외, `strokeDasharray: 4 4`, `color: var(--vscode-panel-border)` 계열, 열린 V형 화살촉
+- `SymbolEdge` extends: `strokeWidth: 2.5` 내외, `color: var(--vscode-charts-green)`, 빈 삼각형 화살촉
+- `SymbolEdge` implements: `strokeWidth: 2.5` 내외, `strokeDasharray: 6 4`, `color: var(--vscode-charts-purple)`, 빈 삼각형 화살촉
 - `SymbolLegendPanel`: 반투명 배경 (`backdrop-filter: blur`), F04 LegendPanel과 동일 위치, 접기/펼치기 토글 제공
 - `CanvasControls`: F04와 동일 디자인 재사용
 
@@ -135,7 +136,7 @@ S08_IntraFileSymbolDependencyCanvasScreen
 ## MCP Rules
 
 - `SymbolGraph`는 독립 Frame (전체 캔버스 영역)
-- `SymbolNode`는 재사용 Component (3가지 Variant)
+- `SymbolNode`는 재사용 Component (default/hover/exported/import Variant)
 - `SymbolEdge`는 4가지 kind × 3가지 state Variant
 - `SymbolLegendPanel`과 `CanvasControls`는 오버레이 Frame (absolute position)
 - `SymbolKindBadge`는 전역 Component 참조 (7가지 kind Variant)

@@ -1,41 +1,7 @@
 .symbol-edge-sample {
-  position: relative;
-  display: inline-flex;
-  width: 36px;
+  display: inline-block;
+  width: 44px;
   height: 14px;
   flex-shrink: 0;
-  align-items: center;
+  overflow: visible;
 }
-
-.symbol-edge-sample::before {
-  position: absolute;
-  top: 50%;
-  right: 4px;
-  left: 0;
-  height: 2px;
-  transform: translateY(-50%);
-  border-radius: 999px;
-  background: currentColor;
-  content: '';
-}
-
-.symbol-edge-sample::after {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  width: 0;
-  height: 0;
-  transform: translateY(-50%);
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  border-left: 6px solid currentColor;
-  content: '';
-}
-
-.symbol-edge-sample-calls { color: var(--gae-color-symbol-calls); }
-.symbol-edge-sample-uses { color: var(--gae-color-symbol-uses); }
-.symbol-edge-sample-uses::before { height: 1.5px; border-top: 1.5px dashed currentColor; background: transparent; }
-.symbol-edge-sample-extends { color: var(--gae-color-symbol-extends); }
-.symbol-edge-sample-extends::before { height: 3px; }
-.symbol-edge-sample-implements { color: var(--gae-color-symbol-implements); }
-.symbol-edge-sample-implements::before { height: 2.5px; border-top: 2.5px dashed currentColor; background: transparent; }
