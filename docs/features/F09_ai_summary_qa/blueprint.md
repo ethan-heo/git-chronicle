@@ -8,7 +8,7 @@
 
 ## Purpose
 
-요약 완료 후 하단에 질문 입력 UI를 제공하고, 생성된 답변을 요약 뷰어 내부에 자연스럽게 이어서 보여준다.
+요약 완료 후 하단에 질문 입력 UI를 제공하고, 생성된 답변을 별도 채팅 스레드가 아닌 기존 요약 문서 하단에 자연스럽게 이어서 보여준다.
 
 ---
 
@@ -18,15 +18,15 @@
 - `isGenerating: boolean`
 - `isGeneratingQA: boolean`
 - `qaError: string | null`
-- `qaStreamingResponse: string`
+- `qaCompletionCount: number`
 
 ---
 
 ## Outputs
 
 - 질문 제출 이벤트
-- 답변 스트리밍 상태 렌더링
-- 완료된 질문/답변 마크다운 표시
+- 본문 끝 답변 스트리밍 상태 렌더링
+- 완료된 질문/답변 마크다운 append 및 자동 스크롤
 
 ---
 
@@ -48,8 +48,6 @@
 ```typescript
 interface QAInputAreaProps {
   isGeneratingQA: boolean;
-  qaError: string | null;
-  qaStreamingResponse: string;
   onAskQuestion: (question: string) => void;
 }
 ```
@@ -61,8 +59,7 @@ interface QAInputAreaProps {
 
 #### States
 - `idle`: 입력 가능
-- `streaming`: 버튼 비활성화, 임시 응답 박스 표시
-- `error`: 에러 메시지 표시
+- `streaming`: 버튼 비활성화
 
 ---
 
@@ -72,10 +69,9 @@ interface QAInputAreaProps {
 AISummaryViewer
 ├─ action bar
 ├─ markdown / streaming content
+│  └─ completed Q&A blocks appended in same document flow
 └─ QAInputArea (요약 완료 시)
    ├─ textarea
-   ├─ streaming preview (조건부)
-   ├─ error text (조건부)
    └─ submit button
 ```
 
@@ -84,8 +80,9 @@ AISummaryViewer
 ## Layout Rules
 
 - 질문/답변 영역은 `AISummaryViewer` 하단에 border-top으로 구분한다.
-- 질문 버튼은 우측 정렬의 소형 primary button을 사용한다.
-- 스트리밍 응답은 입력창 아래 별도 박스로 표시한다.
+- 질문 입력창과 버튼은 가로 배치한다.
+- 질문/답변 결과는 별도 박스나 스레드가 아니라 기존 요약 문서의 하단 흐름으로만 표시한다.
+- 마크다운 heading은 화면상 `h2 → h3 → h4 → h5` 위계로 보이도록 축약 렌더링한다.
 
 ---
 
@@ -95,12 +92,12 @@ AISummaryViewer
 |---------|--------|------|
 | 질문 영역 노출 | 요약 완료 | textarea + 버튼 표시 |
 | 질문 제출 | Enter / 버튼 클릭 | `START_AI_QA` 전송 |
-| 응답 스트리밍 | `AI_QA_CHUNK` 수신 | 임시 응답 박스 갱신 |
-| 완료 | `AI_QA_COMPLETE` 수신 | 최종 마크다운 본문에 `### Q. ...` 블록 append |
+| 응답 스트리밍 | `AI_QA_CHUNK` 수신 | 본문 끝 "생각중" 상태 유지 |
+| 완료 | `AI_QA_COMPLETE` 수신 | 최종 마크다운 본문에 `### Q. ...` 블록 append 후 최신 위치로 스크롤 |
 
 ---
 
 ## Responsive Rules
 
-- 좁은 패널에서도 textarea와 버튼이 세로 흐름을 유지한다.
-- 스트리밍 박스는 `white-space: pre-wrap`으로 긴 답변을 줄바꿈 표시한다.
+- 좁은 패널에서도 textarea와 버튼은 한 줄 레이아웃을 우선 유지한다.
+- 본문에 append된 질문/답변과 표(table)는 기존 요약 문서와 동일한 폭/줄바꿈 규칙을 따른다.

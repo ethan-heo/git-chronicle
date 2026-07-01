@@ -33,8 +33,7 @@ export const S04AISummaryViewerScreen: FC = () => {
     onConfirmRegenerate,
     onRegenerate,
     onRetry,
-    qaError,
-    qaStreamingResponse,
+    qaCompletionCount,
     savePath,
     selectedCommit,
     selectedFile,
@@ -77,8 +76,7 @@ export const S04AISummaryViewerScreen: FC = () => {
             hasSavePath={Boolean(savePath)}
             savedPath={summarySavedPath}
             providerLabel={activeAIProvider}
-            qaError={qaError}
-            qaStreamingResponse={qaStreamingResponse}
+            qaCompletionCount={qaCompletionCount}
             summaryMode={summaryMode}
             onAskQuestion={onAskQuestion}
             onGoToSettings={goToSettingsView}

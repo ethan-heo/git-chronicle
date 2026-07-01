@@ -35,8 +35,7 @@ export const S07CodeAndAISummaryScreen: FC = () => {
     onAskQuestion,
     onRegenerate,
     onRetry,
-    qaError,
-    qaStreamingResponse,
+    qaCompletionCount,
     savePath,
     summaryError,
     summaryMode,
@@ -83,8 +82,7 @@ export const S07CodeAndAISummaryScreen: FC = () => {
             hasSavePath={Boolean(savePath)}
             savedPath={summarySavedPath}
             providerLabel={activeAIProvider}
-            qaError={qaError}
-            qaStreamingResponse={qaStreamingResponse}
+            qaCompletionCount={qaCompletionCount}
             summaryMode={summaryMode}
             onAskQuestion={onAskQuestion}
             onGoToSettings={goToSettingsView}

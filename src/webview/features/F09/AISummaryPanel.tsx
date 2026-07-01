@@ -27,8 +27,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isOpen, filePath, onCl
     onAskQuestion,
     onRegenerate,
     onRetry,
-    qaError,
-    qaStreamingResponse,
+    qaCompletionCount,
     savePath,
     summaryError,
     summaryMode,
@@ -59,8 +58,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isOpen, filePath, onCl
           hasSavePath={Boolean(savePath)}
           savedPath={summarySavedPath}
           providerLabel={activeAIProvider}
-          qaError={qaError}
-          qaStreamingResponse={qaStreamingResponse}
+          qaCompletionCount={qaCompletionCount}
           summaryMode={summaryMode}
           onAskQuestion={onAskQuestion}
           onGoToSettings={onGoToSettings}

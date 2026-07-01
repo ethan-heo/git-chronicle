@@ -129,7 +129,7 @@
     "saved_path_title": "저장 경로: {{path}}",
     "regenerate": "다시 생성",
     "ai_result": "AI 정리 결과",
-    "streaming": "AI 정리를 생성하는 중입니다...",
+    "streaming": "답변을 준비하는 중...",
     "token_warning": "diff가 큽니다. AI가 일부를 생략할 수 있습니다.",
     "qa_label": "요약에 대해 질문하기",
     "qa_placeholder": "요약 내용에 대해 질문하세요...",

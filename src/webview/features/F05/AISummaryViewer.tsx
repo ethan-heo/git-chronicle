@@ -1,10 +1,15 @@
-import { useState, type FC, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type FC, type ReactElement, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState } from '../../shared/components';
 import type { SummaryMode } from '../../types/commit';
+import { QAInputArea } from '../F09/QAInputArea';
 import { RegenerateButton } from './RegenerateButton';
 import { StreamingTextRenderer } from './StreamingTextRenderer';
+
+type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+type DisplayHeadingLevel = 2 | 3 | 4 | 5;
 
 interface AISummaryViewerProps {
   content: string;
@@ -17,8 +22,7 @@ interface AISummaryViewerProps {
   hasSavePath: boolean;
   savedPath: string | null;
   providerLabel: string | null;
-  qaError: string | null;
-  qaStreamingResponse: string;
+  qaCompletionCount: number;
   summaryMode: SummaryMode;
   onAskQuestion: (question: string) => void;
   onGoToSettings: () => void;
@@ -37,8 +41,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   hasSavePath,
   savedPath,
   providerLabel,
-  qaError,
-  qaStreamingResponse,
+  qaCompletionCount,
   summaryMode,
   onAskQuestion,
   onGoToSettings,
@@ -46,7 +49,14 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   onRetry,
 }) => {
   const { t } = useTranslation();
-  const [question, setQuestion] = useState('');
+  const summaryEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (qaCompletionCount > 0) {
+      summaryEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [qaCompletionCount]);
+
   if (!hasAIProvider) {
     return <EmptyState message={t('ai_summary.no_ai')} ctaLabel={t('ai_summary.go_to_settings')} onCtaClick={onGoToSettings} />;
   }
@@ -92,23 +102,6 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const showSavedPath = hasSavedSummary && Boolean(savedPath);
   const canAskQuestion = !isGenerating && Boolean(content);
 
-  const submitQuestion = (): void => {
-    const trimmed = question.trim();
-    if (!trimmed || isGeneratingQA) {
-      return;
-    }
-
-    onAskQuestion(trimmed);
-    setQuestion('');
-  };
-
-  const handleQuestionKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      submitQuestion();
-    }
-  };
-
   return (
     <section className="ai-summary-viewer" role="region" aria-label={t('ai_summary.ai_result')} aria-live={isGenerating ? 'polite' : undefined}>
       <div className="ai-summary-action-bar">
@@ -124,49 +117,36 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
       </div>
 
       <div className="ai-summary-content">
-        {isGenerating ? (
-          <StreamingTextRenderer content={content} isStreaming />
-        ) : content ? (
-          <ReactMarkdown
-            components={{
-              h3: ({ children }) => (
-                <h3>
-                  <span aria-hidden="true" />
-                  {children}
-                </h3>
-              ),
-            }}
-          >
-            {content}
-          </ReactMarkdown>
-        ) : (
-          <EmptyState message={summaryMode === 'commit' ? t('ai_summary.empty_commit') : t('ai_summary.empty')} />
-        )}
-      </div>
-      {canAskQuestion ? (
-        <div className="ai-summary-qa-panel">
-          <textarea
-            id="ai-summary-question"
-            className="ai-summary-qa-textarea"
-            placeholder={t('ai_summary.qa_placeholder')}
-            value={question}
-            disabled={isGeneratingQA}
-            onChange={(event) => setQuestion(event.target.value)}
-            onKeyDown={handleQuestionKeyDown}
-          />
-          {qaStreamingResponse ? (
-            <div className="ai-summary-qa-stream" aria-live="polite">
-              <p>{qaStreamingResponse}</p>
-            </div>
-          ) : null}
-          {qaError ? <p className="ai-summary-qa-error">{qaError}</p> : null}
-          <div className="ai-summary-qa-actions">
-            <button type="button" className="ai-summary-qa-button" disabled={isGeneratingQA || !question.trim()} onClick={submitQuestion}>
-              {isGeneratingQA ? t('ai_summary.qa_loading') : t('ai_summary.qa_submit')}
-            </button>
-          </div>
+        <div className="ai-summary-body">
+          {isGenerating ? (
+            <StreamingTextRenderer content={content} isStreaming />
+          ) : content ? (
+            <>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => renderMarkdownHeading(1, children),
+                  h2: ({ children }) => renderMarkdownHeading(2, children),
+                  h3: ({ children }) => renderMarkdownHeading(3, children),
+                  h4: ({ children }) => renderMarkdownHeading(4, children),
+                  h5: ({ children }) => renderMarkdownHeading(5, children),
+                  h6: ({ children }) => renderMarkdownHeading(6, children),
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+              <div ref={summaryEndRef} />
+            </>
+          ) : (
+            <EmptyState message={summaryMode === 'commit' ? t('ai_summary.empty_commit') : t('ai_summary.empty')} />
+          )}
         </div>
-      ) : null}
+        {canAskQuestion ? (
+          <>
+            <QAInputArea isGeneratingQA={isGeneratingQA} onAskQuestion={onAskQuestion} />
+          </>
+        ) : null}
+      </div>
     </section>
   );
 };
@@ -193,4 +173,51 @@ function formatSourceTag(
   }
 
   return t('ai_summary.source_ready', { provider });
+}
+
+function renderMarkdownHeading(level: HeadingLevel, children: ReactNode): ReactElement {
+  const displayLevel = toDisplayHeadingLevel(level);
+  const Tag = `h${displayLevel}` as const;
+  const headingText = extractHeadingText(children).trim();
+  const isQuestionHeading = /^q\.\s/i.test(headingText);
+
+  return (
+    <Tag className={`ai-summary-heading ai-summary-heading-h${displayLevel}${isQuestionHeading ? ' ai-summary-heading-question' : ''}`}>
+      {displayLevel <= 4 && !isQuestionHeading ? <span aria-hidden="true" /> : null}
+      {children}
+    </Tag>
+  );
+}
+
+function toDisplayHeadingLevel(level: HeadingLevel): DisplayHeadingLevel {
+  if (level <= 1) {
+    return 2;
+  }
+
+  if (level === 2) {
+    return 3;
+  }
+
+  if (level === 3) {
+    return 4;
+  }
+
+  return 5;
+}
+
+function extractHeadingText(children: ReactNode): string {
+  if (typeof children === 'string' || typeof children === 'number') {
+    return String(children);
+  }
+
+  if (Array.isArray(children)) {
+    return children.map((child) => extractHeadingText(child)).join('');
+  }
+
+  if (children && typeof children === 'object' && 'props' in children) {
+    const childProps = children.props as { children?: ReactNode };
+    return extractHeadingText(childProps.children ?? '');
+  }
+
+  return '';
 }

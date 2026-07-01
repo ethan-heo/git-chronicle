@@ -1,6 +1,6 @@
 # Component: AISummaryViewer
 
-AI 정리 결과(마크다운)를 표시하는 뷰어 컴포넌트. 스트리밍 중에는 타이핑 효과로 실시간 출력하고, 완료 후에는 `react-markdown`으로 렌더링한다. F05_AISummaryFile, F05b_AISummaryCommit 모두에서 사용한다.
+AI 정리 결과(마크다운)를 표시하는 뷰어 컴포넌트. 스트리밍 중에는 타이핑 효과와 "생각중" 상태를 보여주고, 완료 후에는 `react-markdown` + `remark-gfm`으로 렌더링한다. F05_AISummaryFile, F05b_AISummaryCommit 모두에서 사용한다.
 
 ---
 
@@ -18,8 +18,7 @@ interface AISummaryViewerProps {
   hasSavePath: boolean;            // savePath 존재 여부
   savedPath: string | null;        // 현재 저장 파일 경로
   providerLabel: string | null;    // 표시할 provider 이름
-  qaError: string | null;          // Q&A 에러 메시지
-  qaStreamingResponse: string;     // Q&A 임시 스트리밍 텍스트
+  qaCompletionCount: number;       // Q&A 완료 후 최신 append 위치 스크롤 트리거
   summaryMode: "file" | "commit";
   onAskQuestion: (question: string) => void;
   onGoToSettings: () => void;
@@ -41,22 +40,22 @@ AISummaryViewer
 ├── [content === '' && !isGenerating] → EmptyState (AI 정리가 없음)
 └── [content 있음]          → 마크다운 렌더링 영역
     ├── [isGenerating = true]  → StreamingTextRenderer (타이핑 커서 표시)
-    ├── [isGenerating = false] → ReactMarkdown 렌더링 (완성본)
+    ├── [isGenerating = false] → ReactMarkdown + remark-gfm 렌더링 (완성본)
     └── [isGenerating = false && content !== ''] → QAInputArea
 ```
 
-상단 action bar에는 provider/source tag를 표시한다. [재생성] 버튼은 `hasSavedSummary && content !== "" && !isGenerating`일 때만 노출한다. 요약 완료 후에는 하단에 질문 입력 영역이 추가되며, Q&A 응답 완료 시 동일 마크다운 본문에 append된 결과가 다시 렌더링된다.
+상단 action bar에는 provider/source tag를 표시한다. [재생성] 버튼은 `hasSavedSummary && content !== "" && !isGenerating`일 때만 노출한다. 요약 완료 후에는 하단에 질문 입력 영역이 추가되며, Q&A 응답 완료 시 동일 마크다운 본문에 append된 결과만 다시 렌더링된다. 별도 Q&A 스레드 UI는 유지하지 않는다.
 
 ---
 
 ## 스트리밍 타이핑 효과
 
-`StreamingTextRenderer`는 `content`를 `<pre>` 태그로 표시하고 끝에 깜빡이는 커서(`|`)를 추가한다.
+`StreamingTextRenderer`는 `content`를 `<pre>` 태그로 표시하고 끝에 깜빡이는 커서(`|`)를 추가한다. 아직 텍스트 chunk가 오지 않은 스트리밍 시작 구간에서는 "생각중" + 점 애니메이션을 보여준다.
 
 ```tsx
 const StreamingTextRenderer: React.FC<{ content: string; isStreaming: boolean }> = ({ content, isStreaming }) => (
   <div className="streaming-text-renderer">
-    <pre className="streaming-content">{content || 'AI 정리를 생성하는 중입니다...'}</pre>
+    <pre className="streaming-content">{content}</pre>
     {isStreaming ? <span className="streaming-cursor" aria-hidden="true" /> : null}
   </div>
 );
@@ -71,46 +70,31 @@ const StreamingTextRenderer: React.FC<{ content: string; isStreaming: boolean }>
 | `loading` | `isLoading = true` | 상단 안내 문구 + 스켈레톤 프리뷰 카드 |
 | `streaming` | `isGenerating = true`, `content` 증가 중 | 타이핑 커서 표시 |
 | `complete` | `isGenerating = false`, `content` 완성 | react-markdown 렌더링 |
-| `qa.streaming` | `isGeneratingQA = true` | 질문 버튼 비활성화 + 임시 응답 박스 |
-| `qa.error` | `qaError !== null` | 질문 영역 하단 에러 텍스트 |
+| `qa.streaming` | `isGeneratingQA = true` | 질문 버튼 비활성화 + 본문 끝 "생각중" 표시 |
 | `error` | `error !== null` | ErrorState + [재시도] |
 | `empty` | `content === ''`, `!isGenerating`, `!isLoading`, `!error` | EmptyState |
 | `noAI` | `hasAIProvider = false` | EmptyState + 설정 CTA |
 | `noPath` | `hasSavePath = false` | EmptyState + 설정 CTA |
 
+Q&A 에러는 별도 스레드 박스가 아니라 입력 흐름에서 처리하고, 성공 시에는 append된 본문 위치로 자동 스크롤된다.
+
 ---
 
-## CSS
+## Markdown Rendering
 
-```css
-.ai-summary-viewer {
-  padding: 16px;
-  overflow-y: auto;
-  flex: 1;
-}
-.streaming-text {
-  font-family: var(--vscode-editor-font-family, monospace);
-  font-size: 13px;
-  white-space: pre-wrap;
-  color: var(--vscode-editor-foreground);
-}
-.streaming-cursor {
-  animation: blink 1s step-start infinite;
-}
-@keyframes blink {
-  50% { opacity: 0; }
-}
-```
+- `remark-gfm`을 사용해 table 문법을 렌더링한다.
+- heading은 문서 가독성을 위해 표시 레벨을 축약해 `h2 → h3 → h4 → h5` 체계로 렌더링한다.
+- `Q. ...` 형식의 질문 heading은 일반 소제목보다 낮은 메타 톤으로 렌더링해 본문 위계를 침범하지 않도록 한다.
 
 ---
 
 ## Accessibility
 
 - 스트리밍 중 커서는 `aria-hidden="true"` (스크린 리더 제외).
-- 완료 후 react-markdown이 생성하는 헤딩(`h2`, `h3`)에 자동 포커스는 하지 않는다.
+- 완료 후 react-markdown이 생성하는 heading에 자동 포커스는 하지 않는다.
 - [재생성] 버튼: `aria-label="AI 정리 재생성"`.
 - 질문 textarea는 Enter 제출, Shift+Enter 줄바꿈을 지원한다.
-- Q&A 스트리밍 박스는 `aria-live="polite"`로 응답 진행 상황을 전달한다.
+- Q&A 진행 상태와 본문 갱신은 `aria-live="polite"`로 전달한다.
 - 질문 답변 결과를 본문에 append할 때 `## Q&A` 제목은 렌더링하지 않고, `### Q. ...` 블록부터 바로 이어붙인다.
 
 ---
