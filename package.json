@@ -87,6 +87,7 @@
     "@tailwindcss/vite": "^4.1.10",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
+    "@ttsc/graph": "^0.16.7",
     "@types/dagre": "^0.7.54",
     "@types/node": "^22.15.32",
     "@types/react": "^19.1.8",
@@ -107,6 +108,7 @@
     "jsdom": "^26.1.0",
     "prettier": "^3.5.3",
     "tailwindcss": "^4.1.10",
+    "ttsc": "^0.16.7",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vitest": "^3.2.4"

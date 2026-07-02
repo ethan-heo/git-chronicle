@@ -33,6 +33,7 @@ git-chronicle/
 ├── package.nls.ko.json               # VSCode manifest 한국어 문자열
 ├── tsconfig.json                     # Webview 타입스크립트 설정
 ├── tsconfig.extension.json           # Extension Host 타입스크립트 설정
+├── tsconfig.graph.json               # MCP/코드 그래프용 통합 타입스크립트 설정 (webview + extension + tests)
 ├── vite.config.ts                    # Vite 빌드 설정
 ├── tailwind.config.ts                # TailwindCSS 보조 설정 파일(현재 스타일 토큰의 기준은 `src/webview/global.css`)
 └── .vscodeignore                     # 패키징 제외 파일 목록
