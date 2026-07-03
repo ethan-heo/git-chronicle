@@ -1,21 +1,15 @@
 import type { FC } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ResizableSplitPane, SplitViewButton, TopHeader } from '../../shared/components';
+import { TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { AISummaryViewer } from './AISummaryViewer';
 import { OverwriteConfirmDialog } from './OverwriteConfirmDialog';
 import { TokenLimitWarning } from './TokenLimitWarning';
 import { useAISummary } from './useAISummary';
-import { DiffViewerPanel } from '../F09/DiffViewerPanel';
 
 export const S04AISummaryViewerScreen: FC = () => {
-  const { t } = useTranslation();
   const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const goToSettingsView = useAppStore((state) => state.goToSettingsView);
-  const isSplitPanelOpen = useAppStore((state) => state.isSplitPanelOpen);
-  const openSplitPanel = useAppStore((state) => state.openSplitPanel);
-  const closeSplitPanel = useAppStore((state) => state.closeSplitPanel);
   const isRouteSlotActive = useRouteSlotActive();
   const {
     activeAIProvider,
@@ -36,15 +30,13 @@ export const S04AISummaryViewerScreen: FC = () => {
     qaCompletionCount,
     savePath,
     selectedCommit,
-    selectedFile,
     setIsDialogOpen,
     setIsTokenWarningDismissed,
     summaryError,
-    summaryMode,
     summarySavedPath,
   } = useAISummary({ isActive: isRouteSlotActive });
 
-  if (!selectedCommit || (summaryMode === 'file' && !selectedFile)) {
+  if (!selectedCommit) {
     return null;
   }
 
@@ -55,16 +47,12 @@ export const S04AISummaryViewerScreen: FC = () => {
         context={headerContext}
         showBackButton
         onBackClick={goBackFromDetail}
-        endSlot={<SplitViewButton label={t(isSplitPanelOpen ? 'ai_summary.split_panel_hide' : 'ai_summary.split_view')} disabled={summaryMode !== 'file'} onClick={isSplitPanelOpen ? closeSplitPanel : openSplitPanel} />}
         showSettingsIcon
         onSettingsClick={goToSettingsView}
       />
-      <ResizableSplitPane
-        isOpen={isSplitPanelOpen}
-        className="min-h-0 flex-1"
-        left={(
-          <>
-          <TokenLimitWarning isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed} onDismiss={() => setIsTokenWarningDismissed(true)} />
+      <div className="min-h-0 flex-1">
+        <TokenLimitWarning isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed} onDismiss={() => setIsTokenWarningDismissed(true)} />
+        <div className="flex h-full min-h-0 flex-col">
           <AISummaryViewer
             content={currentSummaryContent}
             error={summaryError}
@@ -77,16 +65,13 @@ export const S04AISummaryViewerScreen: FC = () => {
             savedPath={summarySavedPath}
             providerLabel={activeAIProvider}
             qaCompletionCount={qaCompletionCount}
-            summaryMode={summaryMode}
             onAskQuestion={onAskQuestion}
             onGoToSettings={goToSettingsView}
             onRegenerate={onRegenerate}
             onRetry={onRetry}
           />
-        </>
-        )}
-        right={selectedFile ? <DiffViewerPanel isOpen={isSplitPanelOpen} filePath={selectedFile.path} commitHash={selectedCommit.hash} isDeletedFile={selectedFile.status === 'D'} onClose={closeSplitPanel} /> : null}
-      />
+        </div>
+      </div>
       <OverwriteConfirmDialog isOpen={isDialogOpen} onCancel={() => setIsDialogOpen(false)} onConfirm={onConfirmRegenerate} />
     </main>
   );

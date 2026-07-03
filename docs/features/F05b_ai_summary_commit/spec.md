@@ -11,7 +11,7 @@
 
 ## Purpose
 
-커밋 전체 변경(모든 파일의 diff 합산)을 AI CLI에 전달하고, 커밋 단위 종합 요약을 마크다운으로 생성·표시·저장한다. 파일 단위(F05)와 달리 커밋 전체를 하나의 단위로 요약한다.
+커밋 전체 변경(모든 파일의 diff 합산)을 AI CLI에 전달하고, 커밋 단위 종합 요약을 마크다운으로 생성·표시·저장한다. 커밋 전체를 하나의 단위로 요약하는 유일한 AI 정리 기능이며, 개별 파일에 대한 세부 분석은 [F09_AISummaryQA](../F09_ai_summary_qa/spec.md)의 질문/답변으로 진행한다.
 
 ---
 
@@ -24,7 +24,6 @@
 ## User Scenarios
 
 1. [커밋 AI 정리] 버튼 클릭 시 AI 정리 화면(S-04) 활성화. 헤더에 `{커밋 메시지} > 커밋 전체 요약` 표시.
-   - S-04 헤더 우측에는 [코드 함께 보기] 버튼이 함께 노출되지만, 커밋 전체 요약 모드에서는 비활성화된다.
 2. **기존 저장본이 있는 경우**: 저장된 마크다운 파일을 즉시 불러와 표시. [재생성] 버튼 제공.
 3. **저장본이 없는 경우**: 클릭 즉시 커밋 내 전체 파일 diff를 컨텍스트로 AI가 마크다운 형식으로 정리.
    - 정리된 내용은 설정 경로에 `전체_파일_정리.md` 파일명으로 자동 저장.
@@ -85,7 +84,16 @@
 
 ## Error Handling
 
-[F05_AISummaryFile spec](../F05_ai_summary_file/spec.md#error-handling)과 동일한 오류 정책을 따른다. 정확한 안내 메시지·컴포넌트는 [blueprint.md](./blueprint.md) 또는 F05 blueprint.md의 Empty States / Error States가 유일한 출처다.
+| 상황 | 발생 조건 |
+|------|------|
+| AI 미설정 | `activeAIProvider === null` |
+| 저장 경로 미설정 | `savePath === null` |
+| 타임아웃 (120초) | AI CLI 응답이 120초 내 완료되지 않음 |
+| CLI 실행 실패 | `child_process.spawn` 실행 자체가 실패 |
+| CLI 로그인/인증 필요 | provider CLI가 미인증 상태로 종료 |
+| 토큰 초과 | diff 크기가 provider 토큰 한계에 근접(호출은 계속 진행) |
+
+> 정확한 안내 메시지·컴포넌트는 [blueprint.md](./blueprint.md)의 Empty States / Error States가 유일한 출처다.
 
 ---
 
@@ -127,9 +135,11 @@
 
 ## Side Effects
 
-F05_AISummaryFile과 동일한 Side Effect 정책을 따른다. 아래 항목만 다르다.
-
-| 효과 | 트리거 | F05와의 차이 |
-|------|--------|-------------|
-| 로컬 파일 쓰기 | AI 생성 완료 | 파일명이 `전체_파일_정리.md` 고정 |
-| `hasSavedSummary` 업데이트 | 해당 없음 | 커밋 단위 요약은 개별 파일 뱃지를 업데이트하지 않음 |
+| 효과 | 트리거 | 설명 |
+|------|--------|------|
+| `isLoadingSummary = true` | 저장본 확인 시작 | 저장본/설정 확인 로딩 상태 전환 |
+| `isGeneratingSummary = true` | AI 호출 시작 | 로딩 상태 전환 |
+| `isGeneratingSummary = false` | AI 완료 / 실패 / 타임아웃 | 로딩 상태 해제 |
+| `currentSummaryContent` 스트리밍 업데이트 | `child_process.spawn` stdout | 청크 단위로 전역 상태 누적 업데이트 |
+| 로컬 파일 쓰기 | AI 생성 완료 | `fs.writeFileSync`로 `전체_파일_정리.md` 저장 (경로 없으면 `fs.mkdirSync` 선행) |
+| `summaryError` 업데이트 | 타임아웃 / CLI 실패 | 오류 메시지 전역 상태 설정 |

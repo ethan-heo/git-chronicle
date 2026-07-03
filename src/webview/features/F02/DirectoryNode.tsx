@@ -8,10 +8,9 @@ interface DirectoryNodeProps {
   node: DirectoryTreeNode;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
-  onAISummary: (file: ChangedFile) => void;
 }
 
-export const DirectoryNode: FC<DirectoryNodeProps> = ({ node, depth, onCodeView, onAISummary }) => {
+export const DirectoryNode: FC<DirectoryNodeProps> = ({ node, depth, onCodeView }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
@@ -36,7 +35,7 @@ export const DirectoryNode: FC<DirectoryNodeProps> = ({ node, depth, onCodeView,
         <div role="group">
           {node.children.map((child) =>
             isDirectoryNode(child) ? (
-              <DirectoryNode key={child.path} node={child} depth={depth + 1} onCodeView={onCodeView} onAISummary={onAISummary} />
+              <DirectoryNode key={child.path} node={child} depth={depth + 1} onCodeView={onCodeView} />
             ) : (
               <FileTreeNode
                 key={child.file.path}
@@ -44,7 +43,6 @@ export const DirectoryNode: FC<DirectoryNodeProps> = ({ node, depth, onCodeView,
                 name={child.name}
                 depth={depth + 1}
                 onCodeView={onCodeView}
-                onAISummary={onAISummary}
               />
             ),
           )}

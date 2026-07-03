@@ -8,19 +8,13 @@ interface FileTreeNodeProps {
   name: string;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
-  onAISummary: (file: ChangedFile) => void;
 }
 
-export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeView, onAISummary }) => {
+export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeView }) => {
   const { t } = useTranslation();
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Enter') {
       onCodeView(file);
-      return;
-    }
-
-    if (event.key.toLowerCase() === 'a') {
-      onAISummary(file);
     }
   };
 
@@ -48,12 +42,11 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeV
       >
         {name}
       </span>
-      <SavedBadge isVisible={file.hasSavedSummary} />
+      <SavedBadge isVisible={false} />
       <FileActionButtons
         className="group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
         isVisible={false}
         onCodeView={() => onCodeView(file)}
-        onAISummary={() => onAISummary(file)}
       />
     </div>
   );

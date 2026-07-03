@@ -5,9 +5,9 @@ import type { ChangedFile, DependencyEdge } from '../../src/webview/types/commit
 describe('buildGraphData', () => {
   it('keeps every changed file as a node and filters edges to changed files only', () => {
     const files: ChangedFile[] = [
-      { path: 'src/App.tsx', status: 'M', hasSavedSummary: false },
-      { path: 'src/store.ts', status: 'A', hasSavedSummary: true },
-      { path: 'docs/spec.md', status: 'M', hasSavedSummary: false },
+      { path: 'src/App.tsx', status: 'M' },
+      { path: 'src/store.ts', status: 'A' },
+      { path: 'docs/spec.md', status: 'M' },
     ];
     const dependencyEdges: DependencyEdge[] = [
       { from: 'src/App.tsx', to: 'src/store.ts', kind: 'import' },
@@ -16,7 +16,6 @@ describe('buildGraphData', () => {
 
     const graph = buildGraphData(files, dependencyEdges, {
       onCodeView: () => undefined,
-      onAISummary: () => undefined,
     });
 
     expect(graph.nodes.map((node) => node.id)).toEqual(['src/App.tsx', 'src/store.ts', 'docs/spec.md']);
@@ -35,15 +34,14 @@ describe('buildGraphData', () => {
 
   it('clusters dependency-free files into a compact block', () => {
     const files: ChangedFile[] = [
-      { path: 'src/zeta.ts', status: 'M', hasSavedSummary: false },
-      { path: 'docs/spec.md', status: 'M', hasSavedSummary: false },
-      { path: 'src/alpha.ts', status: 'A', hasSavedSummary: false },
-      { path: 'src/view.tsx', status: 'M', hasSavedSummary: false },
+      { path: 'src/zeta.ts', status: 'M' },
+      { path: 'docs/spec.md', status: 'M' },
+      { path: 'src/alpha.ts', status: 'A' },
+      { path: 'src/view.tsx', status: 'M' },
     ];
 
     const graph = buildGraphData(files, [], {
       onCodeView: () => undefined,
-      onAISummary: () => undefined,
     });
     const positions = new Map(graph.nodes.map((node) => [node.id, node.position]));
     const zetaPosition = positions.get('src/zeta.ts');
@@ -60,11 +58,10 @@ describe('buildGraphData', () => {
 
   it('expands long file-name nodes so the label can be shown completely', () => {
     const graph = buildGraphData(
-      [{ path: 'src/components/ExtremelyLongDependencyCanvasNodeFileName.tsx', status: 'M', hasSavedSummary: false }],
+      [{ path: 'src/components/ExtremelyLongDependencyCanvasNodeFileName.tsx', status: 'M' }],
       [],
       {
         onCodeView: () => undefined,
-        onAISummary: () => undefined,
       },
     );
 
@@ -74,9 +71,9 @@ describe('buildGraphData', () => {
   it('connects dependency edges from the nearest node faces', () => {
     const graph = buildGraphData(
       [
-        { path: 'src/alpha.ts', status: 'M', hasSavedSummary: false },
-        { path: 'src/beta.ts', status: 'M', hasSavedSummary: false },
-        { path: 'src/view.tsx', status: 'M', hasSavedSummary: false },
+        { path: 'src/alpha.ts', status: 'M' },
+        { path: 'src/beta.ts', status: 'M' },
+        { path: 'src/view.tsx', status: 'M' },
       ],
       [
         { from: 'src/alpha.ts', to: 'src/beta.ts', kind: 'import' },
@@ -84,7 +81,6 @@ describe('buildGraphData', () => {
       ],
       {
         onCodeView: () => undefined,
-        onAISummary: () => undefined,
       },
     );
 

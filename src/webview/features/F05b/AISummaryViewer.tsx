@@ -3,7 +3,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState } from '../../shared/components';
-import type { SummaryMode } from '../../types/commit';
 import { QAInputArea } from '../F09/QAInputArea';
 import { RegenerateButton } from './RegenerateButton';
 import { StreamingTextRenderer } from './StreamingTextRenderer';
@@ -24,7 +23,6 @@ interface AISummaryViewerProps {
   savedPath: string | null;
   providerLabel: string | null;
   qaCompletionCount: number;
-  summaryMode: SummaryMode;
   onAskQuestion: (question: string) => void;
   onGoToSettings: () => void;
   onRegenerate: () => void;
@@ -43,7 +41,6 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   savedPath,
   providerLabel,
   qaCompletionCount,
-  summaryMode,
   onAskQuestion,
   onGoToSettings,
   onRegenerate,
@@ -105,8 +102,6 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const showRegenerate = hasSavedSummary && (Boolean(content) || isGenerating);
   const showSavedPath = hasSavedSummary && Boolean(savedPath);
   const canAskQuestion = !isGenerating && Boolean(content);
-  const isCommitSummary = summaryMode === 'commit';
-
   return (
     <section className="flex min-h-0 flex-1 flex-col" role="region" aria-label={t('ai_summary.ai_result')} aria-live={isGenerating ? 'polite' : undefined}>
       <div className="flex items-center justify-between gap-3 border-b border-line bg-panel px-6 py-2">
@@ -123,8 +118,8 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
         {showRegenerate ? <RegenerateButton disabled={isGenerating} onClick={onRegenerate} /> : null}
       </div>
 
-      <div className={`ai-summary-content flex min-h-0 flex-1 flex-col${isCommitSummary ? ' ai-summary-content-commit' : ''}`}>
-        <div className={`min-h-0 flex-1 overflow-auto ${isCommitSummary ? 'px-7 pt-5 pb-16 sm:px-8' : 'px-6 pt-[14px] pb-12'}`}>
+      <div className="ai-summary-content ai-summary-content-commit flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-auto px-7 pt-5 pb-16 sm:px-8">
           {isGenerating ? (
             <StreamingTextRenderer content={content} isStreaming />
           ) : content ? (
@@ -145,7 +140,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
               <div ref={summaryEndRef} />
             </>
           ) : (
-            <EmptyState message={summaryMode === 'commit' ? t('ai_summary.empty_commit') : t('ai_summary.empty')} />
+            <EmptyState message={t('ai_summary.empty_commit')} />
           )}
         </div>
         {canAskQuestion ? <QAInputArea isGeneratingQA={isGeneratingQA} onAskQuestion={onAskQuestion} /> : null}

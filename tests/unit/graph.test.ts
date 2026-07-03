@@ -5,8 +5,8 @@ import { buildNodePathIndex, layoutFiles, resolveNodePath } from '../../src/webv
 describe('graph path resolution', () => {
   it('does not let duplicate file names overwrite each other in the node index', () => {
     const files = [
-      { path: 'src/utils/hooks.ts', status: 'M', hasSavedSummary: false },
-      { path: 'src/services/hooks.ts', status: 'M', hasSavedSummary: false },
+      { path: 'src/utils/hooks.ts', status: 'M' },
+      { path: 'src/services/hooks.ts', status: 'M' },
     ] satisfies ChangedFile[];
     const index = buildNodePathIndex(files);
 
@@ -17,9 +17,9 @@ describe('graph path resolution', () => {
 
   it('resolves only exact or unique path matches when file names collide', () => {
     const files = [
-      { path: 'src/utils/hooks.ts', status: 'M', hasSavedSummary: false },
-      { path: 'src/services/hooks.ts', status: 'M', hasSavedSummary: false },
-      { path: 'src/main.ts', status: 'M', hasSavedSummary: false },
+      { path: 'src/utils/hooks.ts', status: 'M' },
+      { path: 'src/services/hooks.ts', status: 'M' },
+      { path: 'src/main.ts', status: 'M' },
     ] satisfies ChangedFile[];
     const index = buildNodePathIndex(files);
     const fullPathKeys = new Set(files.map((file) => file.path));
@@ -31,9 +31,9 @@ describe('graph path resolution', () => {
 
   it('uses dagre layout when edges are present and keeps isolated files in a separate band', () => {
     const files = [
-      { path: 'src/a.ts', status: 'M', hasSavedSummary: false },
-      { path: 'src/b.ts', status: 'M', hasSavedSummary: false },
-      { path: 'src/c.ts', status: 'M', hasSavedSummary: false },
+      { path: 'src/a.ts', status: 'M' },
+      { path: 'src/b.ts', status: 'M' },
+      { path: 'src/c.ts', status: 'M' },
     ] satisfies ChangedFile[];
     const positions = layoutFiles(files, [
       { from: 'src/a.ts', to: 'src/b.ts', kind: 'import' },

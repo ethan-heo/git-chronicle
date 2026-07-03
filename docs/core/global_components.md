@@ -133,12 +133,11 @@
 
 ## FileActionButtons
 
-**용도:** 파일 트리 노드(S-02) 또는 캔버스 노드(S-05) 호버 시 표시되는 액션 버튼 쌍. AI 액션은 별표 아이콘 대신 `AI` 텍스트로 표시된다.
+**용도:** 파일 트리 노드(S-02) 또는 캔버스 노드(S-05) 호버 시 표시되는 액션 버튼.
 
 | 속성 | 타입 | 설명 |
 |------|------|------|
 | `onCodeView` | `() => void` | [코드 보기] 클릭 핸들러 → S-03 진입 |
-| `onAISummary` | `() => void` | [AI 정리 보기] 클릭 핸들러 → S-04 진입 |
 | `onSymbolGraph` | `() => void \| undefined` | [심볼 그래프] 클릭 핸들러 → S-08 진입. 미전달 시 버튼 미표시 (F04에서만 사용) |
 | `isSymbolGraphDisabled` | `boolean \| undefined` | 미지원 파일 유형일 때 [심볼 그래프] 버튼 비활성화 |
 | `isVisible` | `boolean` | 호버 상태 여부로 표시 제어 |
@@ -169,13 +168,13 @@
 
 ## SavedBadge
 
-**용도:** 파일 트리 노드 또는 캔버스 노드에서 AI 정리 저장본 존재 여부를 표시하는 뱃지. 표시 문구는 `AI 요약됨`이다.
+**용도:** `CommitActionBar`의 [커밋 AI 정리] 버튼 옆에서 커밋 단위 AI 정리 저장본 존재 여부를 표시하는 뱃지. 표시 문구는 `AI 요약됨`이다.
 
 | 속성 | 타입 | 설명 |
 |------|------|------|
 | `isVisible` | `boolean` | 저장본 존재 시 true |
 
-**표시 조건:** 저장 경로가 설정되어 있고, 해당 파일의 `.md` 저장본이 존재할 때만 표시.
+**표시 조건:** 저장 경로가 설정되어 있고, 해당 커밋의 `전체_파일_정리.md` 저장본이 존재할 때만 표시.
 
 **구현 파일:** `src/webview/shared/components/SavedBadge.tsx`
 
@@ -205,7 +204,7 @@
 
 ## ResizableSplitPane
 
-**용도:** 좌우 두 패널 사이에 드래그 가능한 Divider를 제공하는 공용 레이아웃 컨테이너. F03 코드 뷰어, F05 AI 요약 뷰어, F10 파일 내부 심볼 캔버스에서 인라인 분할 패널 용도로 공통 사용한다.
+**용도:** 좌우 두 패널 사이에 드래그 가능한 Divider를 제공하는 공용 레이아웃 컨테이너. F10 파일 내부 심볼 캔버스에서 인라인 분할 패널 용도로 사용한다.
 
 | 속성 | 타입 | 설명 |
 |------|------|------|
@@ -218,22 +217,6 @@
 **동작:** Divider 드래그는 `mousemove`/`mouseup` 이벤트로 처리하며, 드래그 중에는 텍스트 선택을 막고 커서를 `col-resize`로 바꾼다.
 
 **구현 파일:** `src/webview/shared/components/ResizableSplitPane.tsx`, `ResizableSplitPane.css`
-
----
-
-## SplitViewButton
-
-**용도:** 코드 뷰어(S03)와 AI 요약 뷰어(S04)의 우측 상단에서 인라인 분할 패널을 열고 닫는 아이콘 버튼. `TopHeader`의 `endSlot`에 배치한다.
-
-| 속성 | 타입 | 설명 |
-|------|------|------|
-| `label` | `string` | 버튼 라벨 겸 `title`/`aria-label` |
-| `disabled` | `boolean \| undefined` | `selectedFile`이 없거나 진입 조건이 맞지 않을 때 비활성화 |
-| `onClick` | `() => void` | 분할 패널 열기/닫기 토글 |
-
-**사용 예:** S03 — "AI 요약 함께 보기" / "패널 닫기", S04 — "코드 함께 보기" / "패널 닫기"
-
-**구현 파일:** `src/webview/shared/components/SplitViewButton.tsx`
 
 ---
 

@@ -64,7 +64,7 @@
 
 ## Related Screens
 
-- [S03_CodeViewerScreen](../../screens/S03_code_viewer/blueprint.md) — 우측 인라인 `AISummaryPanel`로 F05 요약을 함께 표시
+- [S03_CodeViewerScreen](../../screens/S03_code_viewer/blueprint.md)
 
 ---
 

@@ -15,7 +15,6 @@
 ## Entry Condition
 
 다음 화면에서 [코드 보기] 버튼 클릭 시 진입. `selectedFile` 전역 상태 설정 후 진입.
-진입 시 AI 요약 관련 상태는 현재 파일 기준으로 초기화되며, 우측 패널은 새 요약을 생성하는 전제로 동작한다.
 
 - [S02_HistoryViewScreen](../S02_history_view/blueprint.md) — 파일 트리 노드 호버 → [코드 보기]
 - [S05_DependencyCanvasScreen](../S04_dependency_canvas/blueprint.md) — 캔버스 노드 호버 → [코드 보기]
@@ -31,7 +30,7 @@
 
 ## Child Screens
 
-- 우측 인라인 AI 요약 패널: `AISummaryPanel`
+없음
 
 ---
 
@@ -42,14 +41,11 @@ S03_CodeViewerScreen
 ├─ TopHeader ({커밋 메시지} > {파일 경로})
 │   ├─ BackButton → 이전 화면 복귀
 │   └─ SettingsIcon (⚙) → S06
-└─ code-split-workspace
-   ├─ code-split-main-panel
-   │  └─ DiffViewer (스크롤 영역)
-   │      ├─ DeletedFileNotice (조건부, 삭제된 파일)
-   │      └─ DiffLine × N
-   │         OR BinaryFileNotice
-   │      └─ 로드 후 첫 변경 라인으로 자동 스크롤
-   └─ AISummaryPanel (조건부 인라인 패널)
+└─ DiffViewer (스크롤 영역)
+    ├─ DeletedFileNotice (조건부, 삭제된 파일)
+    └─ DiffLine × N
+       OR BinaryFileNotice
+    └─ 로드 후 첫 변경 라인으로 자동 스크롤
 ```
 
 ---
@@ -64,7 +60,6 @@ S03_CodeViewerScreen
 | `DiffLine` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md#component-diffline) | `src/webview/features/F03/DiffLine.tsx` |
 | `BinaryFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md#component-binaryfilenotice) | `src/webview/features/F03/DiffViewer.tsx` (내부 조건부 렌더링) |
 | `DeletedFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md#component-deletedfilenotice) | `src/webview/features/F03/DiffViewer.tsx` (내부 조건부 렌더링) |
-| `AISummaryPanel` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) (인라인 `ResizableSplitPane` 우측 패널) | `src/webview/features/F09/AISummaryPanel.tsx` |
 | `LoadingState` | [global_components](../../core/global_components.md#loadingstate) | `src/webview/shared/components/LoadingState.tsx` |
 | `ErrorState` | [global_components](../../core/global_components.md#errorstate) | `src/webview/shared/components/ErrorState.tsx` |
 

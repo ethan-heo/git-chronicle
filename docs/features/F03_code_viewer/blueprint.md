@@ -9,7 +9,6 @@
 ## Purpose
 
 선택된 파일의 Git diff를 unified diff 형식 + Shiki 신텍스 하이라이팅으로 렌더링한다.
-헤더 우측에는 `ResizableSplitPane` 기반 인라인 우측 패널로 F05 AI 요약을 함께 여는 [AI 요약 함께 보기] 아이콘 버튼(`SplitViewButton`)이 추가된다.
 
 ---
 

@@ -8,7 +8,7 @@ export interface SummaryFileResult {
 
 export class SummarySaveError extends Error {
   constructor(
-    message = 'Could not create the save path. Check permissions.',
+    message = '저장 경로를 생성할 수 없습니다. 권한을 확인하세요',
     public readonly cause?: unknown,
   ) {
     super(message);

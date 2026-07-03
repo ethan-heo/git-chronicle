@@ -10,17 +10,15 @@ export const S02HistoryViewScreen: FC = () => {
   const {
     selectedCommit,
     changedFiles,
+    hasSavedCommitSummary,
     isLoadingChangedFiles,
     changedFilesError,
-    isBatchRunning,
     goToCommitList,
     loadChangedFiles,
     selectFileForCode,
-    selectFileForAI,
     goToCommitAISummary,
     goToCanvasView,
     goToSettingsView,
-    startBatchAISummary,
     handleChangedFilesLoaded,
     handleChangedFilesLoadFailed,
   } = useAppStore();
@@ -44,12 +42,16 @@ export const S02HistoryViewScreen: FC = () => {
         type: string;
         payload?: {
           files?: ChangedFile[];
+          hasSavedCommitSummary?: boolean;
           message?: string;
         };
       }>,
     ): void => {
       if (event.data.type === 'CHANGED_FILES_LOADED') {
-        handleChangedFilesLoaded(event.data.payload?.files ?? []);
+        handleChangedFilesLoaded({
+          files: event.data.payload?.files ?? [],
+          hasSavedCommitSummary: event.data.payload?.hasSavedCommitSummary ?? false,
+        });
         return;
       }
 
@@ -74,10 +76,9 @@ export const S02HistoryViewScreen: FC = () => {
       <TopHeader title={selectedCommit.message} context={`${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`} showBackButton onBackClick={goToCommitList} showSettingsIcon onSettingsClick={goToSettingsView} />
       <CommitActionBar
         selectedCommit={selectedCommit}
-        isBatchRunning={isBatchRunning}
+        hasSavedCommitSummary={hasSavedCommitSummary}
         isLoadingChangedFiles={isLoadingChangedFiles}
         onCommitAISummary={goToCommitAISummary}
-        onBatchAISummary={startBatchAISummary}
         onCanvasView={goToCanvasView}
       />
       <FileTree
@@ -86,7 +87,6 @@ export const S02HistoryViewScreen: FC = () => {
         error={changedFilesError}
         onRetry={retry}
         onFileCodeView={selectFileForCode}
-        onFileAISummary={selectFileForAI}
       />
     </main>
   );

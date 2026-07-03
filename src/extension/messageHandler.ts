@@ -2,12 +2,11 @@ import * as vscode from 'vscode';
 import { AI_PROVIDERS, loadAISettingsState, registerAIProvider, setAIModel, setActiveAIProvider, setSavePath } from './aiProviderService';
 import { streamAISummary } from './aiService';
 import type { AIModelUsage, AIProviderName } from './aiTypes';
-import { runBatchAISummary } from './batchService';
 import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
 import { analyzeSymbolGraph } from './intraFileDependencyService';
-import { fetchChangedFiles, fetchCommitCount, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError, type ChangedFile } from './gitService';
-import { buildCommitSummaryPrompt, buildFileSummaryPrompt, buildSummaryQAPrompt } from './prompts';
-import { appendSummaryQA, loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from './summaryFileService';
+import { fetchChangedFiles, fetchCommitCount, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
+import { buildCommitSummaryPrompt, buildSummaryQAPrompt } from './prompts';
+import { appendSummaryQA, loadCommitSummary, saveCommitSummary, SummarySaveError } from './summaryFileService';
 
 interface WebviewMessage {
   type: string;
@@ -17,9 +16,7 @@ interface WebviewMessage {
     | FetchFileDiffPayload
     | AnalyzeDependenciesPayload
     | AnalyzeSymbolGraphPayload
-    | StartAISummaryFilePayload
     | StartAISummaryCommitPayload
-    | StartBatchAISummaryPayload
     | StartAIQAPayload
     | AIProviderPayload
     | OpenExternalUrlPayload;
@@ -58,16 +55,6 @@ interface AnalyzeSymbolGraphPayload {
   commitHash?: string;
 }
 
-interface StartAISummaryFilePayload {
-  commitHash?: string;
-  commitMessage?: string;
-  filePath?: string;
-  provider?: AIProviderName | null;
-  summaryModel?: string | null;
-  savePath?: string | null;
-  forceRegenerate?: boolean;
-}
-
 interface StartAISummaryCommitPayload {
   commitHash?: string;
   commitMessage?: string;
@@ -75,15 +62,6 @@ interface StartAISummaryCommitPayload {
   summaryModel?: string | null;
   savePath?: string | null;
   forceRegenerate?: boolean;
-}
-
-interface StartBatchAISummaryPayload {
-  commitHash?: string;
-  commitMessage?: string;
-  files?: ChangedFile[];
-  provider?: AIProviderName | null;
-  summaryModel?: string | null;
-  savePath?: string | null;
 }
 
 interface AIProviderPayload {
@@ -99,8 +77,6 @@ interface StartAIQAPayload {
   summaryContent?: string;
   commitHash?: string;
   commitMessage?: string;
-  filePath?: string;
-  summaryMode?: 'file' | 'commit';
   provider?: AIProviderName | null;
   qaModel?: string | null;
   savePath?: string | null;
@@ -110,16 +86,7 @@ interface OpenExternalUrlPayload {
   url?: string;
 }
 
-const FILE_TOKEN_LIMIT_CHARS = 12_000;
 const COMMIT_TOKEN_LIMIT_CHARS = 20_000;
-
-interface ActiveBatchRun {
-  id: number;
-  cancelled: boolean;
-}
-
-let activeBatchRun: ActiveBatchRun | null = null;
-let nextBatchRunId = 1;
 
 function l10n(message: string): string {
   return message;
@@ -173,25 +140,11 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
       case 'CLEAR_SAVE_PATH':
         await handleClearSavePath(panel, context);
         break;
-      case 'START_AI_SUMMARY_FILE':
-        await handleStartAISummaryFile(panel, context, message.payload as StartAISummaryFilePayload);
-        break;
       case 'START_AI_SUMMARY_COMMIT':
         await handleStartAISummaryCommit(panel, context, message.payload as StartAISummaryCommitPayload);
         break;
-      case 'START_BATCH_AI_SUMMARY':
-        await handleStartBatchAISummary(panel, context, message.payload as StartBatchAISummaryPayload);
-        break;
       case 'START_AI_QA':
         await handleStartAIQA(panel, context, message.payload as StartAIQAPayload);
-        break;
-      case 'CANCEL_BATCH_AI_SUMMARY':
-        if (activeBatchRun) {
-          activeBatchRun.cancelled = true;
-          await panel.webview.postMessage({
-            type: 'BATCH_AI_SUMMARY_CANCELLING',
-          });
-        }
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
@@ -497,7 +450,8 @@ async function handleFetchChangedFiles(panel: vscode.WebviewPanel, context: vsco
     await panel.webview.postMessage({
       type: 'CHANGED_FILES_LOADED',
       payload: {
-        files: changedFiles,
+        files: changedFiles.files,
+        hasSavedCommitSummary: changedFiles.hasSavedCommitSummary,
       },
     });
   } catch (error) {
@@ -547,112 +501,6 @@ async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: FetchFil
         message: error instanceof Error ? error.message : 'Failed to load diff',
       },
     });
-  }
-}
-
-async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: StartAISummaryFilePayload = {}): Promise<void> {
-  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const settings = loadAISettingsState(context);
-  const provider = payload.provider ?? settings.activeAIProvider;
-  const savePath = payload.savePath ?? settings.savePath;
-  const summaryModel = payload.summaryModel ?? settings.summaryModel;
-
-  if (!repoPath) {
-    await postAISummaryError(panel, 'No Git repository detected');
-    return;
-  }
-
-  if (!payload.commitHash || !payload.filePath) {
-    await postAISummaryError(panel, 'No file selected');
-    return;
-  }
-
-  if (!provider) {
-    await postAISummaryError(panel, 'AI is not configured');
-    return;
-  }
-
-  if (!savePath) {
-    await postAISummaryError(panel, 'Set a save path first');
-    return;
-  }
-
-  try {
-    if (!payload.forceRegenerate) {
-      const savedSummary = loadSummary(savePath, payload.commitHash, payload.filePath, payload.commitMessage);
-
-      if (savedSummary) {
-        await panel.webview.postMessage({
-          type: 'AI_SUMMARY_LOADED',
-          payload: {
-            content: savedSummary.content,
-            savedPath: savedSummary.savedPath,
-            provider,
-            fromSaved: true,
-          },
-        });
-        return;
-      }
-    }
-
-    const diff = await fetchFileDiff(repoPath, payload.commitHash, payload.filePath);
-
-    if (diff.isBinary) {
-      await postAISummaryError(panel, 'Binary files cannot be summarized by AI');
-      return;
-    }
-
-    await panel.webview.postMessage({
-      type: 'AI_SUMMARY_TOKEN_WARNING',
-      payload: {
-        isOverLimit: diff.rawDiff.length > FILE_TOKEN_LIMIT_CHARS,
-      },
-    });
-
-    await panel.webview.postMessage({
-      type: 'AI_SUMMARY_STARTED',
-      payload: {
-        provider,
-      },
-    });
-
-    const prompt = buildFileSummaryPrompt(payload.filePath, diff.rawDiff);
-    let content = '';
-
-    streamAISummary({
-      provider,
-      model: summaryModel,
-      prompt,
-      onChunk: (chunk) => {
-        content += chunk;
-        void panel.webview.postMessage({
-          type: 'AI_SUMMARY_CHUNK',
-          payload: {
-            chunk,
-          },
-        });
-      },
-      onComplete: () => {
-        try {
-          const savedPath = saveSummary(savePath, payload.commitHash ?? '', payload.filePath ?? '', content, payload.commitMessage);
-          void panel.webview.postMessage({
-            type: 'AI_SUMMARY_DONE',
-            payload: {
-              content,
-              savedPath,
-              provider,
-            },
-          });
-        } catch (error) {
-          void postAISummaryError(panel, getSummarySaveErrorMessage(error));
-        }
-      },
-      onError: (message) => {
-        void postAISummaryError(panel, message);
-      },
-    });
-  } catch (error) {
-    await postAISummaryError(panel, error instanceof Error ? error.message : 'Generation failed');
   }
 }
 
@@ -757,102 +605,6 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
   }
 }
 
-async function handleStartBatchAISummary(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: StartBatchAISummaryPayload = {}): Promise<void> {
-  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const settings = loadAISettingsState(context);
-  const provider = payload.provider ?? settings.activeAIProvider;
-  const savePath = payload.savePath ?? settings.savePath;
-  const files = payload.files ?? [];
-  const summaryModel = payload.summaryModel ?? settings.summaryModel;
-
-  if (!repoPath) {
-    await postBatchError(panel, 'No Git repository detected');
-    return;
-  }
-
-  if (!payload.commitHash) {
-    await postBatchError(panel, 'No commit selected');
-    return;
-  }
-
-  if (!provider) {
-    await postBatchError(panel, 'AI is not configured');
-    return;
-  }
-
-  if (!savePath) {
-    await postBatchError(panel, 'Set a save path first');
-    return;
-  }
-
-  if (files.length === 0) {
-    await postBatchError(panel, 'No changed files');
-    return;
-  }
-
-  if (activeBatchRun) {
-    return;
-  }
-
-  const batchRun: ActiveBatchRun = {
-    id: nextBatchRunId,
-    cancelled: false,
-  };
-  nextBatchRunId += 1;
-  activeBatchRun = batchRun;
-
-  await panel.webview.postMessage({
-    type: 'BATCH_AI_SUMMARY_STARTED',
-    payload: {
-      batchTotal: files.length,
-    },
-  });
-
-  try {
-    const result = await runBatchAISummary({
-      repoPath,
-      files,
-      provider,
-      savePath,
-      summaryModel,
-      commitHash: payload.commitHash,
-      commitMessage: payload.commitMessage,
-      isCancelled: () => batchRun.cancelled,
-      onProgress: (progress) => {
-        if (activeBatchRun?.id !== batchRun.id) {
-          return;
-        }
-
-        void panel.webview.postMessage({
-          type: 'BATCH_AI_SUMMARY_PROGRESS',
-          payload: {
-            batchCompleted: progress.completed,
-            batchFailedCount: progress.failed,
-            completedFilePath: progress.filePath,
-            hasSavedSummary: progress.saved,
-          },
-        });
-      },
-    });
-
-    if (activeBatchRun?.id === batchRun.id) {
-      await panel.webview.postMessage({
-        type: result.cancelled ? 'BATCH_AI_SUMMARY_CANCELLED' : 'BATCH_AI_SUMMARY_DONE',
-        payload: {
-          batchCompleted: result.completed,
-          batchFailedCount: result.failed,
-        },
-      });
-    }
-  } catch (error) {
-    await postBatchError(panel, error instanceof Error ? error.message : 'Could not complete batch generation');
-  } finally {
-    if (activeBatchRun?.id === batchRun.id) {
-      activeBatchRun = null;
-    }
-  }
-}
-
 async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: StartAIQAPayload = {}): Promise<void> {
   const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   const settings = loadAISettingsState(context);
@@ -880,23 +632,14 @@ async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscode.Exten
     return;
   }
 
-  const savedPath = payload.summaryMode === 'commit'
-    ? loadCommitSummary(savePath, payload.commitHash, payload.commitMessage)?.savedPath
-    : payload.filePath
-      ? loadSummary(savePath, payload.commitHash, payload.filePath, payload.commitMessage)?.savedPath
-      : null;
+  const savedPath = loadCommitSummary(savePath, payload.commitHash, payload.commitMessage)?.savedPath;
 
   if (!savedPath) {
     await postAIQAError(panel, 'Saved summary could not be found');
     return;
   }
 
-  const diff = payload.diff
-    ?? (payload.summaryMode === 'commit'
-      ? await fetchCommitFullDiff(repoPath, payload.commitHash)
-      : payload.filePath
-        ? (await fetchFileDiff(repoPath, payload.commitHash, payload.filePath)).rawDiff
-        : null);
+  const diff = payload.diff ?? await fetchCommitFullDiff(repoPath, payload.commitHash);
 
   if (!diff) {
     await postAIQAError(panel, 'Diff could not be loaded for Q&A');
@@ -937,15 +680,6 @@ async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscode.Exten
 async function postAISummaryError(panel: vscode.WebviewPanel, message: string): Promise<void> {
   await panel.webview.postMessage({
     type: 'AI_SUMMARY_ERROR',
-    payload: {
-      message,
-    },
-  });
-}
-
-async function postBatchError(panel: vscode.WebviewPanel, message: string): Promise<void> {
-  await panel.webview.postMessage({
-    type: 'BATCH_AI_SUMMARY_ERROR',
     payload: {
       message,
     },

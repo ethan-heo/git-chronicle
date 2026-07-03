@@ -1,12 +1,12 @@
 # Product Overview: GitChronicle
 
-> **버전** v1.3 | **작성일** 2026-06-25 | **갱신** 2026-07-01 (F09/F10, S08 반영) | **상태** 각 기능 spec.md를 최신 기준으로 삼음
+> **버전** v1.4 | **작성일** 2026-06-25 | **갱신** 2026-07-03 (F05/F08 제거, 사용자 주도 분석 방향 반영) | **상태** 각 기능 spec.md를 최신 기준으로 삼음
 
 ---
 
 ## Product Purpose
 
-GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을 효율적으로 탐색하고, 파일 변경 내역을 시각적으로 분석하며, AI CLI를 통해 작업 내용을 마크다운 형식으로 자동 요약·저장할 수 있는 도구다.
+GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을 효율적으로 탐색하고, 파일 변경 내역을 시각적으로 분석하며, AI CLI를 통해 커밋 단위 작업 내역을 마크다운으로 요약하고 궁금한 부분은 직접 질문하며 분석할 수 있는 도구다. 분석의 주체는 항상 사용자이며, AI와 시각화 기능은 그 과정을 보조한다.
 
 ---
 
@@ -21,8 +21,8 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 1. 과거 커밋 이력을 기간·작성자·키워드 기준으로 빠르게 필터링한다.
 2. 특정 커밋에서 변경된 파일을 디렉토리 트리 형태로 파악한다.
 3. 파일 간 import/require 의존 관계를 노드-엣지 캔버스로 시각적으로 이해한다.
-4. AI CLI를 통해 파일 단위 및 커밋 단위 작업 내역을 마크다운으로 자동 정리한다.
-5. 정리된 AI 요약을 로컬 경로에 자동 저장하여 나중에 즉시 재활용한다.
+4. AI CLI를 통해 커밋 단위 작업 내역을 마크다운으로 자동 정리한다.
+5. 정리된 요약에 직접 질문하며 개별 파일의 세부 내용을 파악하고, 대화 내용을 로컬 경로에 자동 저장하여 나중에 즉시 재활용한다.
 
 ---
 
@@ -35,12 +35,12 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | S-01 | 커밋 목록 | 확장 프로그램 활성화 | — |
 | S-02 | 이력 조회 | 커밋 목록에서 항목 클릭 | S-01 |
 | S-03 | 코드 뷰어 | 파일/노드 호버 → [코드 보기] 버튼 클릭 | S-02 / S-05 |
-| S-04 | AI 정리 뷰어 | 파일/노드 호버 → [AI 정리 보기] 버튼 클릭, 또는 [커밋 AI 정리] 클릭 | S-02 / S-05 |
+| S-04 | AI 정리 뷰어 | [커밋 AI 정리] 클릭 | S-02 |
 | S-05 | 캔버스 | 이력 조회 화면 내 [캔버스 보기] 버튼 클릭 | S-02 |
 | S-06 | 설정 | 우측 상단 설정(⚙) 아이콘 클릭 | 어디서든 |
 | S-08 | 파일 내부 심볼 캔버스 | S-05 캔버스 노드에서 [심볼 그래프] 버튼 클릭 | S-05 |
 
-> S-03과 S-04는 각각 우측 인라인 패널(`AISummaryPanel`/`DiffViewerPanel`, F09)로 서로를 함께 열 수 있다. 과거 별도 화면이었던 S-07(코드+AI 요약 분할)은 이 인라인 패널 방식으로 대체되어 더 이상 존재하지 않는다.
+> 과거 별도 화면이었던 S-07(코드+AI 요약 분할)은 더 이상 존재하지 않는다.
 
 ---
 
@@ -53,7 +53,6 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 - AI CLI는 복수 등록 가능하나 하나만 활성화 가능. 하나가 활성화되면 나머지는 자동으로 비활성화.
 - AI 정리는 설정 경로에 자동 저장되며, 저장본이 있으면 AI 재호출 없이 즉시 표시.
 - AI 정리 타임아웃은 120초. 실패 시 "생성에 실패했습니다" + [재시도] 버튼 표시.
-- 일괄 생성(F-08) 중 화면 이동 시에도 백그라운드에서 계속 진행되며 상단 고정 프로그레스 바로 상태 표시.
 - 저장 경로가 존재하지 않으면 `fs.mkdirSync({ recursive: true })`로 자동 생성.
 
 ---
@@ -66,12 +65,10 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
   [S-01: 커밋 목록] ◄────────────────────────────────────┐
        ↓ 커밋 클릭                               뒤로가기 │
   [S-02: 이력 조회] ──────────────────────────────────────┘
-       ├─ 파일 호버 → [코드 보기]    → [S-03: 코드 뷰어] ⇄ (인라인 패널) AI 요약
-       ├─ 파일 호버 → [AI 정리 보기] → [S-04: AI 정리 뷰어] ⇄ (인라인 패널) 코드
+       ├─ 파일 호버 → [코드 보기]    → [S-03: 코드 뷰어]
        ├─ [커밋 AI 정리]             → [S-04: AI 정리 뷰어]
        └─ [캔버스 보기]              → [S-05: 캔버스]
                                           ├─ 노드 호버 → [코드 보기]      → [S-03]
-                                          ├─ 노드 호버 → [AI 정리 보기]   → [S-04]
                                           └─ 노드 호버 → [심볼 그래프]    → [S-08: 파일 내부 심볼 캔버스]
 
   [⚙ 아이콘 (어디서든)] → [S-06: 설정]
@@ -87,12 +84,10 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | [F02_ChangedFileTree](../features/F02_changed_file_tree/spec.md) | 변경 파일 트리 | 커밋 선택 시 변경 파일을 디렉토리 트리로 표시. 상태 뱃지·저장됨 뱃지 포함 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F03_CodeViewer](../features/F03_code_viewer/spec.md) | 코드 변경이력 | 파일 단위 unified diff 뷰어. Shiki 신텍스 하이라이팅 | [S03](../screens/S03_code_viewer/blueprint.md) |
 | [F04_DependencyCanvas](../features/F04_dependency_canvas/spec.md) | 의존 관계 캔버스 | 변경 파일 간 의존 관계를 노드-엣지 그래프로 시각화. React Flow 기반 | [S05](../screens/S04_dependency_canvas/blueprint.md) |
-| [F05_AISummaryFile](../features/F05_ai_summary_file/spec.md) | AI 정리 (파일 단위) | 파일 diff를 AI가 마크다운으로 요약. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
-| [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
+| [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약하는 유일한 AI 정리 진입점. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
 | [F06_AISettings](../features/F06_ai_settings/spec.md) | AI 설정 | Claude/Gemini/Codex CLI 등록·활성화·비활성화 | [S06](../screens/S06_settings/blueprint.md) |
 | [F07_SavePathSettings](../features/F07_save_path_settings/spec.md) | 저장 경로 설정 | AI 정리 결과물 저장 경로 지정·삭제 | [S06](../screens/S06_settings/blueprint.md) |
-| [F08_BatchAISummary](../features/F08_batch_ai_summary/spec.md) | AI 정리 일괄 생성 | 커밋 내 모든 파일에 대해 파일 단위 AI 정리를 순차 자동 생성 | [S02](../screens/S02_history_view/blueprint.md) |
-| [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문 입력, 답변을 기존 요약 문서 하단에 append. S03/S04 인라인 분할 패널도 포함 | [S03](../screens/S03_code_viewer/blueprint.md) / [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
+| [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문/답변으로 개별 파일까지 파고들며 분석. 커밋 전체 diff를 근거로 답변하며, 답변을 기존 요약 문서 하단에 append | [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
 | [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S08](../screens/S08_intra_file_dependency_canvas/blueprint.md) |
 
 ---
@@ -110,10 +105,8 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 - [F-02: 변경 파일 트리](#f-02) → [features/F02_changed_file_tree/spec.md](../features/F02_changed_file_tree/spec.md)
 - [F-03: 코드 변경이력](#f-03) → [features/F03_code_viewer/spec.md](../features/F03_code_viewer/spec.md)
 - [F-04: 의존 관계 캔버스](#f-04) → [features/F04_dependency_canvas/spec.md](../features/F04_dependency_canvas/spec.md)
-- [F-05: AI 정리 (파일 단위)](#f-05) → [features/F05_ai_summary_file/spec.md](../features/F05_ai_summary_file/spec.md)
 - [F-05b: AI 정리 (커밋 단위)](#f-05b) → [features/F05b_ai_summary_commit/spec.md](../features/F05b_ai_summary_commit/spec.md)
 - [F-06: AI 설정](#f-06) → [features/F06_ai_settings/spec.md](../features/F06_ai_settings/spec.md)
 - [F-07: 저장 경로 설정](#f-07) → [features/F07_save_path_settings/spec.md](../features/F07_save_path_settings/spec.md)
-- [F-08: AI 정리 일괄 생성](#f-08) → [features/F08_batch_ai_summary/spec.md](../features/F08_batch_ai_summary/spec.md)
 - [F-09: AI 요약 Q&A](#f-09) → [features/F09_ai_summary_qa/spec.md](../features/F09_ai_summary_qa/spec.md)
 - [F-10: 파일 내부 심볼 의존성 캔버스](#f-10) → [features/F10_intra_file_symbol_dependency_canvas/spec.md](../features/F10_intra_file_symbol_dependency_canvas/spec.md)

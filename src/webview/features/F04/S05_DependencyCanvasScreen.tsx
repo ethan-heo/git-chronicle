@@ -21,7 +21,6 @@ export const S05DependencyCanvasScreen: FC = () => {
     loadChangedFiles,
     loadDependencies,
     selectFileForCode,
-    selectFileForAI,
     goToSymbolGraphView,
     handleChangedFilesLoaded,
     handleChangedFilesLoadFailed,
@@ -50,13 +49,17 @@ export const S05DependencyCanvasScreen: FC = () => {
         type: string;
         payload?: {
           files?: ChangedFile[];
+          hasSavedCommitSummary?: boolean;
           edges?: DependencyEdge[];
           message?: string;
         };
       }>,
     ): void => {
       if (event.data.type === 'CHANGED_FILES_LOADED') {
-        handleChangedFilesLoaded(event.data.payload?.files ?? []);
+        handleChangedFilesLoaded({
+          files: event.data.payload?.files ?? [],
+          hasSavedCommitSummary: event.data.payload?.hasSavedCommitSummary ?? false,
+        });
         return;
       }
 
@@ -121,7 +124,6 @@ export const S05DependencyCanvasScreen: FC = () => {
           error={changedFilesError ?? dependenciesError}
           onRetry={retry}
           onFileCodeView={selectFileForCode}
-          onFileAISummary={selectFileForAI}
           onFileSymbolGraph={goToSymbolGraphView}
         />
       </ReactFlowProvider>

@@ -52,7 +52,7 @@
 - `transitionDirection = 'forward'`이면 incoming 화면은 오른쪽에서 들어오고 outgoing 화면은 왼쪽으로 나간다. `transitionDirection = 'back'`이면 incoming 화면은 왼쪽에서 들어오고 outgoing 화면은 오른쪽으로 나간다.
 - outgoing 슬롯은 `aria-hidden="true"`와 `RouteSlotProvider isActive={false}`를 사용한다. 최상위 화면 컴포넌트는 `useRouteSlotActive()`가 false일 때 초기 데이터 로딩 effect와 Extension 메시지 listener 등록을 건너뛴다.
 - 라우트 전환 animation은 `global.css`의 전역 motion 토큰(`--gae-motion-duration-base`)과 `App.tsx`의 `ROUTE_TRANSITION_DURATION_MS`가 같은 200ms 값으로 동작한다.
-- `BatchProgressBar`와 `ToastContainer`는 라우트 슬롯 밖에 렌더링해 화면 전환 중에도 전역 피드백을 유지한다.
+- `ToastContainer`는 라우트 슬롯 밖에 렌더링해 화면 전환 중에도 전역 피드백을 유지한다.
 - `dependency-cruiser`는 패키지 자체뿐 아니라 transitive dependency까지 `dist/node_modules/dependency-cruiser/`에 복사한 뒤 runner가 참조한다. pnpm symlink에 직접 의존하지 않는다. 복사 스크립트는 `require.resolve()` 기반으로 실제 설치 레이아웃을 따라가며, 누락 시 `commander` 같은 런타임 패키지 에러가 발생할 수 있다.
 
 ---
@@ -95,11 +95,8 @@ type WebviewToExtensionMessage =
   | { type: 'ANALYZE_DEPENDENCIES'; payload: { filePaths: string[]; commitHash?: string } }
   | { type: 'ANALYZE_SYMBOL_GRAPH'; payload: { filePath: string; commitHash?: string } }
   | { type: 'FETCH_AI_SUMMARY_SETTINGS' }
-  | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; commitMessage?: string; filePath: string; provider?: AIProviderName | null; summaryModel?: string | null; savePath?: string | null; forceRegenerate?: boolean } }
   | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string; commitMessage?: string; provider?: AIProviderName | null; summaryModel?: string | null; savePath?: string | null; forceRegenerate?: boolean } }
-  | { type: 'START_BATCH_AI_SUMMARY'; payload: { commitHash: string; commitMessage?: string; provider: AIProviderName; summaryModel?: string | null; savePath: string; files: ChangedFile[] } }
-  | { type: 'CANCEL_BATCH_AI_SUMMARY' }
-  | { type: 'START_AI_QA'; payload: { question: string; diff?: string; summaryContent: string; commitHash: string; commitMessage?: string; filePath?: string; summaryMode: 'file' | 'commit'; provider?: AIProviderName | null; qaModel?: string | null; savePath?: string | null } }
+  | { type: 'START_AI_QA'; payload: { question: string; diff?: string; summaryContent: string; commitHash: string; commitMessage?: string; provider?: AIProviderName | null; qaModel?: string | null; savePath?: string | null } }
   | { type: 'REGISTER_AI_PROVIDER'; payload: { name: AIProviderName } }
   | { type: 'ACTIVATE_AI_PROVIDER' | 'SET_ACTIVE_AI_PROVIDER'; payload: { name: AIProviderName } }
   | { type: 'SET_AI_MODEL'; payload: { name: AIProviderName; usage: 'summary' | 'qa'; model: string } }
@@ -132,12 +129,6 @@ type ExtensionToWebviewMessage =
   | { type: 'AI_QA_CHUNK'; payload: { chunk: string } }
   | { type: 'AI_QA_COMPLETE'; payload: { appendedContent: string } }
   | { type: 'AI_QA_ERROR'; payload: { message: string } }
-  | { type: 'BATCH_AI_SUMMARY_STARTED'; payload: { batchTotal: number } }
-  | { type: 'BATCH_AI_SUMMARY_PROGRESS'; payload: { batchCompleted: number; batchFailedCount: number; completedFilePath: string; hasSavedSummary: boolean } }
-  | { type: 'BATCH_AI_SUMMARY_CANCELLING' }
-  | { type: 'BATCH_AI_SUMMARY_DONE'; payload: { batchCompleted: number; batchFailedCount: number } }
-  | { type: 'BATCH_AI_SUMMARY_CANCELLED'; payload: { batchCompleted: number; batchFailedCount: number } }
-  | { type: 'BATCH_AI_SUMMARY_ERROR'; payload: { message: string } }
   | { type: 'AI_PROVIDER_REGISTERED'; payload: AISettingsState & { providerName: AIProviderName } }
   | { type: 'AI_PROVIDER_REGISTRATION_FAILED'; payload: { providerName: AIProviderName; message: string; installUrl?: string } }
   | { type: 'AI_PROVIDER_STATE_UPDATED'; payload: AISettingsState & { providerName: AIProviderName } }
@@ -168,7 +159,7 @@ interface AISettingsState {
 
 - `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
 - 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록과 F02 변경 파일 트리용 데모 데이터를 사용해 UI를 확인할 수 있게 한다.
-- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES` / `START_BATCH_AI_SUMMARY`, F03이 `FETCH_FILE_DIFF`, F04가 `ANALYZE_DEPENDENCIES`, F05/F05b가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_FILE` / `START_AI_SUMMARY_COMMIT`, F09가 `START_AI_QA`, F10이 `ANALYZE_SYMBOL_GRAPH` 메시지를 보낸다. F08 취소는 App 전역 `BatchProgressBar`에서 `CANCEL_BATCH_AI_SUMMARY`로 요청한다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`/`SET_ACTIVE_AI_PROVIDER`, `SET_AI_MODEL`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
+- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF`, F04가 `ANALYZE_DEPENDENCIES`, F05b가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_COMMIT`, F09가 `START_AI_QA`, F10이 `ANALYZE_SYMBOL_GRAPH` 메시지를 보낸다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`/`SET_ACTIVE_AI_PROVIDER`, `SET_AI_MODEL`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
 - Browser dev fallback에서는 VSCode 파일 다이얼로그를 열 수 없으므로 S06 저장 경로 선택이 데모 경로를 설정한다. 실제 디렉토리 선택은 Extension Host의 `vscode.window.showOpenDialog()`에서만 동작한다.
 
 ### child_process (Extension Host 전용)
@@ -178,27 +169,6 @@ interface AISettingsState {
 - 타임아웃 120초 초과 시 프로세스를 `kill()`하고 `AI_SUMMARY_ERROR` 메시지를 전송한다.
 
 ---
-
-## Data Flow Example: AI 정리 파일 단위 생성
-
-```
-Webview (F05_AISummaryFile)
-  └─ [AI 정리 보기 클릭]
-       └─ postMessage({ type: 'START_AI_SUMMARY_FILE', payload: { commitHash, filePath, provider, savePath } })
-            ↓
-Extension Host (messageHandler.ts)
-  └─ summaryFileService.loadSummary(savePath, commitHash, filePath)
-       ├─ [존재 시] → postMessage({ type: 'AI_SUMMARY_LOADED', payload: { content, savedPath, provider, fromSaved: true } })
-       └─ [없을 시]
-            └─ gitService.fetchFileDiff(repoPath, commitHash, filePath)
-                 ├─ postMessage({ type: 'AI_SUMMARY_TOKEN_WARNING', payload: { isOverLimit } })
-                 ├─ postMessage({ type: 'AI_SUMMARY_STARTED', payload: { provider } })
-                 └─ aiService.streamAISummary(provider, prompt)
-                      ├─ [stdout chunk] → postMessage({ type: 'AI_SUMMARY_CHUNK', payload: { chunk } })
-                      └─ [close]        → summaryFileService.saveSummary(...)
-                                          ├─ [성공] → postMessage({ type: 'AI_SUMMARY_DONE', payload: { content, savedPath, provider } })
-                                          └─ [저장 실패] → postMessage({ type: 'AI_SUMMARY_ERROR', payload: { message: '저장 경로를 생성할 수 없습니다. 권한을 확인하세요' } })
-```
 
 ## Data Flow Example: AI 정리 커밋 단위 생성
 

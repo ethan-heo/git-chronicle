@@ -1,7 +1,7 @@
 import { ReactFlowProvider } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ResizableSplitPane, SplitViewButton, TopHeader } from '../../shared/components';
+import { ResizableSplitPane, TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { SymbolCodePanel } from './SymbolCodePanel';
@@ -83,8 +83,11 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
         showSettingsIcon
         onSettingsClick={goToSettingsView}
         endSlot={(
-          <SplitViewButton
-            label={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
+          <button
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-45"
+            type="button"
+            aria-label={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
+            title={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
             disabled={symbolNodes.length === 0 || Boolean(symbolGraphError) || isLoadingSymbolGraph}
             onClick={() => {
               if (!isCodePanelOpen) {
@@ -93,7 +96,12 @@ export const S08IntraFileSymbolDependencyCanvasScreen: FC = () => {
                 closeCodePanel();
               }
             }}
-          />
+          >
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+              <rect x="1.6" y="2" width="4.9" height="12" rx="1.1" />
+              <rect x="9.5" y="2" width="4.9" height="12" rx="1.1" />
+            </svg>
+          </button>
         )}
       />
       <ResizableSplitPane

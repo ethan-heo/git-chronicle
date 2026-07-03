@@ -12,10 +12,9 @@ interface FileTreeProps {
   error: string | null;
   onRetry: () => void;
   onFileCodeView: (file: ChangedFile) => void;
-  onFileAISummary: (file: ChangedFile) => void;
 }
 
-export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, onRetry, onFileCodeView, onFileAISummary }) => {
+export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, onRetry, onFileCodeView }) => {
   const { t } = useTranslation();
   const tree = useMemo(() => buildFileTree(changedFiles), [changedFiles]);
   const stats = useMemo(() => getFileStats(changedFiles), [changedFiles]);
@@ -59,9 +58,9 @@ export const FileTree: FC<FileTreeProps> = ({ changedFiles, isLoading, error, on
       <div className="px-0 pt-0.5 pb-2" role="tree" aria-label={t('file_tree.tree_aria')}>
         {tree.children.map((child) =>
           isDirectoryNode(child) ? (
-            <DirectoryNode key={child.path} node={child} depth={0} onCodeView={onFileCodeView} onAISummary={onFileAISummary} />
+            <DirectoryNode key={child.path} node={child} depth={0} onCodeView={onFileCodeView} />
           ) : (
-            <FileTreeNode key={child.file.path} file={child.file} name={child.name} depth={0} onCodeView={onFileCodeView} onAISummary={onFileAISummary} />
+            <FileTreeNode key={child.file.path} file={child.file} name={child.name} depth={0} onCodeView={onFileCodeView} />
           ),
         )}
       </div>

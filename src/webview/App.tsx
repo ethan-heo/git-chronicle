@@ -3,34 +3,34 @@ import { S01CommitListScreen } from './features/F01';
 import { S02HistoryViewScreen } from './features/F02';
 import { S03CodeViewerScreen } from './features/F03';
 import { S05DependencyCanvasScreen } from './features/F04';
-import { S04AISummaryViewerScreen } from './features/F05';
+import { S04AISummaryViewerScreen } from './features/F05b';
 import { S06SettingsScreen } from './features/F06';
 import { S08IntraFileSymbolDependencyCanvasScreen } from './features/F10';
-import { BatchProgressBar } from './features/F08/BatchProgressBar';
 import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
 import { RouteSlotProvider } from './shared/route/RouteSlotContext';
 import { useAppStore } from './store/appStore';
-import type { AIProviderName, RouteTransitionDirection, ScreenID } from './types/commit';
+import type { AIProviderName, RouteTransitionDirection, ScreenID, SymbolEdge, SymbolNode } from './types/commit';
 
 const ROUTE_TRANSITION_DURATION_MS = 200;
+
+interface WebviewEventPayload {
+  savePath?: string | null;
+  activeAIProvider?: AIProviderName | null;
+  registeredProviders?: AIProviderName[];
+  summaryModel?: string | null;
+  qaModel?: string | null;
+  nodes?: SymbolNode[];
+  edges?: SymbolEdge[];
+  fileContent?: string;
+  message?: string;
+}
 
 export const App: FC = () => {
   const currentScreen = useAppStore((state) => state.currentScreen);
   const transitionDirection = useAppStore((state) => state.transitionDirection);
-  const isBatchRunning = useAppStore((state) => state.isBatchRunning);
-  const isBatchCancelling = useAppStore((state) => state.isBatchCancelling);
-  const batchTotal = useAppStore((state) => state.batchTotal);
-  const batchCompleted = useAppStore((state) => state.batchCompleted);
   const toasts = useAppStore((state) => state.toasts);
   const setAISummarySettings = useAppStore((state) => state.setAISummarySettings);
-  const cancelBatchAISummary = useAppStore((state) => state.cancelBatchAISummary);
-  const handleBatchStarted = useAppStore((state) => state.handleBatchStarted);
-  const handleBatchProgress = useAppStore((state) => state.handleBatchProgress);
-  const handleBatchCancelling = useAppStore((state) => state.handleBatchCancelling);
-  const handleBatchComplete = useAppStore((state) => state.handleBatchComplete);
-  const handleBatchCancelled = useAppStore((state) => state.handleBatchCancelled);
-  const handleBatchError = useAppStore((state) => state.handleBatchError);
   const dismissToast = useAppStore((state) => state.dismissToast);
   const [outgoingScreen, setOutgoingScreen] = useState<{
     screen: ScreenID;
@@ -43,9 +43,7 @@ export const App: FC = () => {
       postMessage('FETCH_AI_SUMMARY_SETTINGS');
     }
 
-    const handler = (
-      event: MessageEvent<{ type: string; payload?: any }>,
-    ): void => {
+    const handler = (event: MessageEvent<{ type: string; payload?: WebviewEventPayload }>): void => {
       if (event.data.type === 'AI_SUMMARY_SETTINGS_LOADED') {
         setAISummarySettings({
           savePath: event.data.payload?.savePath ?? null,
@@ -68,46 +66,6 @@ export const App: FC = () => {
         return;
       }
 
-      if (event.data.type === 'BATCH_AI_SUMMARY_STARTED') {
-        handleBatchStarted({ batchTotal: event.data.payload?.batchTotal ?? 0 });
-        return;
-      }
-
-      if (event.data.type === 'BATCH_AI_SUMMARY_PROGRESS') {
-        handleBatchProgress({
-          batchCompleted: event.data.payload?.batchCompleted,
-          batchFailedCount: event.data.payload?.batchFailedCount,
-          completedFilePath: event.data.payload?.completedFilePath,
-          hasSavedSummary: event.data.payload?.hasSavedSummary,
-        });
-        return;
-      }
-
-      if (event.data.type === 'BATCH_AI_SUMMARY_CANCELLING') {
-        handleBatchCancelling();
-        return;
-      }
-
-      if (event.data.type === 'BATCH_AI_SUMMARY_DONE') {
-        handleBatchComplete({
-          batchCompleted: event.data.payload?.batchCompleted,
-          batchFailedCount: event.data.payload?.batchFailedCount,
-        });
-        return;
-      }
-
-      if (event.data.type === 'BATCH_AI_SUMMARY_CANCELLED') {
-        handleBatchCancelled({
-          batchCompleted: event.data.payload?.batchCompleted,
-          batchFailedCount: event.data.payload?.batchFailedCount,
-        });
-        return;
-      }
-
-      if (event.data.type === 'BATCH_AI_SUMMARY_ERROR') {
-        handleBatchError(event.data.payload?.message);
-      }
-
       if (event.data.type === 'SYMBOL_GRAPH_LOADED') {
         useAppStore.getState().handleSymbolGraphLoaded({
           nodes: event.data.payload?.nodes ?? [],
@@ -124,7 +82,7 @@ export const App: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [handleBatchCancelled, handleBatchCancelling, handleBatchComplete, handleBatchError, handleBatchProgress, handleBatchStarted, setAISummarySettings]);
+  }, [setAISummarySettings]);
 
   useEffect(() => {
     if (previousScreenRef.current === currentScreen) {
@@ -146,7 +104,6 @@ export const App: FC = () => {
 
   return (
     <>
-      <BatchProgressBar batchTotal={batchTotal} batchCompleted={batchCompleted} isBatchRunning={isBatchRunning} isCancelling={isBatchCancelling} onCancel={cancelBatchAISummary} />
       <div className="relative h-screen overflow-hidden bg-surface">
         {outgoingScreen && (
           <div className={getScreenSlotClassName(outgoingScreen.direction, 'exiting')} aria-hidden="true">

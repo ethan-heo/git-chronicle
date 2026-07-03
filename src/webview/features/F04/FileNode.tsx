@@ -1,7 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { FC } from 'react';
-import { useTranslation } from 'react-i18next';
-import { FileActionButtons, FileStatusBadge, SavedBadge } from '../../shared/components';
+import { FileActionButtons, FileStatusBadge } from '../../shared/components';
 import { getSourceHandleId, getTargetHandleId, type FileNodeType } from './graph';
 import './FileNode.css';
 
@@ -13,7 +12,6 @@ const handlePositions = [
 ] as const;
 
 export const FileNode: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
-  const { t } = useTranslation();
   const title = data.canAnalyze ? `${data.directory}${data.label}` : 'JS/TS 외 파일은 노드로만 표시됩니다.';
 
   return (
@@ -50,13 +48,11 @@ export const FileNode: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
         </div>
       </div>
       <div className="mt-1.5 flex min-h-[18px] items-center gap-[5px]">
-        {data.file.hasSavedSummary ? <SavedBadge /> : null}
         {!data.canAnalyze ? <span className="rounded-full bg-[color-mix(in_srgb,var(--gae-color-text-secondary)_16%,transparent)] px-[7px] py-[2px] text-[10px] text-muted">분석 불가</span> : null}
       </div>
       <div className="dependency-file-node-actions nodrag nopan absolute right-2 bottom-[-30px] z-10 rounded-sm border border-line bg-elevated p-1 shadow-[0_4px_16px_rgba(0,0,0,0.36)] opacity-0 pointer-events-none translate-y-[-3px] transition-[opacity,transform] duration-[var(--gae-motion-duration-fast)] ease-[var(--gae-motion-easing-default)] group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
         <FileActionButtons
           onCodeView={() => data.onCodeView(data.file)}
-          onAISummary={() => data.onAISummary(data.file)}
           onSymbolGraph={data.onSymbolGraph && data.isSymbolGraphSupported ? () => data.onSymbolGraph?.(data.file) : undefined}
         />
       </div>

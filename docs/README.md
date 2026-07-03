@@ -68,11 +68,9 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **F02** 변경 파일 트리 | [spec](features/F02_changed_file_tree/spec.md) | [blueprint](features/F02_changed_file_tree/blueprint.md) |
 | **F03** 코드 뷰어 (Diff) | [spec](features/F03_code_viewer/spec.md) | [blueprint](features/F03_code_viewer/blueprint.md) |
 | **F04** 의존성 캔버스 | [spec](features/F04_dependency_canvas/spec.md) | [blueprint](features/F04_dependency_canvas/blueprint.md) |
-| **F05** AI 요약 — 파일 단위 | [spec](features/F05_ai_summary_file/spec.md) | [blueprint](features/F05_ai_summary_file/blueprint.md) |
 | **F05b** AI 요약 — 커밋 단위 | [spec](features/F05b_ai_summary_commit/spec.md) | [blueprint](features/F05b_ai_summary_commit/blueprint.md) |
 | **F06** AI 설정 | [spec](features/F06_ai_settings/spec.md) | [blueprint](features/F06_ai_settings/blueprint.md) |
 | **F07** 저장 경로 설정 | [spec](features/F07_save_path_settings/spec.md) | [blueprint](features/F07_save_path_settings/blueprint.md) |
-| **F08** 일괄 AI 요약 | [spec](features/F08_batch_ai_summary/spec.md) | [blueprint](features/F08_batch_ai_summary/blueprint.md) |
 | **F09** AI 요약 Q&A | [spec](features/F09_ai_summary_qa/spec.md) | [blueprint](features/F09_ai_summary_qa/blueprint.md) |
 | **F10** 파일 내부 심볼 의존성 캔버스 | [spec](features/F10_intra_file_symbol_dependency_canvas/spec.md) | [blueprint](features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
 
@@ -87,7 +85,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **S01** 커밋 목록 | [blueprint](screens/S01_commit_list/blueprint.md) | 필터 패널 + 커밋 리스트 메인 화면 |
 | **S02** 커밋 히스토리 뷰 | [blueprint](screens/S02_history_view/blueprint.md) | 선택 커밋의 변경 파일 트리 화면 |
 | **S03** 코드 뷰어 | [blueprint](screens/S03_code_viewer/blueprint.md) | Diff 코드 뷰어 화면 |
-| **S04** AI 요약 뷰어 | [blueprint](screens/S05_ai_summary_viewer/blueprint.md) | AI 요약 결과 마크다운 뷰어 화면 (F05/F05b/F09 조합) |
+| **S04** AI 요약 뷰어 | [blueprint](screens/S05_ai_summary_viewer/blueprint.md) | AI 요약 결과 마크다운 뷰어 화면 (F05b/F09 조합) |
 | **S05** 의존성 캔버스 | [blueprint](screens/S04_dependency_canvas/blueprint.md) | 노드-엣지 의존성 그래프 화면 |
 | **S06** 설정 | [blueprint](screens/S06_settings/blueprint.md) | AI 프로바이더·저장 경로 설정 화면 (F06/F07 조합) |
 | **S08** 파일 내부 심볼 의존성 캔버스 | [blueprint](screens/S08_intra_file_dependency_canvas/blueprint.md) | 단일 파일 내 심볼(함수·클래스·변수 등) 간 의존 관계 그래프 + 우측 코드 패널 화면 |

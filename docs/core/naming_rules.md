@@ -18,7 +18,7 @@
 | S06 | S06_SettingsScreen |
 | S08 | S08_IntraFileSymbolDependencyCanvasScreen |
 
-> S07(코드+AI 요약 분할)은 인라인 분할 패널 방식으로 대체되어 더 이상 존재하지 않는다.
+> S07은 현재 사용하지 않는다.
 
 - 번호는 2자리 zero-padding (`S01`, `S02`, ...).
 - 이름은 PascalCase, 반드시 `Screen` 접미사로 끝낸다.
@@ -36,11 +36,9 @@
 | F02 | F02_ChangedFileTree |
 | F03 | F03_CodeViewer |
 | F04 | F04_DependencyCanvas |
-| F05 | F05_AISummaryFile |
 | F05b | F05b_AISummaryCommit |
 | F06 | F06_AISettings |
 | F07 | F07_SavePathSettings |
-| F08 | F08_BatchAISummary |
 | F09 | F09_AISummaryQA |
 | F10 | F10_IntraFileSymbolDependencyCanvas |
 
@@ -76,7 +74,6 @@ StreamingTextRenderer
 RegenerateButton
 AIProviderButton
 SavePathSelector
-BatchProgressBar
 ```
 
 ---

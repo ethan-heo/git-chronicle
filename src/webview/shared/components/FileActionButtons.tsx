@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 
 interface FileActionButtonsProps {
   onCodeView: () => void;
-  onAISummary: () => void;
   onSymbolGraph?: () => void;
   isVisible?: boolean;
   className?: string;
@@ -11,7 +10,6 @@ interface FileActionButtonsProps {
 
 export const FileActionButtons: FC<FileActionButtonsProps> = ({
   onCodeView,
-  onAISummary,
   onSymbolGraph,
   isVisible = true,
   className,
@@ -34,11 +32,6 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
           <path d="M6 5 2.5 8 6 11" />
           <path d="m10 5 3.5 3L10 11" />
         </svg>
-      </button>
-      <button className={buttonClassName} type="button" aria-label={t('shared.file_ai_view')} title={t('shared.file_ai_view')} onClick={onAISummary}>
-        <span className="text-[10px] font-semibold leading-none tracking-[0.04em]" aria-hidden="true">
-          AI
-        </span>
       </button>
       {onSymbolGraph ? (
         <button

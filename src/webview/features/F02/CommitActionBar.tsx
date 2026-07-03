@@ -1,23 +1,21 @@
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PrimaryButton } from '../../shared/components';
+import { PrimaryButton, SavedBadge } from '../../shared/components';
 import type { Commit } from '../../types/commit';
 
 interface CommitActionBarProps {
   selectedCommit: Commit;
-  isBatchRunning: boolean;
+  hasSavedCommitSummary: boolean;
   isLoadingChangedFiles: boolean;
   onCommitAISummary: () => void;
-  onBatchAISummary: () => void;
   onCanvasView: () => void;
 }
 
 export const CommitActionBar: FC<CommitActionBarProps> = ({
   selectedCommit,
-  isBatchRunning,
+  hasSavedCommitSummary,
   isLoadingChangedFiles,
   onCommitAISummary,
-  onBatchAISummary,
   onCanvasView,
 }) => {
   const { t } = useTranslation();
@@ -27,17 +25,12 @@ export const CommitActionBar: FC<CommitActionBarProps> = ({
       role="toolbar"
       aria-label={`${selectedCommit.shortHash} ${t('action_bar.commit_ai_aria')}`}
     >
-      <PrimaryButton aria-label={t('action_bar.commit_ai_aria')} onClick={onCommitAISummary}>
-        {t('action_bar.commit_ai_aria')}
-      </PrimaryButton>
-      <PrimaryButton
-        className="border-line !bg-secondary !text-text hover:!bg-secondary-hi"
-        aria-label={t('action_bar.batch_ai_aria')}
-        disabled={isBatchRunning}
-        onClick={onBatchAISummary}
-      >
-        {isBatchRunning ? t('batch.in_progress') : t('action_bar.batch_ai_aria')}
-      </PrimaryButton>
+      <div className="inline-flex items-center gap-1.5">
+        <PrimaryButton aria-label={t('action_bar.commit_ai_aria')} onClick={onCommitAISummary}>
+          {t('action_bar.commit_ai_aria')}
+        </PrimaryButton>
+        <SavedBadge isVisible={hasSavedCommitSummary} />
+      </div>
       <PrimaryButton
         className="border-line !bg-secondary !text-text hover:!bg-secondary-hi"
         aria-label={t('action_bar.canvas_aria')}

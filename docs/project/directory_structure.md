@@ -62,21 +62,14 @@ src/extension/
 ├── aiTypes.ts                        # AIProviderName 타입 ('claude' | 'gemini' | 'codex')
 ├── aiProviderService.ts              # AI 프로바이더/모델 선택 상태(AISettingsState) 관리
 │   - registerAIProvider / setActiveAIProvider / setAIModel / setSavePath
-├── batchService.ts                   # 파일 단위 AI 정리 일괄 순차 실행
-│   - runBatchAISummary(options)      # 저장본 스킵, 실패 계속 진행, 취소 플래그 확인
 ├── prompts.ts                        # AI 정리 프롬프트 빌더
-│   - buildFileSummaryPrompt(filePath, diff)
 │   - buildCommitSummaryPrompt(commitHash, diff)
 │   - buildSummaryQAPrompt(summaryContent, diff, question)  # F09 Q&A
 └── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인
     - SummarySaveError                # 저장 경로 생성/쓰기 실패 전용 오류
-    - loadSummary(savePath, hash, file) → { content, savedPath } | null
-    - saveSummary(savePath, hash, file, content) → savedPath
     - loadCommitSummary(savePath, hash) → { content, savedPath } | null
     - saveCommitSummary(savePath, hash, content) → savedPath
-    - hasSavedSummary(savePath, hash, file) → boolean
     - appendSummaryQA(savedPath, question, answer) → string  # F09 질문/답변 append
-    - 파일명 규칙: filePath의 / 또는 \ 를 __로 치환 후 .md 추가
 ```
 
 ---
@@ -133,14 +126,14 @@ src/webview/
 │   │   ├── LegendPanel.tsx           # 캔버스 범례
 │   │   ├── graph.ts                  # ChangedFile[] + DependencyEdge[] → 그래프 데이터
 │   │   └── index.ts                  # F04 barrel export
-│   ├── F05/
+│   ├── F05b/
 │   │   ├── S04_AISummaryViewerScreen.tsx # S04 화면 조합, AI 요약 메시지 구독
 │   │   ├── AISummaryViewer.tsx       # 상태 분기 + 마크다운 렌더링
 │   │   ├── StreamingTextRenderer.tsx # 실시간 스트리밍 텍스트 + 커서
 │   │   ├── RegenerateButton.tsx      # 저장본 재생성 버튼
 │   │   ├── TokenLimitWarning.tsx     # 대용량 diff 경고 + 접기
 │   │   ├── OverwriteConfirmDialog.tsx # 저장본 덮어쓰기 확인 모달
-│   │   └── index.ts                  # F05 barrel export
+│   │   └── index.ts                  # F05b barrel export
 │   ├── F06/
 │   │   ├── S06_SettingsScreen.tsx    # S06 설정 화면 조합, 설정 메시지 구독
 │   │   ├── AIProviderSection.tsx     # Claude/Gemini/Codex 등록·활성화 영역
@@ -148,17 +141,8 @@ src/webview/
 │   │   ├── SavePathSection.tsx       # F07 저장 경로 표시·선택·삭제 UI
 │   │   ├── providers.ts              # AI provider UI 메타데이터
 │   │   └── index.ts                  # F06 barrel export
-│   ├── F08/
-│   │   ├── BatchCancelButton.tsx
-│   │   ├── BatchProgressBar.tsx      # 상단 고정 프로그레스 바
-│   │   └── BatchProgressBar.css
-│   ├── F09/                          # AI 요약 Q&A + 인라인 분할 패널
-│   │   ├── S07CodeAndAISummaryScreen.tsx # 미참조 레거시 파일 (더 이상 라우팅되지 않음)
-│   │   ├── AISummaryPanel.tsx        # S03 우측 인라인 AI 요약 패널
-│   │   ├── DiffViewerPanel.tsx       # S04 우측 인라인 코드 패널
+│   ├── F09/                          # AI 요약 Q&A
 │   │   ├── QAInputArea.tsx           # 요약 완료 후 질문 입력 영역
-│   │   ├── SplitSidePanel.css
-│   │   └── index.ts
 │   └── F10/                          # 파일 내부 심볼 의존성 캔버스 (S08)
 │       ├── S08_IntraFileSymbolDependencyCanvasScreen.tsx
 │       ├── SymbolGraph.tsx           # React Flow 캔버스 컨테이너
@@ -229,8 +213,7 @@ tests/
 │   ├── summaryFileService.test.ts
 │   ├── aiService.test.ts
 │   ├── aiProviderService.test.ts
-│   ├── appStorePersistence.test.ts
-│   └── batchService.test.ts
+│   └── appStorePersistence.test.ts
 └── setup.ts
 ```
 

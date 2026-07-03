@@ -98,8 +98,8 @@ export const MyComponent: React.FC<MyComponentProps> = ({ value, onChange }) => 
 
 ```typescript
 // 올바른 예
-case 'START_AI_SUMMARY_FILE':
-  await handleStartAISummaryFile(webviewPanel, payload);
+case 'START_AI_SUMMARY_COMMIT':
+  await handleStartAISummaryCommit(webviewPanel, payload);
   break;
 ```
 

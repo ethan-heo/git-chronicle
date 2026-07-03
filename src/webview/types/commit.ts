@@ -21,7 +21,6 @@ export interface ChangedFile {
   path: string;
   oldPath?: string;
   status: FileStatus;
-  hasSavedSummary: boolean;
 }
 
 export type DependencyKind = 'import' | 'require';
@@ -70,8 +69,6 @@ export interface SymbolEdge {
   to: string;
   kind: SymbolDependencyKind;
 }
-
-export type SummaryMode = 'file' | 'commit';
 
 export type AIProviderName = 'claude' | 'gemini' | 'codex';
 

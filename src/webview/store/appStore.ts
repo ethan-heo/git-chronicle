@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import i18n from 'i18next';
 import type { ToastItem, ToastType } from '../shared/components/Toast';
 import { getWebviewState, isVSCodeRuntime, postMessage, setWebviewState } from '../bridge/vscodeApi';
 import type {
@@ -10,7 +9,6 @@ import type {
   FilterState,
   RouteTransitionDirection,
   ScreenID,
-  SummaryMode,
   SymbolEdge,
   SymbolNode,
 } from '../types/commit';
@@ -43,6 +41,7 @@ interface AppState extends FilterState {
   authorList: string[];
   selectedCommit: Commit | null;
   changedFiles: ChangedFile[];
+  hasSavedCommitSummary: boolean;
   selectedFile: ChangedFile | null;
   isLoadingChangedFiles: boolean;
   changedFilesError: string | null;
@@ -58,7 +57,6 @@ interface AppState extends FilterState {
   hasLoadedSymbolGraph: boolean;
   symbolGraphError: string | null;
   isCodePanelOpen: boolean;
-  isSplitPanelOpen: boolean;
   activeSymbolNodeId: string | null;
   hoveredSymbolNodeId: string | null;
   savePath: string | null;
@@ -66,7 +64,6 @@ interface AppState extends FilterState {
   activeAIProvider: AIProviderName | null;
   summaryModel: string | null;
   qaModel: string | null;
-  summaryMode: SummaryMode;
   currentSummaryContent: string;
   isLoadingSummary: boolean;
   isGeneratingSummary: boolean;
@@ -76,11 +73,6 @@ interface AppState extends FilterState {
   summarySavedPath: string | null;
   hasCurrentSavedSummary: boolean;
   isSummaryTokenLimitExceeded: boolean;
-  isBatchRunning: boolean;
-  isBatchCancelling: boolean;
-  batchTotal: number;
-  batchCompleted: number;
-  batchFailedCount: number;
   toasts: ToastItem[];
   commitPage: number;
   hasMoreCommits: boolean;
@@ -106,22 +98,11 @@ interface AppState extends FilterState {
   goToCommitList: () => void;
   goToHistoryView: () => void;
   goBackFromDetail: () => void;
-  openSplitPanel: () => void;
-  closeSplitPanel: () => void;
   selectFileForCode: (file: ChangedFile) => void;
-  selectFileForAI: (file: ChangedFile) => void;
   goToCommitAISummary: () => void;
   goToCanvasView: () => void;
   goToSymbolGraphView: (file: ChangedFile) => void;
   goToSettingsView: () => void;
-  startBatchAISummary: () => void;
-  cancelBatchAISummary: () => void;
-  handleBatchStarted: (payload: { batchTotal: number }) => void;
-  handleBatchProgress: (payload: { batchCompleted?: number; batchFailedCount?: number; completedFilePath?: string; hasSavedSummary?: boolean }) => void;
-  handleBatchCancelling: () => void;
-  handleBatchComplete: (payload: { batchCompleted?: number; batchFailedCount?: number }) => void;
-  handleBatchCancelled: (payload: { batchCompleted?: number; batchFailedCount?: number }) => void;
-  handleBatchError: (message?: string) => void;
   pushToast: (message: string, type: ToastType) => void;
   dismissToast: (id: string) => void;
   openRepository: () => void;
@@ -141,7 +122,7 @@ interface AppState extends FilterState {
   handleCommitsLoaded: (payload: CommitsLoadedPayload) => void;
   handleRepositoryNotFound: () => void;
   handleCommitsLoadFailed: (message?: string) => void;
-  handleChangedFilesLoaded: (files: ChangedFile[]) => void;
+  handleChangedFilesLoaded: (payload: { files: ChangedFile[]; hasSavedCommitSummary?: boolean }) => void;
   handleChangedFilesLoadFailed: (message?: string) => void;
   handleDependenciesLoaded: (edges: DependencyEdge[]) => void;
   handleDependenciesLoadFailed: (message?: string) => void;
@@ -165,6 +146,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   authorList: [],
   selectedCommit: null,
   changedFiles: [],
+  hasSavedCommitSummary: false,
   selectedFile: null,
   isLoadingChangedFiles: false,
   changedFilesError: null,
@@ -180,7 +162,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   hasLoadedSymbolGraph: false,
   symbolGraphError: null,
   isCodePanelOpen: false,
-  isSplitPanelOpen: false,
   activeSymbolNodeId: null,
   hoveredSymbolNodeId: null,
   savePath: isVSCodeRuntime() ? null : '.git-author',
@@ -188,7 +169,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeAIProvider: isVSCodeRuntime() ? null : 'claude',
   summaryModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
   qaModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
-  summaryMode: 'file',
   currentSummaryContent: '',
   isLoadingSummary: false,
   isGeneratingSummary: false,
@@ -198,11 +178,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   summarySavedPath: null,
   hasCurrentSavedSummary: false,
   isSummaryTokenLimitExceeded: false,
-  isBatchRunning: false,
-  isBatchCancelling: false,
-  batchTotal: 0,
-  batchCompleted: 0,
-  batchFailedCount: 0,
   toasts: [],
   commitPage: 0,
   hasMoreCommits: true,
@@ -280,7 +255,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     if (!isVSCodeRuntime()) {
       window.setTimeout(() => {
-        get().handleChangedFilesLoaded(demoChangedFiles);
+        get().handleChangedFilesLoaded({
+          files: demoChangedFiles,
+          hasSavedCommitSummary: true,
+        });
       }, 220);
       return;
     }
@@ -371,6 +349,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       selectedCommit: commit,
       selectedFile: null,
       changedFiles: [],
+      hasSavedCommitSummary: false,
       changedFilesError: null,
       isLoadingChangedFiles: false,
       hasLoadedChangedFiles: false,
@@ -385,7 +364,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       hasLoadedSymbolGraph: false,
       symbolGraphError: null,
       isCodePanelOpen: false,
-      isSplitPanelOpen: false,
       activeSymbolNodeId: null,
       hoveredSymbolNodeId: null,
       currentSummaryContent: '',
@@ -408,7 +386,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: 'S01',
       previousScreen: null,
       transitionDirection: 'back',
-      isSplitPanelOpen: false,
     });
   },
 
@@ -417,7 +394,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: 'S02',
       previousScreen: null,
       transitionDirection: 'back',
-      isSplitPanelOpen: false,
     });
   },
 
@@ -429,7 +405,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: previousScreen,
       previousScreen: null,
       transitionDirection: 'back',
-      isSplitPanelOpen: false,
     });
   },
 
@@ -438,7 +413,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({
       selectedFile: file,
-      summaryMode: 'file',
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: false,
@@ -446,52 +420,29 @@ export const useAppStore = create<AppState>((set, get) => ({
       summaryError: null,
       qaError: null,
       summarySavedPath: null,
-      hasCurrentSavedSummary: file.hasSavedSummary,
+      hasCurrentSavedSummary: state.hasSavedCommitSummary,
       isSummaryTokenLimitExceeded: false,
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
       currentScreen: 'S03',
       transitionDirection: 'forward',
-      isSplitPanelOpen: false,
-    });
-  },
-
-  selectFileForAI: (file) => {
-    const state = get();
-
-    set({
-      selectedFile: file,
-      summaryMode: 'file',
-      currentSummaryContent: '',
-      isLoadingSummary: false,
-      isGeneratingSummary: false,
-      isGeneratingQA: false,
-      summaryError: null,
-      qaError: null,
-      summarySavedPath: null,
-      hasCurrentSavedSummary: file.hasSavedSummary,
-      isSummaryTokenLimitExceeded: false,
-      previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
-      currentScreen: 'S04',
-      transitionDirection: 'forward',
-      isSplitPanelOpen: false,
     });
   },
 
   goToCommitAISummary: () => {
     set({
       selectedFile: null,
-      summaryMode: 'commit',
       currentSummaryContent: '',
       isLoadingSummary: false,
       isGeneratingSummary: false,
+      isGeneratingQA: false,
       summaryError: null,
+      qaError: null,
       summarySavedPath: null,
-      hasCurrentSavedSummary: false,
+      hasCurrentSavedSummary: get().hasSavedCommitSummary,
       isSummaryTokenLimitExceeded: false,
       previousScreen: 'S02',
       currentScreen: 'S04',
       transitionDirection: 'forward',
-      isSplitPanelOpen: false,
     });
   },
 
@@ -515,7 +466,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       isLoadingSymbolGraph: false,
       hasLoadedSymbolGraph: false,
       isCodePanelOpen: false,
-      isSplitPanelOpen: false,
       activeSymbolNodeId: null,
       hoveredSymbolNodeId: null,
       previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
@@ -530,132 +480,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       previousScreen: state.currentScreen === 'S06' ? state.previousScreen : state.currentScreen,
       transitionDirection: 'forward',
     }));
-  },
-
-  openSplitPanel: () => set({ isSplitPanelOpen: true }),
-  closeSplitPanel: () => set({ isSplitPanelOpen: false }),
-
-  startBatchAISummary: () => {
-    const state = get();
-    const total = state.changedFiles.length;
-
-    if (total === 0) {
-      return;
-    }
-
-    if (!state.activeAIProvider) {
-      get().pushToast(i18n.t('ai_summary.no_ai'), 'error');
-      return;
-    }
-
-    if (!state.savePath) {
-      get().pushToast(i18n.t('ai_summary.no_save_path'), 'error');
-      return;
-    }
-
-    if (isVSCodeRuntime()) {
-      postMessage('START_BATCH_AI_SUMMARY', {
-        commitHash: state.selectedCommit?.hash,
-        commitMessage: state.selectedCommit?.message,
-        provider: state.activeAIProvider,
-        summaryModel: state.summaryModel,
-        savePath: state.savePath,
-        files: state.changedFiles,
-      });
-      return;
-    }
-
-    set({
-      isBatchRunning: true,
-      isBatchCancelling: false,
-      batchTotal: total,
-      batchCompleted: 0,
-      batchFailedCount: 0,
-    });
-
-    simulateDemoBatchAISummary();
-  },
-
-  cancelBatchAISummary: () => {
-    if (!get().isBatchRunning) {
-      return;
-    }
-
-    if (isVSCodeRuntime()) {
-      set({
-        isBatchCancelling: true,
-      });
-      postMessage('CANCEL_BATCH_AI_SUMMARY');
-    } else {
-      get().handleBatchCancelled({
-        batchCompleted: get().batchCompleted,
-        batchFailedCount: get().batchFailedCount,
-      });
-    }
-  },
-
-  handleBatchStarted: ({ batchTotal }) => {
-    set({
-      isBatchRunning: true,
-      isBatchCancelling: false,
-      batchTotal,
-      batchCompleted: 0,
-      batchFailedCount: 0,
-    });
-  },
-
-  handleBatchProgress: ({ batchCompleted = 0, batchFailedCount = 0, completedFilePath, hasSavedSummary }) => {
-    set((state) => ({
-      isBatchRunning: true,
-      batchCompleted,
-      batchFailedCount,
-      changedFiles:
-        completedFilePath && hasSavedSummary
-          ? state.changedFiles.map((file) => (file.path === completedFilePath ? { ...file, hasSavedSummary: true } : file))
-          : state.changedFiles,
-      selectedFile:
-        completedFilePath && hasSavedSummary && state.selectedFile?.path === completedFilePath
-          ? { ...state.selectedFile, hasSavedSummary: true }
-          : state.selectedFile,
-      hasCurrentSavedSummary:
-        completedFilePath && hasSavedSummary && state.selectedFile?.path === completedFilePath ? true : state.hasCurrentSavedSummary,
-    }));
-  },
-
-  handleBatchCancelling: () => {
-    set({
-      isBatchCancelling: true,
-    });
-  },
-
-  handleBatchComplete: ({ batchCompleted = get().batchCompleted, batchFailedCount = get().batchFailedCount }) => {
-    set({
-      isBatchRunning: false,
-      isBatchCancelling: false,
-      batchCompleted,
-      batchFailedCount,
-    });
-
-    get().pushToast(batchFailedCount > 0 ? `Completed with ${batchFailedCount} failures` : i18n.t('status.ai_summary_generation'), batchFailedCount > 0 ? 'warning' : 'success');
-  },
-
-  handleBatchCancelled: ({ batchCompleted = get().batchCompleted, batchFailedCount = get().batchFailedCount }) => {
-    set({
-      isBatchRunning: false,
-      isBatchCancelling: false,
-      batchCompleted,
-      batchFailedCount,
-    });
-
-    get().pushToast(`${batchCompleted - batchFailedCount} files saved`, 'success');
-  },
-
-  handleBatchError: (message = 'Could not complete batch generation') => {
-    set({
-      isBatchRunning: false,
-      isBatchCancelling: false,
-    });
-    get().pushToast(message, 'error');
   },
 
   pushToast: (message, type) => {
@@ -736,11 +560,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   completeAISummary: ({ content, savedPath, provider }) => {
-    const state = get();
-    const selectedPath = state.selectedFile?.path;
-
     set({
-      currentSummaryContent: content ?? state.currentSummaryContent,
+      currentSummaryContent: content ?? get().currentSummaryContent,
       isLoadingSummary: false,
       isGeneratingSummary: false,
       isGeneratingQA: false,
@@ -749,9 +570,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       summarySavedPath: savedPath ?? null,
       hasCurrentSavedSummary: true,
       ...(provider ? { activeAIProvider: provider } : {}),
-      changedFiles: selectedPath
-        ? state.changedFiles.map((file) => (file.path === selectedPath ? { ...file, hasSavedSummary: true } : file))
-        : state.changedFiles,
+      hasSavedCommitSummary: true,
     });
   },
 
@@ -867,9 +686,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  handleChangedFilesLoaded: (files) => {
+  handleChangedFilesLoaded: ({ files, hasSavedCommitSummary = false }) => {
     set({
       changedFiles: files,
+      hasSavedCommitSummary,
       isLoadingChangedFiles: false,
       changedFilesError: null,
       hasLoadedChangedFiles: true,
@@ -966,44 +786,6 @@ function extractAuthors(commits: Commit[]): string[] {
   return [...new Set(commits.map((commit) => commit.author).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 }
 
-function simulateDemoBatchAISummary(): void {
-  const runNext = (index: number, completed: number, failed: number): void => {
-    const state = useAppStore.getState();
-
-    if (!state.isBatchRunning) {
-      return;
-    }
-
-    const file = state.changedFiles[index];
-
-    if (!file) {
-      state.handleBatchComplete({ batchCompleted: completed, batchFailedCount: failed });
-      return;
-    }
-
-    window.setTimeout(
-      () => {
-        const latest = useAppStore.getState();
-
-        if (!latest.isBatchRunning) {
-          return;
-        }
-
-        latest.handleBatchProgress({
-          batchCompleted: completed + 1,
-          batchFailedCount: failed,
-          completedFilePath: file.path,
-          hasSavedSummary: true,
-        });
-        runNext(index + 1, completed + 1, failed);
-      },
-      file.hasSavedSummary ? 120 : 420,
-    );
-  };
-
-  runNext(0, 0, 0);
-}
-
 function getDemoCommitsPage(state: FilterState, page: number, pageSize: number): Commit[] {
   const filtered = filterDemoCommits(state);
   const start = page * pageSize;
@@ -1082,16 +864,16 @@ const demoCommits: Commit[] = [
 ];
 
 const demoChangedFiles: ChangedFile[] = [
-  { path: 'src/components/CommitList/CommitList.tsx', status: 'M', hasSavedSummary: true },
-  { path: 'src/components/CommitList/CommitListItem.tsx', status: 'M', hasSavedSummary: false },
-  { path: 'src/components/CommitList/useInfiniteScroll.ts', status: 'A', hasSavedSummary: true },
-  { path: 'src/components/CommitFilter/CommitFilterPanel.tsx', status: 'M', hasSavedSummary: false },
-  { path: 'src/hooks/useIntersectionObserver.ts', status: 'A', hasSavedSummary: false },
-  { path: 'src/hooks/useScrollTrigger.ts', status: 'D', hasSavedSummary: false },
-  { path: 'src/utils/pagination.ts', status: 'M', hasSavedSummary: true },
-  { path: 'src/types/commit.ts', oldPath: 'src/types/git.ts', status: 'R', hasSavedSummary: false },
-  { path: 'tests/CommitList.test.tsx', status: 'M', hasSavedSummary: false },
-  { path: 'docs/F01_blueprint.md', status: 'M', hasSavedSummary: false },
+  { path: 'src/components/CommitList/CommitList.tsx', status: 'M' },
+  { path: 'src/components/CommitList/CommitListItem.tsx', status: 'M' },
+  { path: 'src/components/CommitList/useInfiniteScroll.ts', status: 'A' },
+  { path: 'src/components/CommitFilter/CommitFilterPanel.tsx', status: 'M' },
+  { path: 'src/hooks/useIntersectionObserver.ts', status: 'A' },
+  { path: 'src/hooks/useScrollTrigger.ts', status: 'D' },
+  { path: 'src/utils/pagination.ts', status: 'M' },
+  { path: 'src/types/commit.ts', oldPath: 'src/types/git.ts', status: 'R' },
+  { path: 'tests/CommitList.test.tsx', status: 'M' },
+  { path: 'docs/F01_blueprint.md', status: 'M' },
 ];
 
 const demoDependencyEdges: DependencyEdge[] = [

@@ -22,8 +22,7 @@
 
 ## Outputs
 
-- `selectedFile: ChangedFile` — 파일 클릭 시 전역 상태 업데이트 → S-03/S-04 진입
-- `isBatchRunning` 트리거 → F08 진입
+- `selectedFile: ChangedFile` — 파일 클릭 시 전역 상태 업데이트 → S-03 진입
 
 ---
 
@@ -44,31 +43,28 @@
 ### Component: CommitActionBar
 
 #### Purpose
-커밋 단위 액션 버튼([커밋 AI 정리], [전체 파일 AI 정리], [캔버스 보기])을 상단에 표시한다.
+커밋 단위 액션 버튼([커밋 AI 정리], [캔버스 보기])을 상단에 표시한다. [커밋 AI 정리] 옆에는 저장본 존재 여부에 따라 `SavedBadge`가 표시된다.
 
 #### Data
 - `selectedCommit: Commit`
-- `isBatchRunning: boolean`
+- `hasSavedCommitSummary: boolean`
 
 #### Props
 ```typescript
 interface CommitActionBarProps {
   selectedCommit: Commit;
-  isBatchRunning: boolean;
+  hasSavedCommitSummary: boolean;
   onCommitAISummary: () => void;
-  onBatchAISummary: () => void;
   onCanvasView: () => void;
 }
 ```
 
 #### Interaction
-- [커밋 AI 정리] 클릭 → `summaryMode = "commit"` 설정 → S-04 진입
-- [전체 파일 AI 정리] 클릭 → F08 시작 (`isBatchRunning = true`)
+- [커밋 AI 정리] 클릭 → S-04 진입
 - [캔버스 보기] 클릭 → S-05 진입
 
 #### States
 - `default`: 모든 버튼 활성
-- `batchRunning`: [전체 파일 AI 정리] 버튼 비활성화
 
 #### Accessibility
 - 각 버튼에 `aria-label` 명시
@@ -94,7 +90,6 @@ interface FileTreeProps {
   error: string | null;
   onRetry: () => void;
   onFileCodeView: (file: ChangedFile) => void;
-  onFileAISummary: (file: ChangedFile) => void;
 }
 ```
 
@@ -129,7 +124,6 @@ interface DirectoryNodeProps {
   node: DirectoryTreeNode;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
-  onAISummary: (file: ChangedFile) => void;
 }
 ```
 
@@ -163,14 +157,12 @@ interface FileTreeNodeProps {
   name: string;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
-  onAISummary: (file: ChangedFile) => void;
 }
 ```
 
 #### Interaction
 - 호버 시 `FileActionButtons` 표시, `FileStatusBadge` 유지
 - [코드 보기] 클릭 → `selectedFile` 업데이트 → S-03 진입
-- [AI 정리 보기] 클릭 → `selectedFile` 업데이트 → S-04 진입
 
 #### States
 - `default`, `hover`
@@ -224,7 +216,6 @@ interface FileStatusBadgeProps {
 
 ### CommitActionBar
 - `default`: 모든 버튼 활성
-- `batchRunning`: [전체 파일 AI 정리] 버튼 비활성
 
 ---
 
@@ -235,13 +226,11 @@ interface FileStatusBadgeProps {
 | 파일 호버 | `FileTreeNode` 마우스 진입 | `FileActionButtons` 표시 |
 | 파일 호버 해제 | 마우스 이탈 | `FileActionButtons` 숨김 |
 | [코드 보기] | 버튼 클릭 | `selectedFile` 설정 후 S-03 진입 |
-| [AI 정리 보기] | 버튼 클릭 | `selectedFile` 설정 후 S-04 진입, `summaryMode = "file"` |
-| [커밋 AI 정리] | 버튼 클릭 | S-04 진입, `summaryMode = "commit"` |
-| [전체 파일 AI 정리] | 버튼 클릭 | `isBatchRunning = true`, `batchTotal` 설정 |
+| [커밋 AI 정리] | 버튼 클릭 | S-04 진입 |
 | [캔버스 보기] | 버튼 클릭 | S-05 진입 |
 | 디렉토리 클릭 | `DirectoryNode` 클릭 | 펼침/접힘 토글 |
 
-> 현재 S-03은 코드 뷰어로, S-04는 파일 단위 AI 요약 뷰어로, S-05는 의존성 캔버스로 라우팅된다. S-04의 커밋 단위 요약은 F05b 구현 범위에서 확장한다.
+> 현재 S-03은 코드 뷰어로, S-04는 커밋 단위 AI 요약 뷰어로, S-05는 의존성 캔버스로 라우팅된다.
 
 ---
 
@@ -286,7 +275,7 @@ interface FileStatusBadgeProps {
 ## Reusable Components
 
 - [`FileActionButtons`](../../core/global_components.md#fileactionbuttons)
-- [`SavedBadge`](../../core/global_components.md#savedbadge)
+- [`SavedBadge`](../../core/global_components.md#savedbadge) — `CommitActionBar`의 [커밋 AI 정리] 버튼 옆에서 사용
 - [`EmptyState`](../../core/global_components.md#emptystate)
 - [`LoadingState`](../../core/global_components.md#loadingstate)
 - [`ErrorState`](../../core/global_components.md#errorstate)

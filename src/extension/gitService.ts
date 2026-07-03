@@ -1,5 +1,5 @@
 import simpleGit from 'simple-git';
-import { hasSavedSummary } from './summaryFileService';
+import { loadCommitSummary } from './summaryFileService';
 
 export interface Commit {
   hash: string;
@@ -15,7 +15,11 @@ export interface ChangedFile {
   path: string;
   oldPath?: string;
   status: FileStatus;
-  hasSavedSummary: boolean;
+}
+
+export interface FetchChangedFilesResult {
+  files: ChangedFile[];
+  hasSavedCommitSummary: boolean;
 }
 
 export interface FetchCommitsOptions {
@@ -169,7 +173,7 @@ export async function fetchCommitCount(options: FetchCommitCountOptions): Promis
   return Number.parseInt(output.trim(), 10) || 0;
 }
 
-export async function fetchChangedFiles(repoPath: string, commitHash: string, savePath: string | null, commitMessage?: string): Promise<ChangedFile[]> {
+export async function fetchChangedFiles(repoPath: string, commitHash: string, savePath: string | null, commitMessage?: string): Promise<FetchChangedFilesResult> {
   const git = simpleGit(repoPath);
   const isRepo = await git.checkIsRepo();
 
@@ -179,10 +183,13 @@ export async function fetchChangedFiles(repoPath: string, commitHash: string, sa
 
   const output = await git.raw(['diff-tree', '--no-commit-id', '--name-status', '-r', '--root', commitHash]);
 
-  return output
-    .split('\n')
-    .map((line) => parseChangedFileLine(line, commitHash, savePath, commitMessage))
-    .filter((file): file is ChangedFile => Boolean(file));
+  return {
+    files: output
+      .split('\n')
+      .map((line) => parseChangedFileLine(line))
+      .filter((file): file is ChangedFile => Boolean(file)),
+    hasSavedCommitSummary: Boolean(savePath && loadCommitSummary(savePath, commitHash, commitMessage)),
+  };
 }
 
 export async function fetchFileDiff(repoPath: string, commitHash: string, filePath: string): Promise<FileDiffResult> {
@@ -230,7 +237,7 @@ export async function fetchCommitFullDiff(repoPath: string, commitHash: string):
   return git.show([commitHash, '--stat', '-p', '--find-renames', '--unified=3']);
 }
 
-function parseChangedFileLine(line: string, commitHash: string, savePath: string | null, commitMessage?: string): ChangedFile | null {
+function parseChangedFileLine(line: string): ChangedFile | null {
   const trimmed = line.trim();
 
   if (!trimmed) {
@@ -254,7 +261,6 @@ function parseChangedFileLine(line: string, commitHash: string, savePath: string
     path: filePath,
     oldPath: status === 'R' ? firstPath : undefined,
     status,
-    hasSavedSummary: hasSavedSummary(savePath, commitHash, filePath, commitMessage),
   };
 }
 
