@@ -1,4 +1,4 @@
-# Development Environment — GitRewind
+# Development Environment — GitChronicle
 
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 
@@ -131,10 +131,7 @@
 
 ## Webview 스타일링 기준
 
-- Webview 스타일 엔트리는 `src/webview/global.css`다.
-- 기본 스타일링 방식은 TSX 내부 Tailwind 유틸리티 클래스다.
-- 공존 `.css` 파일은 컴포넌트와 같은 디렉터리에 두며, 애니메이션/복잡한 선택자/외부 라이브러리 override처럼 예외적인 경우에만 사용한다.
-- VSCode 테마 연동은 `global.css`의 `@theme inline` 토큰과 legacy `--gae-*` alias를 통해 유지한다.
+> 스타일 작성 규칙(엔트리 파일, Tailwind 우선순위, `.css` colocate 기준, 테마 토큰 참조 순서)은 [coding_standards.md](./coding_standards.md)의 "스타일 작성 규칙" 섹션이 유일한 출처다.
 
 ---
 

@@ -121,9 +121,4 @@ docs/
 
 ## 저장 파일 Naming
 
-AI 정리 결과물 저장 시 파일시스템 규칙:
-
-- **파일 단위:** `{설정경로}/{shortHash}_{sanitizedCommitMessage}/{파일명}.md`
-- **커밋 단위:** `{설정경로}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md`
-- **디렉토리명:** 커밋 hash 앞 7자리와 커밋 메시지를 조합한다. 메시지는 영문·숫자·한글·공백·하이픈만 유지하고, 공백은 `-`로 변환하며, 메시지 부분은 최대 60자로 제한한다.
-- **하위 호환:** 기존 `{설정경로}/{커밋해시}/...` 저장본은 읽기 폴백으로 유지한다.
+AI 정리 결과물의 저장 디렉토리/파일 이름 패턴, sanitize 규칙, 하위 호환 경로는 [F07_save_path_settings/spec.md](../features/F07_save_path_settings/spec.md)의 "저장 파일 Naming" 섹션이 유일한 출처다.

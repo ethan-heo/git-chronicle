@@ -64,65 +64,40 @@ S04_AISummaryViewerScreen
 
 ## Components
 
-| 컴포넌트 | 출처 |
-|---------|------|
-| `TopHeader` | [global_components](../../core/global_components.md#topheader) |
-| `BackButton` | [global_components](../../core/global_components.md#backbutton) |
-| `EmptyState` | [global_components](../../core/global_components.md#emptystate) |
-| `ErrorState` | [global_components](../../core/global_components.md#errorstate) |
-| `AISummaryViewer` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) |
-| `StreamingTextRenderer` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) |
-| `RegenerateButton` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) |
-| `TokenLimitWarning` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) |
-| `OverwriteConfirmDialog` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) |
-| `DiffViewerPanel` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) (인라인 `ResizableSplitPane` 우측 패널) |
+| 컴포넌트 | 정의 | 구현 파일 |
+|---------|------|-----------|
+| `TopHeader` | [global_components](../../core/global_components.md#topheader) | `src/webview/shared/components/TopHeader.tsx` |
+| `BackButton` | [global_components](../../core/global_components.md#backbutton) | `src/webview/shared/components/BackButton.tsx` |
+| `EmptyState` | [global_components](../../core/global_components.md#emptystate) | `src/webview/shared/components/EmptyState.tsx` |
+| `ErrorState` | [global_components](../../core/global_components.md#errorstate) | `src/webview/shared/components/ErrorState.tsx` |
+| `AISummaryViewer` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md#component-aisummaryviewer) | `src/webview/features/F05/AISummaryViewer.tsx` |
+| `StreamingTextRenderer` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md#component-streamingtextrenderer) | `src/webview/features/F05/StreamingTextRenderer.tsx` |
+| `RegenerateButton` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md#component-regeneratebutton) | `src/webview/features/F05/RegenerateButton.tsx` |
+| `TokenLimitWarning` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md#component-tokenlimitwarning) | `src/webview/features/F05/TokenLimitWarning.tsx` |
+| `OverwriteConfirmDialog` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md#component-overwriteconfirmdialog) | `src/webview/features/F05/OverwriteConfirmDialog.tsx` |
+| `QAInputArea` | [F09 blueprint](../../features/F09_ai_summary_qa/blueprint.md#component-qainputarea) | `src/webview/features/F09/QAInputArea.tsx` |
+| `DiffViewerPanel` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) (인라인 `ResizableSplitPane` 우측 패널) | `src/webview/features/F09/DiffViewerPanel.tsx` |
 
 ---
 
 ## Screen States
 
+`noAI`/`noPath`/`loading`/`generating`/`displaying.saved`/`displaying.new`/`error`는 [F05_ai_summary_file/blueprint.md](../../features/F05_ai_summary_file/blueprint.md)의 State Model이 유일한 출처다(F05b도 동일하게 공유). 아래는 F09(Q&A)가 조합될 때만 발생하는 화면 전용 상태다.
+
 | 상태 | 조건 | UI |
 |------|------|-----|
-| `noAI` | `activeAIProvider === null` | `EmptyState` (AI 미설정) |
-| `noPath` | `savePath === null` | `EmptyState` (경로 미설정) |
-| `loading` | 설정 또는 저장본 확인 중 | AI 전용 로딩 프리뷰 |
-| `generating` | `isGeneratingSummary === true` | `StreamingTextRenderer` |
 | `qa.generating` | `isGeneratingQA === true` | 질문 버튼 비활성화 + 답변 스트리밍 박스 |
-| `displaying.saved` | 저장본 존재 | react-markdown + `RegenerateButton` |
-| `displaying.new` | 새로 생성 완료 | react-markdown + `RegenerateButton` |
-| `error` | 타임아웃 또는 CLI 실패 | `ErrorState` |
 
 ---
 
 ## Interaction Flow
 
+요약 생성/재생성 흐름은 [F05_ai_summary_file/blueprint.md](../../features/F05_ai_summary_file/blueprint.md)의 Interaction Model이, 질문/답변 흐름은 [F09_ai_summary_qa/blueprint.md](../../features/F09_ai_summary_qa/blueprint.md)의 Interaction Model이 유일한 출처다. 아래는 F03(코드 패널)과 조합될 때만 발생하는 화면 전용 흐름이다.
+
 ```
-[진입]
-    → FETCH_AI_SUMMARY_SETTINGS
-    → activeAIProvider 확인
-        → (null) EmptyState [noAI] + "설정으로 이동" CTA
-    → savePath 확인
-        → (null) EmptyState [noPath] + "설정으로 이동" CTA
-    → 저장본 확인
-        → (있음) react-markdown 즉시 표시 + RegenerateButton
-        → (없음) AI 호출 시작
-            → StreamingTextRenderer (타이핑 효과)
-            → 완료 → react-markdown + RegenerateButton + 저장
-            → 타임아웃/실패 → ErrorState + [재시도]
-    → RegenerateButton 클릭
-        → OverwriteConfirmDialog
-            → [확인] → AI 재호출
-            → [취소] → 현재 저장본 유지
-    → 요약 완료 후 질문 입력 영역 노출
-        → Enter / [질문하기]
-            → START_AI_QA
-            → AI_QA_CHUNK
-            → AI_QA_COMPLETE
-            → 현재 요약 + 저장된 .md 파일에 질문/답변 블록 append (`### Q. ...`)
-    → [코드 함께 보기] 클릭 시 isSplitPanelOpen 토글
-    → 우측 DiffViewerPanel 슬라이드 인
-    → BackButton → 이전 화면 복귀
-    → ⚙ → S06
+[코드 함께 보기] 클릭 → isSplitPanelOpen 토글 → 우측 DiffViewerPanel 슬라이드 인
+BackButton → 이전 화면 복귀
+⚙ → S06
 ```
 
 ---

@@ -44,12 +44,14 @@
 
 ## Error Handling
 
-| 상황 | 처리 |
+| 상황 | 발생 조건 |
 |------|------|
-| 이진 파일 | `EmptyState` 변형: "Binary file — diff를 표시할 수 없습니다" (CTA 없음) |
-| 삭제된 파일 | 안내 배너 표시 후 삭제 전 코드 전체 표시 |
-| diff 로드 실패 | `ErrorState`: "diff를 불러오지 못했습니다" + [재시도] 버튼 |
-| diff 후처리 실패 | 하이라이팅 또는 후속 가공 중 예외가 발생해도 로딩 상태에 머무르지 않고 `ErrorState`로 전환 |
+| 이진 파일 | `isBinary === true` |
+| 삭제된 파일 | 파일 상태가 삭제(`D`) |
+| diff 로드 실패 | `git show` 실행 자체가 실패 |
+| diff 후처리 실패 | 하이라이팅 또는 후속 가공 중 예외 발생 |
+
+> 정확한 안내 메시지·컴포넌트는 [blueprint.md](./blueprint.md)의 Empty States / Error States가 유일한 출처다.
 
 ---
 

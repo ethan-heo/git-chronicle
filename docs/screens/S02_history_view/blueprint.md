@@ -57,51 +57,33 @@ S02_HistoryViewScreen
 
 ## Components
 
-| 컴포넌트 | 출처 |
-|---------|------|
-| `BatchProgressBar` | [F08 blueprint](../../features/F08_batch_ai_summary/blueprint.md) — App 전역 상단 진행 표시 |
-| `TopHeader` | [global_components](../../core/global_components.md#topheader) |
-| `BackButton` | [global_components](../../core/global_components.md#backbutton) |
-| `CommitActionBar` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md) |
-| `FileTree` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md) |
-| `DirectoryNode` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md) |
-| `FileTreeNode` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md) |
-| `FileStatusBadge` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md) |
-| `FileActionButtons` | [global_components](../../core/global_components.md#fileactionbuttons) |
-| `SavedBadge` | [global_components](../../core/global_components.md#savedbadge) |
-| `EmptyState` | [global_components](../../core/global_components.md#emptystate) |
-| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) |
-| `ErrorState` | [global_components](../../core/global_components.md#errorstate) |
+| 컴포넌트 | 정의 | 구현 파일 |
+|---------|------|-----------|
+| `BatchProgressBar` | [F08 blueprint](../../features/F08_batch_ai_summary/blueprint.md#component-batchprogressbar) — App 전역 상단 진행 표시 | `src/webview/features/F08/BatchProgressBar.tsx` |
+| `TopHeader` | [global_components](../../core/global_components.md#topheader) | `src/webview/shared/components/TopHeader.tsx` |
+| `BackButton` | [global_components](../../core/global_components.md#backbutton) | `src/webview/shared/components/BackButton.tsx` |
+| `CommitActionBar` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-commitactionbar) | `src/webview/features/F02/CommitActionBar.tsx` |
+| `FileTree` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filetree) | `src/webview/features/F02/FileTree.tsx` |
+| `DirectoryNode` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-directorynode) | `src/webview/features/F02/DirectoryNode.tsx` |
+| `FileTreeNode` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filetreenode) | `src/webview/features/F02/FileTreeNode.tsx` |
+| `FileStatusBadge` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filestatusbadge) | `src/webview/shared/components/FileStatusBadge.tsx` |
+| `FileActionButtons` | [global_components](../../core/global_components.md#fileactionbuttons) | `src/webview/shared/components/FileActionButtons.tsx` |
+| `SavedBadge` | [global_components](../../core/global_components.md#savedbadge) | `src/webview/shared/components/SavedBadge.tsx` |
+| `EmptyState` | [global_components](../../core/global_components.md#emptystate) | `src/webview/shared/components/EmptyState.tsx` |
+| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) | `src/webview/shared/components/LoadingState.tsx` |
+| `ErrorState` | [global_components](../../core/global_components.md#errorstate) | `src/webview/shared/components/ErrorState.tsx` |
 
 ---
 
 ## Screen States
 
+`loading`/`empty`/`populated`/`error`는 [F02_changed_file_tree/blueprint.md](../../features/F02_changed_file_tree/blueprint.md)의 State Model이 유일한 출처다. 아래는 F02와 F08(일괄 AI 정리)이 조합될 때만 발생하는 화면 전용 상태다.
+
 | 상태 | 조건 | UI |
 |------|------|-----|
-| `loading` | 변경 파일 로드 중 | `LoadingState` |
-| `empty` | `changedFiles.length === 0` | `EmptyState`: "변경된 파일이 없습니다" |
-| `populated` | `changedFiles.length > 0` | `FileTree` + `CommitActionBar` |
-| `error` | 로드 실패 | `ErrorState` |
 | `batchRunning` | `isBatchRunning === true` | [전체 파일 AI 정리] 버튼 비활성화 + App 전역 `BatchProgressBar` 표시 |
 
----
-
-## Interaction Flow
-
-```
-[S01에서 커밋 클릭]
-    → changedFiles 로드
-    → FileTree 표시
-        → 파일 호버 → FileActionButtons 표시
-            → [코드 보기] → S03 code viewer
-            → [AI 정리 보기] → S04 placeholder
-        → [커밋 AI 정리] → S04 placeholder
-        → [전체 파일 AI 정리] → isBatchRunning true, START_BATCH_AI_SUMMARY 전송
-        → [캔버스 보기] → S05 dependency canvas
-    → BackButton → S01
-    → ⚙ → S06
-```
+> 인터랙션 흐름은 [F02_changed_file_tree/blueprint.md](../../features/F02_changed_file_tree/blueprint.md)의 Interaction Model을 참고한다. BackButton/설정 아이콘 이동은 위 Layout Structure에 표시된 대로다.
 
 ---
 

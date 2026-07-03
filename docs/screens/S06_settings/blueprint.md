@@ -61,50 +61,29 @@ S06_SettingsScreen
 
 ## Components
 
-| 컴포넌트 | 출처 |
-|---------|------|
-| `TopHeader` | [global_components](../../core/global_components.md#topheader) |
-| `BackButton` | [global_components](../../core/global_components.md#backbutton) |
-| `AIProviderSection` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md) |
-| `AIProviderButton` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md) |
-| `CLIInstallLink` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md) |
-| `SavePathSection` | [F07 blueprint](../../features/F07_save_path_settings/blueprint.md) |
-| `SavePathSelector` | [F07 blueprint](../../features/F07_save_path_settings/blueprint.md) |
-| `SavePathDisplay` | [F07 blueprint](../../features/F07_save_path_settings/blueprint.md) |
-| `SavePathDeleteButton` | [F07 blueprint](../../features/F07_save_path_settings/blueprint.md) |
-| `Toast` | [global_components](../../core/global_components.md#toast) |
+| 컴포넌트 | 정의 | 구현 파일 |
+|---------|------|-----------|
+| `TopHeader` | [global_components](../../core/global_components.md#topheader) | `src/webview/shared/components/TopHeader.tsx` |
+| `BackButton` | [global_components](../../core/global_components.md#backbutton) | `src/webview/shared/components/BackButton.tsx` |
+| `AIProviderSection` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-aiprovidersection) | `src/webview/features/F06/AIProviderSection.tsx` |
+| `AIProviderButton` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-aiproviderbutton) | `src/webview/features/F06/AIProviderButton.tsx` |
+| `ModelSelectorGroup` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-modelselectorgroup) | `src/webview/features/F06/AIProviderButton.tsx` (내부 조건부 렌더링) |
+| `CLIInstallLink` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-cliinstalllink) | `src/webview/features/F06/AIProviderButton.tsx` (내부 조건부 렌더링) |
+| `SavePathSection` | [F07 blueprint](../../features/F07_save_path_settings/blueprint.md#component-savepathsection) | `src/webview/features/F06/SavePathSection.tsx` |
+| `SavePathSelector` | [F07 blueprint](../../features/F07_save_path_settings/blueprint.md#component-savepathselector) | `src/webview/features/F06/SavePathSection.tsx` (내부 조건부 렌더링) |
+| `SavePathDisplay` | [F07 blueprint](../../features/F07_save_path_settings/blueprint.md#component-savepathdisplay) | `src/webview/features/F06/SavePathSection.tsx` (내부 조건부 렌더링) |
+| `SavePathDeleteButton` | [F07 blueprint](../../features/F07_save_path_settings/blueprint.md#component-savepathdeletebutton) | `src/webview/features/F06/SavePathSection.tsx` (내부 조건부 렌더링) |
+| `Toast` | [global_components](../../core/global_components.md#toast) | `src/webview/shared/components/Toast.tsx` |
+
+> `SavePathSection`은 F07이 정의하는 4개 하위 컴포넌트 계약을 단일 파일로 구현한다. `AIProviderButton`도 `ModelSelectorGroup`/`CLIInstallLink`를 별도 파일로 분리하지 않고 내부에서 함께 렌더링한다.
 
 ---
 
 ## Screen States
 
-| 상태 | 조건 | UI |
-|------|------|-----|
-| `default` | 항상 | 설정 폼 표시 |
-| AI 등록 중 | `AIProviderButton` 로딩 | 해당 버튼 `registering` 상태 |
-| AI 등록 실패 | CLI 미설치 | `CLIInstallLink` 표시 |
-| 경로 미설정 | `savePath === null` | `SavePathSelector` 플레이스홀더 |
-| 경로 설정됨 | `savePath !== null` | `SavePathDisplay` + `SavePathDeleteButton` |
+AI 등록 상태는 [F06_ai_settings/blueprint.md](../../features/F06_ai_settings/blueprint.md)의, 저장 경로 상태는 [F07_save_path_settings/blueprint.md](../../features/F07_save_path_settings/blueprint.md)의 State Model이 유일한 출처다. 두 섹션은 서로 독립적으로 렌더링되며 화면 전용 조합 상태는 없다.
 
----
-
-## Interaction Flow
-
-```
-[⚙ 아이콘 클릭 (어느 화면에서나)]
-    → previousScreen 저장
-    → S06 진입
-    → AI 등록 영역
-        → 비활성 버튼 클릭 → CLI 버전 확인
-            → 성공 → 활성화, 나머지 비활성화
-            → 실패 → CLIInstallLink 표시
-        → 활성 버튼 클릭 → 비활성화
-    → 저장 경로 영역
-        → SavePathSelector 클릭 → 디렉토리 다이얼로그
-            → 경로 선택 → savePath 업데이트
-        → SavePathDeleteButton 클릭 → savePath = null
-    → BackButton → previousScreen 복귀
-```
+인터랙션 흐름은 AI 등록의 경우 F06 blueprint.md의, 저장 경로의 경우 F07 blueprint.md의 Interaction Model을 참고한다. 화면 진입/복귀 흐름은 위 Entry Condition과 Layout Structure를 참고한다.
 
 ---
 
@@ -112,14 +91,3 @@ S06_SettingsScreen
 
 - `AIProviderButton` 세 개는 세로 방향으로 배치
 - `SavePathDisplay`는 긴 경로 말줄임표 처리 + 툴팁
-
----
-
-## Current Implementation Notes
-
-- 화면 구현 파일은 `src/webview/features/F06/S06_SettingsScreen.tsx`이다.
-- AI 등록 UI는 `AIProviderSection`, `AIProviderButton`, `CLIInstallLink`, `providers.ts`로 구성된다.
-- 저장 경로 UI는 `src/webview/features/F06/SavePathSection.tsx`에 구현되어 있으며, F07 기능을 S06 화면 안에서 함께 제공한다.
-- S06 진입은 `useAppStore.goToSettingsView()`가 현재 화면을 `previousScreen`에 저장한 뒤 `currentScreen = "S06"`으로 전환한다.
-- S06의 `BackButton`은 공통 `goBackFromDetail()`을 사용해 `previousScreen`으로 복귀한다.
-- Extension Host 메시지 응답은 S06 화면에서 직접 구독하며, `setAISummarySettings()`로 `savePath`, `registeredProviders`, `activeAIProvider`를 전역 상태에 반영한다.

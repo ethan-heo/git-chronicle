@@ -1,4 +1,4 @@
-# Product Overview: GitRewind
+# Product Overview: GitChronicle
 
 > **버전** v1.3 | **작성일** 2026-06-25 | **갱신** 2026-07-01 (F09/F10, S08 반영) | **상태** 각 기능 spec.md를 최신 기준으로 삼음
 
@@ -6,7 +6,7 @@
 
 ## Product Purpose
 
-GitRewind는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을 효율적으로 탐색하고, 파일 변경 내역을 시각적으로 분석하며, AI CLI를 통해 작업 내용을 마크다운 형식으로 자동 요약·저장할 수 있는 도구다.
+GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력을 효율적으로 탐색하고, 파일 변경 내역을 시각적으로 분석하며, AI CLI를 통해 작업 내용을 마크다운 형식으로 자동 요약·저장할 수 있는 도구다.
 
 ---
 

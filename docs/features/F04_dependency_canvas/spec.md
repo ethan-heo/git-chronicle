@@ -55,12 +55,14 @@
 
 ## Error Handling
 
-| 상황 | 처리 |
+| 상황 | 발생 조건 |
 |------|------|
-| 의존 관계 분석 실패 | `ErrorState`: "의존 관계를 분석하지 못했습니다" + [재시도] 버튼 |
-| dependency-cruiser 실행 파일 없음 | `ErrorState`: "dependency-cruiser가 설치되지 않았습니다. pnpm install 후 다시 시도해주세요." + [재시도] 버튼 |
-| 변경 파일 없음 | `EmptyState`: "변경된 파일이 없습니다" |
-| JS/TS 외, Python/Go 제외 파일 | 노드로 표시 + "의존 관계 분석 불가" 툴팁 |
+| 의존 관계 분석 실패 | runner 실행 자체가 실패 |
+| dependency-cruiser 실행 파일 없음 | `dist/depcruiser-runner.mjs` 의존 모듈 미설치 |
+| 변경 파일 없음 | `changedFiles.length === 0` |
+| JS/TS 외, Python/Go 제외 파일 | 지원하지 않는 언어의 파일 |
+
+> 정확한 안내 메시지·컴포넌트는 [blueprint.md](./blueprint.md)의 Empty States / Error States가 유일한 출처다.
 
 ---
 

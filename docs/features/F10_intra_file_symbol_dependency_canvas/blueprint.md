@@ -311,24 +311,6 @@ F10 전용. `SymbolCodePanel` 내부에서만 사용.
 
 ---
 
-## Component Tree
-
-```
-F10_IntraFileSymbolDependencyCanvas
-├─ SymbolGraph
-│   ├─ SymbolNode × N
-│   │   ├─ SymbolKindBadge
-│   │   ├─ 심볼명 텍스트
-│   │   └─ 라인 범위 텍스트
-│   └─ SymbolEdge × M
-├─ SymbolLegendPanel
-├─ SymbolCodePanel
-│  └─ SymbolFileCodeViewer
-└─ CanvasControls (재사용)
-```
-
----
-
 ## Variants
 
 ### SymbolNode
@@ -352,16 +334,6 @@ F10_IntraFileSymbolDependencyCanvas
 ---
 
 ## Layout Rules
-
-```
-S08_IntraFileSymbolDependencyCanvasScreen
-├─ TopHeader ({파일 경로})
-├─ SymbolGraph (전체 영역)
-│   ├─ SymbolNode × N (Dagre 우선, 고립 노드는 kind 그룹 배치)
-│   └─ SymbolEdge × M
-├─ SymbolLegendPanel (우측 하단 고정)
-└─ CanvasControls (우측 상단 고정)
-```
 
 - `SymbolGraph`는 화면 전체를 채우는 캔버스 영역.
 - `SymbolNode` 크기: 최소 180px × 56px, 최대 400px (심볼명 길이 기반 가변).
@@ -435,34 +407,3 @@ S08_IntraFileSymbolDependencyCanvasScreen
 - [`ErrorState`](../../core/global_components.md#errorstate)
 - [`TopHeader`](../../core/global_components.md#topheader)
 - [`BackButton`](../../core/global_components.md#backbutton)
-
----
-
-## MCP Optimization Rules
-
-- `SymbolGraph`는 독립 Frame (React Flow 캔버스 전체 영역)
-- `SymbolLegendPanel`과 `CanvasControls`는 캔버스 위 오버레이 — position absolute Frame
-- `SymbolNode`는 재사용 Component (default/hover/exported Variant)
-- `SymbolEdge`는 React Flow 커스텀 SmoothStep 엣지 — Figma에서는 Arrow 컴포넌트로 표현
-- `SymbolKindBadge`는 전역 Component 참조 (7가지 kind 별 색상 Variant)
-- React Flow 내 노드 드래그 활성화
-
----
-
-## Figma Naming Rules
-
-```
-S08_IntraFileSymbolDependencyCanvasScreen
-├─ TopHeader
-├─ SymbolGraph
-│   ├─ SymbolNode [default]
-│   ├─ SymbolNode [hover]
-│   ├─ SymbolNode [exported]
-│   ├─ SymbolEdge [calls]
-│   ├─ SymbolEdge [uses]
-│   ├─ SymbolEdge [extends]
-│   └─ SymbolEdge [implements]
-├─ SymbolLegendPanel [visible]
-├─ SymbolLegendPanel [minimized]
-└─ CanvasControls
-```

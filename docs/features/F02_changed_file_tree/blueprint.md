@@ -212,26 +212,6 @@ interface FileStatusBadgeProps {
 
 ---
 
-## Component Tree
-
-```
-F02_ChangedFileTree
-├─ CommitActionBar
-│   ├─ PrimaryButton [커밋 AI 정리]
-│   ├─ PrimaryButton [전체 파일 AI 정리]
-│   └─ PrimaryButton [캔버스 보기]
-└─ FileTree
-    ├─ DirectoryNode (재귀)
-    │   └─ FileTreeNode
-    │       ├─ FileStatusBadge
-    │       ├─ SavedBadge (조건부)
-    │       └─ FileActionButtons (호버 시)
-    ├─ LoadingState (로드 중)
-    └─ EmptyState (변경 파일 없음)
-```
-
----
-
 ## Variants
 
 ### FileTreeNode
@@ -245,27 +225,6 @@ F02_ChangedFileTree
 ### CommitActionBar
 - `default`: 모든 버튼 활성
 - `batchRunning`: [전체 파일 AI 정리] 버튼 비활성
-
----
-
-## Layout Rules
-
-```
-S02_HistoryViewScreen
-├─ TopHeader (커밋 메시지 표시)
-├─ CommitActionBar
-│   ├─ PrimaryButton [커밋 AI 정리]
-│   ├─ PrimaryButton [전체 파일 AI 정리]
-│   └─ PrimaryButton [캔버스 보기]
-└─ FileTree (스크롤 영역)
-    ├─ DirectoryNode
-    │   └─ FileTreeNode
-    │       ├─ FileStatusBadge
-    │       ├─ [파일명]
-    │       ├─ SavedBadge (조건부)
-    │       └─ FileActionButtons (호버 시)
-    └─ ...
-```
 
 ---
 
@@ -324,21 +283,6 @@ S02_HistoryViewScreen
 
 ---
 
-## Current Implementation Files
-
-| 파일 | 역할 |
-|------|------|
-| `src/webview/features/F02/S02_HistoryViewScreen.tsx` | S02 화면 조합, 변경 파일 메시지 구독 |
-| `src/webview/features/F02/CommitActionBar.tsx` | 커밋 단위 액션 버튼 |
-| `src/webview/features/F02/FileTree.tsx` | 변경 파일 트리 상태 분기와 요약 |
-| `src/webview/features/F02/DirectoryNode.tsx` | 디렉토리 노드 토글 |
-| `src/webview/features/F02/FileTreeNode.tsx` | 파일 행, 상태 배지, 저장됨 뱃지, 호버 액션 |
-| `src/webview/features/F02/tree.ts` | `ChangedFile[]` → 디렉토리 트리 변환 |
-| `src/webview/shared/components/FileStatusBadge.tsx` | A/M/D/R 공유 상태 배지 |
-| `src/webview/shared/components/FileActionButtons.tsx` | 코드 보기/AI 정리 보기 공유 액션 버튼 |
-
----
-
 ## Reusable Components
 
 - [`FileActionButtons`](../../core/global_components.md#fileactionbuttons)
@@ -346,39 +290,3 @@ S02_HistoryViewScreen
 - [`EmptyState`](../../core/global_components.md#emptystate)
 - [`LoadingState`](../../core/global_components.md#loadingstate)
 - [`ErrorState`](../../core/global_components.md#errorstate)
-
----
-
-## MCP Optimization Rules
-
-- `CommitActionBar`는 독립 Frame으로 분리 (상단 고정 액션 영역)
-- `FileTree`는 독립 Frame으로 분리 (스크롤 영역)
-- `FileTreeNode`는 재사용 Component로 등록 (default/hover Variant)
-- `DirectoryNode`는 재사용 Component로 등록 (expanded/collapsed Variant)
-- `FileStatusBadge`는 전역 Component로 등록 (A/M/D/R Variant)
-- Auto Layout: `FileTree`는 Vertical, `FileTreeNode` 내부는 Horizontal
-- `SavedBadge`와 `FileActionButtons`는 전역 Component 참조
-
----
-
-## Figma Naming Rules
-
-```
-S02_HistoryViewScreen
-├─ TopHeader
-├─ CommitActionBar
-│   ├─ PrimaryButton [커밋 AI 정리]
-│   ├─ PrimaryButton [전체 파일 AI 정리]
-│   └─ PrimaryButton [캔버스 보기]
-└─ FileTree
-    ├─ DirectoryNode [expanded]
-    ├─ DirectoryNode [collapsed]
-    ├─ FileTreeNode [default]
-    └─ FileTreeNode [hover]
-        ├─ FileStatusBadge [A]
-        ├─ FileStatusBadge [M]
-        ├─ FileStatusBadge [D]
-        ├─ FileStatusBadge [R]
-        ├─ SavedBadge
-        └─ FileActionButtons
-```

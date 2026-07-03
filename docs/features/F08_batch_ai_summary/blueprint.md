@@ -107,46 +107,11 @@ F08_BatchAISummary 전용. BatchProgressBar 내에서만 사용.
 
 ---
 
-## Component Tree
-
-```
-F08_BatchAISummary
-└─ BatchProgressBar [전역 고정]
-    ├─ ProgressBar (시각적 바)
-    ├─ "{batchCompleted} / {batchTotal}" 텍스트
-    └─ BatchCancelButton
-```
-
-진입점 (F08 외부):
-```
-S02_HistoryViewScreen
-└─ CommitActionBar
-    └─ PrimaryButton [전체 파일 AI 정리] ← F08 시작 트리거
-```
-
----
-
 ## Variants
 
 ### BatchProgressBar
 - `running`: 진행 중 (progress bar 애니메이션 + BatchCancelButton 표시)
 - `hidden`: `isBatchRunning === false` (렌더링 스킵)
-
----
-
-## Layout Rules
-
-```
-[전역 레이아웃 - 화면 상단 고정]
-BatchProgressBar (isBatchRunning === true 시 표시)
-├─ ProgressBar 시각적 바
-├─ "{batchCompleted} / {batchTotal}" 텍스트
-└─ BatchCancelButton
-
-[S02_HistoryViewScreen 내]
-CommitActionBar
-└─ PrimaryButton [전체 파일 AI 정리] ← 일괄 생성 시작 진입점
-```
 
 ---
 
@@ -208,26 +173,3 @@ CommitActionBar
 
 - [`Toast`](../../core/global_components.md#toast)
 - [`SavedBadge`](../../core/global_components.md#savedbadge)
-
----
-
-## MCP Optimization Rules
-
-- `BatchProgressBar`는 전역 Frame — 모든 Screen 레이아웃 최상단에 배치
-- `BatchProgressBar`는 Variant Component로 등록 (running/hidden)
-- `BatchCancelButton`은 BatchProgressBar 내부 Component
-- position: sticky/fixed — 화면 스크롤 시에도 항상 상단 고정
-- Auto Layout: BatchProgressBar는 Horizontal (ProgressBar + 텍스트 + 취소 버튼)
-
----
-
-## Figma Naming Rules
-
-```
-BatchProgressBar [running]
-├─ ProgressBar
-├─ "{n} / {total}" 텍스트
-└─ BatchCancelButton
-
-BatchProgressBar [hidden]
-```

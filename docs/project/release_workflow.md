@@ -1,4 +1,4 @@
-# Release Workflow — GitRewind
+# Release Workflow — GitChronicle
 
 > **버전** v1.0 | **작성일** 2026-06-29 | **상태** 확정
 
@@ -6,7 +6,7 @@
 
 ## 목적
 
-이 문서는 GitRewind의 로컬 릴리스 워크플로우를 설명한다.
+이 문서는 GitChronicle의 로컬 릴리스 워크플로우를 설명한다.
 
 - `CHANGELOG.md`를 Conventional Commits 히스토리 기반으로 자동 생성한다.
 - `pnpm release [patch|minor|major]` 한 명령으로 버전 bump, git commit, tag 생성 후 CHANGELOG 갱신과 커밋까지 완료한다.

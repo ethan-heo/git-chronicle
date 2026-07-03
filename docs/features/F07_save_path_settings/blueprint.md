@@ -136,39 +136,11 @@ F07_SavePathSettings 전용. SavePathSection 내에서만 사용.
 
 ---
 
-## Component Tree
-
-```
-F07_SavePathSettings
-└─ SavePathSection
-    ├─ SavePathSelector
-    │   ├─ SavePathDisplay (경로 설정 시)
-    │   └─ [플레이스홀더] (미설정 시)
-    └─ SavePathDeleteButton (경로 설정 시)
-```
-
----
-
 ## Variants
 
 ### SavePathSection
 - `unset`: 경로 미설정 (플레이스홀더 + 삭제 버튼 숨김)
 - `set`: 경로 설정됨 (`SavePathDisplay` + `SavePathDeleteButton` 표시)
-
----
-
-## Layout Rules
-
-```
-S06_SettingsScreen
-├─ TopHeader
-├─ AIProviderSection (F06 담당)
-└─ SavePathSection (저장 경로 영역)
-    ├─ SavePathSelector
-    │   ├─ SavePathDisplay (경로 설정 시)
-    │   └─ [플레이스홀더 텍스트] (미설정 시)
-    └─ SavePathDeleteButton (경로 설정 시)
-```
 
 ---
 
@@ -219,38 +191,3 @@ S06_SettingsScreen
 - [`Toast`](../../core/global_components.md#toast)
 - [`TopHeader`](../../core/global_components.md#topheader)
 - [`BackButton`](../../core/global_components.md#backbutton)
-
----
-
-## Current Implementation Notes
-
-- 현재 저장 경로 UI는 별도 `features/F07` 디렉토리가 아니라 `src/webview/features/F06/SavePathSection.tsx`에 구현되어 S06 설정 화면에서 사용된다.
-- `SavePathSelector`, `SavePathDisplay`, `SavePathDeleteButton`은 문서상 하위 컴포넌트 개념이며, 현재 코드는 `SavePathSection.tsx` 내부에서 함께 렌더링한다.
-- Extension Host 요청 메시지는 `SET_SAVE_PATH`, `CLEAR_SAVE_PATH`이고 응답 메시지는 `SAVE_PATH_SET`, `SAVE_PATH_CLEARED`이다.
-- 저장 실패는 `src/extension/summaryFileService.ts`의 `SummarySaveError`로 표준화되며, `src/extension/messageHandler.ts`에서 `AI_SUMMARY_ERROR`로 Webview에 전달된다.
-- Webview 브라우저 dev fallback에서는 실제 파일 다이얼로그 대신 데모 경로를 설정한다.
-
----
-
-## MCP Optimization Rules
-
-- `SavePathSection`은 독립 Frame으로 분리 (저장 경로 영역)
-- `SavePathSection`은 Variant Component로 등록 (unset/set)
-- `SavePathSelector`는 재사용 Component — unset/set Variant
-- `SavePathDisplay`는 독립 Component (읽기 전용 텍스트)
-- `SavePathDeleteButton`은 조건부 표시 — `savePath !== null` 시에만
-- Auto Layout: `SavePathSection`은 Vertical
-
----
-
-## Figma Naming Rules
-
-```
-SavePathSection [unset]
-└─ SavePathSelector [unset]
-
-SavePathSection [set]
-├─ SavePathSelector [set]
-│   └─ SavePathDisplay
-└─ SavePathDeleteButton
-```

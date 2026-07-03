@@ -49,15 +49,17 @@
 
 ## Error Handling
 
-| 상황 | 처리 |
+| 상황 | 발생 조건 |
 |------|------|
-| 개별 파일 생성 실패 | 해당 파일 건너뛰고 계속 진행 |
-| 개별 파일 CLI 로그인/인증 필요 | 해당 파일 실패로 집계하고 다음 파일 계속 진행. 완료 후 실패 건수에 포함 |
-| 전체 완료 후 (실패 있음) | `Toast` (warning): "완료되었습니다. 실패 N개" |
-| 전체 완료 후 (실패 없음) | `Toast` (success): "파일 AI 정리가 완료되었습니다" |
-| AI 미설정 상태에서 시작 | `Toast` (error): "AI가 설정되지 않았습니다" + 시작 불가 |
-| 저장 경로 미설정 상태에서 시작 | `Toast` (error): "저장 경로를 먼저 설정해주세요" + 시작 불가 |
-| 사용자 취소 | `Toast` (success): "{완료N}개 파일이 저장되었습니다" (완료된 파일 수 표시) |
+| 개별 파일 생성 실패 | 해당 파일의 AI 호출 실패 (건너뛰고 계속 진행) |
+| 개별 파일 CLI 로그인/인증 필요 | provider CLI가 미인증 상태로 종료 (실패로 집계 후 계속 진행) |
+| 전체 완료 후 (실패 있음) | `batchFailedCount > 0` |
+| 전체 완료 후 (실패 없음) | `batchFailedCount === 0` |
+| AI 미설정 상태에서 시작 | `activeAIProvider === null` |
+| 저장 경로 미설정 상태에서 시작 | `savePath === null` |
+| 사용자 취소 | `BatchCancelButton` 클릭 |
+
+> 정확한 Toast 문구는 [blueprint.md](./blueprint.md)의 Error States가 유일한 출처다.
 
 ---
 

@@ -56,47 +56,23 @@ S03_CodeViewerScreen
 
 ## Components
 
-| 컴포넌트 | 출처 |
-|---------|------|
-| `TopHeader` | [global_components](../../core/global_components.md#topheader) |
-| `BackButton` | [global_components](../../core/global_components.md#backbutton) |
-| `DiffViewer` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
-| `DiffLine` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
-| `BinaryFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
-| `DeletedFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) |
-| `AISummaryPanel` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) (인라인 `ResizableSplitPane` 우측 패널) |
-| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) |
-| `ErrorState` | [global_components](../../core/global_components.md#errorstate) |
+| 컴포넌트 | 정의 | 구현 파일 |
+|---------|------|-----------|
+| `TopHeader` | [global_components](../../core/global_components.md#topheader) | `src/webview/shared/components/TopHeader.tsx` |
+| `BackButton` | [global_components](../../core/global_components.md#backbutton) | `src/webview/shared/components/BackButton.tsx` |
+| `DiffViewer` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md#component-diffviewer) | `src/webview/features/F03/DiffViewer.tsx` |
+| `DiffLine` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md#component-diffline) | `src/webview/features/F03/DiffLine.tsx` |
+| `BinaryFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md#component-binaryfilenotice) | `src/webview/features/F03/DiffViewer.tsx` (내부 조건부 렌더링) |
+| `DeletedFileNotice` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md#component-deletedfilenotice) | `src/webview/features/F03/DiffViewer.tsx` (내부 조건부 렌더링) |
+| `AISummaryPanel` | [F05 blueprint](../../features/F05_ai_summary_file/blueprint.md) (인라인 `ResizableSplitPane` 우측 패널) | `src/webview/features/F09/AISummaryPanel.tsx` |
+| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) | `src/webview/shared/components/LoadingState.tsx` |
+| `ErrorState` | [global_components](../../core/global_components.md#errorstate) | `src/webview/shared/components/ErrorState.tsx` |
 
 ---
 
 ## Screen States
 
-| 상태 | 조건 | UI |
-|------|------|-----|
-| `loading` | diff 로드 중 | `LoadingState` |
-| `binary` | 이진 파일 | `BinaryFileNotice` |
-| `deleted` | 삭제된 파일 | `DeletedFileNotice` + 삭제 전 코드 |
-| `populated` | 일반 diff | `DiffViewer` |
-| `error` | 로드 실패 | `ErrorState` |
-
----
-
-## Interaction Flow
-
-```
-[S02 또는 S05에서 [코드 보기] 클릭]
-    → selectedFile 설정
-    → FILE_DIFF 메시지 리스너 활성화
-    → diff 로드
-    → DiffViewer 표시 (또는 BinaryFileNotice / DeletedFileNotice)
-    → [AI 요약 함께 보기] 클릭 시 isSplitPanelOpen 토글
-    → 우측 AISummaryPanel 슬라이드 인
-    → BackButton → 이전 화면 복귀
-    → ⚙ → S06
-```
-
-개발 환경에서는 응답이 즉시 돌아올 수 있으므로, diff 요청보다 메시지 리스너 활성화가 항상 먼저여야 한다.
+> 화면 상태 조건·UI 매핑과 인터랙션 흐름은 [F03_code_viewer/blueprint.md](../../features/F03_code_viewer/blueprint.md)의 State Model / Interaction Model이 유일한 출처다. S03은 F03 하나로만 구성된 화면이라 별도 문서를 두지 않는다. 개발 환경에서 diff 요청보다 메시지 리스너 활성화가 항상 먼저여야 한다는 순서 규칙도 F03 blueprint의 State Model에 있다.
 
 ---
 

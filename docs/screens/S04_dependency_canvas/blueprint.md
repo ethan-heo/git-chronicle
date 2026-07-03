@@ -52,55 +52,27 @@ S05_DependencyCanvasScreen
 
 ## Components
 
-| 컴포넌트 | 출처 |
-|---------|------|
-| `TopHeader` | [global_components](../../core/global_components.md#topheader) |
-| `BackButton` | [global_components](../../core/global_components.md#backbutton) |
-| `DependencyGraph` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md) |
-| `FileNode` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md) |
-| `DependencyEdge` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md) |
-| `LegendPanel` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md) |
-| `CanvasControls` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md) |
-| `FileActionButtons` | [global_components](../../core/global_components.md#fileactionbuttons) |
-| `SavedBadge` | [global_components](../../core/global_components.md#savedbadge) |
-| `FileStatusBadge` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md) |
-| `EmptyState` | [global_components](../../core/global_components.md#emptystate) |
-| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) |
-| `ErrorState` | [global_components](../../core/global_components.md#errorstate) |
+| 컴포넌트 | 정의 | 구현 파일 |
+|---------|------|-----------|
+| `TopHeader` | [global_components](../../core/global_components.md#topheader) | `src/webview/shared/components/TopHeader.tsx` |
+| `BackButton` | [global_components](../../core/global_components.md#backbutton) | `src/webview/shared/components/BackButton.tsx` |
+| `DependencyGraph` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md#component-dependencygraph) | `src/webview/features/F04/DependencyGraph.tsx` |
+| `FileNode` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md#component-filenode) | `src/webview/features/F04/FileNode.tsx` |
+| `DependencyEdge` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md#component-dependencyedge) | `src/webview/features/F04/DependencyEdge.tsx` |
+| `LegendPanel` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md#component-legendpanel) | `src/webview/features/F04/LegendPanel.tsx` |
+| `CanvasControls` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md#component-canvascontrols) | `src/webview/features/F04/CanvasControls.tsx` |
+| `FileActionButtons` | [global_components](../../core/global_components.md#fileactionbuttons) | `src/webview/shared/components/FileActionButtons.tsx` |
+| `SavedBadge` | [global_components](../../core/global_components.md#savedbadge) | `src/webview/shared/components/SavedBadge.tsx` |
+| `FileStatusBadge` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filestatusbadge) | `src/webview/shared/components/FileStatusBadge.tsx` |
+| `EmptyState` | [global_components](../../core/global_components.md#emptystate) | `src/webview/shared/components/EmptyState.tsx` |
+| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) | `src/webview/shared/components/LoadingState.tsx` |
+| `ErrorState` | [global_components](../../core/global_components.md#errorstate) | `src/webview/shared/components/ErrorState.tsx` |
 
 ---
 
 ## Screen States
 
-| 상태 | 조건 | UI |
-|------|------|-----|
-| `loading` | 변경 파일 로딩 또는 의존 관계 분석 중 | `LoadingState` (전체 화면) |
-| `empty` | `changedFiles.length === 0` | `EmptyState`: "변경된 파일이 없습니다" |
-| `populated` | 분석 완료 | `DependencyGraph` 표시 |
-| `error` | 분석 실패 | `ErrorState` |
-
----
-
-## Interaction Flow
-
-```
-[S02에서 [캔버스 보기] 클릭]
-    → changedFiles가 없고 아직 로드 완료 전이면 변경 파일 로딩
-    → 현재 파일 복사 + 누락 파일 git 복원
-    → commitHash를 포함해 dependency-cruiser runner로 changedFiles 의존 관계 분석
-    → (분석 성공) React Flow로 노드-엣지 렌더링
-        → 노드 호버 → FileActionButtons 표시
-            → [코드 보기] → S03
-            → [AI 정리 보기] → S04
-        → 노드 드래그 → 위치 직접 조정 + 가장 가까운 면으로 엣지 재연결
-        → S03/S04 뒤로가기 → previousScreen이 S05이면 S05 복귀
-        → 마우스 휠 → 줌
-        → 빈 영역 드래그 → 패닝
-        → [맞춤] 버튼 → fitView()
-    → (분석 실패) ErrorState + [재시도]
-    → BackButton → S02
-    → ⚙ → S06
-```
+> 화면 상태 조건·UI 매핑과 인터랙션 흐름은 [F04_dependency_canvas/blueprint.md](../../features/F04_dependency_canvas/blueprint.md)의 State Model / Interaction Model이 유일한 출처다. S05는 F04 하나로만 구성된 화면이라 별도 문서를 두지 않는다. 분석 전 파일 복사·git 복원 절차는 F04 spec.md의 Business Rules를 참고한다.
 
 ---
 

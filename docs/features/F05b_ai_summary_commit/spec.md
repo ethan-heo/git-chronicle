@@ -85,16 +85,7 @@
 
 ## Error Handling
 
-F05_AISummaryFile과 동일한 오류 정책을 따른다.
-
-| 상황 | 처리 |
-|------|------|
-| AI 미설정 | `EmptyState`: "AI가 설정되지 않았습니다" + "설정으로 이동" CTA |
-| 저장 경로 미설정 | `EmptyState`: "저장 경로를 먼저 설정해주세요" + "설정으로 이동" CTA |
-| 타임아웃 (120초) | `ErrorState`: "생성에 실패했습니다" + [재시도] 버튼 |
-| CLI 실행 실패 | `ErrorState`: "연결된 CLI를 찾을 수 없습니다. 설정을 확인하세요" |
-| CLI 로그인/인증 필요 | `ErrorState`: provider별 로그인 안내 메시지 표시 (`claude login`, `gemini` 로그인 플로우, `codex login`) |
-| 토큰 초과 | 경고 배너 표시 후 AI 호출 계속 진행 |
+[F05_AISummaryFile spec](../F05_ai_summary_file/spec.md#error-handling)과 동일한 오류 정책을 따른다. 정확한 안내 메시지·컴포넌트는 [blueprint.md](./blueprint.md) 또는 F05 blueprint.md의 Empty States / Error States가 유일한 출처다.
 
 ---
 

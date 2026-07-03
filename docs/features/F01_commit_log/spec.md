@@ -61,13 +61,15 @@
 
 ## Error Handling
 
-| 상황 | 처리 |
+| 상황 | 발생 조건 |
 |------|------|
-| Git 저장소 없음 | `EmptyState`: "Git 저장소가 감지되지 않았습니다" + "레포 열기" CTA |
-| 커밋 이력 없음 | `EmptyState`: "커밋 이력이 없습니다" |
-| 필터 결과 없음 | `EmptyState`: "조건에 맞는 커밋이 없습니다" |
-| git 명령어 실행 실패 | `ErrorState`: "커밋 목록을 불러오지 못했습니다" + [재시도] 버튼 |
-| 추가 로드 실패 | 하단 에러 메시지 표시. 이전에 로드된 목록은 유지 |
+| Git 저장소 없음 | `isGitRepoDetected === false` |
+| 커밋 이력 없음 | `commitList.length === 0`이고 필터 미적용 |
+| 필터 결과 없음 | `commitList.length === 0`이고 필터 적용 중 |
+| git 명령어 실행 실패 | `git log` 실행 자체가 실패 |
+| 추가 로드 실패 | 무한 스크롤 중 후속 페이지 요청 실패. 이전에 로드된 목록은 유지 |
+
+> 정확한 안내 메시지·CTA 문구·컴포넌트는 [blueprint.md](./blueprint.md)의 Empty States / Error States / Loading States가 유일한 출처다.
 
 ---
 

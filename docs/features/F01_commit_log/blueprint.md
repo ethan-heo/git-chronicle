@@ -27,8 +27,6 @@
 - `selectedCommit`: 클릭 시 선택된 커밋 (전역 상태 업데이트 → S-02 진입 트리거)
 - `commitListScrollTop`: S-01 재진입 시 복원할 마지막 스크롤 위치
 
-> 현재 구현은 `src/webview/features/F01/` 아래에 F01 전용 컴포넌트를 두고, `S01_CommitListScreen.tsx`를 같은 디렉토리에서 조합한다.
-
 ---
 
 ## Components
@@ -289,23 +287,6 @@ interface InfiniteScrollTriggerProps {
 
 ---
 
-## Component Tree
-
-```
-F01_CommitLog
-├─ CommitFilterPanel
-│   ├─ DateRangeFilter
-│   ├─ AuthorDropdown
-│   └─ KeywordSearchInput
-└─ CommitList
-    ├─ CommitListItem × N
-    ├─ LoadingState (초기 로드 중)
-    ├─ EmptyState (빈 상태)
-    └─ InfiniteScrollTrigger
-```
-
----
-
 ## Variants
 
 ### CommitListItem
@@ -327,17 +308,6 @@ F01_CommitLog
 ---
 
 ## Layout Rules
-
-```
-CommitFilterPanel (상단 고정)
-├─ DateRangeFilter
-├─ AuthorDropdown
-└─ KeywordSearchInput
-
-CommitList (스크롤 영역)
-├─ CommitListItem × N
-└─ InfiniteScrollTrigger (하단)
-```
 
 - `CommitFilterPanel`은 상단에 고정. 스크롤해도 항상 표시.
 - `CommitList`는 `CommitFilterPanel` 하단부터 화면 끝까지 전체 스크롤 영역을 차지.
@@ -408,32 +378,3 @@ CommitList (스크롤 영역)
 - [`ErrorState`](../../core/global_components.md#errorstate)
 - [`TopHeader`](../../core/global_components.md#topheader)
 
----
-
-## MCP Optimization Rules
-
-- `CommitFilterPanel`은 독립 Frame으로 분리 (상단 고정 영역)
-- `CommitList`는 독립 Frame으로 분리 (스크롤 영역)
-- `CommitListItem`은 재사용 Component로 등록
-- `EmptyState`, `LoadingState`, `ErrorState`는 전역 Component 참조
-- Auto Layout: `CommitFilterPanel`은 Vertical, `CommitList`는 Vertical
-- `CommitListItem`의 모든 상태(default/hover)를 단일 Component의 Variant로 관리
-
----
-
-## Figma Naming Rules
-
-```
-S01_CommitListScreen
-├─ TopHeader
-├─ CommitFilterPanel
-│   ├─ DateRangeFilter
-│   ├─ AuthorDropdown
-│   └─ KeywordSearchInput
-└─ CommitList
-    ├─ CommitListItem [default]
-    ├─ CommitListItem [hover]
-    ├─ LoadingState [lg]
-    ├─ LoadingState [sm]
-    └─ EmptyState
-```

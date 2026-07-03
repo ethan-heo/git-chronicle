@@ -1,4 +1,4 @@
-# Directory Structure — GitRewind
+# Directory Structure — GitChronicle
 
 > **버전** v1.1 | **작성일** 2026-06-26 | **갱신** 2026-07-01 (F09/F10, docs 색인 정리) | **상태** 확정
 
@@ -200,10 +200,7 @@ src/webview/
 
 ### Webview 스타일 구조 규칙
 
-- `global.css`는 전역 스타일과 Tailwind 토큰 정의만 담당한다.
-- 대부분의 UI 스타일은 각 `.tsx` 컴포넌트의 Tailwind 유틸리티 클래스에서 직접 관리한다.
-- 컴포넌트 전용 `.css` 파일은 같은 디렉터리에 colocate하며, 애니메이션/선택자/외부 라이브러리 override처럼 Tailwind만으로 표현하기 어려운 경우에만 추가한다.
-- 더 이상 `src/webview/styles.css` 같은 단일 대형 스타일 파일을 기준 구조로 사용하지 않는다.
+> 스타일 작성 규칙은 [coding_standards.md](./coding_standards.md)의 "스타일 작성 규칙" 섹션이 유일한 출처다.
 
 ---
 

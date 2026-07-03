@@ -54,57 +54,27 @@ S08_IntraFileSymbolDependencyCanvasScreen
 
 ## Components
 
-| 컴포넌트 | 출처 |
-|---------|------|
-| `TopHeader` | [global_components](../../core/global_components.md#topheader) |
-| `BackButton` | [global_components](../../core/global_components.md#backbutton) |
-| `SymbolGraph` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
-| `SymbolNode` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
-| `SymbolEdge` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
-| `SymbolKindBadge` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
-| `SymbolLegendPanel` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
-| `SymbolCodePanel` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
-| `SymbolFileCodeViewer` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
-| `CanvasControls` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md) (재사용) |
-| `EmptyState` | [global_components](../../core/global_components.md#emptystate) |
-| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) |
-| `ErrorState` | [global_components](../../core/global_components.md#errorstate) |
+| 컴포넌트 | 정의 | 구현 파일 |
+|---------|------|-----------|
+| `TopHeader` | [global_components](../../core/global_components.md#topheader) | `src/webview/shared/components/TopHeader.tsx` |
+| `BackButton` | [global_components](../../core/global_components.md#backbutton) | `src/webview/shared/components/BackButton.tsx` |
+| `SymbolGraph` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolgraph) | `src/webview/features/F10/SymbolGraph.tsx` |
+| `SymbolNode` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolnode) | `src/webview/features/F10/SymbolNode.tsx` |
+| `SymbolEdge` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symboledge) | `src/webview/features/F10/SymbolEdge.tsx` |
+| `SymbolKindBadge` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolkindbadge) | `src/webview/features/F10/SymbolKindBadge.tsx` |
+| `SymbolLegendPanel` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbollegendpanel) | `src/webview/features/F10/SymbolLegendPanel.tsx` |
+| `SymbolCodePanel` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolcodepanel) | `src/webview/features/F10/SymbolCodePanel.tsx` |
+| `SymbolFileCodeViewer` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolfilecodeviewer) | `src/webview/features/F10/SymbolFileCodeViewer.tsx` |
+| `CanvasControls` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md#component-canvascontrols) (재사용) | `src/webview/features/F04/CanvasControls.tsx` |
+| `EmptyState` | [global_components](../../core/global_components.md#emptystate) | `src/webview/shared/components/EmptyState.tsx` |
+| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) | `src/webview/shared/components/LoadingState.tsx` |
+| `ErrorState` | [global_components](../../core/global_components.md#errorstate) | `src/webview/shared/components/ErrorState.tsx` |
 
 ---
 
 ## Screen States
 
-| 상태 | 조건 | UI |
-|------|------|-----|
-| `loading` | `isLoadingSymbolGraph === true` | `LoadingState` (전체 화면) |
-| `empty` | 분석 완료 + `symbolNodes.length === 0` | `EmptyState`: "분석 가능한 심볼이 없습니다" |
-| `unsupported` | 미지원 파일 유형 | `EmptyState`: "이 파일 유형은 심볼 분석이 지원되지 않습니다" |
-| `populated` | 분석 완료 + 심볼 존재 | `SymbolGraph` 표시 |
-| `error` | `symbolGraphError !== null` | `ErrorState` |
-
----
-
-## Interaction Flow
-
-```
-[S05에서 파일 노드 호버/클릭 → [심볼 그래프] 클릭]
-    → goToSymbolGraphView(file)
-        → currentScreen = 'S08', previousScreen = 'S05'
-    → S08 마운트 → loadSymbolGraph() 호출
-        → Extension Host ANALYZE_SYMBOL_GRAPH
-    → (분석 성공) React Flow로 심볼 노드-엣지 렌더링
-        → 노드 호버 → 연결 엣지 강조 + 비연결 엣지 감쇠
-        → [코드 보기] 버튼 → 우측 코드 패널 토글
-        → 코드 패널 내 노드 클릭 → 해당 라인으로 스크롤
-        → 코드 패널 내 노드 호버 → 해당 라인 강조
-        → 노드 드래그 → 위치 조정 + 엣지 연결 면 재계산
-        → 마우스 휠 → 줌
-        → 빈 영역 드래그 → 패닝
-        → [맞춤] 버튼 → fitView()
-    → (분석 실패) ErrorState + [재시도]
-    → BackButton → goBackFromDetail() → S05 복귀
-    → ⚙ → S06
-```
+> 화면 상태 조건·UI 매핑과 인터랙션 흐름은 [F10_intra_file_symbol_dependency_canvas/blueprint.md](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md)의 State Model / Interaction Model이 유일한 출처다. S08은 F10 하나로만 구성된 화면이라 별도 문서를 두지 않는다.
 
 ---
 

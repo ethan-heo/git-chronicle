@@ -55,49 +55,25 @@ S01은 재진입 시 이미 로드된 커밋 목록을 재사용하고 마지막
 
 ## Components
 
-| 컴포넌트 | 출처 |
-|---------|------|
-| `TopHeader` | [global_components](../../core/global_components.md#topheader) |
-| `CommitFilterPanel` | [F01 blueprint](../../features/F01_commit_log/blueprint.md) |
-| `DateRangeFilter` | [F01 blueprint](../../features/F01_commit_log/blueprint.md) |
-| `AuthorDropdown` | [F01 blueprint](../../features/F01_commit_log/blueprint.md) |
-| `KeywordSearchInput` | [F01 blueprint](../../features/F01_commit_log/blueprint.md) |
-| `CommitList` | [F01 blueprint](../../features/F01_commit_log/blueprint.md) |
-| `CommitListItem` | [F01 blueprint](../../features/F01_commit_log/blueprint.md) |
-| `InfiniteScrollTrigger` | [F01 blueprint](../../features/F01_commit_log/blueprint.md) |
-| `EmptyState` | [global_components](../../core/global_components.md#emptystate) |
-| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) |
-| `ErrorState` | [global_components](../../core/global_components.md#errorstate) |
+| 컴포넌트 | 정의 | 구현 파일 |
+|---------|------|-----------|
+| `TopHeader` | [global_components](../../core/global_components.md#topheader) | `src/webview/shared/components/TopHeader.tsx` |
+| `CommitFilterPanel` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitfilterpanel) | `src/webview/features/F01/CommitFilterPanel.tsx` |
+| `DateRangeFilter` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-daterangefilter) | `src/webview/features/F01/DateRangeFilter.tsx` |
+| `AuthorDropdown` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-authordropdown) | `src/webview/features/F01/AuthorDropdown.tsx` |
+| `KeywordSearchInput` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-keywordsearchinput) | `src/webview/features/F01/KeywordSearchInput.tsx` |
+| `CommitList` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitlist) | `src/webview/features/F01/CommitList.tsx` |
+| `CommitListItem` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitlistitem) | `src/webview/features/F01/CommitListItem.tsx` |
+| `InfiniteScrollTrigger` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-infinitescrolltrigger) | `src/webview/features/F01/InfiniteScrollTrigger.tsx` |
+| `EmptyState` | [global_components](../../core/global_components.md#emptystate) | `src/webview/shared/components/EmptyState.tsx` |
+| `LoadingState` | [global_components](../../core/global_components.md#loadingstate) | `src/webview/shared/components/LoadingState.tsx` |
+| `ErrorState` | [global_components](../../core/global_components.md#errorstate) | `src/webview/shared/components/ErrorState.tsx` |
 
 ---
 
 ## Screen States
 
-| 상태 | 조건 | UI |
-|------|------|-----|
-| `loading` | 초기 커밋 로드 중 | `LoadingState` (전체 화면) |
-| `empty.noRepo` | Git 저장소 미감지 | `EmptyState`: "Git 저장소가 감지되지 않았습니다" + "레포 열기" |
-| `empty.noCommits` | 커밋 이력 없음 | `EmptyState`: "커밋 이력이 없습니다" |
-| `empty.noResults` | 필터 결과 없음 | `EmptyState`: "조건에 맞는 커밋이 없습니다" |
-| `populated` | 커밋 있음 | `CommitList` 표시 |
-| `loadingMore` | 무한 스크롤 로드 중 | 하단 스피너 추가 |
-| `error` | git 명령 실패 | `ErrorState` |
-
----
-
-## Interaction Flow
-
-```
-[Extension 활성화]
-    → git repo 감지 확인
-    → (없음) EmptyState [noRepo]
-    → (있음) git log 로드 → CommitList 표시
-        → 필터 변경 → CommitList 재로드 및 스크롤 위치 초기화
-        → S01 재진입 → 목록 재로드 없이 마지막 스크롤 위치 복원
-        → 스크롤 하단 → 추가 200개 로드
-        → CommitListItem 클릭 → selectedCommit 설정 및 S02 진입
-    → ⚙ 클릭 → S06 진입
-```
+> 화면 상태 조건·UI 매핑과 인터랙션 흐름은 [F01_commit_log/blueprint.md](../../features/F01_commit_log/blueprint.md)의 State Model / Interaction Model이 유일한 출처다. S01은 F01 하나로만 구성된 화면이라 별도 문서를 두지 않는다.
 
 ---
 

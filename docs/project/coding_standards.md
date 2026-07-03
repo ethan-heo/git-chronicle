@@ -1,4 +1,4 @@
-# Coding Standards — GitRewind
+# Coding Standards — GitChronicle
 
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 

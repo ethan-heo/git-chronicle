@@ -210,23 +210,6 @@ F05/F05b 공유. RegenerateButton 클릭 시 표시.
 
 ---
 
-## Component Tree
-
-```
-F05_AISummaryFile
-├─ TokenLimitWarning (조건부)
-├─ AISummaryViewer
-│   ├─ RegenerateButton (저장본/저장 완료본 있을 때)
-│   ├─ StreamingTextRenderer [streaming]
-│   ├─ [react-markdown] (완료 후)
-│   ├─ AISummaryLoadingPreview [loading]
-│   ├─ EmptyState [noAI]
-│   └─ EmptyState [noPath]
-└─ OverwriteConfirmDialog (조건부)
-```
-
----
-
 ## Variants
 
 ### AISummaryViewer
@@ -244,19 +227,6 @@ F05_AISummaryFile
 ### StreamingTextRenderer
 - `streaming`: 블링킹 커서 표시
 - `done`: 커서 숨김
-
----
-
-## Layout Rules
-
-```
-S04_AISummaryViewerScreen
-├─ TopHeader ({커밋 메시지} > {파일 경로})
-├─ TokenLimitWarning (조건부, 상단 배너)
-├─ RegenerateButton (저장본 있을 때)
-└─ AISummaryViewer (스크롤 영역)
-    └─ StreamingTextRenderer OR react-markdown
-```
 
 ---
 
@@ -323,33 +293,3 @@ S04_AISummaryViewerScreen
 - [`ErrorState`](../../core/global_components.md#errorstate)
 - [`TopHeader`](../../core/global_components.md#topheader)
 - [`BackButton`](../../core/global_components.md#backbutton)
-
----
-
-## MCP Optimization Rules
-
-- `AISummaryViewer`는 독립 Frame으로 분리 (스크롤 영역)
-- `TokenLimitWarning`은 독립 Component (조건부 표시)
-- `RegenerateButton`은 재사용 Component로 등록 (default/disabled Variant)
-- `OverwriteConfirmDialog`는 독립 Component (Modal overlay)
-- `StreamingTextRenderer`는 AISummaryViewer의 내부 Component
-- Auto Layout: AISummaryViewer는 Vertical
-- EmptyState, ErrorState는 전역 Component 참조
-
----
-
-## Figma Naming Rules
-
-```
-S04_AISummaryViewerScreen [file]
-├─ TopHeader
-├─ TokenLimitWarning
-├─ RegenerateButton [default]
-├─ RegenerateButton [disabled]
-└─ AISummaryViewer
-    ├─ StreamingTextRenderer [streaming]
-    ├─ StreamingTextRenderer [done]
-    ├─ EmptyState [noAI]
-    ├─ EmptyState [noPath]
-    └─ ErrorState
-```

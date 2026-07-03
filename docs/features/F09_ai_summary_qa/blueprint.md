@@ -63,20 +63,6 @@ interface QAInputAreaProps {
 
 ---
 
-## Component Tree
-
-```
-AISummaryViewer
-├─ action bar
-├─ markdown / streaming content
-│  └─ completed Q&A blocks appended in same document flow
-└─ QAInputArea (요약 완료 시)
-   ├─ textarea
-   └─ submit button
-```
-
----
-
 ## Layout Rules
 
 - 질문/답변 영역은 `AISummaryViewer` 하단에 border-top으로 구분한다.

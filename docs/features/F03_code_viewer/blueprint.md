@@ -136,21 +136,6 @@ F03_CodeViewer 전용. DiffViewer 내에서만 사용.
 
 ---
 
-## Component Tree
-
-```
-F03_CodeViewer
-└─ DiffViewer
-    ├─ DeletedFileNotice (조건부)
-    ├─ DiffLine × N
-    │   ├─ DiffLine [added]
-    │   ├─ DiffLine [removed]
-    │   └─ DiffLine [context]
-    └─ BinaryFileNotice (조건부)
-```
-
----
-
 ## Variants
 
 ### DiffLine
@@ -163,20 +148,6 @@ F03_CodeViewer
 - `populated`: 정상 diff 표시
 - `binary`: 이진 파일 안내
 - `deleted`: 삭제된 파일 안내 + 삭제 전 코드
-
----
-
-## Layout Rules
-
-```
-S03_CodeViewerScreen
-├─ TopHeader ({커밋 메시지} > {파일 경로})
-│  └─ 우측 액션: AI 요약 함께 보기 버튼 + 설정 버튼
-└─ DiffViewer (스크롤 영역)
-    ├─ DeletedFileNotice (조건부, 최상단)
-    └─ DiffLine × N
-       OR BinaryFileNotice
-```
 
 ---
 
@@ -236,28 +207,3 @@ S03_CodeViewerScreen
 - [`ErrorState`](../../core/global_components.md#errorstate)
 - [`TopHeader`](../../core/global_components.md#topheader)
 - [`BackButton`](../../core/global_components.md#backbutton)
-
----
-
-## MCP Optimization Rules
-
-- `DiffViewer`는 독립 Frame으로 분리 (스크롤 영역)
-- `DiffLine`은 재사용 Component로 등록 (added/removed/context Variant)
-- `BinaryFileNotice`와 `DeletedFileNotice`는 각각 독립 Component
-- Auto Layout: `DiffViewer`는 Vertical, `DiffLine`은 Horizontal (라인 번호 + 코드)
-- 라인 번호 컬럼 폭은 고정 (Hug 대신 Fixed로 설정)
-
----
-
-## Figma Naming Rules
-
-```
-S03_CodeViewerScreen
-├─ TopHeader
-└─ DiffViewer
-    ├─ DeletedFileNotice
-    ├─ DiffLine [added]
-    ├─ DiffLine [removed]
-    ├─ DiffLine [context]
-    └─ BinaryFileNotice
-```

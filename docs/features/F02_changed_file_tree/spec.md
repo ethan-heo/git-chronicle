@@ -51,10 +51,12 @@
 
 ## Error Handling
 
-| 상황 | 처리 |
+| 상황 | 발생 조건 |
 |------|------|
-| 변경 파일 로드 실패 | `ErrorState`: "변경 파일 목록을 불러오지 못했습니다" + [재시도] 버튼 |
-| 변경 파일 없음 | `EmptyState`: "변경된 파일이 없습니다" |
+| 변경 파일 로드 실패 | `diff-tree` 실행 자체가 실패 |
+| 변경 파일 없음 | `changedFiles.length === 0` |
+
+> 정확한 안내 메시지·CTA 문구·컴포넌트는 [blueprint.md](./blueprint.md)의 Empty States / Error States가 유일한 출처다.
 
 ---
 
