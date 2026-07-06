@@ -42,7 +42,6 @@ export const S02WorkspaceScreen: FC = () => {
   const {
     selectedCommit,
     changedFiles,
-    hasSavedCommitSummary,
     selectedFile,
     isLoadingChangedFiles,
     changedFilesError,
@@ -261,11 +260,6 @@ export const S02WorkspaceScreen: FC = () => {
     () => (activeNode ? { start: activeNode.lineStart, end: activeNode.lineEnd } : null),
     [activeNode],
   );
-  const toggleSidebar = useCallback(() => {
-    setIsSidebarCollapsed((current) => !current);
-    setSidebarWidth((current) => Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, current)));
-  }, []);
-
   useEffect(() => {
     if (!isSidebarDragging) {
       return;
@@ -383,18 +377,6 @@ export const S02WorkspaceScreen: FC = () => {
           context={`${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`}
           endSlot={(
             <>
-              <button
-                className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
-                type="button"
-                onClick={toggleSidebar}
-                aria-label={t('action_bar.sidebar_toggle_aria')}
-                title={t('action_bar.sidebar_toggle_aria')}
-              >
-                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-                  <rect x="2" y="2.2" width="3.6" height="11.6" rx="0.9" />
-                  <path d="M8 4.2h5M8 8h5M8 11.8h5" />
-                </svg>
-              </button>
               <button
                 className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
                 type="button"
