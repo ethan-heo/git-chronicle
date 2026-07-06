@@ -1,17 +1,14 @@
-import { useEffect, useRef, type FC, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useRef, type FC } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState } from '../../shared/components';
 import { useAppStore } from '../../store/appStore';
 import { QAInputArea } from '../F09/QAInputArea';
-import { CopyMarkdownButton, splitMarkdownSections } from '../F11';
+import { CopyMarkdownButton } from '../F11';
 import { RegenerateButton } from './RegenerateButton';
 import { StreamingTextRenderer } from './StreamingTextRenderer';
 import './AISummaryViewer.css';
-
-type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
-type DisplayHeadingLevel = 2 | 3 | 4 | 5;
 
 interface AISummaryViewerProps {
   content: string;
@@ -51,7 +48,6 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const { t } = useTranslation();
   const pushToast = useAppStore((state) => state.pushToast);
   const summaryEndRef = useRef<HTMLDivElement | null>(null);
-  const sections = splitMarkdownSections(content);
 
   useEffect(() => {
     if (qaCompletionCount > 0) {
@@ -128,30 +124,16 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
             <StreamingTextRenderer content={content} isStreaming />
           ) : content ? (
             <>
-              {sections.map((section, index) => (
-                <div key={`${section.heading}-${index}`} className="group relative">
-                  <CopyMarkdownButton
-                    className="absolute top-0 right-0 z-[1] group-hover:opacity-100"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(section.content);
-                      pushToast(`"${section.heading}" 섹션을 복사했습니다`, 'success');
-                    }}
-                  />
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => renderMarkdownHeading(1, children),
-                      h2: ({ children }) => renderMarkdownHeading(2, children),
-                      h3: ({ children }) => renderMarkdownHeading(3, children),
-                      h4: ({ children }) => renderMarkdownHeading(4, children),
-                      h5: ({ children }) => renderMarkdownHeading(5, children),
-                      h6: ({ children }) => renderMarkdownHeading(6, children),
-                    }}
-                  >
-                    {section.content}
-                  </ReactMarkdown>
-                </div>
-              ))}
+              <div className="group relative ai-summary-markdown">
+                <CopyMarkdownButton
+                  className="absolute top-0 right-0 z-[1] group-hover:opacity-100"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(content);
+                    pushToast('마크다운을 복사했습니다', 'success');
+                  }}
+                />
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+              </div>
               <div ref={summaryEndRef} />
             </>
           ) : (
@@ -186,51 +168,4 @@ function formatSourceTag(
   }
 
   return t('ai_summary.source_ready', { provider });
-}
-
-function renderMarkdownHeading(level: HeadingLevel, children: ReactNode): ReactElement {
-  const displayLevel = toDisplayHeadingLevel(level);
-  const Tag = `h${displayLevel}` as const;
-  const headingText = extractHeadingText(children).trim();
-  const isQuestionHeading = /^q\.\s/i.test(headingText);
-
-  return (
-    <Tag className={`ai-summary-heading ai-summary-heading-h${displayLevel}${isQuestionHeading ? ' ai-summary-heading-question' : ''}`}>
-      {displayLevel <= 4 && !isQuestionHeading ? <span aria-hidden="true" /> : null}
-      {children}
-    </Tag>
-  );
-}
-
-function toDisplayHeadingLevel(level: HeadingLevel): DisplayHeadingLevel {
-  if (level <= 1) {
-    return 2;
-  }
-
-  if (level === 2) {
-    return 3;
-  }
-
-  if (level === 3) {
-    return 4;
-  }
-
-  return 5;
-}
-
-function extractHeadingText(children: ReactNode): string {
-  if (typeof children === 'string' || typeof children === 'number') {
-    return String(children);
-  }
-
-  if (Array.isArray(children)) {
-    return children.map((child) => extractHeadingText(child)).join('');
-  }
-
-  if (children && typeof children === 'object' && 'props' in children) {
-    const childProps = children.props as { children?: ReactNode };
-    return extractHeadingText(childProps.children ?? '');
-  }
-
-  return '';
 }
