@@ -1,17 +1,29 @@
 import type { FC, KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FileActionButtons, FileStatusBadge, SavedBadge } from '../../shared/components';
+import { FileActionButtons, FileStatusBadge } from '../../shared/components';
 import type { ChangedFile } from '../../types/commit';
+import { ANALYZABLE_FILE_PATTERN } from '../F04/graph';
 
 interface FileTreeNodeProps {
   file: ChangedFile;
   name: string;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
+  onAIView: (file: ChangedFile) => void;
+  onSymbolGraph: (file: ChangedFile) => void;
 }
 
-export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeView }) => {
+export const FileTreeNode: FC<FileTreeNodeProps> = ({
+  file,
+  name,
+  depth,
+  onCodeView,
+  onAIView,
+  onSymbolGraph,
+}) => {
   const { t } = useTranslation();
+  const isSymbolGraphSupported = ANALYZABLE_FILE_PATTERN.test(file.path);
+
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Enter') {
       onCodeView(file);
@@ -42,11 +54,13 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({ file, name, depth, onCodeV
       >
         {name}
       </span>
-      <SavedBadge isVisible={false} />
       <FileActionButtons
         className="group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
         isVisible={false}
         onCodeView={() => onCodeView(file)}
+        onAIView={() => onAIView(file)}
+        onSymbolGraph={() => onSymbolGraph(file)}
+        isSymbolGraphDisabled={!isSymbolGraphSupported}
       />
     </div>
   );

@@ -3,14 +3,18 @@ import { useTranslation } from 'react-i18next';
 
 interface FileActionButtonsProps {
   onCodeView: () => void;
+  onAIView?: () => void;
   onSymbolGraph?: () => void;
+  isSymbolGraphDisabled?: boolean;
   isVisible?: boolean;
   className?: string;
 }
 
 export const FileActionButtons: FC<FileActionButtonsProps> = ({
   onCodeView,
+  onAIView,
   onSymbolGraph,
+  isSymbolGraphDisabled = false,
   isVisible = true,
   className,
 }) => {
@@ -33,12 +37,27 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
           <path d="m10 5 3.5 3L10 11" />
         </svg>
       </button>
+      {onAIView ? (
+        <button
+          className={`${buttonClassName} hover:text-accent`}
+          type="button"
+          aria-label={t('shared.file_ai_view')}
+          title={t('shared.file_ai_view')}
+          onClick={onAIView}
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+            <path d="M8 2.1 9.2 5.2l3.2.1-2.5 2 .8 3.1L8 9.1l-2.7 1.3.8-3.1-2.5-2 3.2-.1L8 2.1Z" />
+            <path d="M12.2 2.3v2M11.2 3.3h2" />
+          </svg>
+        </button>
+      ) : null}
       {onSymbolGraph ? (
         <button
-          className={`${buttonClassName} hover:text-link`}
+          className={`${buttonClassName} hover:text-link disabled:cursor-not-allowed disabled:hover:bg-secondary disabled:hover:text-muted disabled:opacity-45`}
           type="button"
-          aria-label={t('action_bar.canvas_aria')}
-          title={t('action_bar.canvas_aria')}
+          aria-label={t('symbol_graph.open_aria')}
+          title={t('symbol_graph.open_aria')}
+          disabled={isSymbolGraphDisabled}
           onClick={onSymbolGraph}
         >
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">

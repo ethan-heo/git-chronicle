@@ -6,6 +6,5 @@ export { FileStatusBadge, type FileStatus } from './FileStatusBadge';
 export { LoadingState } from './LoadingState';
 export { PrimaryButton } from './PrimaryButton';
 export { ResizableSplitPane } from './ResizableSplitPane';
-export { SavedBadge } from './SavedBadge';
 export { Toast, ToastContainer, type ToastItem, type ToastType } from './Toast';
 export { TopHeader } from './TopHeader';

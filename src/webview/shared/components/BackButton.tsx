@@ -16,7 +16,7 @@ export const BackButton: FC<BackButtonProps> = ({
     <button
       {...buttonProps}
       className={[
-        'inline-flex items-center justify-center gap-1 rounded-sm border-none bg-transparent px-2 py-[5px] text-[12.5px] text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text',
+        'inline-flex size-8 items-center justify-center rounded-sm border-none bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text',
         className,
       ]
         .filter(Boolean)
@@ -27,7 +27,6 @@ export const BackButton: FC<BackButtonProps> = ({
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
         <path d="M10 3 5 8l5 5" />
       </svg>
-      <span>{t('shared.back_button')}</span>
     </button>
   );
 };

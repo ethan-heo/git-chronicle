@@ -74,6 +74,7 @@
   "symbol_graph": {
     "loading": "심볼을 분석하는 중...",
     "empty": "분석 가능한 심볼이 없습니다",
+    "open_aria": "심볼 그래프 보기",
     "graph_aria": "파일 내부 심볼 의존성 그래프",
     "code_panel_title": "코드 보기",
     "code_panel_hide": "코드 숨기기",

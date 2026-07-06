@@ -85,11 +85,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | 화면 | 파일 | 설명 |
 |------|------|------|
 | **S01** 커밋 목록 | [blueprint](screens/S01_commit_list/blueprint.md) | 필터 패널 + 커밋 리스트 메인 화면 |
-| **S02** 커밋 히스토리 뷰 | [blueprint](screens/S02_history_view/blueprint.md) | 선택 커밋의 변경 파일 트리 화면 |
-| **S03** 코드 뷰어 | [blueprint](screens/S03_code_viewer/blueprint.md) | Diff 코드 뷰어 화면 |
-| **S04** AI 요약 뷰어 | [blueprint](screens/S05_ai_summary_viewer/blueprint.md) | AI 요약 결과 마크다운 뷰어 화면 (F05b/F09 조합) |
-| **S05** 의존성 캔버스 | [blueprint](screens/S04_dependency_canvas/blueprint.md) | 노드-엣지 의존성 그래프 화면 |
+| **S02** 워크스페이스 | [blueprint](screens/S02_history_view/blueprint.md) | 사이드바 + 본문 레이아웃에서 변경 파일 트리, Diff, AI 요약, 의존성 캔버스, 심볼 그래프를 전환하는 통합 화면 |
 | **S06** 설정 | [blueprint](screens/S06_settings/blueprint.md) | AI 프로바이더·저장 경로 설정 화면 (F06/F07 조합) |
-| **S08** 파일 내부 심볼 의존성 캔버스 | [blueprint](screens/S08_intra_file_dependency_canvas/blueprint.md) | 단일 파일 내 심볼(함수·클래스·변수 등) 간 의존 관계 그래프 + 우측 코드 패널 화면 |
 
-> 디렉토리명과 화면 ID가 일부 어긋나 있다 — 자세한 내용은 [project/known_issues.md](project/known_issues.md) 참고.
+> S03, S04, S05, S08은 독립 화면에서 S02 워크스페이스 본문 패널로 통합되었다.

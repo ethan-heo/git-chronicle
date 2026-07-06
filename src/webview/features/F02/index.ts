@@ -1,1 +1,1 @@
-export { S02HistoryViewScreen } from './S02_HistoryViewScreen';
+export { S02WorkspaceScreen } from './S02_WorkspaceScreen';

@@ -1,1 +1,2 @@
-export { S03CodeViewerScreen } from './S03_CodeViewerScreen';
+export { DiffViewer } from './DiffViewer';
+export { useFileDiff } from './useFileDiff';

@@ -1,1 +1,1 @@
-export { S05DependencyCanvasScreen } from './S05_DependencyCanvasScreen';
+export { DependencyGraph } from './DependencyGraph';

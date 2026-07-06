@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState, type FC, type ReactElement } from 'react';
 import { S01CommitListScreen } from './features/F01';
-import { S02HistoryViewScreen } from './features/F02';
-import { S03CodeViewerScreen } from './features/F03';
-import { S05DependencyCanvasScreen } from './features/F04';
-import { S04AISummaryViewerScreen } from './features/F05b';
+import { S02WorkspaceScreen } from './features/F02';
 import { S06SettingsScreen } from './features/F06';
-import { S08IntraFileSymbolDependencyCanvasScreen } from './features/F10';
 import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
 import { RouteSlotProvider } from './shared/route/RouteSlotContext';
@@ -121,27 +117,11 @@ export const App: FC = () => {
 
 function renderScreen(currentScreen: ScreenID): ReactElement {
   if (currentScreen === 'S02') {
-    return <S02HistoryViewScreen />;
-  }
-
-  if (currentScreen === 'S03') {
-    return <S03CodeViewerScreen />;
-  }
-
-  if (currentScreen === 'S05') {
-    return <S05DependencyCanvasScreen />;
-  }
-
-  if (currentScreen === 'S04') {
-    return <S04AISummaryViewerScreen />;
+    return <S02WorkspaceScreen />;
   }
 
   if (currentScreen === 'S06') {
     return <S06SettingsScreen />;
-  }
-
-  if (currentScreen === 'S08') {
-    return <S08IntraFileSymbolDependencyCanvasScreen />;
   }
 
   return <S01CommitListScreen />;

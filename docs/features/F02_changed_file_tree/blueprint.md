@@ -8,7 +8,7 @@
 
 ## Purpose
 
-선택된 커밋의 변경 파일을 디렉토리 트리로 렌더링하고, 파일 호버 시 액션 버튼을 노출한다.
+선택된 커밋의 변경 파일을 디렉토리 트리로 렌더링하고, 파일 호버 시 코드 보기/AI 요약 보기/심볼 그래프 액션 버튼을 노출한다. 워크스페이스 통합 이후 F02는 S02 사이드바 영역으로 배치된다.
 
 ---
 
@@ -22,57 +22,21 @@
 
 ## Outputs
 
-- `selectedFile: ChangedFile` — 파일 클릭 시 전역 상태 업데이트 → S-03 진입
+- `selectedFile: ChangedFile` — 파일 [코드 보기] 클릭 시 전역 상태 업데이트 → S02 본문 `code` 패널 활성화
 
 ---
 
 ## Components
 
-- `CommitActionBar`
 - `FileTree`
 - `DirectoryNode`
 - `FileTreeNode`
 - `FileStatusBadge`
-- `SavedBadge`
 - `FileActionButtons`
 
 ---
 
 ## Component Definitions
-
-### Component: CommitActionBar
-
-#### Purpose
-커밋 단위 액션 버튼([커밋 AI 정리], [캔버스 보기])을 상단에 표시한다. [커밋 AI 정리] 옆에는 저장본 존재 여부에 따라 `SavedBadge`가 표시된다.
-
-#### Data
-- `selectedCommit: Commit`
-- `hasSavedCommitSummary: boolean`
-
-#### Props
-```typescript
-interface CommitActionBarProps {
-  selectedCommit: Commit;
-  hasSavedCommitSummary: boolean;
-  onCommitAISummary: () => void;
-  onCanvasView: () => void;
-}
-```
-
-#### Interaction
-- [커밋 AI 정리] 클릭 → S-04 진입
-- [캔버스 보기] 클릭 → S-05 진입
-
-#### States
-- `default`: 모든 버튼 활성
-
-#### Accessibility
-- 각 버튼에 `aria-label` 명시
-
-#### Reusability
-F02_ChangedFileTree 전용. S02_HistoryViewScreen 상단에서만 사용.
-
----
 
 ### Component: FileTree
 
@@ -90,6 +54,8 @@ interface FileTreeProps {
   error: string | null;
   onRetry: () => void;
   onFileCodeView: (file: ChangedFile) => void;
+  onFileAIView: (file: ChangedFile) => void;
+  onFileSymbolGraph: (file: ChangedFile) => void;
 }
 ```
 
@@ -104,7 +70,7 @@ interface FileTreeProps {
 - `role="tree"`, `aria-label="변경 파일 트리"`
 
 #### Reusability
-F02_ChangedFileTree 전용. S02_HistoryViewScreen 내 스크롤 영역에서만 사용.
+F02_ChangedFileTree 전용. S02_WorkspaceScreen 사이드바 스크롤 영역에서만 사용.
 
 ---
 
@@ -124,6 +90,8 @@ interface DirectoryNodeProps {
   node: DirectoryTreeNode;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
+  onAIView: (file: ChangedFile) => void;
+  onSymbolGraph: (file: ChangedFile) => void;
 }
 ```
 
@@ -157,12 +125,16 @@ interface FileTreeNodeProps {
   name: string;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
+  onAIView: (file: ChangedFile) => void;
+  onSymbolGraph: (file: ChangedFile) => void;
 }
 ```
 
 #### Interaction
 - 호버 시 `FileActionButtons` 표시, `FileStatusBadge` 유지
-- [코드 보기] 클릭 → `selectedFile` 업데이트 → S-03 진입
+- [코드 보기] 클릭 → `selectedFile` 업데이트 → S02 본문 `code` 패널 활성화
+- [AI 요약 보기] 클릭 → S02 본문 `aiSummary` 패널 활성화
+- [심볼 그래프] 클릭 → `selectedFileForSymbolGraph` 업데이트 → S02 본문 `symbolGraph` 패널 활성화
 
 #### States
 - `default`, `hover`
@@ -214,23 +186,16 @@ interface FileStatusBadgeProps {
 - `expanded`: 하위 항목 표시
 - `collapsed`: 하위 항목 숨김
 
-### CommitActionBar
-- `default`: 모든 버튼 활성
-
----
-
 ## Interaction Model
 
 | 인터랙션 | 트리거 | 결과 |
 |---------|--------|------|
 | 파일 호버 | `FileTreeNode` 마우스 진입 | `FileActionButtons` 표시 |
 | 파일 호버 해제 | 마우스 이탈 | `FileActionButtons` 숨김 |
-| [코드 보기] | 버튼 클릭 | `selectedFile` 설정 후 S-03 진입 |
-| [커밋 AI 정리] | 버튼 클릭 | S-04 진입 |
-| [캔버스 보기] | 버튼 클릭 | S-05 진입 |
+| [코드 보기] | 버튼 클릭 | `selectedFile` 설정 후 S02 본문 `code` 패널 활성화 |
+| [AI 요약 보기] | 버튼 클릭 | S02 본문 `aiSummary` 패널 활성화 |
+| [심볼 그래프] | 버튼 클릭 | `selectedFileForSymbolGraph` 설정 후 S02 본문 `symbolGraph` 패널 활성화 |
 | 디렉토리 클릭 | `DirectoryNode` 클릭 | 펼침/접힘 토글 |
-
-> 현재 S-03은 코드 뷰어로, S-04는 커밋 단위 AI 요약 뷰어로, S-05는 의존성 캔버스로 라우팅된다.
 
 ---
 

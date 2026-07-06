@@ -36,6 +36,8 @@ interface CommitsLoadedPayload {
   requestId?: number;
 }
 
+type WorkspacePanel = 'none' | 'code' | 'aiSummary' | 'fileCanvas' | 'symbolGraph';
+
 interface AppState extends FilterState {
   commitList: Commit[];
   authorList: string[];
@@ -84,6 +86,7 @@ interface AppState extends FilterState {
   currentScreen: ScreenID;
   previousScreen: ScreenID | null;
   transitionDirection: RouteTransitionDirection;
+  activeWorkspacePanel: WorkspacePanel;
   commitLoadError: string | null;
   loadMoreError: string | null;
   hasLoadedCommits: boolean;
@@ -189,6 +192,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentScreen: 'S01',
   previousScreen: null,
   transitionDirection: 'forward',
+  activeWorkspacePanel: 'none',
   commitLoadError: null,
   loadMoreError: null,
   hasLoadedCommits: false,
@@ -378,6 +382,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: 'S02',
       previousScreen: null,
       transitionDirection: 'forward',
+      activeWorkspacePanel: 'none',
     });
   },
 
@@ -394,6 +399,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: 'S02',
       previousScreen: null,
       transitionDirection: 'back',
+      activeWorkspacePanel: 'none',
     });
   },
 
@@ -422,9 +428,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       summarySavedPath: null,
       hasCurrentSavedSummary: state.hasSavedCommitSummary,
       isSummaryTokenLimitExceeded: false,
-      previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
-      currentScreen: 'S03',
-      transitionDirection: 'forward',
+      activeWorkspacePanel: 'code',
     });
   },
 
@@ -440,23 +444,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       summarySavedPath: null,
       hasCurrentSavedSummary: get().hasSavedCommitSummary,
       isSummaryTokenLimitExceeded: false,
-      previousScreen: 'S02',
-      currentScreen: 'S04',
-      transitionDirection: 'forward',
+      activeWorkspacePanel: 'aiSummary',
     });
   },
 
   goToCanvasView: () => {
     set({
-      currentScreen: 'S05',
-      previousScreen: 'S02',
-      transitionDirection: 'forward',
+      activeWorkspacePanel: 'fileCanvas',
     });
   },
 
   goToSymbolGraphView: (file) => {
-    const state = get();
-
     set({
       selectedFileForSymbolGraph: file,
       symbolNodes: [],
@@ -468,9 +466,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       isCodePanelOpen: false,
       activeSymbolNodeId: null,
       hoveredSymbolNodeId: null,
-      previousScreen: state.currentScreen === 'S05' ? 'S05' : 'S02',
-      currentScreen: 'S08',
-      transitionDirection: 'forward',
+      activeWorkspacePanel: 'symbolGraph',
     });
   },
 

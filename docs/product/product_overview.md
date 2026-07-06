@@ -28,19 +28,15 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 
 ## Global Navigation Model
 
-확장 프로그램은 **퍼널(Funnel) 방식**으로 화면이 전환된다. 상위 화면에서 항목을 선택하면 세부 화면으로 진입하고, [뒤로가기] 버튼으로 복귀한다.
+확장 프로그램은 S01 이후를 **지속형 워크스페이스**로 유지한다. 커밋을 선택하면 S02로 진입하고, 이후 코드/AI 요약/의존성 캔버스/심볼 그래프는 모두 S02 본문 패널 전환으로 처리한다.
 
 | 화면 ID | 화면명 | 진입 조건 | 이전 화면 |
 |---------|--------|-----------|-----------|
 | S-01 | 커밋 목록 | 확장 프로그램 활성화 | — |
-| S-02 | 이력 조회 | 커밋 목록에서 항목 클릭 | S-01 |
-| S-03 | 코드 뷰어 | 파일/노드 호버 → [코드 보기] 버튼 클릭 | S-02 / S-05 |
-| S-04 | AI 정리 뷰어 | [커밋 AI 정리] 클릭 | S-02 |
-| S-05 | 캔버스 | 이력 조회 화면 내 [캔버스 보기] 버튼 클릭 | S-02 |
+| S-02 | 워크스페이스 | 커밋 목록에서 항목 클릭 | S-01 |
 | S-06 | 설정 | 우측 상단 설정(⚙) 아이콘 클릭 | 어디서든 |
-| S-08 | 파일 내부 심볼 캔버스 | S-05 캔버스 노드에서 [심볼 그래프] 버튼 클릭 | S-05 |
 
-> 과거 별도 화면이었던 S-07(코드+AI 요약 분할)은 더 이상 존재하지 않는다.
+> 과거 별도 화면이었던 S-03/S-04/S-05/S-07/S-08은 더 이상 독립 라우트가 아니며, 해당 콘텐츠는 S-02 워크스페이스 내부 패널로 통합되었다.
 
 ---
 
@@ -64,12 +60,11 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
        ↓
   [S-01: 커밋 목록] ◄────────────────────────────────────┐
        ↓ 커밋 클릭                               뒤로가기 │
-  [S-02: 이력 조회] ──────────────────────────────────────┘
-       ├─ 파일 호버 → [코드 보기]    → [S-03: 코드 뷰어]
-       ├─ [커밋 AI 정리]             → [S-04: AI 정리 뷰어]
-       └─ [캔버스 보기]              → [S-05: 캔버스]
-                                          ├─ 노드 호버 → [코드 보기]      → [S-03]
-                                          └─ 노드 호버 → [심볼 그래프]    → [S-08: 파일 내부 심볼 캔버스]
+  [S-02: 워크스페이스] ───────────────────────────────────┘
+       ├─ 파일 [코드 보기]           → 본문 code 패널
+       ├─ [커밋 AI 정리]             → 본문 aiSummary 패널
+       ├─ [캔버스 보기]              → 본문 fileCanvas 패널
+       └─ 파일 [심볼 그래프]         → 본문 symbolGraph 패널
 
   [⚙ 아이콘 (어디서든)] → [S-06: 설정]
 ```
@@ -82,13 +77,13 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 |------------|-----------|------|-----------|
 | [F01_CommitLog](../features/F01_commit_log/spec.md) | 커밋 로그 조회 | 전체 커밋 이력 목록 표시. 기간·작성자·키워드 필터, 무한 스크롤 | [S01](../screens/S01_commit_list/blueprint.md) |
 | [F02_ChangedFileTree](../features/F02_changed_file_tree/spec.md) | 변경 파일 트리 | 커밋 선택 시 변경 파일을 디렉토리 트리로 표시. 상태 뱃지·저장됨 뱃지 포함 | [S02](../screens/S02_history_view/blueprint.md) |
-| [F03_CodeViewer](../features/F03_code_viewer/spec.md) | 코드 변경이력 | 파일 단위 unified diff 뷰어. Shiki 신텍스 하이라이팅 | [S03](../screens/S03_code_viewer/blueprint.md) |
-| [F04_DependencyCanvas](../features/F04_dependency_canvas/spec.md) | 의존 관계 캔버스 | 변경 파일 간 의존 관계를 노드-엣지 그래프로 시각화. React Flow 기반 | [S05](../screens/S04_dependency_canvas/blueprint.md) |
-| [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약하는 유일한 AI 정리 진입점. 스트리밍 표시, 로컬 저장, 재사용 | [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
+| [F03_CodeViewer](../features/F03_code_viewer/spec.md) | 코드 변경이력 | 파일 단위 unified diff 뷰어. Shiki 신텍스 하이라이팅 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F04_DependencyCanvas](../features/F04_dependency_canvas/spec.md) | 의존 관계 캔버스 | 변경 파일 간 의존 관계를 노드-엣지 그래프로 시각화. React Flow 기반 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약하는 유일한 AI 정리 진입점. 스트리밍 표시, 로컬 저장, 재사용 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F06_AISettings](../features/F06_ai_settings/spec.md) | AI 설정 | Claude/Gemini/Codex CLI 등록·활성화·비활성화 | [S06](../screens/S06_settings/blueprint.md) |
 | [F07_SavePathSettings](../features/F07_save_path_settings/spec.md) | 저장 경로 설정 | AI 정리 결과물 저장 경로 지정·삭제 | [S06](../screens/S06_settings/blueprint.md) |
-| [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문/답변으로 개별 파일까지 파고들며 분석. 커밋 전체 diff를 근거로 답변하며, 답변을 기존 요약 문서 하단에 append | [S04](../screens/S05_ai_summary_viewer/blueprint.md) |
-| [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S08](../screens/S08_intra_file_dependency_canvas/blueprint.md) |
+| [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문/답변으로 개별 파일까지 파고들며 분석. 커밋 전체 diff를 근거로 답변하며, 답변을 기존 요약 문서 하단에 append | [S02](../screens/S02_history_view/blueprint.md) |
+| [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S02](../screens/S02_history_view/blueprint.md) |
 
 ---
 

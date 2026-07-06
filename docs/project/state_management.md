@@ -177,8 +177,9 @@ stateDiagram-v2
 | 상태 | 설명 |
 |------|------|
 | `currentScreen` | 현재 active 화면 |
-| `previousScreen` | S03/S04/S06에서 뒤로가기 대상 화면. S05에서 S03/S04로 진입하면 `"S05"`를 저장한다. S05에서 S08(F10 심볼 그래프)로 진입하면 `"S05"`를 저장한다. |
+| `previousScreen` | 현재는 S06에서 뒤로가기 대상 화면을 기억하는 용도로만 사용한다. |
 | `transitionDirection` | 라우트 전환 애니메이션 방향. `'forward'` 또는 `'back'` |
+| `activeWorkspacePanel` | S02 워크스페이스 본문 패널 상태. `'none' | 'code' | 'aiSummary' | 'fileCanvas' | 'symbolGraph'` |
 
 `App.tsx`는 `transitionDirection`을 읽어 incoming/outgoing 라우트 슬롯에 CSS animation class를 적용한다. `transitionDirection`은 화면 전환 동작의 시각적 방향만 표현하며, 데이터 로딩 상태를 직접 변경하지 않는다.
 
@@ -206,30 +207,24 @@ stateDiagram-v2
 | `loadChangedFiles()` | `selectedCommit`이 있고 중복 로딩 중이 아닐 때만 실행 | `isLoadingChangedFiles = true` → `FETCH_CHANGED_FILES` 전송 |
 | `handleChangedFilesLoaded(files)` | 응답 수신 | `changedFiles` 교체, 로딩/에러 상태 해제 |
 
-### F02/F03/F04 화면 전환 액션
-
-F02와 S05에서 후속 화면으로 전환한다. S05 의존성 캔버스에서 S03/S04로 진입할 때는 `previousScreen = "S05"`를 저장해 뒤로가기 시 캔버스로 복귀한다.
+### S02 워크스페이스 패널 전환 액션
 
 ```mermaid
 stateDiagram-v2
-    S02 --> S03 : selectFileForCode(file)
-    S02 --> S04 : goToCommitAISummary()
-    S02 --> S05 : goToCanvasView()
-    S05 --> S03 : selectFileForCode(file)
-    S03 --> S02 : goBackFromDetail() (previousScreen=S02)
-    S03 --> S05 : goBackFromDetail() (previousScreen=S05)
-    S04 --> S02 : goBackFromDetail() (previousScreen=S02)
-    S04 --> S05 : goBackFromDetail() (previousScreen=S05)
-    S05 --> S02 : goBackFromDetail()
+    [*] --> none
+    none --> code : selectFileForCode(file)
+    none --> aiSummary : goToCommitAISummary()
+    none --> fileCanvas : goToCanvasView()
+    none --> symbolGraph : goToSymbolGraphView(file)
+    code --> aiSummary : goToCommitAISummary()
+    code --> fileCanvas : goToCanvasView()
+    code --> symbolGraph : goToSymbolGraphView(file)
 ```
 
-- `goToSettingsView()`는 위 다이어그램과 별개로 **모든 화면**에서 S06으로 진입 가능하며, 진입 시점의 `currentScreen`을 `previousScreen`에 저장한다(단, 이미 S06이면 기존 `previousScreen`을 유지해 설정 화면 재진입으로 원래 경로를 잃지 않는다).
+- `goToSettingsView()`는 위 다이어그램과 별개로 S01/S02에서 S06으로 진입 가능하며, 진입 시점의 `currentScreen`을 `previousScreen`에 저장한다.
 - `selectFileForCode`와 `goToCommitAISummary`는 이전 화면의 잔여 AI 요약 상태가 섞이지 않도록 `currentSummaryContent`, `isLoadingSummary`, `isGeneratingSummary`, `summaryError`, `summarySavedPath`, `hasCurrentSavedSummary`, `isSummaryTokenLimitExceeded`를 함께 초기화한다.
-- `previousScreen`은 진입 시점의 `currentScreen`이 `S05`이면 `S05`, 아니면 `S02`로 결정된다 — F04 캔버스에서 진입했는지 F02 파일 트리에서 진입했는지에 따라 뒤로가기 목적지가 갈린다.
-
-S03 자체의 diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 읽기 전용 화면의 로컬 상태로 관리한다. Extension Host 메시지는 `features/F03/S03_CodeViewerScreen.tsx`에서 직접 구독한다.
-
-S05 의존성 캔버스는 전역 상태의 `dependencyEdges`, `isLoadingDependencies`, `dependenciesError`를 사용한다. 변경 파일 로딩 중 S05로 진입하는 상황에 대비해 `hasLoadedChangedFiles`로 빈 커밋과 아직 로드 전 상태를 구분한다.
+- Diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 S02 내부의 `useFileDiff()` 로컬 상태로 관리한다.
+- 의존성 캔버스는 전역 상태의 `dependencyEdges`, `isLoadingDependencies`, `dependenciesError`를 사용하며, S02의 `activeWorkspacePanel === "fileCanvas"`일 때만 로드를 트리거한다.
 
 전환 애니메이션 중 outgoing 화면도 잠시 mount되므로, 각 최상위 화면은 `shared/route/RouteSlotContext.tsx`의 `useRouteSlotActive()`를 확인한다. inactive 슬롯에서는 초기 데이터 로딩 effect와 Extension 메시지 listener를 실행하지 않는다.
 

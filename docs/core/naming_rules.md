@@ -11,14 +11,10 @@
 | Screen ID | 이름 |
 |-----------|------|
 | S01 | S01_CommitListScreen |
-| S02 | S02_HistoryViewScreen |
-| S03 | S03_CodeViewerScreen |
-| S04 | S04_AISummaryViewerScreen |
-| S05 | S05_DependencyCanvasScreen |
+| S02 | S02_WorkspaceScreen |
 | S06 | S06_SettingsScreen |
-| S08 | S08_IntraFileSymbolDependencyCanvasScreen |
 
-> S07은 현재 사용하지 않는다.
+> S03, S04, S05, S07, S08은 현재 독립 화면으로 사용하지 않는다. S03/S04/S05/S08 콘텐츠는 S02_WorkspaceScreen 본문 패널로 통합되었다.
 
 - 번호는 2자리 zero-padding (`S01`, `S02`, ...).
 - 이름은 PascalCase, 반드시 `Screen` 접미사로 끝낸다.
@@ -62,7 +58,6 @@ AuthorDropdown
 KeywordSearchInput
 FileTreeNode
 FileStatusBadge
-SavedBadge
 FileActionButtons
 DependencyGraph
 FileNode

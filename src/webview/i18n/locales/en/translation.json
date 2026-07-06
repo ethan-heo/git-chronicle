@@ -74,6 +74,7 @@
   "symbol_graph": {
     "loading": "Analyzing symbols...",
     "empty": "No analyzable symbols",
+    "open_aria": "Open symbol graph",
     "graph_aria": "Intra-file symbol dependency graph",
     "code_panel_title": "Code view",
     "code_panel_hide": "Hide code",

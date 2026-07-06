@@ -29,7 +29,7 @@
 
 ## Outputs
 
-- 없음 (S08은 탐색 전용 화면. 별도 액션 없음)
+- 없음 (S02 워크스페이스의 `symbolGraph` 패널은 탐색 전용이다.)
 
 ---
 
@@ -93,7 +93,7 @@ interface SymbolGraphProps {
 - `LoadingState`, `EmptyState`, 코드 패널, 범례 패널, 코드 뷰어의 접근성 라벨은 `symbol_graph.*` 번역 키를 사용한다
 
 #### Reusability
-F10 전용. S08_IntraFileSymbolDependencyCanvasScreen에서만 사용.
+F10 전용. S02_WorkspaceScreen의 `symbolGraph` 패널에서만 사용.
 
 ---
 
@@ -246,7 +246,7 @@ interface SymbolLegendPanelProps {
 - 접기/펼치기 버튼을 통해 `isMinimized` 상태를 전환한다
 
 #### Reusability
-F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 우측 하단 오버레이에서만 사용.
+F10 전용. S02_WorkspaceScreen의 `symbolGraph` 패널 우측 하단 오버레이에서만 사용.
 
 #### Legend Contents
 
@@ -259,7 +259,7 @@ F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 우측 하단 오버레이
 ### Component: SymbolCodePanel
 
 #### Purpose
-S08 우측에서 슬라이드 인하는 코드 패널. 파일명과 닫기 버튼을 보여주고, 내부에 `SymbolFileCodeViewer`를 포함한다.
+S02 `symbolGraph` 패널 우측에서 슬라이드 인하는 코드 패널. 파일명과 닫기 버튼을 보여주고, 내부에 `SymbolFileCodeViewer`를 포함한다.
 
 #### Props
 ```typescript
@@ -282,7 +282,7 @@ interface SymbolCodePanelProps {
 - 호버는 스크롤을 유발하지 않음
 
 #### Reusability
-F10 전용. S08_IntraFileSymbolDependencyCanvasScreen 내에서만 사용.
+F10 전용. S02_WorkspaceScreen 내에서만 사용.
 
 ---
 
@@ -355,7 +355,7 @@ F10 전용. `SymbolCodePanel` 내부에서만 사용.
 | 줌 | 마우스 휠 | React Flow 내장 |
 | 패닝 | 빈 영역 드래그 | React Flow 내장 |
 | [맞춤] | CanvasControls 버튼 | `fitView()` |
-| 뒤로가기 | `BackButton` 클릭 | `previousScreen`(S05)으로 복귀 |
+| 워크스페이스 이탈 | 좌측 `BackButton` 클릭 | S01로 복귀 |
 
 ---
 
