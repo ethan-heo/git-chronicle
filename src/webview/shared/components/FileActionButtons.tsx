@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { CSSProperties, FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface FileActionButtonsProps {
@@ -6,6 +6,9 @@ interface FileActionButtonsProps {
   onAIView?: () => void;
   onSymbolGraph?: () => void;
   isSymbolGraphDisabled?: boolean;
+  isCodeViewActive?: boolean;
+  isAIViewActive?: boolean;
+  isSymbolGraphActive?: boolean;
   isVisible?: boolean;
   className?: string;
 }
@@ -15,6 +18,9 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
   onAIView,
   onSymbolGraph,
   isSymbolGraphDisabled = false,
+  isCodeViewActive = false,
+  isAIViewActive = false,
+  isSymbolGraphActive = false,
   isVisible = true,
   className,
 }) => {
@@ -28,10 +34,25 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
     .join(' ');
   const buttonClassName =
     'inline-flex size-[22px] items-center justify-center rounded-sm border border-line bg-secondary p-0 text-muted transition-colors duration-100 ease-in-out hover:bg-secondary-hi hover:text-text';
+  const getActiveButtonStyle = (color: string, isActive: boolean): CSSProperties | undefined =>
+    isActive
+      ? {
+          borderColor: color,
+          backgroundColor: `color-mix(in srgb, ${color} 16%, var(--color-elevated) 84%)`,
+          color,
+        }
+      : undefined;
 
   return (
     <div className={containerClassName}>
-      <button className={buttonClassName} type="button" aria-label={t('shared.file_code_view')} title={t('shared.file_code_view')} onClick={onCodeView}>
+      <button
+        className={buttonClassName}
+        style={getActiveButtonStyle('var(--color-focus)', isCodeViewActive)}
+        type="button"
+        aria-label={t('shared.file_code_view')}
+        title={t('shared.file_code_view')}
+        onClick={onCodeView}
+      >
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
           <path d="M6 5 2.5 8 6 11" />
           <path d="m10 5 3.5 3L10 11" />
@@ -39,7 +60,11 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
       </button>
       {onAIView ? (
         <button
-          className={`${buttonClassName} hover:text-accent`}
+          className={[
+            buttonClassName,
+            'hover:text-accent',
+          ].filter(Boolean).join(' ')}
+          style={getActiveButtonStyle('var(--color-accent)', isAIViewActive)}
           type="button"
           aria-label={t('shared.file_ai_view')}
           title={t('shared.file_ai_view')}
@@ -52,7 +77,11 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
       ) : null}
       {onSymbolGraph ? (
         <button
-          className={`${buttonClassName} hover:text-link disabled:cursor-not-allowed disabled:hover:bg-secondary disabled:hover:text-muted disabled:opacity-45`}
+          className={[
+            buttonClassName,
+            'hover:text-link disabled:cursor-not-allowed disabled:hover:bg-secondary disabled:hover:text-muted disabled:opacity-45',
+          ].filter(Boolean).join(' ')}
+          style={getActiveButtonStyle('var(--color-link)', isSymbolGraphActive)}
           type="button"
           aria-label={t('symbol_graph.open_aria')}
           title={t('symbol_graph.open_aria')}

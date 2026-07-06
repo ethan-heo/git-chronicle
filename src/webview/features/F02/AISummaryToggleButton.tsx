@@ -2,13 +2,11 @@ import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface AISummaryToggleButtonProps {
-  hasSavedSummary: boolean;
   isActive: boolean;
   onClick: () => void;
 }
 
 export const AISummaryToggleButton: FC<AISummaryToggleButtonProps> = ({
-  hasSavedSummary,
   isActive,
   onClick,
 }) => {
@@ -18,7 +16,7 @@ export const AISummaryToggleButton: FC<AISummaryToggleButtonProps> = ({
     <button
       className={[
         'inline-flex size-9 shrink-0 items-center justify-center rounded-md border transition-colors duration-100 ease-in-out',
-        hasSavedSummary || isActive
+        isActive
           ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_18%,transparent)] text-accent'
           : 'border-line bg-panel text-muted hover:bg-hover hover:text-text',
       ].join(' ')}

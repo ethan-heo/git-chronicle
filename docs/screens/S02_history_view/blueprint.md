@@ -13,7 +13,7 @@
 
 ## Purpose
 
-선택된 커밋을 하나의 지속형 워크스페이스에서 탐색한다. 좌측 사이드바에는 뒤로가기, 패널 토글, 변경 파일 트리가 있고, 우측 본문은 코드 diff, AI 요약, 의존성 캔버스, 심볼 그래프 중 하나를 표시한다.
+선택된 커밋을 하나의 지속형 워크스페이스에서 탐색한다. 좌측 사이드바 상단 통합 헤더에는 왼쪽의 뒤로가기와 오른쪽의 패널 토글 버튼들이 있고, 그 아래 변경 파일 트리가 이어진다. 우측 본문은 코드 diff, AI 요약, 의존성 캔버스, 심볼 그래프 중 하나를 표시한다.
 
 ---
 
@@ -40,9 +40,10 @@ S01_CommitListScreen에서 커밋 항목 클릭 시 진입. `selectedCommit` 설
 ```
 S02_WorkspaceScreen
 ├─ Sidebar (drag resize, toggle collapse / expand)
-│  ├─ BackButton → S01
-│  ├─ AISummaryToggleButton → activeWorkspacePanel = 'aiSummary'
-│  ├─ FileCanvasToggleButton → activeWorkspacePanel = 'fileCanvas'
+│  ├─ SidebarHeader
+│  │  ├─ BackButton → S01
+│  │  ├─ AISummaryToggleButton → activeWorkspacePanel = 'aiSummary'
+│  │  └─ FileCanvasToggleButton → activeWorkspacePanel = 'fileCanvas'
 │  └─ FileTree
 │     └─ FileTreeNode
 │        ├─ [코드 보기] → activeWorkspacePanel = 'code'

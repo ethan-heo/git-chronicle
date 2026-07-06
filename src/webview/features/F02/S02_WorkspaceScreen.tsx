@@ -111,6 +111,7 @@ export const S02WorkspaceScreen: FC = () => {
     isDeletedFile: selectedFile?.status === 'D',
   });
   const [scrollRequestId, setScrollRequestId] = useState(0);
+  const [activeAIFilePath, setActiveAIFilePath] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
@@ -123,6 +124,10 @@ export const S02WorkspaceScreen: FC = () => {
 
     loadChangedFiles();
   }, [isRouteSlotActive, loadChangedFiles, selectedCommit?.hash]);
+
+  useEffect(() => {
+    setActiveAIFilePath(null);
+  }, [selectedCommit?.hash]);
 
   useEffect(() => {
     if (!isRouteSlotActive) {
@@ -231,6 +236,14 @@ export const S02WorkspaceScreen: FC = () => {
   }, [changedFiles.length, changedFilesError, loadChangedFiles, loadDependencies]);
 
   const retrySymbolGraph = useCallback(() => loadSymbolGraph(), [loadSymbolGraph]);
+  const openCommitAISummaryFromSidebar = useCallback(() => {
+    setActiveAIFilePath(null);
+    goToCommitAISummary();
+  }, [goToCommitAISummary]);
+  const openCommitAISummaryFromFile = useCallback((file: ChangedFile) => {
+    setActiveAIFilePath(file.path);
+    goToCommitAISummary();
+  }, [goToCommitAISummary]);
 
   const hoveredNode = useMemo(
     () => symbolNodes.find((node) => node.id === hoveredSymbolNodeId) ?? null,
@@ -309,19 +322,18 @@ export const S02WorkspaceScreen: FC = () => {
           className="flex shrink-0 flex-col overflow-hidden border-r border-line bg-panel"
           style={{ width: `${sidebarWidth}px` }}
         >
-          <div className="flex items-center px-3 py-3">
+          <div className="flex items-center justify-between gap-3 px-3 py-3">
             <BackButton onClick={goToCommitList} />
-          </div>
-          <div className="flex items-center gap-2 px-3 pb-3">
-            <AISummaryToggleButton
-              hasSavedSummary={hasSavedCommitSummary}
-              isActive={activeWorkspacePanel === 'aiSummary'}
-              onClick={goToCommitAISummary}
-            />
-            <FileCanvasToggleButton
-              isActive={activeWorkspacePanel === 'fileCanvas'}
-              onClick={goToCanvasView}
-            />
+            <div className="flex items-center gap-2">
+              <AISummaryToggleButton
+                isActive={activeWorkspacePanel === 'aiSummary'}
+                onClick={openCommitAISummaryFromSidebar}
+              />
+              <FileCanvasToggleButton
+                isActive={activeWorkspacePanel === 'fileCanvas'}
+                onClick={goToCanvasView}
+              />
+            </div>
           </div>
           <div className="min-h-0 flex-1 bg-surface">
             <FileTree
@@ -330,8 +342,11 @@ export const S02WorkspaceScreen: FC = () => {
               error={changedFilesError}
               onRetry={retryTree}
               onFileCodeView={selectFileForCode}
-              onFileAIView={() => goToCommitAISummary()}
+              onFileAIView={openCommitAISummaryFromFile}
               onFileSymbolGraph={goToSymbolGraphView}
+              activeAIFilePath={activeWorkspacePanel === 'aiSummary' ? activeAIFilePath : null}
+              activeCodeFilePath={activeWorkspacePanel === 'code' ? selectedFile?.path ?? null : null}
+              activeSymbolGraphFilePath={activeWorkspacePanel === 'symbolGraph' ? selectedFileForSymbolGraph?.path ?? null : null}
             />
           </div>
         </aside>

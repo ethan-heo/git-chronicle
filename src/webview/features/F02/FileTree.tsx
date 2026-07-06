@@ -14,6 +14,9 @@ interface FileTreeProps {
   onFileCodeView: (file: ChangedFile) => void;
   onFileAIView: (file: ChangedFile) => void;
   onFileSymbolGraph: (file: ChangedFile) => void;
+  activeAIFilePath?: string | null;
+  activeCodeFilePath?: string | null;
+  activeSymbolGraphFilePath?: string | null;
 }
 
 export const FileTree: FC<FileTreeProps> = ({
@@ -24,6 +27,9 @@ export const FileTree: FC<FileTreeProps> = ({
   onFileCodeView,
   onFileAIView,
   onFileSymbolGraph,
+  activeAIFilePath = null,
+  activeCodeFilePath = null,
+  activeSymbolGraphFilePath = null,
 }) => {
   const { t } = useTranslation();
   const tree = useMemo(() => buildFileTree(changedFiles), [changedFiles]);
@@ -75,6 +81,9 @@ export const FileTree: FC<FileTreeProps> = ({
               onCodeView={onFileCodeView}
               onAIView={onFileAIView}
               onSymbolGraph={onFileSymbolGraph}
+              activeAIFilePath={activeAIFilePath}
+              activeCodeFilePath={activeCodeFilePath}
+              activeSymbolGraphFilePath={activeSymbolGraphFilePath}
             />
           ) : (
             <FileTreeNode
@@ -85,6 +94,9 @@ export const FileTree: FC<FileTreeProps> = ({
               onCodeView={onFileCodeView}
               onAIView={onFileAIView}
               onSymbolGraph={onFileSymbolGraph}
+              isCodeViewActive={activeCodeFilePath === child.file.path}
+              isAIViewActive={activeAIFilePath === child.file.path}
+              isSymbolGraphActive={activeSymbolGraphFilePath === child.file.path}
             />
           ),
         )}

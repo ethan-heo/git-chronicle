@@ -10,6 +10,9 @@ interface DirectoryNodeProps {
   onCodeView: (file: ChangedFile) => void;
   onAIView: (file: ChangedFile) => void;
   onSymbolGraph: (file: ChangedFile) => void;
+  activeAIFilePath?: string | null;
+  activeCodeFilePath?: string | null;
+  activeSymbolGraphFilePath?: string | null;
 }
 
 export const DirectoryNode: FC<DirectoryNodeProps> = ({
@@ -18,6 +21,9 @@ export const DirectoryNode: FC<DirectoryNodeProps> = ({
   onCodeView,
   onAIView,
   onSymbolGraph,
+  activeAIFilePath = null,
+  activeCodeFilePath = null,
+  activeSymbolGraphFilePath = null,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -50,6 +56,9 @@ export const DirectoryNode: FC<DirectoryNodeProps> = ({
                 onCodeView={onCodeView}
                 onAIView={onAIView}
                 onSymbolGraph={onSymbolGraph}
+                activeAIFilePath={activeAIFilePath}
+                activeCodeFilePath={activeCodeFilePath}
+                activeSymbolGraphFilePath={activeSymbolGraphFilePath}
               />
             ) : (
               <FileTreeNode
@@ -60,6 +69,9 @@ export const DirectoryNode: FC<DirectoryNodeProps> = ({
                 onCodeView={onCodeView}
                 onAIView={onAIView}
                 onSymbolGraph={onSymbolGraph}
+                isCodeViewActive={activeCodeFilePath === child.file.path}
+                isAIViewActive={activeAIFilePath === child.file.path}
+                isSymbolGraphActive={activeSymbolGraphFilePath === child.file.path}
               />
             ),
           )}

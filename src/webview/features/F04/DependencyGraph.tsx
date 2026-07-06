@@ -39,7 +39,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
   const { t } = useTranslation();
   if (isLoading) {
     return (
-      <section className="flex min-h-0 flex-1 items-center justify-center p-8">
+      <section className="flex h-full min-h-0 flex-1 items-center justify-center p-8">
         <LoadingState label={t('dependency.loading')} size="lg" />
       </section>
     );
@@ -47,7 +47,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
 
   if (error) {
     return (
-      <section className="flex min-h-0 flex-1 items-center justify-center p-8">
+      <section className="flex h-full min-h-0 flex-1 items-center justify-center p-8">
         <ErrorState message={error} onRetry={onRetry} />
       </section>
     );
@@ -55,7 +55,7 @@ export const DependencyGraph: FC<DependencyGraphProps> = ({
 
   if (files.length === 0) {
     return (
-      <section className="flex min-h-0 flex-1 items-center justify-center p-8">
+      <section className="flex h-full min-h-0 flex-1 items-center justify-center p-8">
         <EmptyState message={t('dependency.empty')} />
       </section>
     );
@@ -80,6 +80,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   const graphRef = useRef<HTMLElement | null>(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isLegendMinimized, setIsLegendMinimized] = useState(true);
   const { nodes: graphNodes, edges: graphEdges } = useMemo(
     () =>
       buildGraphData(files, dependencyEdges, {
@@ -150,7 +151,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   }, [fitCanvas]);
 
   return (
-    <section className="dependency-graph relative min-h-0 flex-1 overflow-hidden bg-surface" aria-label={t('dependency.graph_aria')} ref={graphRef}>
+    <section className="dependency-graph relative h-full min-h-0 flex-1 overflow-hidden bg-surface" aria-label={t('dependency.graph_aria')} ref={graphRef}>
       {hasOnlyUnanalyzableFiles ? (
         <div className="absolute top-3 left-3 z-[5] rounded-sm border border-line border-l-[3px] border-l-warning bg-elevated px-[11px] py-[7px] text-[11px] text-muted">
           JS/TS 외 파일은 노드로만 표시됩니다.
@@ -184,7 +185,10 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
       </ReactFlow>
       <CanvasControls onZoomIn={() => void zoomIn({ duration: 120 })} onZoomOut={() => void zoomOut({ duration: 120 })} onFitView={fitCanvas} />
-      <LegendPanel />
+      <LegendPanel
+        isMinimized={isLegendMinimized}
+        onToggleMinimized={() => setIsLegendMinimized((current) => !current)}
+      />
     </section>
   );
 };

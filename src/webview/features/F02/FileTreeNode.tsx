@@ -11,6 +11,9 @@ interface FileTreeNodeProps {
   onCodeView: (file: ChangedFile) => void;
   onAIView: (file: ChangedFile) => void;
   onSymbolGraph: (file: ChangedFile) => void;
+  isCodeViewActive?: boolean;
+  isAIViewActive?: boolean;
+  isSymbolGraphActive?: boolean;
 }
 
 export const FileTreeNode: FC<FileTreeNodeProps> = ({
@@ -20,9 +23,14 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
   onCodeView,
   onAIView,
   onSymbolGraph,
+  isCodeViewActive = false,
+  isAIViewActive = false,
+  isSymbolGraphActive = false,
 }) => {
   const { t } = useTranslation();
   const isSymbolGraphSupported = ANALYZABLE_FILE_PATTERN.test(file.path);
+  const isRowActive = isCodeViewActive || isAIViewActive || isSymbolGraphActive;
+  const shouldShowActions = isCodeViewActive || isAIViewActive || isSymbolGraphActive;
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Enter') {
@@ -32,7 +40,10 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
 
   return (
     <div
-      className="group relative flex min-w-0 items-center gap-1.5 py-[3px] pr-2 hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
+      className={[
+        'group relative flex min-w-0 items-center gap-1.5 py-[3px] pr-2 hover:bg-hover focus-visible:bg-hover focus-visible:outline-none',
+        isRowActive ? 'bg-hover' : '',
+      ].filter(Boolean).join(' ')}
       style={{ paddingLeft: `${10 + depth * 16}px` }}
       role="treeitem"
       tabIndex={0}
@@ -56,11 +67,14 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
       </span>
       <FileActionButtons
         className="absolute top-1/2 right-2 -translate-y-1/2 group-hover:pointer-events-auto group-hover:opacity-100 group-has-focus-visible:pointer-events-auto group-has-focus-visible:opacity-100"
-        isVisible={false}
+        isVisible={shouldShowActions}
         onCodeView={() => onCodeView(file)}
         onAIView={() => onAIView(file)}
         onSymbolGraph={() => onSymbolGraph(file)}
         isSymbolGraphDisabled={!isSymbolGraphSupported}
+        isCodeViewActive={isCodeViewActive}
+        isAIViewActive={isAIViewActive}
+        isSymbolGraphActive={isSymbolGraphActive}
       />
     </div>
   );
