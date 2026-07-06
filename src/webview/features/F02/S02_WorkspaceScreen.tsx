@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FC,
 } from 'react';
@@ -29,6 +30,12 @@ import { AISummaryToggleButton } from './AISummaryToggleButton';
 import { FileCanvasToggleButton } from './FileCanvasToggleButton';
 import { FileTree } from './FileTree';
 import { WorkspaceHeading } from './WorkspaceHeading';
+
+const SIDEBAR_DEFAULT_WIDTH = 320;
+const SIDEBAR_MIN_WIDTH = 200;
+const SIDEBAR_MAX_WIDTH = 560;
+const SIDEBAR_RESIZE_HANDLE_WIDTH = 6;
+const SIDEBAR_COLLAPSE_WIDTH = 0;
 
 export const S02WorkspaceScreen: FC = () => {
   const { t } = useTranslation();
@@ -104,6 +111,10 @@ export const S02WorkspaceScreen: FC = () => {
     isDeletedFile: selectedFile?.status === 'D',
   });
   const [scrollRequestId, setScrollRequestId] = useState(0);
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarDragging, setIsSidebarDragging] = useState(false);
+  const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   useEffect(() => {
     if (!isRouteSlotActive) {
@@ -237,6 +248,55 @@ export const S02WorkspaceScreen: FC = () => {
     () => (activeNode ? { start: activeNode.lineStart, end: activeNode.lineEnd } : null),
     [activeNode],
   );
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarCollapsed((current) => !current);
+    setSidebarWidth((current) => Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, current)));
+  }, []);
+
+  useEffect(() => {
+    if (!isSidebarDragging) {
+      return;
+    }
+
+    const previousUserSelect = document.body.style.userSelect;
+    const previousCursor = document.body.style.cursor;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+
+    const handleMove = (event: MouseEvent): void => {
+      const dragState = sidebarDragStateRef.current;
+      if (!dragState) {
+        return;
+      }
+
+      const nextWidth = dragState.startWidth + (event.clientX - dragState.startX);
+      const clampedWidth = Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_COLLAPSE_WIDTH, nextWidth));
+      setSidebarWidth(clampedWidth);
+    };
+
+    const handleUp = (): void => {
+      setIsSidebarDragging(false);
+      setSidebarWidth((current) => {
+        if (current <= SIDEBAR_COLLAPSE_WIDTH) {
+          setIsSidebarCollapsed(true);
+          return SIDEBAR_DEFAULT_WIDTH;
+        }
+
+        return Math.max(SIDEBAR_MIN_WIDTH, current);
+      });
+      sidebarDragStateRef.current = null;
+    };
+
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleUp);
+      document.body.style.userSelect = previousUserSelect;
+      document.body.style.cursor = previousCursor;
+    };
+  }, [isSidebarDragging]);
 
   if (!selectedCommit) {
     return null;
@@ -244,71 +304,117 @@ export const S02WorkspaceScreen: FC = () => {
 
   return (
     <main className="app-shell flex h-screen min-h-0 overflow-hidden bg-surface">
-      <aside className="flex w-[320px] shrink-0 flex-col border-r border-line bg-panel">
-        <div className="flex items-center justify-between px-3 py-3">
-          <BackButton onClick={goToCommitList} />
-          <button
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
-            type="button"
-            onClick={goToSettingsView}
-            aria-label={t('settings.open_aria')}
-            title={t('settings.open_aria')}
-          >
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-              <circle cx="8" cy="8" r="2.2" />
-              <path d="M8 1.7v1.7M8 12.6v1.7M3.55 3.55l1.2 1.2M11.25 11.25l1.2 1.2M1.7 8h1.7M12.6 8h1.7M3.55 12.45l1.2-1.2M11.25 4.75l1.2-1.2" />
-            </svg>
-          </button>
-        </div>
-        <div className="flex items-center gap-2 px-3 pb-3">
-          <AISummaryToggleButton
-            hasSavedSummary={hasSavedCommitSummary}
-            isActive={activeWorkspacePanel === 'aiSummary'}
-            onClick={goToCommitAISummary}
-          />
-          <FileCanvasToggleButton
-            isActive={activeWorkspacePanel === 'fileCanvas'}
-            onClick={goToCanvasView}
-          />
-        </div>
-        <div className="min-h-0 flex-1 bg-surface">
-          <FileTree
-            changedFiles={changedFiles}
-            isLoading={isLoadingChangedFiles}
-            error={changedFilesError}
-            onRetry={retryTree}
-            onFileCodeView={selectFileForCode}
-            onFileAIView={() => goToCommitAISummary()}
-            onFileSymbolGraph={goToSymbolGraphView}
-          />
-        </div>
-      </aside>
+      {!isSidebarCollapsed ? (
+        <aside
+          className="flex shrink-0 flex-col overflow-hidden border-r border-line bg-panel"
+          style={{ width: `${sidebarWidth}px` }}
+        >
+          <div className="flex items-center px-3 py-3">
+            <BackButton onClick={goToCommitList} />
+          </div>
+          <div className="flex items-center gap-2 px-3 pb-3">
+            <AISummaryToggleButton
+              hasSavedSummary={hasSavedCommitSummary}
+              isActive={activeWorkspacePanel === 'aiSummary'}
+              onClick={goToCommitAISummary}
+            />
+            <FileCanvasToggleButton
+              isActive={activeWorkspacePanel === 'fileCanvas'}
+              onClick={goToCanvasView}
+            />
+          </div>
+          <div className="min-h-0 flex-1 bg-surface">
+            <FileTree
+              changedFiles={changedFiles}
+              isLoading={isLoadingChangedFiles}
+              error={changedFilesError}
+              onRetry={retryTree}
+              onFileCodeView={selectFileForCode}
+              onFileAIView={() => goToCommitAISummary()}
+              onFileSymbolGraph={goToSymbolGraphView}
+            />
+          </div>
+        </aside>
+      ) : null}
+
+      <div
+        className={[
+          'relative shrink-0 bg-transparent transition-colors duration-[var(--gae-motion-duration-fast)] ease-[var(--gae-motion-easing-default)] hover:bg-[color-mix(in_srgb,var(--gae-color-accent-primary)_20%,transparent)]',
+          isSidebarDragging ? 'bg-[color-mix(in_srgb,var(--gae-color-accent-primary)_20%,transparent)]' : '',
+          isSidebarCollapsed ? 'cursor-e-resize' : 'cursor-col-resize',
+        ].filter(Boolean).join(' ')}
+        style={{ width: `${SIDEBAR_RESIZE_HANDLE_WIDTH}px` }}
+        role="separator"
+        aria-orientation="vertical"
+        tabIndex={0}
+        onMouseDown={(event) => {
+          sidebarDragStateRef.current = {
+            startX: event.clientX,
+            startWidth: isSidebarCollapsed ? 0 : sidebarWidth,
+          };
+          if (isSidebarCollapsed) {
+            setSidebarWidth(0);
+            setIsSidebarCollapsed(false);
+          }
+          setIsSidebarDragging(true);
+        }}
+      >
+        <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line" />
+      </div>
 
       <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <WorkspaceHeading
           commit={selectedCommit}
           context={`${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`}
-          endSlot={activeWorkspacePanel === 'symbolGraph' ? (
-            <button
-              className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-45"
-              type="button"
-              aria-label={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
-              title={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
-              disabled={symbolNodes.length === 0 || Boolean(symbolGraphError) || isLoadingSymbolGraph}
-              onClick={() => {
-                if (!isCodePanelOpen) {
-                  openCodePanel();
-                } else {
-                  closeCodePanel();
-                }
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-                <rect x="1.6" y="2" width="4.9" height="12" rx="1.1" />
-                <rect x="9.5" y="2" width="4.9" height="12" rx="1.1" />
-              </svg>
-            </button>
-          ) : null}
+          endSlot={(
+            <>
+              <button
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+                type="button"
+                onClick={toggleSidebar}
+                aria-label={t('action_bar.sidebar_toggle_aria')}
+                title={t('action_bar.sidebar_toggle_aria')}
+              >
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+                  <rect x="2" y="2.2" width="3.6" height="11.6" rx="0.9" />
+                  <path d="M8 4.2h5M8 8h5M8 11.8h5" />
+                </svg>
+              </button>
+              <button
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+                type="button"
+                onClick={goToSettingsView}
+                aria-label={t('settings.open_aria')}
+                title={t('settings.open_aria')}
+              >
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+                  <circle cx="8" cy="8" r="2.2" />
+                  <path d="M8 1.7v1.7M8 12.6v1.7M3.55 3.55l1.2 1.2M11.25 11.25l1.2 1.2M1.7 8h1.7M12.6 8h1.7M3.55 12.45l1.2-1.2M11.25 4.75l1.2-1.2" />
+                </svg>
+              </button>
+              {activeWorkspacePanel === 'symbolGraph' ? (
+                <button
+                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-45"
+                  type="button"
+                  aria-label={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
+                  title={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
+                  disabled={symbolNodes.length === 0 || Boolean(symbolGraphError) || isLoadingSymbolGraph}
+                  onClick={() => {
+                    if (!isCodePanelOpen) {
+                      openCodePanel();
+                    } else {
+                      closeCodePanel();
+                    }
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+                    <rect x="1.6" y="2" width="4.9" height="12" rx="1.1" />
+                    <rect x="9.5" y="2" width="4.9" height="12" rx="1.1" />
+                  </svg>
+                </button>
+              ) : null}
+            </>
+          )}
         />
         <div className="min-h-0 flex-1 overflow-hidden">
           {activeWorkspacePanel === 'none' ? (
@@ -363,16 +469,18 @@ export const S02WorkspaceScreen: FC = () => {
           ) : null}
 
           {activeWorkspacePanel === 'fileCanvas' ? (
-            <ReactFlowProvider>
-              <DependencyGraph
-                files={changedFiles}
-                dependencyEdges={dependencyEdges}
-                isLoading={isLoadingChangedFiles || isLoadingDependencies}
-                error={changedFilesError ?? dependenciesError}
-                onRetry={retryCanvas}
-                onFileCodeView={selectFileForCode}
-              />
-            </ReactFlowProvider>
+            <div className="h-full min-h-0">
+              <ReactFlowProvider>
+                <DependencyGraph
+                  files={changedFiles}
+                  dependencyEdges={dependencyEdges}
+                  isLoading={isLoadingChangedFiles || isLoadingDependencies}
+                  error={changedFilesError ?? dependenciesError}
+                  onRetry={retryCanvas}
+                  onFileCodeView={selectFileForCode}
+                />
+              </ReactFlowProvider>
+            </div>
           ) : null}
 
           {activeWorkspacePanel === 'symbolGraph' && selectedFileForSymbolGraph ? (

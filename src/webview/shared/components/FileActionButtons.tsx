@@ -45,10 +45,9 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
           title={t('shared.file_ai_view')}
           onClick={onAIView}
         >
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-            <path d="M8 2.1 9.2 5.2l3.2.1-2.5 2 .8 3.1L8 9.1l-2.7 1.3.8-3.1-2.5-2 3.2-.1L8 2.1Z" />
-            <path d="M12.2 2.3v2M11.2 3.3h2" />
-          </svg>
+          <span className="text-[9px] font-bold leading-none" aria-hidden="true">
+            AI
+          </span>
         </button>
       ) : null}
       {onSymbolGraph ? (

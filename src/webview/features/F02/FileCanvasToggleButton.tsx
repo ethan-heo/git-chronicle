@@ -15,7 +15,7 @@ export const FileCanvasToggleButton: FC<FileCanvasToggleButtonProps> = ({
   return (
     <button
       className={[
-        'inline-flex size-9 items-center justify-center rounded-md border transition-colors duration-100 ease-in-out',
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-md border transition-colors duration-100 ease-in-out',
         isActive
           ? 'border-focus bg-[color-mix(in_srgb,var(--color-focus)_16%,transparent)] text-text'
           : 'border-line bg-panel text-muted hover:bg-hover hover:text-text',

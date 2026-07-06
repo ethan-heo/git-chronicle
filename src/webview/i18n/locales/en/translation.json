@@ -141,6 +141,7 @@
     "commit_ai_aria": "Summarize the entire commit with AI",
     "batch_ai_aria": "Summarize all files with AI",
     "canvas_aria": "Open dependency canvas",
+    "sidebar_toggle_aria": "Collapse or expand the sidebar",
     "batch_cancel_aria": "Cancel batch AI summary generation",
     "batch_cancel_title": "Stop after the current file",
     "code_view_aria": "View code",

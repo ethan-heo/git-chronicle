@@ -141,6 +141,7 @@
     "commit_ai_aria": "커밋 전체 AI 정리",
     "batch_ai_aria": "전체 파일 AI 정리",
     "canvas_aria": "의존성 캔버스 보기",
+    "sidebar_toggle_aria": "사이드바 접기 또는 펼치기",
     "batch_cancel_aria": "AI 정리 일괄 생성 취소",
     "batch_cancel_title": "현재 파일 완료 후 중단",
     "code_view_aria": "코드 보기",

@@ -39,7 +39,7 @@ S01_CommitListScreen에서 커밋 항목 클릭 시 진입. `selectedCommit` 설
 
 ```
 S02_WorkspaceScreen
-├─ Sidebar
+├─ Sidebar (drag resize, toggle collapse / expand)
 │  ├─ BackButton → S01
 │  ├─ AISummaryToggleButton → activeWorkspacePanel = 'aiSummary'
 │  ├─ FileCanvasToggleButton → activeWorkspacePanel = 'fileCanvas'
@@ -47,8 +47,10 @@ S02_WorkspaceScreen
 │     └─ FileTreeNode
 │        ├─ [코드 보기] → activeWorkspacePanel = 'code'
 │        └─ [심볼 그래프] → activeWorkspacePanel = 'symbolGraph'
+├─ SidebarResizeHandle
 └─ Main
    ├─ WorkspaceHeading
+   │  ├─ SidebarToggleButton → sidebar collapse / expand
    │  └─ SettingsIcon (⚙) → S06
    └─ ContentPanel
       ├─ code → DiffViewer
@@ -91,5 +93,7 @@ S02_WorkspaceScreen
 ## Navigation Rules
 
 - 사이드바 `BackButton`은 언제나 S01로 이동한다.
-- 본문 설정 아이콘은 S06으로 이동하고, S06 뒤로가기는 다시 S02로 복귀한다.
+- `SidebarResizeHandle` 드래그로 사이드바 폭을 조절할 수 있고, 끝까지 밀면 완전히 접힌다.
+- 접힌 상태에서도 `SidebarResizeHandle`은 얇은 타겟으로 남아 있으며, 이를 오른쪽으로 드래그하거나 `WorkspaceHeading`의 `SidebarToggleButton`을 눌러 다시 펼칠 수 있다.
+- 본문 `WorkspaceHeading`의 설정 아이콘은 S06으로 이동하고, S06 뒤로가기는 다시 S02로 복귀한다.
 - 다른 커밋을 다시 선택하면 `activeWorkspacePanel`은 항상 `'none'`으로 초기화된다.

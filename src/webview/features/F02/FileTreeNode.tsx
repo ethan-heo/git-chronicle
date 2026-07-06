@@ -32,7 +32,7 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
 
   return (
     <div
-      className="group flex min-w-0 items-center gap-1.5 py-[3px] pr-2 hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
+      className="group relative flex min-w-0 items-center gap-1.5 py-[3px] pr-2 hover:bg-hover focus-visible:bg-hover focus-visible:outline-none"
       style={{ paddingLeft: `${10 + depth * 16}px` }}
       role="treeitem"
       tabIndex={0}
@@ -55,7 +55,7 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
         {name}
       </span>
       <FileActionButtons
-        className="group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+        className="absolute top-1/2 right-2 -translate-y-1/2 group-hover:pointer-events-auto group-hover:opacity-100 group-has-focus-visible:pointer-events-auto group-has-focus-visible:opacity-100"
         isVisible={false}
         onCodeView={() => onCodeView(file)}
         onAIView={() => onAIView(file)}

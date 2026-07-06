@@ -145,6 +145,8 @@
 
 **States:** `hidden` (기본), `visible` (호버 시)
 
+**표현 규칙:** [AI 요약 보기] 버튼은 스파클 SVG 대신 `"AI"` 텍스트를 사용한다. hover 시 accent 텍스트 색상으로 강조한다.
+
 **구현 파일:** `src/webview/shared/components/FileActionButtons.tsx`
 
 **Figma 이름:** `FileActionButtons`

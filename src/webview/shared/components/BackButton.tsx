@@ -16,7 +16,7 @@ export const BackButton: FC<BackButtonProps> = ({
     <button
       {...buttonProps}
       className={[
-        'inline-flex size-8 items-center justify-center rounded-sm border-none bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text',
+        'inline-flex size-8 shrink-0 items-center justify-center rounded-sm border-none bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text',
         className,
       ]
         .filter(Boolean)
