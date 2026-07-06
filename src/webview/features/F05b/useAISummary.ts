@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useAppStore } from '../../store/appStore';
-import type { AIProviderName, Commit } from '../../types/commit';
+import type { AIProviderName, ChangedFile, Commit } from '../../types/commit';
 
 const DEMO_COMMIT_SUMMARY = `### 한 줄 요약
 무한 스크롤 로직을 옵저버 기반으로 전환하고 관련 훅과 테스트를 정리한 커밋.
@@ -18,10 +18,25 @@ const DEMO_COMMIT_SUMMARY = `### 한 줄 요약
 ### 기술적 판단 근거
 훅 삭제와 신규 구현을 한 커밋에 묶은 것은 동작 동등성을 보장한 채 교체를 끝내려는 의도로 추정됨.`;
 
+const DEMO_FILE_SUMMARY = `### 한 줄 요약
+선택한 파일의 변경 로직을 정리하고 상호작용 흐름을 보강한 수정으로 보임.
+
+### 변경 목적
+**리팩터링 / 기능 보강.** 파일 단위 동작을 더 명확하게 드러내고, 사용자 상호작용에 맞춘 상태 연결을 보완하려는 의도로 추정됨.
+
+### 주요 포인트
+- 파일 내부 분기와 상태 전환 흐름을 정리
+- 기존 동작을 유지하면서 선택한 파일 기준으로 결과를 보여주도록 조정
+
+### 기술적 판단 근거
+변경 범위를 단일 파일에 집중해 다루고 있어, 커밋 전체 맥락보다 해당 파일의 역할과 상호작용을 빠르게 파악하려는 목적에 가까워 보임.`;
+
 interface StreamDemoSummaryOptions {
   forceRegenerate: boolean;
   commitHash: string;
   commitMessage: string;
+  filePath?: string | null;
+  scope: 'commit' | 'file';
   appendChunk: (chunk: string) => void;
   complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
 }
@@ -60,8 +75,9 @@ interface UseAISummaryResult {
   summarySavedPath: string | null;
 }
 
-export function useAISummary(options?: { isActive?: boolean }): UseAISummaryResult {
+export function useAISummary(options?: { isActive?: boolean; targetFile?: ChangedFile | null }): UseAISummaryResult {
   const isActive = options?.isActive ?? true;
+  const targetFile = options?.targetFile ?? null;
   const { t } = useTranslation();
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const savePath = useAppStore((state) => state.savePath);
@@ -96,11 +112,17 @@ export function useAISummary(options?: { isActive?: boolean }): UseAISummaryResu
   const [qaCompletionCount, setQACompletionCount] = useState(0);
 
   const canStartSummary = Boolean(selectedCommit && activeAIProvider && savePath);
+  const summaryScope = targetFile ? 'file' : 'commit';
 
   const headerContext = useMemo(() => {
     if (!selectedCommit) return t('shared.loading');
-    return ['커밋 전체 요약', t('ai_summary.ai_result'), activeAIProvider, hasCurrentSavedSummary ? t('shared.saved') : null].filter(Boolean).join(' · ');
-  }, [activeAIProvider, hasCurrentSavedSummary, selectedCommit, t]);
+    return [
+      targetFile ? targetFile.path : '커밋 전체 요약',
+      t('ai_summary.ai_result'),
+      activeAIProvider,
+      hasCurrentSavedSummary ? t('shared.saved') : null,
+    ].filter(Boolean).join(' · ');
+  }, [activeAIProvider, hasCurrentSavedSummary, selectedCommit, t, targetFile]);
 
   const startSummary = useCallback(
     (forceRegenerate = false): void => {
@@ -115,13 +137,28 @@ export function useAISummary(options?: { isActive?: boolean }): UseAISummaryResu
           forceRegenerate,
           commitHash: selectedCommit.shortHash,
           commitMessage: selectedCommit.message,
+          filePath: targetFile?.path ?? null,
+          scope: summaryScope,
           appendChunk: appendAISummaryChunk,
-          complete: completeAISummary,
+          complete: (payload) => completeAISummary({ ...payload, scope: summaryScope }),
         });
         return;
       }
 
       startAISummaryLoading({ preserveSavedSummary: forceRegenerate });
+      if (targetFile) {
+        postMessage('START_AI_SUMMARY_FILE', {
+          commitHash: selectedCommit.hash,
+          commitMessage: selectedCommit.message,
+          filePath: targetFile.path,
+          provider: activeAIProvider,
+          summaryModel,
+          savePath,
+          forceRegenerate,
+        });
+        return;
+      }
+
       postMessage('START_AI_SUMMARY_COMMIT', {
         commitHash: selectedCommit.hash,
         commitMessage: selectedCommit.message,
@@ -131,7 +168,7 @@ export function useAISummary(options?: { isActive?: boolean }): UseAISummaryResu
         forceRegenerate,
       });
     },
-    [activeAIProvider, appendAISummaryChunk, completeAISummary, savePath, selectedCommit, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryModel],
+    [activeAIProvider, appendAISummaryChunk, completeAISummary, savePath, selectedCommit, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryModel, summaryScope, targetFile],
   );
 
   const askQuestion = useCallback(
@@ -174,12 +211,13 @@ export function useAISummary(options?: { isActive?: boolean }): UseAISummaryResu
         summaryContent: currentSummaryContent,
         commitHash: selectedCommit.hash,
         commitMessage: selectedCommit.message,
+        filePath: targetFile?.path,
         provider: activeAIProvider,
         qaModel,
         savePath,
       });
     },
-    [activeAIProvider, completeAIQA, currentSummaryContent, qaModel, savePath, selectedCommit, startAIQA],
+    [activeAIProvider, completeAIQA, currentSummaryContent, qaModel, savePath, selectedCommit, startAIQA, targetFile],
   );
 
   useEffect(() => {
@@ -214,11 +252,11 @@ export function useAISummary(options?: { isActive?: boolean }): UseAISummaryResu
         return;
       }
       if (event.data.type === 'AI_SUMMARY_LOADED') {
-        loadSavedAISummary({ content: event.data.payload?.content ?? '', savedPath: event.data.payload?.savedPath ?? null, provider: event.data.payload?.provider ?? null });
+        loadSavedAISummary({ content: event.data.payload?.content ?? '', savedPath: event.data.payload?.savedPath ?? null, provider: event.data.payload?.provider ?? null, scope: summaryScope });
         return;
       }
       if (event.data.type === 'AI_SUMMARY_DONE') {
-        completeAISummary({ content: event.data.payload?.content, savedPath: event.data.payload?.savedPath ?? null, provider: event.data.payload?.provider ?? null });
+        completeAISummary({ content: event.data.payload?.content, savedPath: event.data.payload?.savedPath ?? null, provider: event.data.payload?.provider ?? null, scope: summaryScope });
         return;
       }
       if (event.data.type === 'AI_SUMMARY_ERROR') {
@@ -267,12 +305,12 @@ export function useAISummary(options?: { isActive?: boolean }): UseAISummaryResu
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [appendAISummaryChunk, completeAIQA, completeAISummary, failAIQA, failAISummary, hasCurrentSavedSummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration]);
+  }, [appendAISummaryChunk, completeAIQA, completeAISummary, failAIQA, failAISummary, hasCurrentSavedSummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration, summaryScope]);
 
   useEffect(() => {
     setQAMessages([]);
     setQACompletionCount(0);
-  }, [selectedCommit?.hash]);
+  }, [selectedCommit?.hash, targetFile?.path]);
 
   useEffect(() => {
     if (!isActive || !hasLoadedSettings || !canStartSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) return;
@@ -318,7 +356,8 @@ function toDemoCommitDirName(shortHash: string, commitMessage: string): string {
 
 function streamDemoSummary(options: StreamDemoSummaryOptions): void {
   let index = 0;
-  const content = options.forceRegenerate ? `${DEMO_COMMIT_SUMMARY}\n` : DEMO_COMMIT_SUMMARY;
+  const baseContent = options.scope === 'file' ? DEMO_FILE_SUMMARY : DEMO_COMMIT_SUMMARY;
+  const content = options.forceRegenerate ? `${baseContent}\n` : baseContent;
   const commitDirName = toDemoCommitDirName(options.commitHash, options.commitMessage);
   const timer = window.setInterval(() => {
     const next = content.slice(index, index + 8);
@@ -328,7 +367,10 @@ function streamDemoSummary(options: StreamDemoSummaryOptions): void {
       window.clearInterval(timer);
       options.complete({
         content,
-        savedPath: `.git-author/${commitDirName}/전체_파일_정리.md`,
+        savedPath:
+          options.scope === 'file' && options.filePath
+            ? `.git-author/${commitDirName}/${options.filePath.replace(/[\\/]/g, '__')}.md`
+            : `.git-author/${commitDirName}/전체_파일_정리.md`,
         provider: 'claude',
       });
     }

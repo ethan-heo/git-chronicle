@@ -114,8 +114,8 @@ interface AppState extends FilterState {
   startAISummaryLoading: (options?: { preserveSavedSummary?: boolean }) => void;
   startAISummaryGeneration: (options?: { preserveSavedSummary?: boolean }) => void;
   appendAISummaryChunk: (chunk: string) => void;
-  completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
-  loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
+  completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null; scope?: 'commit' | 'file' }) => void;
+  loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null; scope?: 'commit' | 'file' }) => void;
   failAISummary: (message?: string) => void;
   startAIQA: () => void;
   appendAIQAChunk: (chunk: string) => void;
@@ -555,7 +555,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  completeAISummary: ({ content, savedPath, provider }) => {
+  completeAISummary: ({ content, savedPath, provider, scope = 'commit' }) => {
     set({
       currentSummaryContent: content ?? get().currentSummaryContent,
       isLoadingSummary: false,
@@ -566,11 +566,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       summarySavedPath: savedPath ?? null,
       hasCurrentSavedSummary: true,
       ...(provider ? { activeAIProvider: provider } : {}),
-      hasSavedCommitSummary: true,
+      ...(scope === 'commit' ? { hasSavedCommitSummary: true } : {}),
     });
   },
 
-  loadSavedAISummary: ({ content, savedPath, provider }) => {
+  loadSavedAISummary: ({ content, savedPath, provider, scope = 'commit' }) => {
     set({
       currentSummaryContent: content,
       isLoadingSummary: false,
@@ -582,6 +582,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       hasCurrentSavedSummary: true,
       isSummaryTokenLimitExceeded: false,
       ...(provider ? { activeAIProvider: provider } : {}),
+      ...(scope === 'commit' ? { hasSavedCommitSummary: true } : {}),
     });
   },
 

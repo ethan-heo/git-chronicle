@@ -5,8 +5,8 @@ import type { AIModelUsage, AIProviderName } from './aiTypes';
 import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependencyService';
 import { analyzeSymbolGraph } from './intraFileDependencyService';
 import { fetchChangedFiles, fetchCommitCount, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
-import { buildCommitSummaryPrompt, buildSummaryQAPrompt } from './prompts';
-import { appendSummaryQA, loadCommitSummary, saveCommitSummary, SummarySaveError } from './summaryFileService';
+import { buildCommitSummaryPrompt, buildFileSummaryPrompt, buildSummaryQAPrompt } from './prompts';
+import { appendSummaryQA, loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from './summaryFileService';
 
 interface WebviewMessage {
   type: string;
@@ -17,6 +17,7 @@ interface WebviewMessage {
     | AnalyzeDependenciesPayload
     | AnalyzeSymbolGraphPayload
     | StartAISummaryCommitPayload
+    | StartAISummaryFilePayload
     | StartAIQAPayload
     | AIProviderPayload
     | OpenExternalUrlPayload;
@@ -64,6 +65,10 @@ interface StartAISummaryCommitPayload {
   forceRegenerate?: boolean;
 }
 
+interface StartAISummaryFilePayload extends StartAISummaryCommitPayload {
+  filePath?: string;
+}
+
 interface AIProviderPayload {
   name?: AIProviderName;
   providerName?: AIProviderName;
@@ -77,6 +82,7 @@ interface StartAIQAPayload {
   summaryContent?: string;
   commitHash?: string;
   commitMessage?: string;
+  filePath?: string;
   provider?: AIProviderName | null;
   qaModel?: string | null;
   savePath?: string | null;
@@ -142,6 +148,9 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'START_AI_SUMMARY_COMMIT':
         await handleStartAISummaryCommit(panel, context, message.payload as StartAISummaryCommitPayload);
+        break;
+      case 'START_AI_SUMMARY_FILE':
+        await handleStartAISummaryFile(panel, context, message.payload as StartAISummaryFilePayload);
         break;
       case 'START_AI_QA':
         await handleStartAIQA(panel, context, message.payload as StartAIQAPayload);
@@ -605,6 +614,100 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
   }
 }
 
+async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: StartAISummaryFilePayload = {}): Promise<void> {
+  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const settings = loadAISettingsState(context);
+  const provider = payload.provider ?? settings.activeAIProvider;
+  const savePath = payload.savePath ?? settings.savePath;
+  const summaryModel = payload.summaryModel ?? settings.summaryModel;
+
+  if (!repoPath) {
+    await postAISummaryError(panel, 'No Git repository detected');
+    return;
+  }
+
+  if (!payload.commitHash || !payload.filePath) {
+    await postAISummaryError(panel, 'No file selected');
+    return;
+  }
+
+  if (!provider) {
+    await postAISummaryError(panel, 'AI is not configured');
+    return;
+  }
+
+  if (!savePath) {
+    await postAISummaryError(panel, 'Set a save path first');
+    return;
+  }
+
+  try {
+    if (!payload.forceRegenerate) {
+      const savedSummary = loadSummary(savePath, payload.commitHash, payload.filePath, payload.commitMessage);
+
+      if (savedSummary) {
+        await panel.webview.postMessage({
+          type: 'AI_SUMMARY_LOADED',
+          payload: {
+            content: savedSummary.content,
+            savedPath: savedSummary.savedPath,
+            provider,
+            fromSaved: true,
+          },
+        });
+        return;
+      }
+    }
+
+    const diff = await fetchFileDiff(repoPath, payload.commitHash, payload.filePath);
+
+    await panel.webview.postMessage({
+      type: 'AI_SUMMARY_STARTED',
+      payload: {
+        provider,
+      },
+    });
+
+    const prompt = buildFileSummaryPrompt(payload.filePath, diff.rawDiff);
+    let content = '';
+
+    streamAISummary({
+      provider,
+      model: summaryModel,
+      prompt,
+      onChunk: (chunk) => {
+        content += chunk;
+        void panel.webview.postMessage({
+          type: 'AI_SUMMARY_CHUNK',
+          payload: {
+            chunk,
+          },
+        });
+      },
+      onComplete: () => {
+        try {
+          const savedPath = saveSummary(savePath, payload.commitHash ?? '', payload.filePath ?? '', content, payload.commitMessage);
+          void panel.webview.postMessage({
+            type: 'AI_SUMMARY_DONE',
+            payload: {
+              content,
+              savedPath,
+              provider,
+            },
+          });
+        } catch (error) {
+          void postAISummaryError(panel, getSummarySaveErrorMessage(error));
+        }
+      },
+      onError: (message) => {
+        void postAISummaryError(panel, message);
+      },
+    });
+  } catch (error) {
+    await postAISummaryError(panel, error instanceof Error ? error.message : 'Generation failed');
+  }
+}
+
 async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: StartAIQAPayload = {}): Promise<void> {
   const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   const settings = loadAISettingsState(context);
@@ -632,14 +735,20 @@ async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscode.Exten
     return;
   }
 
-  const savedPath = loadCommitSummary(savePath, payload.commitHash, payload.commitMessage)?.savedPath;
+  const savedPath = payload.filePath
+    ? loadSummary(savePath, payload.commitHash, payload.filePath, payload.commitMessage)?.savedPath
+    : loadCommitSummary(savePath, payload.commitHash, payload.commitMessage)?.savedPath;
 
   if (!savedPath) {
     await postAIQAError(panel, 'Saved summary could not be found');
     return;
   }
 
-  const diff = payload.diff ?? await fetchCommitFullDiff(repoPath, payload.commitHash);
+  const diff = payload.diff ?? (
+    payload.filePath
+      ? (await fetchFileDiff(repoPath, payload.commitHash, payload.filePath)).rawDiff
+      : await fetchCommitFullDiff(repoPath, payload.commitHash)
+  );
 
   if (!diff) {
     await postAIQAError(panel, 'Diff could not be loaded for Q&A');

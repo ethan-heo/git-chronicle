@@ -79,6 +79,18 @@ export const S02WorkspaceScreen: FC = () => {
     setHoveredSymbolNode,
   } = useAppStore();
   const isRouteSlotActive = useRouteSlotActive();
+  const [scrollRequestId, setScrollRequestId] = useState(0);
+  const [activeAIFilePath, setActiveAIFilePath] = useState<string | null>(null);
+  const activeAIFile = useMemo(
+    () => changedFiles.find((file) => file.path === activeAIFilePath) ?? null,
+    [activeAIFilePath, changedFiles],
+  );
+  const isCommitAISummaryActive =
+    activeWorkspacePanel === 'aiSummary' && activeAIFilePath === null;
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarDragging, setIsSidebarDragging] = useState(false);
+  const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const {
     activeAIProvider,
     currentSummaryContent,
@@ -102,6 +114,7 @@ export const S02WorkspaceScreen: FC = () => {
     summarySavedPath,
   } = useAISummary({
     isActive: isRouteSlotActive && activeWorkspacePanel === 'aiSummary',
+    targetFile: activeAIFile,
   });
   const { diffState, loadFileDiff } = useFileDiff({
     isActive: isRouteSlotActive && activeWorkspacePanel === 'code',
@@ -109,12 +122,6 @@ export const S02WorkspaceScreen: FC = () => {
     filePath: selectedFile?.path ?? null,
     isDeletedFile: selectedFile?.status === 'D',
   });
-  const [scrollRequestId, setScrollRequestId] = useState(0);
-  const [activeAIFilePath, setActiveAIFilePath] = useState<string | null>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isSidebarDragging, setIsSidebarDragging] = useState(false);
-  const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   useEffect(() => {
     if (!isRouteSlotActive) {
@@ -320,7 +327,7 @@ export const S02WorkspaceScreen: FC = () => {
             <BackButton onClick={goToCommitList} />
             <div className="flex items-center gap-2">
               <AISummaryToggleButton
-                isActive={activeWorkspacePanel === 'aiSummary'}
+                isActive={isCommitAISummaryActive}
                 onClick={openCommitAISummaryFromSidebar}
               />
               <FileCanvasToggleButton

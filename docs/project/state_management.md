@@ -254,7 +254,7 @@ stateDiagram-v2
 - `completeAISummary`는 `hasSavedCommitSummary`도 함께 `true`로 갱신한다 — 뒤로 돌아가도 `CommitActionBar`의 `SavedBadge`가 별도 재조회 없이 즉시 보이는 이유다.
 - `setSummaryTokenWarning(isOverLimit)`은 `isSummaryTokenLimitExceeded` 플래그만 갱신하며 위 상태 기계와 독립적으로 언제든 호출될 수 있다.
 
-S04 진입 시 `FETCH_AI_SUMMARY_SETTINGS`로 Extension Host의 `globalState` 설정값을 먼저 복원하고, `activeAIProvider`와 `savePath`가 모두 있으면 `START_AI_SUMMARY_COMMIT`을 보낸다. 설정 응답에는 `savePath`, `registeredProviders`, `activeAIProvider`, `summaryModel`, `qaModel`이 포함된다.
+S04 진입 시 `FETCH_AI_SUMMARY_SETTINGS`로 Extension Host의 `globalState` 설정값을 먼저 복원한다. `activeAIProvider`와 `savePath`가 모두 있으면, 현재 컨텍스트가 커밋 전체면 `START_AI_SUMMARY_COMMIT`, 파일 트리에서 선택한 개별 파일이면 `START_AI_SUMMARY_FILE`을 보낸다. 설정 응답에는 `savePath`, `registeredProviders`, `activeAIProvider`, `summaryModel`, `qaModel`이 포함된다.
 
 AI 응답 완료 후 저장 디렉토리 생성 또는 파일 쓰기에 실패하면 Extension Host는 `AI_SUMMARY_ERROR`를 보내고, Webview는 `failAISummary()`로 `summaryError = "저장 경로를 생성할 수 없습니다. 권한을 확인하세요"`를 표시한다. 저장 경로가 미설정된 경우에는 S04의 `EmptyState`가 "저장 경로를 먼저 설정해주세요"와 "설정으로 이동" CTA를 보여준다.
 
