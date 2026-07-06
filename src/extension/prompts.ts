@@ -1,12 +1,14 @@
-export function buildFileSummaryPrompt(filePath: string, diff: string): string {
+export function buildFileSummaryPrompt(filePath: string, diff: string, commitMessage?: string): string {
   return `Here is the diff for a file changed in a Git commit.
 Summarize it in Markdown so the developer can review their work later.
 
 File path: ${filePath}
-
+${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ## Conditions
 - Output language: Korean
 - Focus on intent and context rather than translating code line by line
+- Use the commit message as a hint for intent, but verify it against the actual diff and call out any mismatch
+- Avoid vague statements like "코드를 개선했습니다"; cite actual function/variable names or concrete before → after behavior
 - If inference is needed, phrase it as "보임" or "추정됨"
 - Follow the structure below
 
@@ -15,10 +17,10 @@ File path: ${filePath}
 (Summarize the change in one sentence)
 
 ### Change purpose
-(Choose from bug fix / feature / refactor / performance improvement and explain why)
+(One or more of: feat / fix / refactor / perf / docs / test / chore / style — multiple allowed. Explain why, citing the diff)
 
 ### Key points
--
+- (Cite specific function/variable names or lines)
 -
 
 ### Technical rationale, if applicable
@@ -30,16 +32,18 @@ ${diff}
 \`\`\``;
 }
 
-export function buildCommitSummaryPrompt(commitHash: string, diff: string): string {
+export function buildCommitSummaryPrompt(commitHash: string, diff: string, commitMessage?: string): string {
   return `Here is the diff for all files changed in a Git commit.
 Summarize the entire commit in Markdown so the developer can review their work later.
 
 Commit hash: ${commitHash.slice(0, 7)}
-
+${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ## Conditions
 - Output language: Korean
 - Focus on what the commit achieved overall rather than listing each file
 - Focus on intent and context rather than translating code line by line
+- Use the commit message as a hint for intent, but verify it against the actual diff and call out any mismatch
+- Avoid vague statements like "코드를 개선했습니다"; cite actual function/variable names, file paths, or concrete before → after behavior
 - If inference is needed, phrase it as "보임" or "추정됨"
 - Follow the structure below
 
@@ -48,14 +52,16 @@ Commit hash: ${commitHash.slice(0, 7)}
 (Summarize the work in one sentence)
 
 ### Change purpose
-(Choose from bug fix / feature / refactor / performance improvement and explain why)
+(One or more of: feat / fix / refactor / perf / docs / test / chore / style — multiple allowed. Explain why, citing the diff)
 
 ### Key files and points
-- \`{file name}\`: (Summarize the key change in this file)
-- ...
+- Use the file-size table (--stat summary) at the top of the diff below to judge which files matter most
+- List files with substantial changes individually: \`{file name}\`: (specific point, citing concrete names or paths)
+- If more than 5 files changed, group minor ones (formatting, lockfiles, generated code, or small unrelated edits) into a single line like "그 외 {N}개 파일: (공통 성격 요약)"
+- If 5 or fewer files changed, list all of them individually without grouping
 
 ### Technical rationale, if applicable
-(Explain any notable implementation choices or patterns)
+(Explain any notable implementation choices or patterns, referencing specific code)
 
 ## diff
 \`\`\`diff

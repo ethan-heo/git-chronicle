@@ -37,7 +37,7 @@
 
 | 항목 | 내용 |
 |------|------|
-| 입력 | 커밋 내 전체 파일 diff 합산 |
+| 입력 | 커밋 내 전체 파일 diff 합산 + 커밋 메시지(목적 분류 힌트로 프롬프트에 포함) |
 | 처리 | 설정된 AI CLI에 커밋 단위 프롬프트 + 전체 diff 전달 (`child_process.spawn` 스트리밍) |
 | CLI 실행 옵션 | Claude는 `-p`, Gemini는 `--skip-trust --prompt`, Codex는 `exec --skip-git-repo-check` 조합으로 비대화형 실행 |
 | 출력 | 마크다운 형식의 커밋 종합 요약 (스트리밍 타이핑 효과로 실시간 표시) |
@@ -51,34 +51,86 @@
 
 ## 기본 프롬프트 (커밋 단위)
 
+실제 템플릿은 [prompts.ts의 `buildCommitSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다. 지시문은 영어, 출력 조건에 명시된 결과물은 한국어로 생성된다.
+
 ```
-아래는 Git 커밋에서 변경된 전체 파일의 diff입니다.
-이 내용을 바탕으로 개발자가 나중에 자신의 작업을 회고할 수 있도록 커밋 전체를 종합하여 마크다운 형식으로 정리해주세요.
+Here is the diff for all files changed in a Git commit.
+Summarize the entire commit in Markdown so the developer can review their work later.
 
-## 조건
-- 출력 언어: 한국어
-- 개별 파일의 변경을 나열하지 말고, 이 커밋이 전체적으로 무엇을 달성했는지 중심으로 작성할 것
-- 코드를 단순 번역하지 말고, 변경의 의도와 맥락을 중심으로 작성할 것
-- 추측이 필요한 경우 "~로 보임", "~한 것으로 추정됨" 형태로 표현할 것
-- 출력 형식은 아래 구조를 따를 것
+Commit hash: {shortHash}
+Commit message: {commitMessage}
 
-## 출력 형식
-### 한 줄 요약
-(이 커밋의 작업 내용을 한 문장으로)
+## Conditions
+- Output language: Korean
+- Focus on what the commit achieved overall rather than listing each file
+- Focus on intent and context rather than translating code line by line
+- Use the commit message as a hint for intent, but verify it against the actual diff and call out any mismatch
+- Avoid vague statements like "코드를 개선했습니다"; cite actual function/variable names, file paths, or concrete before → after behavior
+- If inference is needed, phrase it as "보임" or "추정됨"
+- Follow the structure below
 
-### 변경 목적
-(버그 수정 / 기능 추가 / 리팩터링 / 성능 개선 중 해당하는 것과 구체적인 이유)
+## Output format
+### One-line summary
+(Summarize the work in one sentence)
 
-### 주요 변경 파일 및 포인트
-- `{파일명}`: (이 파일에서 달라진 핵심 내용 한 줄)
-- ...
+### Change purpose
+(One or more of: feat / fix / refactor / perf / docs / test / chore / style — multiple allowed. Explain why, citing the diff)
 
-### 기술적 판단 근거 (해당하는 경우)
-(특이한 구현 방식이나 패턴이 있다면 그 이유 추론)
+### Key files and points
+- Use the file-size table (--stat summary) at the top of the diff below to judge which files matter most
+- List files with substantial changes individually: `{file name}`: (specific point, citing concrete names or paths)
+- If more than 5 files changed, group minor ones (formatting, lockfiles, generated code, or small unrelated edits) into a single line like "그 외 {N}개 파일: (공통 성격 요약)"
+- If 5 or fewer files changed, list all of them individually without grouping
+
+### Technical rationale, if applicable
+(Explain any notable implementation choices or patterns, referencing specific code)
 
 ## diff
 {diff}
 ```
+
+`commitMessage`가 없는 경우(빈 문자열 등) `Commit message:` 줄은 생략된다.
+
+---
+
+## 기본 프롬프트 (파일 단위)
+
+파일 트리의 파일 AI 액션([F02_ChangedFileTree](../F02_changed_file_tree/spec.md), [design_principles.md](../../core/design_principles.md))이 호출하는 프롬프트다. `useAISummary`가 commit/file 스코프를 함께 다루므로 이 문서에 함께 둔다. 실제 템플릿은 [prompts.ts의 `buildFileSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다.
+
+```
+Here is the diff for a file changed in a Git commit.
+Summarize it in Markdown so the developer can review their work later.
+
+File path: {filePath}
+Commit message: {commitMessage}
+
+## Conditions
+- Output language: Korean
+- Focus on intent and context rather than translating code line by line
+- Use the commit message as a hint for intent, but verify it against the actual diff and call out any mismatch
+- Avoid vague statements like "코드를 개선했습니다"; cite actual function/variable names or concrete before → after behavior
+- If inference is needed, phrase it as "보임" or "추정됨"
+- Follow the structure below
+
+## Output format
+### One-line summary
+(Summarize the change in one sentence)
+
+### Change purpose
+(One or more of: feat / fix / refactor / perf / docs / test / chore / style — multiple allowed. Explain why, citing the diff)
+
+### Key points
+- (Cite specific function/variable names or lines)
+-
+
+### Technical rationale, if applicable
+(Explain any notable implementation choices or patterns)
+
+## diff
+{diff}
+```
+
+`commitMessage`가 없는 경우(빈 문자열 등) `Commit message:` 줄은 생략된다.
 
 ---
 

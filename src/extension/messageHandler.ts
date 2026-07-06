@@ -652,7 +652,7 @@ async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, context: v
       },
     });
 
-    const prompt = buildCommitSummaryPrompt(payload.commitHash, diff);
+    const prompt = buildCommitSummaryPrompt(payload.commitHash, diff, payload.commitMessage);
     let content = '';
 
     streamAISummary({
@@ -746,7 +746,7 @@ async function handleStartAISummaryFile(panel: vscode.WebviewPanel, context: vsc
       },
     });
 
-    const prompt = buildFileSummaryPrompt(payload.filePath, diff.rawDiff);
+    const prompt = buildFileSummaryPrompt(payload.filePath, diff.rawDiff, payload.commitMessage);
     let content = '';
 
     streamAISummary({
