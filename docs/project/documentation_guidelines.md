@@ -6,7 +6,7 @@
 
 ## 문서 최소화 원칙
 
-각 기능은 `spec.md`(요구사항) + `blueprint.md`(UI/컴포넌트 계약)만 영구 문서로 유지한다. AI 생성용 프롬프트나 구현 상세는 작업 시 계획서(Plan)로 생성하고 완료 후 spec/blueprint에 반영한 뒤 폐기한다. 여러 Feature가 공유하는 컴포넌트는 `core/global_components.md`에만 문서화하고, Feature 전용 컴포넌트는 해당 `blueprint.md`의 Component Definitions 섹션이 유일한 문서다.
+각 기능은 `spec.md`(요구사항) + `blueprint.md`(UI/컴포넌트 계약)만 영구 문서로 유지한다. AI 생성용 프롬프트나 구현 상세는 작업 시 계획서(Plan)로 생성하고 완료 후 spec/blueprint에 반영한 뒤 폐기한다. 계획서를 어떤 구조로 쓰는지는 [project/plan_writing_guide.md](./plan_writing_guide.md)를 따른다. 여러 Feature가 공유하는 컴포넌트는 `core/global_components.md`에만 문서화하고, Feature 전용 컴포넌트는 해당 `blueprint.md`의 Component Definitions 섹션이 유일한 문서다.
 
 ---
 
