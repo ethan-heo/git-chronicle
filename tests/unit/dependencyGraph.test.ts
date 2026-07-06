@@ -16,6 +16,7 @@ describe('buildGraphData', () => {
 
     const graph = buildGraphData(files, dependencyEdges, {
       onCodeView: () => undefined,
+      onCopy: () => undefined,
     });
 
     expect(graph.nodes.map((node) => node.id)).toEqual(['src/App.tsx', 'src/store.ts', 'docs/spec.md']);
@@ -42,6 +43,7 @@ describe('buildGraphData', () => {
 
     const graph = buildGraphData(files, [], {
       onCodeView: () => undefined,
+      onCopy: () => undefined,
     });
     const positions = new Map(graph.nodes.map((node) => [node.id, node.position]));
     const zetaPosition = positions.get('src/zeta.ts');
@@ -62,6 +64,7 @@ describe('buildGraphData', () => {
       [],
       {
         onCodeView: () => undefined,
+        onCopy: () => undefined,
       },
     );
 
@@ -81,6 +84,7 @@ describe('buildGraphData', () => {
       ],
       {
         onCodeView: () => undefined,
+        onCopy: () => undefined,
       },
     );
 

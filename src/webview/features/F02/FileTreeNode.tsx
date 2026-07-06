@@ -1,8 +1,10 @@
 import type { FC, KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileActionButtons, FileStatusBadge } from '../../shared/components';
+import { useAppStore } from '../../store/appStore';
 import type { ChangedFile } from '../../types/commit';
 import { ANALYZABLE_FILE_PATTERN } from '../F04/graph';
+import { changedFileToMarkdown } from '../F11';
 
 interface FileTreeNodeProps {
   file: ChangedFile;
@@ -28,6 +30,7 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
   isSymbolGraphActive = false,
 }) => {
   const { t } = useTranslation();
+  const pushToast = useAppStore((state) => state.pushToast);
   const isSymbolGraphSupported = ANALYZABLE_FILE_PATTERN.test(file.path);
   const isRowActive = isCodeViewActive || isAIViewActive || isSymbolGraphActive;
   const shouldShowActions = isCodeViewActive || isAIViewActive || isSymbolGraphActive;
@@ -36,6 +39,11 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
     if (event.key === 'Enter') {
       onCodeView(file);
     }
+  };
+
+  const handleCopy = async (): Promise<void> => {
+    await navigator.clipboard.writeText(changedFileToMarkdown(file));
+    pushToast('파일 마크다운을 복사했습니다', 'success');
   };
 
   return (
@@ -68,6 +76,9 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
       <FileActionButtons
         className="absolute top-1/2 right-2 -translate-y-1/2 group-hover:pointer-events-auto group-hover:opacity-100 group-has-focus-visible:pointer-events-auto group-has-focus-visible:opacity-100"
         isVisible={shouldShowActions}
+        onCopy={() => {
+          void handleCopy();
+        }}
         onCodeView={() => onCodeView(file)}
         onAIView={() => onAIView(file)}
         onSymbolGraph={() => onSymbolGraph(file)}

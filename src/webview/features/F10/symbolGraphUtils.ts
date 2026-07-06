@@ -8,6 +8,7 @@ export interface SymbolNodeData extends Record<string, unknown> {
   lineRange: string;
   accentColor: string;
   width: number;
+  onCopy: (symbolNode: SymbolNode) => void;
 }
 
 export type SymbolNodeType = Node<SymbolNodeData, 'symbolNode'>;
@@ -31,7 +32,11 @@ interface NodeGeometry {
 
 type SymbolGroup = SymbolKind | 'import';
 
-export function buildSymbolGraphData(symbolNodes: SymbolNode[], symbolEdges: SymbolEdge[]): { nodes: SymbolNodeType[]; edges: SymbolEdgeType[] } {
+export function buildSymbolGraphData(
+  symbolNodes: SymbolNode[],
+  symbolEdges: SymbolEdge[],
+  handlers: Pick<SymbolNodeData, 'onCopy'>,
+): { nodes: SymbolNodeType[]; edges: SymbolEdgeType[] } {
   const positions = layoutSymbols(symbolNodes, symbolEdges);
   const geometryById = new Map(
     symbolNodes.map((symbolNode) => {
@@ -53,6 +58,7 @@ export function buildSymbolGraphData(symbolNodes: SymbolNode[], symbolEdges: Sym
             lineRange: `L${symbolNode.lineStart}–${symbolNode.lineEnd}`,
             accentColor: getSymbolAccentColor(symbolNode),
             width: getNodeDimensions(symbolNode).width,
+            onCopy: handlers.onCopy,
           },
           draggable: true,
           selectable: true,

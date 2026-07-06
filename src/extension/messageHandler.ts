@@ -6,7 +6,7 @@ import { analyzeDependencies, DependencyCruiserNotFoundError } from './dependenc
 import { analyzeSymbolGraph } from './intraFileDependencyService';
 import { fetchChangedFiles, fetchCommitCount, fetchCommitFullDiff, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from './gitService';
 import { buildCommitSummaryPrompt, buildFileSummaryPrompt, buildSummaryQAPrompt } from './prompts';
-import { appendSummaryQA, loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from './summaryFileService';
+import { appendSummaryQA, loadCommitSummary, loadNote, loadSummary, saveCommitSummary, saveNote, saveSummary, SummarySaveError } from './summaryFileService';
 
 interface WebviewMessage {
   type: string;
@@ -20,7 +20,8 @@ interface WebviewMessage {
     | StartAISummaryFilePayload
     | StartAIQAPayload
     | AIProviderPayload
-    | OpenExternalUrlPayload;
+    | OpenExternalUrlPayload
+    | NotePayload;
 }
 
 interface FetchCommitsPayload {
@@ -92,6 +93,13 @@ interface OpenExternalUrlPayload {
   url?: string;
 }
 
+interface NotePayload {
+  commitHash?: string;
+  commitMessage?: string;
+  savePath?: string | null;
+  content?: string;
+}
+
 const COMMIT_TOKEN_LIMIT_CHARS = 20_000;
 
 function l10n(message: string): string {
@@ -154,6 +162,12 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'START_AI_QA':
         await handleStartAIQA(panel, context, message.payload as StartAIQAPayload);
+        break;
+      case 'FETCH_NOTE':
+        await handleFetchNote(panel, message.payload as NotePayload);
+        break;
+      case 'SAVE_NOTE':
+        await handleSaveNote(panel, message.payload as NotePayload);
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
@@ -256,6 +270,70 @@ async function handleOpenExternalUrl(payload: OpenExternalUrlPayload = {}): Prom
   }
 
   await vscode.env.openExternal(vscode.Uri.parse(payload.url));
+}
+
+async function handleFetchNote(panel: vscode.WebviewPanel, payload: NotePayload = {}): Promise<void> {
+  if (!payload.savePath) {
+    await panel.webview.postMessage({
+      type: 'NOTE_LOAD_FAILED',
+      payload: { message: l10n('저장 경로를 먼저 설정해주세요') },
+    });
+    return;
+  }
+
+  if (!payload.commitHash) {
+    await panel.webview.postMessage({
+      type: 'NOTE_LOAD_FAILED',
+      payload: { message: l10n('커밋 정보가 없습니다') },
+    });
+    return;
+  }
+
+  const loaded = loadNote(payload.savePath, payload.commitHash, payload.commitMessage);
+  await panel.webview.postMessage({
+    type: 'NOTE_LOADED',
+    payload: {
+      content: loaded?.content ?? '',
+      savedPath: loaded?.savedPath ?? null,
+      hasSavedNote: Boolean(loaded),
+    },
+  });
+}
+
+async function handleSaveNote(panel: vscode.WebviewPanel, payload: NotePayload = {}): Promise<void> {
+  if (!payload.savePath) {
+    await panel.webview.postMessage({
+      type: 'NOTE_SAVE_FAILED',
+      payload: { message: l10n('저장 경로를 먼저 설정해주세요') },
+    });
+    return;
+  }
+
+  if (!payload.commitHash) {
+    await panel.webview.postMessage({
+      type: 'NOTE_SAVE_FAILED',
+      payload: { message: l10n('커밋 정보가 없습니다') },
+    });
+    return;
+  }
+
+  try {
+    const savedPath = saveNote(payload.savePath, payload.commitHash, payload.content ?? '', payload.commitMessage);
+    await panel.webview.postMessage({
+      type: 'NOTE_SAVED',
+      payload: {
+        content: payload.content ?? '',
+        savedPath,
+        hasSavedNote: true,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof SummarySaveError ? error.message : l10n('노트를 저장하지 못했습니다');
+    await panel.webview.postMessage({
+      type: 'NOTE_SAVE_FAILED',
+      payload: { message },
+    });
+  }
 }
 
 async function handleSetSavePath(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): Promise<void> {

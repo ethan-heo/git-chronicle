@@ -84,7 +84,7 @@ F04_DependencyCanvas 전용. S02_WorkspaceScreen의 `fileCanvas` 패널에서만
 ### Component: FileNode
 
 #### Purpose
-변경 파일 하나를 노드로 표시한다. 워크스페이스 통합 이후 캔버스 노드는 순수 표시 전용이며 별도 액션 버튼을 노출하지 않는다.
+변경 파일 하나를 노드로 표시한다. 노드 호버 시 복사 아이콘을 노출하고, 연결 엣지 강조와 함께 빠른 인용 복사를 지원한다.
 
 #### Data
 - `file: ChangedFile`
@@ -101,12 +101,13 @@ interface FileNodeProps {
 ```
 
 #### Interaction
-- 호버: 연결 엣지 강조
+- 호버: 복사 아이콘 표시 + 연결 엣지 강조
+- [복사] 클릭: 해당 파일이 의존하는 대상 노드/엣지만 함께 Mermaid 마크다운으로 복사
 - 드래그: 노드 위치 이동
 
 #### States
 - `default`: 기본 노드
-- `hover`: 버튼 표시
+- `hover`: 복사 아이콘 표시
 - `noAnalysis`: JS/TS, Python, Go 이외 파일 (툴팁 표시)
 
 #### Accessibility
@@ -116,6 +117,10 @@ interface FileNodeProps {
 
 #### Reusability
 F04_DependencyCanvas 전용. DependencyGraph 내 React Flow 커스텀 노드로만 사용.
+
+#### Copy Format
+- Mermaid 노드 라벨은 경로 전체가 아니라 파일명만 사용한다.
+- 복사 범위는 클릭한 파일 노드에서 바깥으로 나가는 `DependencyEdge`와 그 대상 파일 노드다.
 
 ---
 

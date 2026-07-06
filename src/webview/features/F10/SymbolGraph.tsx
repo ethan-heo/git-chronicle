@@ -3,7 +3,9 @@ import { Background, BackgroundVariant, ReactFlow, useEdgesState, useNodesInitia
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
+import { useAppStore } from '../../store/appStore';
 import { CanvasControls } from '../F04/CanvasControls';
+import { CopyMarkdownButton, symbolSelectionToMermaid } from '../F11';
 import { buildSymbolGraphData } from './symbolGraphUtils';
 import { SymbolEdge } from './SymbolEdge';
 import { SymbolLegendPanel } from './SymbolLegendPanel';
@@ -26,6 +28,20 @@ interface Props {
 const nodeTypes = { symbolNode: SymbolNode };
 const edgeTypes = { symbolEdge: SymbolEdge };
 
+function collectConnectedSelection(
+  nodeId: string,
+  symbolNodes: SymbolNodeModel[],
+  symbolEdges: SymbolEdgeModel[],
+): { nodes: SymbolNodeModel[]; edges: SymbolEdgeModel[] } {
+  const connectedEdges = symbolEdges.filter((edge) => edge.from === nodeId);
+  const relatedNodeIds = new Set([nodeId, ...connectedEdges.map((edge) => edge.to)]);
+
+  return {
+    nodes: symbolNodes.filter((node) => relatedNodeIds.has(node.id)),
+    edges: connectedEdges,
+  };
+}
+
 export const SymbolGraph: FC<Props> = ({ symbolNodes, symbolEdges, isLoading, error, onRetry, activeNodeId, onNodeClick, onNodeHover, onPaneClick }) => {
   const { t } = useTranslation();
 
@@ -46,11 +62,23 @@ export const SymbolGraph: FC<Props> = ({ symbolNodes, symbolEdges, isLoading, er
 
 const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeNodeId' | 'onNodeClick' | 'onNodeHover' | 'onPaneClick'>> = ({ symbolNodes, symbolEdges, activeNodeId, onNodeClick, onNodeHover, onPaneClick }) => {
   const { t } = useTranslation();
+  const pushToast = useAppStore((state) => state.pushToast);
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [isLegendMinimized, setIsLegendMinimized] = useState(true);
+  const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const nodesInitialized = useNodesInitialized();
-  const { nodes: graphNodes, edges: graphEdges } = useMemo(() => buildSymbolGraphData(symbolNodes, symbolEdges), [symbolEdges, symbolNodes]);
+  const { nodes: graphNodes, edges: graphEdges } = useMemo(
+    () =>
+      buildSymbolGraphData(symbolNodes, symbolEdges, {
+        onCopy: (symbolNode) => {
+          const selection = collectConnectedSelection(symbolNode.id, symbolNodes, symbolEdges);
+          void navigator.clipboard.writeText(symbolSelectionToMermaid(selection.nodes, selection.edges));
+          pushToast('심볼 노드 Mermaid를 복사했습니다', 'success');
+        },
+      }),
+    [pushToast, symbolEdges, symbolNodes],
+  );
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
   const fittedGraphKeyRef = useRef<string | null>(null);
@@ -73,9 +101,29 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
     fittedGraphKeyRef.current = graphKey;
     window.setTimeout(() => void fitView({ padding: 0.22, duration: 180 }), 0);
   }, [edges.length, fitView, nodes.length, nodesInitialized]);
+  const selectedEdgesForCopy = useMemo(() => {
+    return graphEdges
+      .filter((edge) => selectedEdgeIds.includes(edge.id))
+      .map((edge) => ({
+        from: edge.source,
+        to: edge.target,
+        kind: (edge.data?.kind ?? 'uses') as SymbolEdgeModel['kind'],
+      }));
+  }, [graphEdges, selectedEdgeIds]);
 
   return (
     <section className="dependency-graph symbol-graph relative min-h-0 flex-1 overflow-hidden bg-surface" aria-label={t('symbol_graph.graph_aria')}>
+      {selectedEdgesForCopy.length > 0 ? (
+        <div className="absolute top-3 right-3 z-[6]">
+          <CopyMarkdownButton
+            className="opacity-100"
+            onClick={() => {
+              void navigator.clipboard.writeText(symbolSelectionToMermaid([], selectedEdgesForCopy));
+              pushToast('Mermaid 그래프를 복사했습니다', 'success');
+            }}
+          />
+        </div>
+      ) : null}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -96,8 +144,10 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
           onNodeHover?.(null);
         }}
         onNodeClick={(_, node) => onNodeClick?.(node.id)}
+        onEdgeClick={(_, edge) => setSelectedEdgeIds((current) => (current.includes(edge.id) ? current.filter((id) => id !== edge.id) : [...current, edge.id]))}
         onPaneClick={() => {
           setHighlightedNodeId(null);
+          setSelectedEdgeIds([]);
           onNodeHover?.(null);
           onPaneClick?.();
         }}

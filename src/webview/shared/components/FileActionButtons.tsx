@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 interface FileActionButtonsProps {
   onCodeView: () => void;
+  onCopy?: () => void;
   onAIView?: () => void;
   onSymbolGraph?: () => void;
   isSymbolGraphDisabled?: boolean;
@@ -15,6 +16,7 @@ interface FileActionButtonsProps {
 
 export const FileActionButtons: FC<FileActionButtonsProps> = ({
   onCodeView,
+  onCopy,
   onAIView,
   onSymbolGraph,
   isSymbolGraphDisabled = false,
@@ -45,6 +47,20 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
 
   return (
     <div className={containerClassName}>
+      {onCopy ? (
+        <button
+          className={buttonClassName}
+          type="button"
+          aria-label={t('shared.copy_markdown')}
+          title={t('shared.copy_markdown')}
+          onClick={onCopy}
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+            <rect x="5.25" y="3.25" width="7.5" height="9.5" rx="1.2" />
+            <path d="M10.25 3.25V2.5a1.25 1.25 0 0 0-1.25-1.25h-5.5A1.25 1.25 0 0 0 2.25 2.5v8A1.25 1.25 0 0 0 3.5 11.75h1" />
+          </svg>
+        </button>
+      ) : null}
       <button
         className={buttonClassName}
         style={getActiveButtonStyle('var(--color-focus)', isCodeViewActive)}

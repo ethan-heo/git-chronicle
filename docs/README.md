@@ -75,6 +75,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **F07** 저장 경로 설정 | [spec](features/F07_save_path_settings/spec.md) | [blueprint](features/F07_save_path_settings/blueprint.md) |
 | **F09** AI 요약 Q&A | [spec](features/F09_ai_summary_qa/spec.md) | [blueprint](features/F09_ai_summary_qa/blueprint.md) |
 | **F10** 파일 내부 심볼 의존성 캔버스 | [spec](features/F10_intra_file_symbol_dependency_canvas/spec.md) | [blueprint](features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
+| **F11** 노트 에디터 | [spec](features/F11_note_editor/spec.md) | [blueprint](features/F11_note_editor/blueprint.md) |
 
 ---
 
@@ -87,5 +88,6 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **S01** 커밋 목록 | [blueprint](screens/S01_commit_list/blueprint.md) | 필터 패널 + 커밋 리스트 메인 화면 |
 | **S02** 워크스페이스 | [blueprint](screens/S02_history_view/blueprint.md) | 사이드바 + 본문 레이아웃에서 변경 파일 트리, Diff, AI 요약, 의존성 캔버스, 심볼 그래프를 전환하는 통합 화면 |
 | **S06** 설정 | [blueprint](screens/S06_settings/blueprint.md) | AI 프로바이더·저장 경로 설정 화면 (F06/F07 조합) |
+| **S07** 노트 | [blueprint](screens/S07_note/blueprint.md) | 커밋 컨텍스트 노트 작성·자동 저장 화면 (F11) |
 
 > S03, S04, S05, S08은 독립 화면에서 S02 워크스페이스 본문 패널로 통합되었다.

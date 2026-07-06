@@ -69,6 +69,7 @@ export const S02WorkspaceScreen: FC = () => {
     goToCanvasView,
     goToSymbolGraphView,
     goToSettingsView,
+    goToNoteView,
     handleChangedFilesLoaded,
     handleChangedFilesLoadFailed,
     handleDependenciesLoaded,
@@ -384,6 +385,19 @@ export const S02WorkspaceScreen: FC = () => {
           context={`${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`}
           endSlot={(
             <>
+              <button
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+                type="button"
+                onClick={goToNoteView}
+                aria-label="노트 열기"
+                title="노트 열기"
+              >
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+                  <path d="M3 2.5h7.5L13 5v8.5H3z" />
+                  <path d="M10.5 2.5V5H13" />
+                  <path d="M5.2 7.2h5.6M5.2 9.4h5.6M5.2 11.6h3.8" />
+                </svg>
+              </button>
               <button
                 className="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-transparent text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
                 type="button"

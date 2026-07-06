@@ -3,7 +3,9 @@ import { Background, BackgroundVariant, MarkerType, ReactFlow, useEdgesState, us
 import { useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
+import { useAppStore } from '../../store/appStore';
 import type { ChangedFile, DependencyEdge as DependencyEdgeModel } from '../../types/commit';
+import { CopyMarkdownButton, dependencySelectionToMermaid } from '../F11';
 import { CanvasControls } from './CanvasControls';
 import { DependencyEdge } from './DependencyEdge';
 import { FileNode } from './FileNode';
@@ -27,6 +29,21 @@ const nodeTypes = {
 const edgeTypes = {
   dependencyEdge: DependencyEdge,
 };
+
+function collectConnectedSelection(
+  file: ChangedFile,
+  files: ChangedFile[],
+  dependencyEdges: DependencyEdgeModel[],
+): { files: ChangedFile[]; edges: DependencyEdgeModel[] } {
+  const connectedEdges = dependencyEdges.filter((edge) => edge.from === file.path);
+  const relatedPaths = new Set([file.path, ...connectedEdges.map((edge) => edge.to)]);
+  const relatedFiles = files.filter((candidate) => relatedPaths.has(candidate.path));
+
+  return {
+    files: relatedFiles,
+    edges: connectedEdges,
+  };
+}
 
 export const DependencyGraph: FC<DependencyGraphProps> = ({
   files,
@@ -76,17 +93,24 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   onFileCodeView,
 }) => {
   const { t } = useTranslation();
+  const pushToast = useAppStore((state) => state.pushToast);
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const graphRef = useRef<HTMLElement | null>(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const [isLegendMinimized, setIsLegendMinimized] = useState(true);
   const { nodes: graphNodes, edges: graphEdges } = useMemo(
     () =>
       buildGraphData(files, dependencyEdges, {
         onCodeView: onFileCodeView,
+        onCopy: (file) => {
+          const selection = collectConnectedSelection(file, files, dependencyEdges);
+          void navigator.clipboard.writeText(dependencySelectionToMermaid(selection.files, selection.edges));
+          pushToast('파일 노드 Mermaid를 복사했습니다', 'success');
+        },
       }),
-    [dependencyEdges, files, onFileCodeView],
+    [dependencyEdges, files, onFileCodeView, pushToast],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
@@ -96,6 +120,15 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
 
     return new Set(nodeIds);
   }, [highlightedNodeId, selectedNodeId]);
+  const selectedEdgesForCopy = useMemo(() => {
+    return graphEdges
+      .filter((edge) => selectedEdgeIds.includes(edge.id))
+      .map((edge) => ({
+        from: edge.source,
+        to: edge.target,
+        kind: (edge.data?.kind ?? 'import') as DependencyEdgeModel['kind'],
+      }));
+  }, [graphEdges, selectedEdgeIds]);
 
   const fitCanvas = useCallback(() => {
     void fitView({ padding: 0.22, duration: 180 });
@@ -157,6 +190,17 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
           JS/TS 외 파일은 노드로만 표시됩니다.
         </div>
       ) : null}
+      {selectedEdgesForCopy.length > 0 ? (
+        <div className="absolute top-3 right-3 z-[6]">
+          <CopyMarkdownButton
+            className="opacity-100"
+            onClick={() => {
+              void navigator.clipboard.writeText(dependencySelectionToMermaid([], selectedEdgesForCopy));
+              pushToast('Mermaid 그래프를 복사했습니다', 'success');
+            }}
+          />
+        </div>
+      ) : null}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -180,7 +224,11 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
         onNodeClick={(_, node) => setSelectedNodeId((currentNodeId) => (currentNodeId === node.id ? null : node.id))}
         onNodeMouseEnter={(_, node) => setHighlightedNodeId((currentNodeId) => (currentNodeId === node.id ? currentNodeId : node.id))}
         onNodeMouseLeave={(_, node) => setHighlightedNodeId((currentNodeId) => (currentNodeId === node.id ? null : currentNodeId))}
-        onPaneClick={() => setSelectedNodeId(null)}
+        onEdgeClick={(_, edge) => setSelectedEdgeIds((current) => (current.includes(edge.id) ? current.filter((id) => id !== edge.id) : [...current, edge.id]))}
+        onPaneClick={() => {
+          setSelectedNodeId(null);
+          setSelectedEdgeIds([]);
+        }}
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
       </ReactFlow>

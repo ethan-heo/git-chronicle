@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { CSSProperties, FC, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SymbolKindBadge } from './SymbolKindBadge';
 import type { SymbolNodeType } from './symbolGraphUtils';
 import './SymbolNode.css';
@@ -12,6 +13,7 @@ const handlePositions = [
 ] as const;
 
 export const SymbolNode: FC<NodeProps<SymbolNodeType>> = ({ data, selected }) => {
+  const { t } = useTranslation();
   const isImportNode = data.symbolNode.nodeCategory === 'import';
   const importKind = data.symbolNode.importKind ?? 'named';
   const modulePath = data.symbolNode.modulePath ?? '';
@@ -22,7 +24,7 @@ export const SymbolNode: FC<NodeProps<SymbolNodeType>> = ({ data, selected }) =>
   return (
     <div
       className={[
-        'symbol-node relative rounded-[16px] border border-line bg-[color-mix(in_srgb,var(--gae-color-surface-elevated)_94%,transparent)] px-4 pt-[14px] pb-3 shadow-[0_4px_18px_rgba(0,0,0,0.22)] backdrop-blur-[2px]',
+        'symbol-node group relative rounded-[16px] border border-line bg-[color-mix(in_srgb,var(--gae-color-surface-elevated)_94%,transparent)] px-4 pt-[14px] pb-3 shadow-[0_4px_18px_rgba(0,0,0,0.22)] backdrop-blur-[2px]',
         isImportNode ? 'symbol-node-import min-w-[208px] border-dashed px-[14px] pt-3 pb-[10px]' : 'min-w-[232px]',
         selected ? 'symbol-node-selected' : '',
       ].filter(Boolean).join(' ')}
@@ -33,6 +35,21 @@ export const SymbolNode: FC<NodeProps<SymbolNodeType>> = ({ data, selected }) =>
       style={{ '--symbol-node-accent': data.accentColor, width: `${data.width}px` } as CSSProperties}
     >
       <span className="symbol-node-accent" aria-hidden="true" />
+      <button
+        className="absolute top-3 right-3 z-[2] inline-flex size-[22px] items-center justify-center rounded-sm border border-line bg-secondary p-0 text-muted opacity-0 transition-all duration-100 ease-in-out group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-secondary-hi hover:text-text"
+        type="button"
+        aria-label={t('shared.copy_markdown')}
+        title={t('shared.copy_markdown')}
+        onClick={(event) => {
+          event.stopPropagation();
+          data.onCopy(data.symbolNode);
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+          <rect x="5.25" y="3.25" width="7.5" height="9.5" rx="1.2" />
+          <path d="M10.25 3.25V2.5a1.25 1.25 0 0 0-1.25-1.25h-5.5A1.25 1.25 0 0 0 2.25 2.5v8A1.25 1.25 0 0 0 3.5 11.75h1" />
+        </svg>
+      </button>
       {handlePositions.map(({ face, position }) => (
         <Handle key={`${data.symbolNode.id}-${face}-target`} id={`target-${face}`} type="target" position={position} className="symbol-node-handle h-0 w-0 border-0 bg-transparent opacity-0 shadow-none" />
       ))}

@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileStatusBadge } from '../../shared/components';
 import { getSourceHandleId, getTargetHandleId, type FileNodeType } from './graph';
 import './FileNode.css';
@@ -12,6 +13,7 @@ const handlePositions = [
 ] as const;
 
 export const FileNode: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
+  const { t } = useTranslation();
   const title = data.canAnalyze ? `${data.directory}${data.label}` : 'JS/TS 외 파일은 노드로만 표시됩니다.';
 
   return (
@@ -29,6 +31,21 @@ export const FileNode: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
       title={title}
       tabIndex={0}
     >
+      <button
+        className="absolute top-2 right-2 z-[2] inline-flex size-[22px] items-center justify-center rounded-sm border border-line bg-secondary p-0 text-muted opacity-0 transition-all duration-100 ease-in-out group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-secondary-hi hover:text-text"
+        type="button"
+        aria-label={t('shared.copy_markdown')}
+        title={t('shared.copy_markdown')}
+        onClick={(event) => {
+          event.stopPropagation();
+          data.onCopy(data.file);
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+          <rect x="5.25" y="3.25" width="7.5" height="9.5" rx="1.2" />
+          <path d="M10.25 3.25V2.5a1.25 1.25 0 0 0-1.25-1.25h-5.5A1.25 1.25 0 0 0 2.25 2.5v8A1.25 1.25 0 0 0 3.5 11.75h1" />
+        </svg>
+      </button>
       {handlePositions.map(({ face, position }) => (
         <Handle
           key={getTargetHandleId(face)}

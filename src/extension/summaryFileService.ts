@@ -18,6 +18,7 @@ export class SummarySaveError extends Error {
 
 const COMMIT_SUMMARY_FILENAME = '전체_파일_정리.md';
 const COMMIT_SUMMARY_FILENAME_LEGACY = '_commit_summary.md';
+const COMMIT_NOTE_FILENAME = '노트.md';
 
 export function toCommitDirName(shortHash: string, commitMessage: string): string {
   const sanitized = commitMessage
@@ -36,6 +37,10 @@ export function getSummaryFilePath(savePath: string, commitHash: string, filePat
 
 export function getCommitSummaryFilePath(savePath: string, commitHash: string, commitMessage?: string): string {
   return path.join(savePath, getCommitDirName(commitHash, commitMessage), commitMessage ? COMMIT_SUMMARY_FILENAME : COMMIT_SUMMARY_FILENAME_LEGACY);
+}
+
+export function getCommitNoteFilePath(savePath: string, commitHash: string, commitMessage?: string): string {
+  return path.join(savePath, getCommitDirName(commitHash, commitMessage), COMMIT_NOTE_FILENAME);
 }
 
 export function loadSummary(savePath: string, commitHash: string, filePath: string, commitMessage?: string): SummaryFileResult | null {
@@ -72,6 +77,25 @@ export function loadCommitSummary(savePath: string, commitHash: string, commitMe
 
 export function saveCommitSummary(savePath: string, commitHash: string, content: string, commitMessage?: string): string {
   const savedPath = getCommitSummaryFilePath(savePath, commitHash, commitMessage);
+  writeSummaryFile(savedPath, content);
+  return savedPath;
+}
+
+export function loadNote(savePath: string, commitHash: string, commitMessage?: string): SummaryFileResult | null {
+  const savedPath = getCommitNoteFilePath(savePath, commitHash, commitMessage);
+
+  if (!fs.existsSync(savedPath)) {
+    return null;
+  }
+
+  return {
+    content: fs.readFileSync(savedPath, 'utf8'),
+    savedPath,
+  };
+}
+
+export function saveNote(savePath: string, commitHash: string, content: string, commitMessage?: string): string {
+  const savedPath = getCommitNoteFilePath(savePath, commitHash, commitMessage);
   writeSummaryFile(savedPath, content);
   return savedPath;
 }

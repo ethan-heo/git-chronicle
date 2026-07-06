@@ -34,7 +34,7 @@ export const SymbolCodePanel: FC<SymbolCodePanelProps> = ({ isOpen, filePath, fi
           ×
         </button>
       </header>
-      <SymbolFileCodeViewer fileContent={fileContent} language={language} highlightRange={highlightRange} scrollToRange={scrollToRange} scrollRequestId={scrollRequestId} />
+      <SymbolFileCodeViewer filePath={filePath} fileContent={fileContent} language={language} highlightRange={highlightRange} scrollToRange={scrollToRange} scrollRequestId={scrollRequestId} />
     </aside>
   );
 };

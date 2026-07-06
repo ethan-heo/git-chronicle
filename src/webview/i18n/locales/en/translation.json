@@ -192,6 +192,7 @@
   "shared": {
     "loading_state": "Loading",
     "back_button": "Go to previous screen",
+    "copy_markdown": "Copy as Markdown",
     "file_code_view": "View code",
     "file_ai_view": "View AI summary",
     "saved": "AI summarized",

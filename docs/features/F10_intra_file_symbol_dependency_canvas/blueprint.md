@@ -117,7 +117,8 @@ type SymbolNodeType = Node<SymbolNodeData, 'symbolNode'>;
 ```
 
 #### Interaction
-- 호버: `SymbolGraph`의 `onNodeMouseEnter`/`onNodeMouseLeave`로 엣지 강조 처리 (노드 내부 버튼 없음)
+- 호버: 파일 캔버스와 동일한 위치의 복사 아이콘 노출 + `SymbolGraph`의 `onNodeMouseEnter`/`onNodeMouseLeave`로 엣지 강조 처리
+- [복사] 클릭: 해당 심볼이 의존하는 대상 심볼/엣지만 함께 Mermaid 마크다운으로 복사
 - 드래그: 노드 위치 이동
 
 #### States
@@ -138,6 +139,11 @@ type SymbolNodeType = Node<SymbolNodeData, 'symbolNode'>;
 
 #### Reusability
 F10 전용. SymbolGraph 내 React Flow 커스텀 노드로만 사용.
+
+#### Copy Format
+- Mermaid 노드 ID는 소스 경로나 내부 심볼 ID 전체를 노출하지 않고, 심볼명과 kind 기반 식별자를 사용한다.
+- 같은 심볼명/kind 조합이 여러 개면 `_1`, `_2` suffix로 충돌을 해소한다.
+- 복사 범위는 클릭한 심볼 노드에서 바깥으로 나가는 `SymbolEdge`와 그 대상 심볼 노드다.
 
 ---
 
@@ -294,6 +300,7 @@ Shiki 기반 구문 강조 코드 뷰어. 라인 번호와 노드 라인 범위 
 #### Props
 ```typescript
 interface SymbolFileCodeViewerProps {
+  filePath: string;
   fileContent: string;
   language: string;
   highlightRange: { start: number; end: number } | null;
@@ -305,6 +312,9 @@ interface SymbolFileCodeViewerProps {
 - `highlightRange`에 포함된 라인 배경 강조
 - 클릭으로 활성화된 노드의 라인 범위를 우선 강조
 - `scrollToRange`와 `scrollRequestId` 변경 시 해당 라인으로 smooth scroll
+- 코드 라인 드래그로 범위 선택
+- 드래그 종료 지점 근처에 복사 아이콘 오버레이 표시
+- [복사] 클릭 시 선택한 범위를 마크다운 코드블록으로 복사
 
 #### Reusability
 F10 전용. `SymbolCodePanel` 내부에서만 사용.

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FC, type ReactElement } from 'react';
 import { S01CommitListScreen } from './features/F01';
 import { S02WorkspaceScreen } from './features/F02';
 import { S06SettingsScreen } from './features/F06';
+import { S07NoteScreen } from './features/F11';
 import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
 import { RouteSlotProvider } from './shared/route/RouteSlotContext';
@@ -122,6 +123,10 @@ function renderScreen(currentScreen: ScreenID): ReactElement {
 
   if (currentScreen === 'S06') {
     return <S06SettingsScreen />;
+  }
+
+  if (currentScreen === 'S07') {
+    return <S07NoteScreen />;
   }
 
   return <S01CommitListScreen />;

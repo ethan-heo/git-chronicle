@@ -10,6 +10,7 @@ export interface FileNodeData extends Record<string, unknown> {
   directory: string;
   canAnalyze: boolean;
   onCodeView: (file: ChangedFile) => void;
+  onCopy: (file: ChangedFile) => void;
 }
 
 export type FileNodeType = Node<FileNodeData, 'fileNode'>;
@@ -34,7 +35,7 @@ interface NodeGeometry {
 export function buildGraphData(
   files: ChangedFile[],
   dependencyEdges: DependencyEdge[],
-  handlers: Pick<FileNodeData, 'onCodeView'>,
+  handlers: Pick<FileNodeData, 'onCodeView' | 'onCopy'>,
 ): { nodes: FileNodeType[]; edges: DependencyEdgeType[] } {
   const nodePathIndex = buildNodePathIndex(files);
   const fullPathKeys = new Set(files.map((file) => normalizePath(file.path)));
@@ -76,6 +77,7 @@ export function buildGraphData(
           directory: getDirectoryName(file.path),
           canAnalyze: ANALYZABLE_FILE_PATTERN.test(file.path),
           onCodeView: handlers.onCodeView,
+          onCopy: handlers.onCopy,
         },
       };
     }),

@@ -67,13 +67,19 @@ interface AppState extends FilterState {
   summaryModel: string | null;
   qaModel: string | null;
   currentSummaryContent: string;
+  noteContent: string;
+  noteSavedPath: string | null;
   isLoadingSummary: boolean;
   isGeneratingSummary: boolean;
   isGeneratingQA: boolean;
+  isLoadingNote: boolean;
+  isSavingNote: boolean;
   summaryError: string | null;
   qaError: string | null;
+  noteError: string | null;
   summarySavedPath: string | null;
   hasCurrentSavedSummary: boolean;
+  hasSavedNote: boolean;
   isSummaryTokenLimitExceeded: boolean;
   toasts: ToastItem[];
   commitPage: number;
@@ -106,6 +112,7 @@ interface AppState extends FilterState {
   goToCanvasView: () => void;
   goToSymbolGraphView: (file: ChangedFile) => void;
   goToSettingsView: () => void;
+  goToNoteView: () => void;
   pushToast: (message: string, type: ToastType) => void;
   dismissToast: (id: string) => void;
   openRepository: () => void;
@@ -131,6 +138,13 @@ interface AppState extends FilterState {
   handleDependenciesLoadFailed: (message?: string) => void;
   handleSymbolGraphLoaded: (payload: { nodes?: SymbolNode[]; edges?: SymbolEdge[]; fileContent?: string }) => void;
   handleSymbolGraphLoadFailed: (message?: string) => void;
+  startNoteLoading: () => void;
+  setNoteContent: (content: string) => void;
+  startNoteSaving: () => void;
+  handleNoteLoaded: (payload: { content: string; savedPath?: string | null; hasSavedNote?: boolean }) => void;
+  handleNoteLoadFailed: (message?: string) => void;
+  handleNoteSaved: (payload: { content: string; savedPath?: string | null; hasSavedNote?: boolean }) => void;
+  handleNoteSaveFailed: (message?: string) => void;
   setCommitListScrollTop: (top: number) => void;
   openCodePanel: () => void;
   closeCodePanel: () => void;
@@ -173,13 +187,19 @@ export const useAppStore = create<AppState>((set, get) => ({
   summaryModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
   qaModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
   currentSummaryContent: '',
+  noteContent: '',
+  noteSavedPath: null,
   isLoadingSummary: false,
   isGeneratingSummary: false,
   isGeneratingQA: false,
+  isLoadingNote: false,
+  isSavingNote: false,
   summaryError: null,
   qaError: null,
+  noteError: null,
   summarySavedPath: null,
   hasCurrentSavedSummary: false,
+  hasSavedNote: false,
   isSummaryTokenLimitExceeded: false,
   toasts: [],
   commitPage: 0,
@@ -379,6 +399,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       summarySavedPath: null,
       hasCurrentSavedSummary: false,
       isSummaryTokenLimitExceeded: false,
+      noteContent: '',
+      noteSavedPath: null,
+      isLoadingNote: false,
+      isSavingNote: false,
+      noteError: null,
+      hasSavedNote: false,
       currentScreen: 'S02',
       previousScreen: null,
       transitionDirection: 'forward',
@@ -475,6 +501,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentScreen: 'S06',
       previousScreen: state.currentScreen === 'S06' ? state.previousScreen : state.currentScreen,
       transitionDirection: 'forward',
+    }));
+  },
+
+  goToNoteView: () => {
+    set((state) => ({
+      currentScreen: 'S07',
+      previousScreen: state.currentScreen === 'S07' ? state.previousScreen : state.currentScreen,
+      transitionDirection: 'forward',
+      noteError: null,
     }));
   },
 
@@ -735,6 +770,65 @@ export const useAppStore = create<AppState>((set, get) => ({
       isLoadingSymbolGraph: false,
       hasLoadedSymbolGraph: true,
       symbolGraphError: message ?? '심볼을 분석하지 못했습니다',
+    });
+  },
+
+  startNoteLoading: () => {
+    set({
+      isLoadingNote: true,
+      isSavingNote: false,
+      noteError: null,
+    });
+  },
+
+  setNoteContent: (content) => {
+    set({
+      noteContent: content,
+      noteError: null,
+    });
+  },
+
+  startNoteSaving: () => {
+    set({
+      isSavingNote: true,
+      noteError: null,
+    });
+  },
+
+  handleNoteLoaded: (payload) => {
+    set({
+      noteContent: payload.content,
+      noteSavedPath: payload.savedPath ?? null,
+      isLoadingNote: false,
+      isSavingNote: false,
+      noteError: null,
+      hasSavedNote: payload.hasSavedNote ?? Boolean(payload.savedPath),
+    });
+  },
+
+  handleNoteLoadFailed: (message = '노트를 불러오지 못했습니다') => {
+    set({
+      isLoadingNote: false,
+      isSavingNote: false,
+      noteError: message,
+    });
+  },
+
+  handleNoteSaved: (payload) => {
+    set({
+      noteContent: payload.content,
+      noteSavedPath: payload.savedPath ?? null,
+      isLoadingNote: false,
+      isSavingNote: false,
+      noteError: null,
+      hasSavedNote: payload.hasSavedNote ?? Boolean(payload.savedPath),
+    });
+  },
+
+  handleNoteSaveFailed: (message = '노트를 저장하지 못했습니다') => {
+    set({
+      isSavingNote: false,
+      noteError: message,
     });
   },
 
