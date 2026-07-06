@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC } from 'react';
+import { isValidElement, useEffect, useMemo, useState, type FC, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,8 @@ import { EmptyState, ErrorState, LoadingState, TopHeader } from '../../shared/co
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
+import { MermaidBlock } from './MermaidBlock';
+import './S07_NoteScreen.css';
 
 const SAVE_DEBOUNCE_MS = 1000;
 
@@ -134,6 +136,8 @@ export const S07NoteScreen: FC = () => {
     return '자동 저장 대기 중';
   }, [hasSavedNote, isSavingNote, noteError]);
 
+  let mermaidBlockIndex = 0;
+
   if (!selectedCommit) {
     return null;
   }
@@ -182,8 +186,36 @@ export const S07NoteScreen: FC = () => {
           ) : null}
           {mode !== 'edit' ? (
             <section className={`min-h-0 overflow-auto px-6 py-5 ${mode === 'preview' ? 'md:col-span-2' : ''}`}>
-              <div className="prose prose-sm max-w-none text-text">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <div className="note-preview text-text">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    pre({ children }) {
+                      if (containsMermaidBlock(children)) {
+                        return <>{children}</>;
+                      }
+
+                      return <pre>{children}</pre>;
+                    },
+                    code({ className, children, node, ...props }) {
+                      const match = /language-(\w+)/.exec(className ?? '');
+                      const language = match?.[1];
+                      const content = String(children).replace(/\n$/, '');
+
+                      if (language === 'mermaid') {
+                        const mermaidCacheKey = `mermaid-block-${mermaidBlockIndex}`;
+                        mermaidBlockIndex += 1;
+                        return <MermaidBlock cacheKey={mermaidCacheKey} code={content} />;
+                      }
+
+                      return (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      );
+                    },
+                  }}
+                >
                   {draftContent || '노트 미리보기가 여기에 표시됩니다.'}
                 </ReactMarkdown>
               </div>
@@ -208,3 +240,19 @@ const ModeButton: FC<{ active: boolean; label: string; onClick: () => void }> = 
     {label}
   </button>
 );
+
+function containsMermaidBlock(children: ReactNode): boolean {
+  if (Array.isArray(children)) {
+    return children.some((child) => containsMermaidBlock(child));
+  }
+
+  if (!isValidElement(children)) {
+    return false;
+  }
+
+  if (children.type === MermaidBlock) {
+    return true;
+  }
+
+  return containsMermaidBlock((children.props as { children?: ReactNode }).children);
+}
