@@ -1,4 +1,20 @@
 
+## [1.1.0](https://github.com/ethan-heo/git-chronicle/compare/v1.0.0...v1.1.0) (2026-07-07)
+
+### Features
+
+* improve diff viewer folding ([c1fbe76](https://github.com/ethan-heo/git-chronicle/commit/c1fbe7682ba77341a130c16975da20296c26b62a))
+
+### Bug Fixes
+
+* **f10:** remove symbol code panel background ([8cd4e06](https://github.com/ethan-heo/git-chronicle/commit/8cd4e063c76f92d0564f977ccea69c9284fba7b3))
+
+### Documentation
+
+* clarify commit message requirements in agent guides ([1c2134d](https://github.com/ethan-heo/git-chronicle/commit/1c2134d1869522fd84e4a3395d0300e93c3a44ec))
+* add doc summaries ([4c09de7](https://github.com/ethan-heo/git-chronicle/commit/4c09de73b9da4b97f5bfbbf11e9f486231f1da19))
+* sync workspace screen documentation ([9cb83a2](https://github.com/ethan-heo/git-chronicle/commit/9cb83a25f047ffd1fd4023695887a6e5cf2da455))
+
 ## [1.0.0](https://github.com/ethan-heo/git-chronicle/compare/v0.8.0...v1.0.0) (2026-07-07)
 
 ### Features
