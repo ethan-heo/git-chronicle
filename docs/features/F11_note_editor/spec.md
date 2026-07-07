@@ -6,7 +6,7 @@
 
 ## Business Rules
 
-- 노트 화면은 `S07_NoteScreen`으로 어디서든 진입 가능하다.
+- 노트 화면은 `S07_NoteScreen`으로 S02 워크스페이스 본문 `WorkspaceHeading`의 노트 아이콘 클릭 시 진입한다.
 - 저장 파일은 `{savePath}/{shortHash}_{sanitizedCommitMessage}/노트.md`다.
 - 저장 방식은 명시적 버튼 없이 디바운스 자동저장이다.
 - 저장 경로가 없으면 F05b와 동일한 "저장 경로를 먼저 설정해주세요" 안내를 사용한다.

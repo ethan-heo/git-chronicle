@@ -25,12 +25,12 @@
 
 1. 선택된 커밋의 변경 파일이 **디렉토리 트리** 형태로 표시된다.
 2. 파일 항목에 마우스를 호버링하면 액션 버튼이 활성화된다.
-   - **[코드 보기]** → `selectedFile` 설정 후 S-03으로 전환
-3. 화면 상단에는 커밋 단위 액션 버튼이 위치한다.
-   - **[커밋 AI 정리]** → S-04로 전환. 해당 커밋의 AI 정리 저장본이 이미 존재하면 버튼 옆에 **"AI 요약됨"** 뱃지가 표시된다.
-   - **[캔버스 보기]** → S-05로 전환
+   - **[코드 보기]** → `selectedFile` 설정 후 S02 본문 `code` 패널 활성화
+3. 사이드바 헤더에는 워크스페이스 패널 전환 버튼이 위치한다.
+   - **[커밋 AI 정리]**(`AISummaryToggleButton`) → S02 본문 `aiSummary` 패널 활성화. 해당 커밋의 AI 정리 저장본이 이미 존재하면 패널 진입 후 `AISummaryViewer`가 저장본을 즉시 표시한다.
+   - **[캔버스 보기]**(`FileCanvasToggleButton`) → S02 본문 `fileCanvas` 패널 활성화
 
-> 현재 S-03은 코드 뷰어, S-04는 커밋 단위 AI 요약 뷰어, S-05는 의존성 캔버스로 구현되어 실제 화면으로 전환된다.
+> S02_WorkspaceScreen 통합 이후 코드 뷰어·AI 요약 뷰어·의존성 캔버스는 모두 독립 화면이 아니라 S02 본문의 `activeWorkspacePanel` 전환으로 구현된다.
 
 ---
 
@@ -39,7 +39,7 @@
 | 항목 | 내용 |
 |------|------|
 | 파일 상태 표시 | 파일명 앞 뱃지 레터로 구분: `A` 추가 / `M` 수정 / `D` 삭제 / `R` 이름 변경 |
-| 커밋 단위 저장 여부 표시 조건 | 저장 경로가 설정되어 있고, `{savePath}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md` 저장본이 존재할 때만 `CommitActionBar`의 [커밋 AI 정리] 버튼 옆에 `AI 요약됨` 뱃지를 표시한다. 구 형식 `{savePath}/{commitHash}/_commit_summary.md`도 폴백으로 인정한다 |
+| 커밋 단위 저장 여부 표시 조건 | 저장 경로가 설정되어 있고, `{savePath}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md` 저장본이 존재하면 `hasSavedCommitSummary`가 `true`로 설정되어 `aiSummary` 패널 진입 시 `AISummaryViewer`가 저장본을 즉시 표시한다. 구 형식 `{savePath}/{commitHash}/_commit_summary.md`도 폴백으로 인정한다 |
 | 대용량 커밋 처리 | 변경 파일 수 무관하게 전체 렌더링. 성능 문제 발생 시 추후 가상 리스트(react-window) 적용 검토 |
 | 트리 구조 | 디렉토리 경로 기준으로 계층 분리. 디렉토리 노드는 토글 가능 |
 
@@ -65,7 +65,7 @@
 
 ## Related Screens
 
-- [S02_HistoryViewScreen](../../screens/S02_history_view/blueprint.md)
+- [S02_WorkspaceScreen](../../screens/S02_history_view/blueprint.md)
 
 ---
 
@@ -86,7 +86,7 @@
 |------|------|------|
 | `changedFiles` | `ChangedFile[]` | 전역 상태 업데이트. 변경 파일 목록 |
 | `selectedFile` | `ChangedFile` | 전역 상태 업데이트. 파일 클릭 시 설정 |
-| `hasSavedCommitSummary` | `boolean` | 전역 상태 업데이트. `CommitActionBar`의 `SavedBadge` 표시 여부 |
+| `hasSavedCommitSummary` | `boolean` | 전역 상태 업데이트. `aiSummary` 패널의 저장본 즉시 표시 여부 |
 
 ---
 
@@ -95,9 +95,9 @@
 | 효과 | 트리거 | 설명 |
 |------|--------|------|
 | `changedFiles` 전역 상태 업데이트 | `selectedCommit` 설정 시 | 해당 커밋의 변경 파일 목록 로드 |
-| S-03 화면 전환 | `selectedFile` 설정 + [코드 보기] | `currentScreen = "S03"` |
-| S-04 화면 전환 | [커밋 AI 정리] 클릭 | `currentScreen = "S04"` |
-| S-05 화면 전환 | [캔버스 보기] 클릭 | `currentScreen = "S05"` |
+| S02 `code` 패널 활성화 | `selectedFile` 설정 + [코드 보기] | `activeWorkspacePanel = "code"` |
+| S02 `aiSummary` 패널 활성화 | [커밋 AI 정리] 클릭 | `activeWorkspacePanel = "aiSummary"` |
+| S02 `fileCanvas` 패널 활성화 | [캔버스 보기] 클릭 | `activeWorkspacePanel = "fileCanvas"` |
 
 ---
 
@@ -105,9 +105,9 @@
 
 | 항목 | 현재 구현 |
 |------|-----------|
-| 화면 파일 | `src/webview/features/F02/S02_HistoryViewScreen.tsx` |
+| 화면 파일 | `src/webview/features/F02/S02_WorkspaceScreen.tsx` |
 | 트리 구성 유틸 | `src/webview/features/F02/tree.ts` |
 | 메시지 요청 | Webview → Extension: `FETCH_CHANGED_FILES` |
 | 메시지 응답 | Extension → Webview: `CHANGED_FILES_LOADED`, `CHANGED_FILES_LOAD_FAILED` |
 | 브라우저 개발 모드 | VSCode API가 없으면 `appStore.ts`의 `demoChangedFiles`를 사용 |
-| 후속 화면 | S03은 실제 코드 뷰어로 이동. S04는 커밋 단위 AI 요약 뷰어로 이동. S05는 실제 의존성 캔버스로 이동 |
+| 후속 패널 | `code`는 F03 코드 뷰어, `aiSummary`는 F05b 커밋 단위 AI 요약 뷰어, `fileCanvas`는 F04 의존성 캔버스를 S02 본문에 표시 |

@@ -144,7 +144,7 @@ interface RegenerateButtonProps {
 - `aria-label="AI 정리 재생성"`
 
 #### Reusability
-F05b_AISummaryCommit 전용. S04_AISummaryViewerScreen에서 사용.
+F05b_AISummaryCommit 전용. S02_WorkspaceScreen 본문 `aiSummary` 패널에서 사용.
 
 ---
 
@@ -227,7 +227,7 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 
 ## Layout Rules
 
-- `AISummaryViewer`는 S04_AISummaryViewerScreen의 단일 메인 패널로 표시된다.
+- `AISummaryViewer`는 S02 본문 `aiSummary` 패널의 단일 메인 콘텐츠로 표시된다.
 - `TokenLimitWarning`은 `AISummaryViewer` 상단에 배너로 표시된다.
 
 ---
@@ -236,7 +236,7 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 
 | 인터랙션 | 트리거 | 결과 |
 |---------|--------|------|
-| 화면 진입 | S-04 진입 | 저장본 존재 시 즉시 표시, 없으면 AI 생성 시작 |
+| 패널 진입 | `aiSummary` 패널 활성화 | 저장본 존재 시 즉시 표시, 없으면 AI 생성 시작 |
 | 재생성 아이콘 | 클릭 | `OverwriteConfirmDialog` 표시 |
 | [확인] | 다이얼로그 확인 | 동일 diff로 AI 재호출, 결과 덮어쓰기 |
 | [취소] | 다이얼로그 취소 | 현재 저장본 유지 |

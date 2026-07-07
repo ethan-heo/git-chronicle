@@ -35,8 +35,9 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | S-01 | 커밋 목록 | 확장 프로그램 활성화 | — |
 | S-02 | 워크스페이스 | 커밋 목록에서 항목 클릭 | S-01 |
 | S-06 | 설정 | 우측 상단 설정(⚙) 아이콘 클릭 | 어디서든 |
+| S-07 | 노트 | S-02 본문 `WorkspaceHeading`의 노트 아이콘 클릭 | S-02 |
 
-> 과거 별도 화면이었던 S-03/S-04/S-05/S-07/S-08은 더 이상 독립 라우트가 아니며, 해당 콘텐츠는 S-02 워크스페이스 내부 패널로 통합되었다.
+> 과거 별도 화면이었던 S-03/S-04/S-05/S-08은 더 이상 독립 라우트가 아니며, 해당 콘텐츠는 S-02 워크스페이스 내부 패널로 통합되었다.
 
 ---
 
@@ -64,7 +65,8 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
        ├─ 파일 [코드 보기]           → 본문 code 패널
        ├─ [커밋 AI 정리]             → 본문 aiSummary 패널
        ├─ [캔버스 보기]              → 본문 fileCanvas 패널
-       └─ 파일 [심볼 그래프]         → 본문 symbolGraph 패널
+       ├─ 파일 [심볼 그래프]         → 본문 symbolGraph 패널
+       └─ [노트]                    → [S-07: 노트] ──(뒤로가기)──→ 복귀
 
   [⚙ 아이콘 (어디서든)] → [S-06: 설정]
 ```
@@ -76,7 +78,7 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | Feature ID | Feature명 | 설명 | 관련 화면 |
 |------------|-----------|------|-----------|
 | [F01_CommitLog](../features/F01_commit_log/spec.md) | 커밋 로그 조회 | 전체 커밋 이력 목록 표시. 기간·작성자·키워드 필터, 무한 스크롤 | [S01](../screens/S01_commit_list/blueprint.md) |
-| [F02_ChangedFileTree](../features/F02_changed_file_tree/spec.md) | 변경 파일 트리 | 커밋 선택 시 변경 파일을 디렉토리 트리로 표시. 상태 뱃지·저장됨 뱃지 포함 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F02_ChangedFileTree](../features/F02_changed_file_tree/spec.md) | 변경 파일 트리 | 커밋 선택 시 변경 파일을 디렉토리 트리로 표시. 파일 상태 뱃지 포함 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F03_CodeViewer](../features/F03_code_viewer/spec.md) | 코드 변경이력 | 파일 단위 unified diff 뷰어. Shiki 신텍스 하이라이팅 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F04_DependencyCanvas](../features/F04_dependency_canvas/spec.md) | 의존 관계 캔버스 | 변경 파일 간 의존 관계를 노드-엣지 그래프로 시각화. React Flow 기반 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약하는 유일한 AI 정리 진입점. 스트리밍 표시, 로컬 저장, 재사용 | [S02](../screens/S02_history_view/blueprint.md) |
@@ -84,18 +86,16 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | [F07_SavePathSettings](../features/F07_save_path_settings/spec.md) | 저장 경로 설정 | AI 정리 결과물 저장 경로 지정·삭제 | [S06](../screens/S06_settings/blueprint.md) |
 | [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문/답변으로 개별 파일까지 파고들며 분석. 커밋 전체 diff를 근거로 답변하며, 답변을 기존 요약 문서 하단에 append | [S02](../screens/S02_history_view/blueprint.md) |
 | [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F11_NoteEditor](../features/F11_note_editor/spec.md) | 노트 에디터 | 커밋 컨텍스트를 유지한 채 마크다운 노트를 작성하고 디바운스 자동저장 | [S07](../screens/S07_note/blueprint.md) |
 
 ---
 
 ## Anchor Index
 
 - [S-01: 커밋 목록](#s-01) → [screens/S01_commit_list/blueprint.md](../screens/S01_commit_list/blueprint.md)
-- [S-02: 이력 조회](#s-02) → [screens/S02_history_view/blueprint.md](../screens/S02_history_view/blueprint.md)
-- [S-03: 코드 뷰어](#s-03) → [screens/S03_code_viewer/blueprint.md](../screens/S03_code_viewer/blueprint.md)
-- [S-04: AI 정리 뷰어](#s-04) → [screens/S05_ai_summary_viewer/blueprint.md](../screens/S05_ai_summary_viewer/blueprint.md)
-- [S-05: 캔버스](#s-05) → [screens/S04_dependency_canvas/blueprint.md](../screens/S04_dependency_canvas/blueprint.md)
+- [S-02: 워크스페이스](#s-02) → [screens/S02_history_view/blueprint.md](../screens/S02_history_view/blueprint.md) (코드 뷰어·AI 정리 뷰어·캔버스·심볼 캔버스는 모두 이 화면의 본문 패널로 통합됨)
 - [S-06: 설정](#s-06) → [screens/S06_settings/blueprint.md](../screens/S06_settings/blueprint.md)
-- [S-08: 파일 내부 심볼 캔버스](#s-08) → [screens/S08_intra_file_dependency_canvas/blueprint.md](../screens/S08_intra_file_dependency_canvas/blueprint.md)
+- [S-07: 노트](#s-07) → [screens/S07_note/blueprint.md](../screens/S07_note/blueprint.md)
 - [F-01: 커밋 로그 조회](#f-01) → [features/F01_commit_log/spec.md](../features/F01_commit_log/spec.md)
 - [F-02: 변경 파일 트리](#f-02) → [features/F02_changed_file_tree/spec.md](../features/F02_changed_file_tree/spec.md)
 - [F-03: 코드 변경이력](#f-03) → [features/F03_code_viewer/spec.md](../features/F03_code_viewer/spec.md)
@@ -105,3 +105,4 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 - [F-07: 저장 경로 설정](#f-07) → [features/F07_save_path_settings/spec.md](../features/F07_save_path_settings/spec.md)
 - [F-09: AI 요약 Q&A](#f-09) → [features/F09_ai_summary_qa/spec.md](../features/F09_ai_summary_qa/spec.md)
 - [F-10: 파일 내부 심볼 의존성 캔버스](#f-10) → [features/F10_intra_file_symbol_dependency_canvas/spec.md](../features/F10_intra_file_symbol_dependency_canvas/spec.md)
+- [F-11: 노트 에디터](#f-11) → [features/F11_note_editor/spec.md](../features/F11_note_editor/spec.md)

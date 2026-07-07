@@ -1,6 +1,6 @@
 # GitChronicle
 
-Rewind your Git history — explore commits, visualize file changes, analyze dependencies, and generate AI summaries, all inside VSCode.
+Rewind your Git history — explore commits, visualize file changes, analyze dependencies, generate AI summaries, and take notes, all inside VSCode.
 
 ## Features
 
@@ -34,10 +34,12 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 
 - **File-level summary** — summarizes the diff of a single file
 - **Commit-level summary** — summarizes all changes in a commit at once
-- **Batch generation** — auto-generates summaries for every file in a commit; runs in the background with a progress bar and can be cancelled at any time
-- **Regenerate** — re-run AI generation on demand with an overwrite confirmation; previously generated files are skipped in batch mode
-- **Split view** — view the code diff and AI summary side by side in a resizable panel
+- **Regenerate** — re-run AI generation on demand with an overwrite confirmation
 - **Q&A** — ask follow-up questions about any summary; answers stream in real time and are appended to the saved `.md` file
+
+### Note Editor
+
+Keep a commit-scoped markdown note alongside your analysis. Paste markdown or Mermaid snippets copied from other panels, and your notes auto-save with no explicit save action needed. Mermaid code blocks render as diagrams in the preview.
 
 ## Requirements
 
@@ -49,7 +51,7 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 
 1. Open the Command Palette (`⌘+Shift+P` / `Ctrl+Shift+P`)
 2. Run **`GitChronicle: Open`**
-3. Browse commits → select a commit → explore changed files, diffs, dependencies, symbol graphs, and AI summaries
+3. Browse commits → select a commit → explore changed files, diffs, dependencies, symbol graphs, AI summaries, and notes
 
 ## Extension Settings
 

@@ -23,8 +23,8 @@
 ## 3. Reusability (재사용성)
 
 - 반복되는 UI 패턴(EmptyState, LoadingState, ErrorState, Toast)은 반드시 전역 컴포넌트로 추출한다.
-- 파일 트리(S-02)와 캔버스 노드(S-05)에서 동일하게 사용하는 호버 액션 버튼([코드 보기], [AI 정리 보기])은 단일 컴포넌트(`FileActionButtons`)로 구현한다.
-- 뱃지(`SavedBadge`, `FileStatusBadge`)는 Feature를 가로질러 일관된 컴포넌트로 재사용한다.
+- 파일 트리(F02)와 캔버스 노드(F04)에서 동일하게 사용하는 호버 액션 버튼([코드 보기], [AI 정리 보기])은 단일 컴포넌트(`FileActionButtons`)로 구현한다.
+- 뱃지(`FileStatusBadge`)는 Feature를 가로질러 일관된 컴포넌트로 재사용한다.
 
 ---
 

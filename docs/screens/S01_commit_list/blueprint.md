@@ -26,7 +26,7 @@ VSCode Extension 활성화 시 자동 진입.
 
 ## Child Screens
 
-- [S02_HistoryViewScreen](../S02_history_view/blueprint.md) — 커밋 항목 클릭 시
+- [S02_WorkspaceScreen](../S02_history_view/blueprint.md) — 커밋 항목 클릭 시
 
 ---
 

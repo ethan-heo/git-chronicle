@@ -76,7 +76,7 @@ interface DiffViewerProps {
 - `role="region"`, `aria-label="코드 변경 내역"`, `tabIndex={0}` (포커스 가능)
 
 #### Reusability
-F03_CodeViewer 전용. S03_CodeViewerScreen에서만 사용.
+F03_CodeViewer 전용. S02_WorkspaceScreen 본문 `code` 패널에서만 사용.
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Related Original Sections
 
-- [화면 구성 > S-05](../../product/product_overview.md#s-05)
+- [화면 구성 > S-02](../../product/product_overview.md#s-02)
 - [사용자 시나리오 > 3.4 의존 관계 캔버스](../../product/product_overview.md#feature-summary)
 - [기능 상세 > 4.3 의존 관계 캔버스](../../product/product_overview.md#feature-summary)
 - [Blueprint (UI/컴포넌트 명세)](./blueprint.md)
@@ -28,7 +28,7 @@
 3. 변경 파일 로딩이 끝나기 전에는 [캔버스 보기] 버튼이 로딩 상태로 표시되어 조기 진입을 방지한다.
 4. 노드에 마우스를 호버링하면 액션 버튼이 활성화되고, 연결된 엣지가 강조되며 비연결 엣지는 감쇠된다.
    - **[복사]** → 해당 파일 노드가 의존하는 대상 노드/엣지만 Mermaid 마크다운으로 복사
-   - **[코드 보기]** → 코드 뷰어(S-03) 활성화
+   - **[코드 보기]** → 본문 `code` 패널 활성화
 
 ---
 
@@ -76,7 +76,7 @@
 
 ## Related Screens
 
-- [S05_DependencyCanvasScreen](../../screens/S04_dependency_canvas/blueprint.md)
+- [S02_WorkspaceScreen](../../screens/S02_history_view/blueprint.md) — 본문 `fileCanvas` 패널로 통합
 
 ---
 
@@ -86,7 +86,6 @@
 |------|------|------|
 | `changedFiles` | `ChangedFile[]` | 전역 상태. 노드로 변환될 변경 파일 목록 |
 | `selectedCommit` | `Commit` | 전역 상태. 의존 관계 분석 컨텍스트, `commitHash` 복원, 헤더 표시 |
-| `previousScreen` | `ScreenID \| null` | S05에서 S03/S04로 진입한 뒤 뒤로가기 목적지 보존 |
 | dependency-cruiser / 텍스트 파서 | runner(JSON) 결과 / 정적 파싱 결과 | Extension Host에서 변경 파일을 임시 디렉토리로 재구성한 뒤 언어별 의존 관계 분석 실행 |
 
 ---
@@ -103,6 +102,5 @@
 
 | 효과 | 트리거 | 설명 |
 |------|--------|------|
-| `selectedFile` 전역 상태 업데이트 | 노드 액션 버튼 클릭 | 선택된 파일 설정 후 화면 전환 |
-| S-03 화면 전환 | [코드 보기] 클릭 | `currentScreen = "S03"`, `previousScreen = "S05"` |
-| S-05 화면 복귀 | S03 뒤로가기 | `currentScreen = previousScreen`, 이후 `previousScreen = null` |
+| `selectedFile` 전역 상태 업데이트 | 노드 액션 버튼 클릭 | 선택된 파일 설정 후 패널 전환 |
+| S02 `code` 패널 활성화 | [코드 보기] 클릭 | `activeWorkspacePanel = "code"` |

@@ -65,7 +65,7 @@
 
 ## Related Screens
 
-- [S03_CodeViewerScreen](../../screens/S03_code_viewer/blueprint.md)
+- [S02_WorkspaceScreen](../../screens/S02_history_view/blueprint.md) — 본문 `code` 패널로 통합
 
 ---
 

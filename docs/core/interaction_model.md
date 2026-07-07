@@ -24,7 +24,7 @@
 ### RouteTransition
 
 - **트리거:** `currentScreen` 변경
-- **적용 대상:** S01~S06, S08 전체 화면 전환
+- **적용 대상:** S01, S02, S06, S07 전체 화면 전환
 - **결과:** incoming 화면과 outgoing 화면을 200ms 동안 동시에 렌더링하고, `transitionDirection`에 따라 슬라이드 애니메이션 적용
 - **규칙:** forward 전환은 새 화면이 오른쪽에서 들어오고 이전 화면이 왼쪽으로 나간다. back 전환은 새 화면이 왼쪽에서 들어오고 이전 화면이 오른쪽으로 나간다.
 - **접근성:** `prefers-reduced-motion: reduce` 환경에서는 전환 animation을 제거한다.
@@ -67,7 +67,7 @@
 ### Retry
 
 - **트리거:** `ErrorState` 내 [재시도] 버튼 클릭
-- **적용 대상:** AI 정리 실패 시 (`S04_AISummaryViewerScreen`)
+- **적용 대상:** AI 정리 실패 시 (S02 `aiSummary` 패널)
 - **결과:** 동일한 입력으로 AI 정리를 재시도
 - **규칙:** 재시도 클릭 즉시 `LoadingState`로 전환.
 

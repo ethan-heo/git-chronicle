@@ -36,7 +36,7 @@
 
 - 2개 이상의 Feature 또는 Screen에서 동일한 UI 패턴이 반복되면 `shared/components/`로 이동한다.
 - `EmptyState`, `LoadingState`, `ErrorState`, `Toast`, `TopHeader`, `BackButton`, `PrimaryButton`은 항상 shared 컴포넌트를 사용한다.
-- FileActionButtons (`FileStatusBadge`, `SavedBadge` 포함)는 F02(FileTree)와 F04(Canvas 노드) 모두에서 사용하므로 shared 컴포넌트로 관리한다.
+- FileActionButtons (`FileStatusBadge` 포함)는 F02(FileTree)와 F04(Canvas 노드) 모두에서 사용하므로 shared 컴포넌트로 관리한다.
 
 ### Business Logic Separation (비즈니스 로직 분리)
 
@@ -159,7 +159,7 @@ interface AISettingsState {
 ### Zustand 상태 관리 (Webview 전용)
 
 - Webview 내 전역 상태는 Zustand 단일 스토어(`useAppStore`, 구현 파일: `src/webview/store/appStore.ts`)에서 관리한다.
-- Extension에서 받은 메시지는 현재 `App.tsx`(AI 설정 초기화, F08 전역 배치 상태), `features/F01/S01_CommitListScreen.tsx`, `features/F02/S02_HistoryViewScreen.tsx`, `features/F03/S03_CodeViewerScreen.tsx`, `features/F04/S05_DependencyCanvasScreen.tsx`, `features/F05/S04_AISummaryViewerScreen.tsx`, `features/F06/S06_SettingsScreen.tsx`, `features/F10/S08_IntraFileSymbolDependencyCanvasScreen.tsx`에서 구독하여 화면 또는 Zustand 상태를 업데이트한다. 메시지 구독 로직이 더 확장되면 `shared/hooks/useVSCodeMessage.ts`로 분리한다.
+- Extension에서 받은 메시지는 현재 `App.tsx`(AI 설정 초기화, 심볼 그래프 로드), `features/F01/S01_CommitListScreen.tsx`(커밋 목록), `features/F02/S02_WorkspaceScreen.tsx`(변경 파일, 의존성 캔버스), `features/F03/useFileDiff.ts`(코드 diff), `features/F05b/useAISummary.ts`(AI 요약), `features/F06/S06_SettingsScreen.tsx`(AI 설정), `features/F11/S07_NoteScreen.tsx`(노트)에서 구독하여 화면 또는 Zustand 상태를 업데이트한다.
 - 화면 전환(`currentScreen`)도 Zustand 상태로 관리한다. `react-router`는 사용하지 않는다.
 
 ### Browser Dev Fallback

@@ -17,7 +17,7 @@
 
 ```typescript
 // 올바른 예
-type ScreenID = 'S01' | 'S02' | 'S03' | 'S04' | 'S05' | 'S06';
+type ScreenID = 'S01' | 'S02' | 'S06' | 'S07';
 type FileStatus = 'A' | 'M' | 'D' | 'R';
 
 // 금지

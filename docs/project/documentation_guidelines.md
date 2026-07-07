@@ -71,13 +71,13 @@ AI 디자인/구현 생성용 프롬프트는 영구 문서로 두지 않는다.
 
 ## Screens 문서 구성
 
-화면 문서는 단일 Feature로 구성된 화면(S01·S02·S03·S05·S08)의 경우 진입 조건·화면 상태·내비게이션 흐름처럼 해당 Feature의 `blueprint.md`에는 없는 화면 단위 정보를 담고, 여러 Feature가 조합되는 화면(S04·S06)은 그 조합 관계 자체를 문서화한다.
+화면 문서는 단일 Feature로 구성된 화면(S01·S07)의 경우 진입 조건·화면 상태·내비게이션 흐름처럼 해당 Feature의 `blueprint.md`에는 없는 화면 단위 정보를 담고, 여러 Feature가 조합되는 화면(S02·S06)은 그 조합 관계 자체를 문서화한다.
 
 ---
 
 ## 컴포넌트 문서화 규칙
 
-여러 Feature가 공유하는 컴포넌트(Props·States·구현 파일)는 [core/global_components.md](../core/global_components.md) 하나에만 문서화한다: `PrimaryButton`, `BackButton`, `EmptyState`, `LoadingState`, `ErrorState`, `Toast`, `FileActionButtons`, `FileStatusBadge`, `SavedBadge`, `TopHeader`, `ResizableSplitPane`.
+여러 Feature가 공유하는 컴포넌트(Props·States·구현 파일)는 [core/global_components.md](../core/global_components.md) 하나에만 문서화한다: `PrimaryButton`, `BackButton`, `EmptyState`, `LoadingState`, `ErrorState`, `Toast`, `FileActionButtons`, `FileStatusBadge`, `TopHeader`, `ResizableSplitPane`.
 
 Feature 전용 컴포넌트(예: `CommitListItem`, `DiffViewer`, `DependencyGraph`, `SymbolGraph` 등)는 별도 문서를 두지 않고 해당 기능 `blueprint.md`의 **Component Definitions** 섹션이 유일한 문서다.
 

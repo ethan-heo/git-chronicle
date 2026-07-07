@@ -31,7 +31,8 @@ S01_CommitListScreen에서 커밋 항목 클릭 시 진입. `selectedCommit` 설
 
 ## Child Screens
 
-- 없음. 기존 S03/S04/S05/S08 콘텐츠는 모두 S02 본문 패널로 통합되었다.
+- [S07_NoteScreen](../S07_note/blueprint.md) — 본문 `WorkspaceHeading`의 노트 아이콘 클릭 시 진입
+- 그 외 없음. 기존 S03/S04/S05/S08 콘텐츠는 모두 S02 본문 패널로 통합되었다.
 
 ---
 
@@ -51,6 +52,7 @@ S02_WorkspaceScreen
 ├─ SidebarResizeHandle
 └─ Main
    ├─ WorkspaceHeading
+   │  ├─ NoteIcon → S07
    │  └─ SettingsIcon (⚙) → S06
    └─ ContentPanel
       ├─ code → DiffViewer
@@ -96,4 +98,5 @@ S02_WorkspaceScreen
 - `SidebarResizeHandle` 드래그로 사이드바 폭을 조절할 수 있고, 끝까지 밀면 완전히 접힌다.
 - 접힌 상태에서도 `SidebarResizeHandle`은 얇은 타겟으로 남아 있으며, 이를 오른쪽으로 드래그해 다시 펼칠 수 있다.
 - 본문 `WorkspaceHeading`의 설정 아이콘은 S06으로 이동하고, S06 뒤로가기는 다시 S02로 복귀한다.
+- 본문 `WorkspaceHeading`의 노트 아이콘은 S07로 이동하고, S07 뒤로가기는 다시 S02로 복귀한다.
 - 다른 커밋을 다시 선택하면 `activeWorkspacePanel`은 항상 `'none'`으로 초기화된다.

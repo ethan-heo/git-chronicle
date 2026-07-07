@@ -173,7 +173,7 @@ interface FileStatusBadgeProps {
 - `aria-label="추가됨"` / `"수정됨"` / `"삭제됨"` / `"이름변경됨"`
 
 #### Reusability
-**재사용 가능.** FileTreeNode(S02)와 FileNode(S05 캔버스) 모두에서 사용. → [core/global_components.md](../../core/global_components.md#filestatusbadge)
+**재사용 가능.** FileTreeNode(F02)와 FileNode(F04 캔버스) 모두에서 사용. → [core/global_components.md](../../core/global_components.md#filestatusbadge)
 
 ---
 
@@ -234,15 +234,14 @@ interface FileStatusBadgeProps {
 
 ## Responsive Rules
 
-- 현재 구현은 `CommitActionBar` 텍스트 버튼을 유지한다.
-- 좁은 패널에서 버튼 레이블을 아이콘만 표시하는 개선은 후속 UI polish 항목으로 남긴다.
+- 현재 구현은 사이드바 헤더의 `AISummaryToggleButton` / `FileCanvasToggleButton` 아이콘 버튼을 유지한다.
+- 좁은 사이드바 폭에서의 추가 개선은 후속 UI polish 항목으로 남긴다.
 
 ---
 
 ## Reusable Components
 
 - [`FileActionButtons`](../../core/global_components.md#fileactionbuttons)
-- [`SavedBadge`](../../core/global_components.md#savedbadge) — `CommitActionBar`의 [커밋 AI 정리] 버튼 옆에서 사용
 - [`EmptyState`](../../core/global_components.md#emptystate)
 - [`LoadingState`](../../core/global_components.md#loadingstate)
 - [`ErrorState`](../../core/global_components.md#errorstate)

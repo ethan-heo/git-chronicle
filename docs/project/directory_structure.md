@@ -59,6 +59,7 @@ src/extension/
 │   - JS/TS는 TypeScript Compiler API, Python/Go는 정규식 파서 사용
 ├── aiService.ts                      # child_process.spawn 기반 AI CLI 스트리밍 실행
 │   - streamAISummary(options)        # stdout chunk 전달, 120초 타임아웃, 취소 함수 반환
+├── depcruiser-runner.mjs             # dependency-cruiser API를 별도 Node 프로세스로 실행하는 러너 (dist로 복사되어 빌드 산출물에서 실행)
 ├── aiTypes.ts                        # AIProviderName 타입 ('claude' | 'gemini' | 'codex')
 ├── aiProviderService.ts              # AI 프로바이더/모델 선택 상태(AISettingsState) 관리
 │   - registerAIProvider / setActiveAIProvider / setAIModel / setSavePath
@@ -91,7 +92,7 @@ src/webview/
 │       - isVSCodeRuntime()
 ├── features/
 │   ├── F01/
-│   │   ├── S01_CommitListScreen.tsx  # S01 화면 조합 컴포넌트
+│   │   ├── S01_CommitListScreen.tsx  # S01 화면 조합, 커밋 목록 메시지 구독
 │   │   ├── CommitFilterPanel.tsx     # 날짜/작성자/키워드/정렬 필터 UI
 │   │   ├── DateRangeFilter.tsx       # 시작일/종료일 입력
 │   │   ├── AuthorDropdown.tsx        # 작성자 선택
@@ -101,24 +102,27 @@ src/webview/
 │   │   ├── CommitListItem.tsx        # 커밋 행
 │   │   ├── InfiniteScrollTrigger.tsx # IntersectionObserver 추가 로드 트리거
 │   │   └── index.ts                  # F01 barrel export
-│   ├── F02/
-│   │   ├── S02_HistoryViewScreen.tsx # S02 화면 조합, 변경 파일 메시지 구독
-│   │   ├── CommitActionBar.tsx       # 커밋 단위 액션 버튼
+│   ├── F02/                          # S02 워크스페이스 (사이드바 + 본문 패널 전환)
+│   │   ├── S02_WorkspaceScreen.tsx   # S02 화면 조합, 변경 파일/의존성 메시지 구독
+│   │   ├── WorkspaceHeading.tsx      # 본문 상단 헤더 (노트/설정 아이콘)
+│   │   ├── AISummaryToggleButton.tsx # 사이드바 헤더 [커밋 AI 정리] 토글
+│   │   ├── FileCanvasToggleButton.tsx # 사이드바 헤더 [캔버스 보기] 토글
 │   │   ├── FileTree.tsx              # 변경 파일 트리 컨테이너
 │   │   ├── DirectoryNode.tsx         # 디렉토리 노드 (재귀 렌더링)
-│   │   ├── FileTreeNode.tsx          # 파일 노드 (상태/저장됨/액션)
+│   │   ├── FileTreeNode.tsx          # 파일 노드 (상태 뱃지/액션)
 │   │   ├── tree.ts                   # ChangedFile[] → 디렉토리 트리 변환
 │   │   └── index.ts                  # F02 barrel export
-│   ├── F03/
-│   │   ├── S03_CodeViewerScreen.tsx  # S03 화면 조합, diff 메시지 구독
+│   ├── F03/                          # 코드 뷰어 (S02 본문 code 패널)
 │   │   ├── DiffViewer.tsx            # 상태 분기 + diff list 컨테이너
 │   │   ├── DiffLine.tsx              # old/new line number + +/- prefix + code token
+│   │   ├── DiffFoldRow.tsx           # 접힌 unchanged 구간 펼치기 행
+│   │   ├── foldDiffLines.ts          # unchanged 구간 접기 계산
 │   │   ├── parseDiff.ts              # unified diff → DiffLineData[]
 │   │   ├── highlightDiff.ts          # Shiki lazy highlighter
+│   │   ├── useFileDiff.ts            # diff 메시지 구독 + 로딩/에러 상태 훅
 │   │   ├── types.ts                  # DiffLineData, FileDiffPayload 타입
 │   │   └── index.ts                  # F03 barrel export
-│   ├── F04/
-│   │   ├── S05_DependencyCanvasScreen.tsx # S05 화면 조합, 의존성 메시지 구독
+│   ├── F04/                          # 의존성 캔버스 (S02 본문 fileCanvas 패널)
 │   │   ├── DependencyGraph.tsx       # React Flow 캔버스 루트
 │   │   ├── FileNode.tsx              # React Flow 커스텀 노드
 │   │   ├── DependencyEdge.tsx        # React Flow 커스텀 엣지
@@ -126,9 +130,9 @@ src/webview/
 │   │   ├── LegendPanel.tsx           # 캔버스 범례
 │   │   ├── graph.ts                  # ChangedFile[] + DependencyEdge[] → 그래프 데이터
 │   │   └── index.ts                  # F04 barrel export
-│   ├── F05b/
-│   │   ├── S04_AISummaryViewerScreen.tsx # S04 화면 조합, AI 요약 메시지 구독
+│   ├── F05b/                         # 커밋 단위 AI 정리 (S02 본문 aiSummary 패널)
 │   │   ├── AISummaryViewer.tsx       # 상태 분기 + 마크다운 렌더링
+│   │   ├── useAISummary.ts           # AI 요약 메시지 구독 + 생성/재생성 로직
 │   │   ├── StreamingTextRenderer.tsx # 실시간 스트리밍 텍스트 + 커서
 │   │   ├── RegenerateButton.tsx      # 저장본 재생성 아이콘 버튼
 │   │   ├── TokenLimitWarning.tsx     # 대용량 diff 경고 + 접기
@@ -138,22 +142,27 @@ src/webview/
 │   │   ├── S06_SettingsScreen.tsx    # S06 설정 화면 조합, 설정 메시지 구독
 │   │   ├── AIProviderSection.tsx     # Claude/Gemini/Codex 등록·활성화 영역
 │   │   ├── AIProviderButton.tsx      # AI CLI 등록·활성화 버튼
+│   │   ├── ModelSelectorGroup.tsx    # 요약용/Q&A용 모델 드롭다운 그룹
+│   │   ├── CLIInstallLink.tsx        # 미설치 CLI 설치 링크
 │   │   ├── SavePathSection.tsx       # F07 저장 경로 표시·선택·삭제 UI
 │   │   ├── providers.ts              # AI provider UI 메타데이터
 │   │   └── index.ts                  # F06 barrel export
-│   ├── F09/                          # AI 요약 Q&A
-│   │   ├── QAInputArea.tsx           # 요약 완료 후 질문 입력 영역
-│   └── F10/                          # 파일 내부 심볼 의존성 캔버스 (S08)
-│       ├── S08_IntraFileSymbolDependencyCanvasScreen.tsx
-│       ├── SymbolGraph.tsx           # React Flow 캔버스 컨테이너
-│       ├── SymbolNode.tsx / SymbolEdge.tsx / SymbolKindBadge.tsx
-│       ├── SymbolLegendPanel.tsx
-│       ├── SymbolCodePanel.tsx       # 우측 슬라이드 인 코드 패널
-│       ├── SymbolFileCodeViewer.tsx  # Shiki 기반 코드 뷰어
-│       ├── symbolGraphUtils.ts       # Dagre/kind 그룹 레이아웃 계산
+│   ├── F09/                          # AI 요약 Q&A (S02 본문 aiSummary 패널 하단)
+│   │   └── QAInputArea.tsx           # 요약 완료 후 질문 입력 영역
+│   ├── F10/                          # 파일 내부 심볼 의존성 캔버스 (S02 본문 symbolGraph 패널)
+│   │   ├── SymbolGraph.tsx           # React Flow 캔버스 컨테이너
+│   │   ├── SymbolNode.tsx / SymbolEdge.tsx / SymbolKindBadge.tsx
+│   │   ├── SymbolLegendPanel.tsx
+│   │   ├── SymbolCodePanel.tsx       # 우측 슬라이드 인 코드 패널
+│   │   ├── SymbolFileCodeViewer.tsx  # Shiki 기반 코드 뷰어
+│   │   ├── symbolGraphUtils.ts       # Dagre/kind 그룹 레이아웃 계산
+│   │   └── index.ts
+│   └── F11/                          # 노트 에디터 (S07)
+│       ├── S07_NoteScreen.tsx        # S07 화면 조합, 노트 메시지 구독
+│       ├── MermaidBlock.tsx          # ```mermaid 코드블록 다이어그램 렌더링
+│       ├── CopyMarkdownButton.tsx    # 마크다운 복사 버튼
+│       ├── markdown.ts               # 마크다운/Mermaid 파싱 유틸
 │       └── index.ts
-├── screens/                          # 향후 독립 Screen 컴포넌트 확장 위치
-│   └── 현재 화면 컴포넌트는 각 feature 디렉터리에서 구현
 └── shared/
     ├── components/
     │   ├── TopHeader.tsx
@@ -163,24 +172,17 @@ src/webview/
     │   ├── LoadingState.tsx
     │   ├── ErrorState.tsx
     │   ├── Toast.tsx
-    │   ├── ProgressBar.tsx
-    │   ├── Badge.tsx
-    │   ├── ActionButton.tsx
     │   ├── FileStatusBadge.tsx
-    │   ├── SavedBadge.tsx
     │   ├── FileActionButtons.tsx
+    │   ├── ResizableSplitPane.tsx    # F10 코드 패널 등에서 쓰는 좌우 분할 레이아웃
     │   └── index.ts                  # 전역 컴포넌트 barrel export
-    ├── hooks/
-    │   ├── useVSCodeMessage.ts       # Extension → Webview 메시지 구독
-    │   └── useDebounce.ts            # 300ms 디바운싱 훅
     ├── route/
     │   └── RouteSlotContext.tsx      # active/inactive 라우트 슬롯 컨텍스트
-    ├── design/
-    │   └── tokens.ts                 # legacy `--gae-*` alias의 TypeScript 참조 상수
-    └── utils/
-        ├── fileStatus.ts             # getStatusLabel(status) → 'A' | 'M' | 'D' | 'R'
-        └── formatDate.ts             # ISO 8601 → 'YYYY.MM.DD' 포매터
+    └── design/
+        └── tokens.ts                 # legacy `--gae-*` alias의 TypeScript 참조 상수
 ```
+
+> 메시지 구독·디바운스 등 훅 유틸은 각 feature 디렉터리에 colocate되어 있으며, `shared/hooks/`·`shared/utils/`와 같은 별도 공용 디렉터리는 두지 않는다.
 
 ### Webview 스타일 구조 규칙
 
@@ -194,7 +196,7 @@ src/webview/
 
 - `product/`, `project/`, `core/`: 프로젝트 전반의 고정 규칙 문서.
 - `features/F##_*/`: 기능별 `spec.md`(요구사항) + `blueprint.md`(UI/컴포넌트 계약) 2개 파일만 유지한다. AI 생성용 프롬프트나 구현 상세는 영구 문서로 두지 않고, 작업 시 계획서(Plan)로 생성 후 완료 시 spec/blueprint에 반영하고 폐기한다.
-- `screens/S##_*/blueprint.md`: 화면 단위 진입 조건·상태·내비게이션 흐름. 여러 Feature를 조합하는 화면(S04, S06)만 별도로 조합 관계를 문서화하고, 단일 Feature 화면은 해당 Feature `blueprint.md`와 함께 참고한다.
+- `screens/S##_*/blueprint.md`: 화면 단위 진입 조건·상태·내비게이션 흐름. 여러 Feature를 조합하는 화면(S02, S06)만 별도로 조합 관계를 문서화하고, 단일 Feature 화면은 해당 Feature `blueprint.md`와 함께 참고한다.
 - Feature 전용 컴포넌트는 별도 `components/*.md`를 두지 않고 해당 `blueprint.md`의 Component Definitions 섹션이 유일한 문서다. 여러 Feature가 공유하는 컴포넌트만 [core/global_components.md](../core/global_components.md)에 문서화한다.
 
 ---
@@ -206,6 +208,7 @@ tests/
 ├── unit/
 │   ├── smoke.test.ts
 │   ├── parseDiff.test.ts
+│   ├── foldDiffLines.test.ts
 │   ├── graph.test.ts
 │   ├── dependencyGraph.test.ts
 │   ├── dependencyService.test.ts
@@ -213,7 +216,13 @@ tests/
 │   ├── summaryFileService.test.ts
 │   ├── aiService.test.ts
 │   ├── aiProviderService.test.ts
-│   └── appStorePersistence.test.ts
+│   ├── appStorePersistence.test.ts
+│   ├── DependencyGraph.render.test.tsx
+│   ├── LegendPanel.test.tsx
+│   ├── S07NoteScreen.test.tsx                # F11
+│   └── markdown.test.ts                      # F11
+├── mocks/
+│   └── vscode.ts                             # vscode 모듈 목
 └── setup.ts
 ```
 

@@ -2,7 +2,7 @@
 
 ## Related Original Sections
 
-- [화면 구성 > S-04](../../product/product_overview.md#s-04)
+- [화면 구성 > S-02](../../product/product_overview.md#s-02)
 - [사용자 시나리오 > 3.5 AI 정리 뷰어](../../product/product_overview.md#feature-summary)
 - [기능 상세 > 4.1 AI 정리 > 커밋 단위](../../product/product_overview.md#feature-summary)
 - [Blueprint (UI/컴포넌트 명세)](./blueprint.md)
@@ -23,7 +23,7 @@
 
 ## User Scenarios
 
-1. [커밋 AI 정리] 버튼 클릭 시 AI 정리 화면(S-04) 활성화. 헤더에 `{커밋 메시지} > 커밋 전체 요약` 표시.
+1. [커밋 AI 정리] 클릭 시 S02 본문 `aiSummary` 패널 활성화. 헤더에 `{커밋 메시지} > 커밋 전체 요약` 표시.
 2. **기존 저장본이 있는 경우**: 저장된 마크다운 파일을 즉시 불러와 표시. 재생성 아이콘 버튼 제공.
 3. **저장본이 없는 경우**: 클릭 즉시 커밋 내 전체 파일 diff를 컨텍스트로 AI가 마크다운 형식으로 정리.
    - 정리된 내용은 설정 경로에 `전체_파일_정리.md` 파일명으로 자동 저장.
@@ -159,7 +159,7 @@ Commit message: {commitMessage}
 
 ## Related Screens
 
-- [S04_AISummaryViewerScreen](../../screens/S05_ai_summary_viewer/blueprint.md)
+- [S02_WorkspaceScreen](../../screens/S02_history_view/blueprint.md) — 본문 `aiSummary` 패널로 통합
 
 ---
 

@@ -3,7 +3,7 @@
 ## Related Original Sections
 
 - [F05b_AISummaryCommit](../F05b_ai_summary_commit/spec.md)
-- [S04_AISummaryViewerScreen](../../screens/S05_ai_summary_viewer/blueprint.md)
+- [S02_WorkspaceScreen](../../screens/S02_history_view/blueprint.md) — 본문 `aiSummary` 패널로 통합
 
 ---
 

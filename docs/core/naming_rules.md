@@ -105,7 +105,7 @@ docs/
     F04_dependency_canvas/
   screens/
     S01_commit_list/
-    S04_dependency_canvas/
+    S02_history_view/
 ```
 
 - Feature/Screen ID는 대문자, 이름 부분은 소문자 snake_case.
