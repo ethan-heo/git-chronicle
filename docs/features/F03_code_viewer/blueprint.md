@@ -29,6 +29,7 @@
 
 - `DiffViewer`
 - `DiffLine`
+- `DiffFoldRow`
 - `BinaryFileNotice`
 - `DeletedFileNotice`
 
@@ -60,6 +61,7 @@ interface DiffViewerProps {
 - 코드 수정 불가 (읽기 전용)
 - diff 라인 마우스 드래그로 범위 선택
 - 드래그 종료 지점 근처에 [복사] 아이콘 오버레이 표시, 클릭 시 선택 범위를 마크다운으로 복사
+- 변경 없는 긴 컨텍스트 구간은 기본 접힘 상태로 시작하고, 접힘 행 클릭으로 개별 구간을 펼칠 수 있음
 - 활성 화면에서는 메시지 리스너 등록 후 diff 요청을 전송해야 한다
 
 #### States
@@ -67,6 +69,8 @@ interface DiffViewerProps {
 - `populated`: diff 표시
 - `binary`: 이진 파일
 - `deleted`: 삭제된 파일
+- `folded`: 변경 없는 긴 컨텍스트 구간 일부가 접힌 상태
+- `expanded`: 사용자가 접힘 행을 클릭해 특정 폴드 구간이 펼쳐진 상태
 
 #### Accessibility
 - `role="region"`, `aria-label="코드 변경 내역"`, `tabIndex={0}` (포커스 가능)
@@ -99,12 +103,48 @@ interface DiffLineProps {
 없음 (표시 전용)
 
 #### States
-- `added`: `color.diff.added` 배경
-- `removed`: `color.diff.removed` 배경
+- `added`: 추가 배경색 + `+` 접두사로 구분
+- `removed`: 삭제 배경색 + `-` 접두사로 구분
 - `context`: 기본 배경
 
 #### Accessibility
 - `aria-label` 불필요 (코드 영역은 스크린리더 전체 읽기 대상에서 제외 권장)
+
+#### Reusability
+F03_CodeViewer 전용. DiffViewer 내에서만 사용.
+
+---
+
+### Component: DiffFoldRow
+
+#### Purpose
+변경 없는 긴 컨텍스트 구간이 접혀 있거나 펼쳐져 있음을 표시하고, 해당 구간의 토글 진입점을 제공한다.
+
+#### Data
+- `hiddenCount: number`
+- `startLineLabel: string`
+- `endLineLabel: string`
+- `isExpanded: boolean`
+
+#### Props
+```typescript
+interface DiffFoldRowProps {
+  hiddenCount: number;
+  startLineLabel: string;
+  endLineLabel: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+```
+
+#### Interaction
+- 라인 정보가 표시된 접힘 행 전체를 클릭하면 숨겨진 컨텍스트 라인 표시
+
+#### States
+- `collapsed`: "⋯ N줄 숨김 (라인 A-B)" 표시
+
+#### Accessibility
+- 접힘 행 전체는 button semantics 사용
 
 #### Reusability
 F03_CodeViewer 전용. DiffViewer 내에서만 사용.
@@ -140,8 +180,8 @@ F03_CodeViewer 전용. DiffViewer 내에서만 사용.
 ## Variants
 
 ### DiffLine
-- `added`: 추가 라인 (`+` 접두사, `color.diff.added` 배경)
-- `removed`: 삭제 라인 (`-` 접두사, `color.diff.removed` 배경)
+- `added`: 추가 라인 (`+` 접두사, 추가 배경색)
+- `removed`: 삭제 라인 (`-` 접두사, 삭제 배경색)
 - `context`: 컨텍스트 라인 (변경 없는 주변 코드)
 
 ### DiffViewer
@@ -158,6 +198,7 @@ F03_CodeViewer 전용. DiffViewer 내에서만 사용.
 |---------|--------|------|
 | 뒤로가기 | `BackButton` 클릭 | S-02 복귀 |
 | 스크롤 | 스크롤 | diff 내용 탐색 |
+| 폴드 펼치기 | `DiffFoldRow` 행 클릭 | 해당 변경 없는 컨텍스트 구간을 펼쳐 실제 라인을 표시 |
 
 ---
 
@@ -169,6 +210,8 @@ F03_CodeViewer 전용. DiffViewer 내에서만 사용.
 | `binary` | 이진 파일 | `BinaryFileNotice` |
 | `deleted` | 삭제된 파일 | `DeletedFileNotice` + 삭제 전 코드 표시 |
 | `populated` | 일반 diff | `DiffViewer` |
+| `folded` | 긴 컨텍스트 구간이 있고 기본 표시 상태 | `DiffFoldRow[collapsed]` + 주변 `DiffLine` |
+| `expanded` | 사용자가 특정 폴드 구간을 펼침 | 펼쳐진 `DiffLine` |
 | `error` | 로드 실패 | `ErrorState` |
 
 개발 환경처럼 응답이 빠른 경우에도 `loading` 상태가 영구 유지되지 않도록, 메시지 수신 경로와 후처리 실패 경로를 모두 종료 상태로 연결한다.

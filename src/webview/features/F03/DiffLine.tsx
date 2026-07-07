@@ -44,7 +44,7 @@ export const DiffLine: FC<DiffLineProps> = ({ line, isSelected = false }) => {
       <span className={`text-center select-none ${prefixColorClassName}`} aria-hidden="true">
         {LINE_PREFIX[line.type]}
       </span>
-      <code className="min-w-0 px-[4px] pr-[14px] font-inherit">
+      <code className="min-w-0 rounded-none bg-transparent px-[4px] pr-[14px] font-inherit">
         {line.tokens.map((token, index) => (
           <span key={`${index}-${token.content}`} style={token.color ? { color: token.color } : undefined}>
             {token.content || ' '}

@@ -13,6 +13,26 @@ export interface DiffLineData {
   tokens: HighlightToken[];
 }
 
+export interface DiffFoldGroup {
+  id: string;
+  startIndex: number;
+  endIndex: number;
+  hiddenCount: number;
+}
+
+export interface DiffLineItem {
+  kind: 'line';
+  index: number;
+  line: DiffLineData;
+}
+
+export type DiffDisplayItem =
+  | DiffLineItem
+  | {
+      kind: 'fold';
+      group: DiffFoldGroup;
+    };
+
 export interface FileDiffPayload {
   rawDiff: string;
   isBinary: boolean;

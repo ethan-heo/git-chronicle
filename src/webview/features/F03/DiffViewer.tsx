@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { FC } from 'react';
+import type { FC, ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import { useAppStore } from '../../store/appStore';
-import { DiffLine } from './DiffLine';
-import type { DiffLineData } from './types';
 import { CopyMarkdownButton, diffRangeToMarkdown } from '../F11';
+import { DiffFoldRow } from './DiffFoldRow';
+import { DiffLine } from './DiffLine';
+import { buildDisplayItems, computeFoldGroups, CONTEXT_LINE_COUNT } from './foldDiffLines';
+import type { DiffDisplayItem, DiffLineData, DiffFoldGroup } from './types';
 
 interface DiffViewerProps {
   diffLines: DiffLineData[];
@@ -35,6 +37,13 @@ export const DiffViewer: FC<DiffViewerProps> = ({
   const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
   const [isDraggingSelection, setIsDraggingSelection] = useState(false);
   const [copyButtonPosition, setCopyButtonPosition] = useState<{ x: number; y: number } | null>(null);
+  const [expandedFoldIds, setExpandedFoldIds] = useState<Set<string>>(() => new Set());
+
+  const foldGroups = useMemo(() => computeFoldGroups(diffLines, CONTEXT_LINE_COUNT), [diffLines]);
+  const displayItems = useMemo(
+    () => buildDisplayItems(diffLines, foldGroups, expandedFoldIds),
+    [diffLines, expandedFoldIds, foldGroups],
+  );
 
   const selectedRange = useMemo(() => {
     if (selectionStart === null || selectionEnd === null) {
@@ -45,6 +54,16 @@ export const DiffViewer: FC<DiffViewerProps> = ({
       end: Math.max(selectionStart, selectionEnd),
     };
   }, [selectionEnd, selectionStart]);
+
+  useEffect(() => {
+    setExpandedFoldIds(new Set());
+    setSelectionStart(null);
+    setSelectionEnd(null);
+    setCopyButtonPosition(null);
+    pendingSelectionStartRef.current = null;
+    hasDraggedSelectionRef.current = false;
+    setIsDraggingSelection(false);
+  }, [filePath]);
 
   useEffect(() => {
     if (!isDraggingSelection) {
@@ -69,6 +88,118 @@ export const DiffViewer: FC<DiffViewerProps> = ({
     const firstChange = document.querySelector('.diff-line-added, .diff-line-removed') as HTMLElement | null;
     firstChange?.scrollIntoView({ block: 'center' });
   }, [diffLines, error, isBinaryFile, isLoading]);
+
+  const renderDiffLine = (line: DiffLineData, index: number): ReactElement => (
+    <div
+      key={`${index}-${line.type}-${line.oldLineNumber ?? 'x'}-${line.newLineNumber ?? 'x'}`}
+      onMouseDown={(event) => {
+        event.preventDefault();
+        pendingSelectionStartRef.current = index;
+        hasDraggedSelectionRef.current = false;
+        setIsDraggingSelection(true);
+        setSelectionStart(null);
+        setSelectionEnd(null);
+        setCopyButtonPosition(null);
+      }}
+      onMouseEnter={() => {
+        if (!isDraggingSelection) {
+          return;
+        }
+
+        const pendingStart = pendingSelectionStartRef.current;
+        if (pendingStart === null) {
+          return;
+        }
+
+        if (!hasDraggedSelectionRef.current) {
+          hasDraggedSelectionRef.current = true;
+          setSelectionStart(pendingStart);
+        }
+
+        setSelectionEnd(index);
+      }}
+      onMouseUp={(event) => {
+        const pendingStart = pendingSelectionStartRef.current;
+
+        if (!hasDraggedSelectionRef.current || pendingStart === null) {
+          setIsDraggingSelection(false);
+          pendingSelectionStartRef.current = null;
+          hasDraggedSelectionRef.current = false;
+          setSelectionStart(null);
+          setSelectionEnd(null);
+          setCopyButtonPosition(null);
+          return;
+        }
+
+        if (!containerRef.current) {
+          setIsDraggingSelection(false);
+          pendingSelectionStartRef.current = null;
+          hasDraggedSelectionRef.current = false;
+          return;
+        }
+
+        const rect = containerRef.current.getBoundingClientRect();
+        setIsDraggingSelection(false);
+        setSelectionEnd(index);
+        pendingSelectionStartRef.current = null;
+        hasDraggedSelectionRef.current = false;
+        setCopyButtonPosition({
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        });
+      }}
+    >
+      <DiffLine
+        line={line}
+        isSelected={Boolean(selectedRange && index >= selectedRange.start && index <= selectedRange.end)}
+      />
+    </div>
+  );
+
+  const expandFoldGroup = (groupId: string): void => {
+    setExpandedFoldIds((current) => {
+      if (current.has(groupId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.add(groupId);
+      return next;
+    });
+  };
+
+  const getFoldLineLabels = (group: DiffFoldGroup): { start: string; end: string } => {
+    const startLine = diffLines[group.startIndex];
+    const endLine = diffLines[group.endIndex];
+    const startLabel = startLine?.newLineNumber ?? startLine?.oldLineNumber ?? group.startIndex + 1;
+    const endLabel = endLine?.newLineNumber ?? endLine?.oldLineNumber ?? group.endIndex + 1;
+
+    return {
+      start: String(startLabel),
+      end: String(endLabel),
+    };
+  };
+
+  const renderDisplayItem = (item: DiffDisplayItem): ReactElement => {
+    if (item.kind === 'line') {
+      return renderDiffLine(item.line, item.index);
+    }
+
+    const labels = getFoldLineLabels(item.group);
+
+    return (
+      <div key={item.group.id}>
+        <DiffFoldRow
+          hiddenCount={item.group.hiddenCount}
+          startLineLabel={labels.start}
+          endLineLabel={labels.end}
+          onExpand={() => {
+            expandFoldGroup(item.group.id);
+          }}
+        />
+      </div>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -95,7 +226,7 @@ export const DiffViewer: FC<DiffViewerProps> = ({
   }
 
   return (
-    <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--vscode-editor-background,var(--color-surface))]">
+    <section className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--vscode-editor-background,var(--color-surface))]">
       {selectedRange && copyButtonPosition ? (
         <div
           className="absolute z-[3]"
@@ -122,88 +253,25 @@ export const DiffViewer: FC<DiffViewerProps> = ({
           setCopyButtonPosition(null);
         }}
       >
-      {isDeletedFile ? (
-        <div
-          className="sticky top-0 z-[1] border-b border-line bg-[color-mix(in_srgb,var(--color-warning)_16%,var(--color-panel))] px-3 py-2 text-sm text-text"
-          role="alert"
-        >
-          {t('diff.deleted_file')}
-        </div>
-      ) : null}
-      {diffLines.length > 0 ? (
-        <div className="min-w-max px-0 pt-1 pb-3" role="list">
-          {diffLines.map((line, index) => (
+        {isDeletedFile ? (
+          <div className="sticky top-0 z-[1]">
             <div
-              key={`${index}-${line.type}-${line.oldLineNumber ?? 'x'}-${line.newLineNumber ?? 'x'}`}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                pendingSelectionStartRef.current = index;
-                hasDraggedSelectionRef.current = false;
-                setIsDraggingSelection(true);
-                setSelectionStart(null);
-                setSelectionEnd(null);
-                setCopyButtonPosition(null);
-              }}
-              onMouseEnter={() => {
-                if (!isDraggingSelection) {
-                  return;
-                }
-
-                const pendingStart = pendingSelectionStartRef.current;
-                if (pendingStart === null) {
-                  return;
-                }
-
-                if (!hasDraggedSelectionRef.current) {
-                  hasDraggedSelectionRef.current = true;
-                  setSelectionStart(pendingStart);
-                }
-
-                setSelectionEnd(index);
-              }}
-              onMouseUp={(event) => {
-                const pendingStart = pendingSelectionStartRef.current;
-
-                if (!hasDraggedSelectionRef.current || pendingStart === null) {
-                  setIsDraggingSelection(false);
-                  pendingSelectionStartRef.current = null;
-                  hasDraggedSelectionRef.current = false;
-                  setSelectionStart(null);
-                  setSelectionEnd(null);
-                  setCopyButtonPosition(null);
-                  return;
-                }
-
-                if (!containerRef.current) {
-                  setIsDraggingSelection(false);
-                  pendingSelectionStartRef.current = null;
-                  hasDraggedSelectionRef.current = false;
-                  return;
-                }
-
-                const rect = containerRef.current.getBoundingClientRect();
-                setIsDraggingSelection(false);
-                setSelectionEnd(index);
-                pendingSelectionStartRef.current = null;
-                hasDraggedSelectionRef.current = false;
-                setCopyButtonPosition({
-                  x: event.clientX - rect.left,
-                  y: event.clientY - rect.top,
-                });
-              }}
+              className="border-b border-line bg-[color-mix(in_srgb,var(--color-warning)_16%,var(--color-panel))] px-3 py-2 text-sm text-text"
+              role="alert"
             >
-              <DiffLine
-                line={line}
-                isSelected={Boolean(selectedRange && index >= selectedRange.start && index <= selectedRange.end)}
-              />
+              {t('diff.deleted_file')}
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center bg-[var(--vscode-editor-background,var(--color-surface))] p-8">
-          <EmptyState message={t('diff.empty')} />
-        </div>
-      )}
+          </div>
+        ) : null}
+        {diffLines.length > 0 ? (
+          <div className="min-w-max px-0 pt-1 pb-3" role="list">
+            {displayItems.map((item) => renderDisplayItem(item))}
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 items-center justify-center bg-[var(--vscode-editor-background,var(--color-surface))] p-8">
+            <EmptyState message={t('diff.empty')} />
+          </div>
+        )}
       </div>
     </section>
   );
