@@ -357,7 +357,7 @@ describe('AISummaryViewer source copy', () => {
     expect(writeText).toHaveBeenCalledWith('```ts\nconst value = 1;\n```');
   });
 
-  it('extracts a mid-word selection from inside a fenced code block as markdown source text', () => {
+  it('falls back to the whole fenced code block when selecting inside rendered code text', () => {
     render(
       <AISummaryViewer
         content={CODE_BLOCK_CONTENT}
@@ -396,7 +396,7 @@ describe('AISummaryViewer source copy', () => {
     selection?.removeAllRanges();
     selection?.addRange(range);
 
-    expect(getMarkdownSliceFromSelection(markdownContainer as HTMLElement, CODE_BLOCK_CONTENT, selection)).toBe('value');
+    expect(getMarkdownSliceFromSelection(markdownContainer as HTMLElement, CODE_BLOCK_CONTENT, selection)).toBe(CODE_BLOCK_CONTENT);
   });
 
   it('includes fences when the full fenced code block is selected', () => {

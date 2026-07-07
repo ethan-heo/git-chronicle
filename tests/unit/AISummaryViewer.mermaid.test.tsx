@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { initI18n } from '../../src/webview/i18n';
 import { AISummaryViewer } from '../../src/webview/features/F05b/AISummaryViewer';
 import { getMarkdownSliceFromSelection } from '../../src/webview/features/F05b/useMarkdownSourceCopy';
+import mermaid from 'mermaid';
 
 vi.mock('mermaid', () => ({
   default: {
@@ -52,6 +53,8 @@ describe('AISummaryViewer mermaid preview', () => {
     await waitFor(() => {
       expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
     });
+
+    expect(mermaid.render).toHaveBeenCalledWith(expect.any(String), 'flowchart TD\n  A --> B');
   });
 
   it('copies the raw mermaid markdown block from the preview copy button', async () => {

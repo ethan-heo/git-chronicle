@@ -56,6 +56,10 @@ function resolveTextOffsets(content: string, child: HastNodeLike, parent: HastNo
   };
 }
 
+function isFencedCodeTextNode(parent: HastNodeLike | undefined): boolean {
+  return parent?.tagName === 'code' && parent.position != null;
+}
+
 function annotateNode(content: string, node: HastNodeLike | undefined): void {
   if (!node) {
     return;
@@ -88,6 +92,10 @@ function annotateNode(content: string, node: HastNodeLike | undefined): void {
 
     if (child.type === 'text') {
       if (node.tagName && TABLE_STRUCTURE_TAGS.has(node.tagName) && child.value?.trim() === '') {
+        continue;
+      }
+
+      if (isFencedCodeTextNode(node) && !child.position) {
         continue;
       }
 
