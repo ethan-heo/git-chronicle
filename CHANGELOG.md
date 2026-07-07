@@ -1,4 +1,10 @@
 
+## [1.1.2](https://github.com/ethan-heo/git-chronicle/compare/v1.1.1...v1.1.2) (2026-07-07)
+
+### Bug Fixes
+
+* restore workspace file tree scrolling ([9fa0144](https://github.com/ethan-heo/git-chronicle/commit/9fa0144a1bc8fb6e517ad4aa0ff7b61e03192f09))
+
 ## [1.1.1](https://github.com/ethan-heo/git-chronicle/compare/v1.1.0...v1.1.1) (2026-07-07)
 
 ### Bug Fixes
