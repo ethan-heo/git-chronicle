@@ -1,5 +1,7 @@
 # Coding Standards — GitChronicle
 
+> **요약:** TypeScript/React 네이밍, 컴포넌트·상태 관리 규칙, 에러 처리 원칙, 커밋 메시지(Conventional Commits) 규칙을 정의한다. 새 컴포넌트/함수를 작성하거나 커밋 메시지를 쓰기 전에 참고한다.
+
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 
 ---

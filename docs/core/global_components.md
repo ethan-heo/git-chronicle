@@ -1,5 +1,7 @@
 # Global Components
 
+> **요약:** 2개 이상 기능이 공유하는 전역 컴포넌트(PrimaryButton, EmptyState, Toast 등)의 Props·States·구현 파일을 정의한다. 공유 UI 패턴이 필요할 때 새로 만들지 먼저 여기서 확인한다.
+
 > GitChronicle 전체에서 재사용되는 컴포넌트를 정의한다.
 > 특정 Feature에만 속한 컴포넌트는 해당 Feature의 blueprint.md에 정의한다.
 

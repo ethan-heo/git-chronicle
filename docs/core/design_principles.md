@@ -1,5 +1,7 @@
 # Design Principles
 
+> **요약:** Information Hierarchy, Progressive Disclosure 등 UI 설계 결정의 기준이 되는 6가지 원칙을 정의한다. 새 화면·컴포넌트를 설계하거나 설계 근거를 판단할 때 참고한다.
+
 > GitChronicle의 모든 UI 설계 결정은 아래 원칙을 기준으로 판단한다.
 
 ---

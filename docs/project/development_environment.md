@@ -1,5 +1,7 @@
 # Development Environment — GitChronicle
 
+> **요약:** 런타임 환경(Extension Host/Webview), 핵심 기술 스택(React·Vite·Zustand·React Flow 등), 개발 스크립트, tsconfig 분리 전략을 정리한다. 개발 환경을 세팅하거나 빌드/실행 명령을 확인할 때 참고한다.
+
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 
 ---

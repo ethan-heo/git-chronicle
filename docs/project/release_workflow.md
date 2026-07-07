@@ -1,5 +1,7 @@
 # Release Workflow — GitChronicle
 
+> **요약:** `bumpp`/`conventional-changelog` 기반 로컬 릴리스 절차(버전 bump, CHANGELOG 생성, 커밋/태그 생성)를 정의한다. 릴리스를 수행하기 전에 참고한다.
+
 > **버전** v1.0 | **작성일** 2026-06-29 | **상태** 확정
 
 ---

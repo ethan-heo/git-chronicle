@@ -1,5 +1,7 @@
 # State Management — GitChronicle
 
+> **요약:** Zustand 단일 스토어 구조, 화면 전환·선택 시 상태 초기화 규칙, Extension Host Memento/Webview State 저장 대상을 정의한다. 상태 필드나 액션을 추가·변경할 때 참고한다.
+
 > **버전** v1.0 | **작성일** 2026-06-26 | **상태** 확정
 
 ---

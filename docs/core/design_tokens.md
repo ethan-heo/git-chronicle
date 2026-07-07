@@ -1,5 +1,7 @@
 # Design Tokens
 
+> **요약:** 색상·타이포그래피·간격·테두리·모션 등 VSCode 테마 기반 디자인 토큰 전체 목록과 Tailwind/CSS 변수 매핑을 정의한다. 하드코딩 대신 참조할 토큰을 찾을 때 확인한다.
+
 > VSCode Extension Webview는 VSCode 테마 CSS 변수를 직접 사용한다.
 > 아래 토큰은 VSCode 변수를 의미적으로 매핑한 것이며, 커스텀 색상값을 기능 코드에 하드코딩하지 않는다.
 

@@ -1,5 +1,7 @@
 # Interaction Model
 
+> **요약:** Hover/Click/Drag/Zoom/Debounce 등 전체에서 공통으로 쓰는 인터랙션 패턴과 전역 인터랙션 규칙(즉각 피드백, 에러 복구 등)을 정의한다. Feature별 인터랙션을 명세하기 전에 참고한다.
+
 > GitChronicle 전체에서 공통으로 사용하는 인터랙션 패턴을 정의한다.
 > 각 Feature의 blueprint.md에서 이 모델을 참조하여 Feature별 인터랙션을 명세한다.
 

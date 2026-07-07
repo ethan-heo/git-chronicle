@@ -1,5 +1,7 @@
 # Architecture — GitChronicle
 
+> **요약:** Extension Host/Webview 이중 런타임 구조, Feature-First 디렉토리 규칙, `postMessage` 메시지 프로토콜 전체 타입 정의를 담는다. 새 메시지 타입을 추가하거나 Extension↔Webview 통신 흐름을 확인할 때 참고한다.
+
 > **버전** v1.1 | **작성일** 2026-06-26 | **갱신** 2026-07-07 (F11 노트 메시지 프로토콜 반영) | **상태** 확정
 
 ---
