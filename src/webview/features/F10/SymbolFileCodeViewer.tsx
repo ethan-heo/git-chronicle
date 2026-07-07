@@ -131,7 +131,7 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ filePath, 
   }, [scrollRequestId, scrollToRange]);
 
   return (
-    <section className="relative flex-1 min-h-0 overflow-hidden">
+    <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
       {selectedRange && copyButtonPosition ? (
         <div
           className="absolute z-[3]"
