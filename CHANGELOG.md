@@ -1,4 +1,29 @@
 
+## [1.0.0](https://github.com/ethan-heo/git-chronicle/compare/v0.8.0...v1.0.0) (2026-07-07)
+
+### Features
+
+* include commit messages in AI summary prompts ([7bb1e01](https://github.com/ethan-heo/git-chronicle/commit/7bb1e01dce4d244831f3b1e262b3e5b1e7d483e6))
+* improve note preview rendering ([95bf4e8](https://github.com/ethan-heo/git-chronicle/commit/95bf4e836754bf5399faf6bcba571029d4ff76d8))
+* add note editor and markdown copy workflows ([005f7ef](https://github.com/ethan-heo/git-chronicle/commit/005f7ef4ff83c011f3ed0d1b4e9052cea1ca12b1))
+* refine workspace sidebar interactions ([60d0df5](https://github.com/ethan-heo/git-chronicle/commit/60d0df5cadbc7b12042d8bfc62f1f77191f5c505))
+* improve S02 sidebar interactions ([a9a2738](https://github.com/ethan-heo/git-chronicle/commit/a9a2738527e118fc9b430106ce99f0280f1ed047))
+* **webview:** redesign workspace layout ([500cc41](https://github.com/ethan-heo/git-chronicle/commit/500cc416d7a5bc01c475ad068d8dfc11c9447024))
+
+### Bug Fixes
+
+* **note:** serialize mermaid preview rendering ([7c23328](https://github.com/ethan-heo/git-chronicle/commit/7c2332898142cc8d62b0cee832b2849ae220ee93))
+* **webview:** normalize ai summary markdown preview ([d545176](https://github.com/ethan-heo/git-chronicle/commit/d5451765d4d29afb1b297606f6b34518398431d1))
+* **ai-summary:** separate commit and file summary flows ([f1d1ddc](https://github.com/ethan-heo/git-chronicle/commit/f1d1ddc0d6fb8c4d12072b17055fdc1276533037))
+* **workspace:** remove main header collapse button ([d009369](https://github.com/ethan-heo/git-chronicle/commit/d0093694b651fdd72ccf110df3a597f82113a26a))
+
+### Documentation
+
+* add plan writing guide ([f06f0a2](https://github.com/ethan-heo/git-chronicle/commit/f06f0a23bc602d8c1ff99c340b629be3284805e0))
+* clarify stale documentation cleanup rules ([c65c4b6](https://github.com/ethan-heo/git-chronicle/commit/c65c4b6f15d8a90d6ec7e5ec6e81258eb97c723d))
+* reorganize documentation guides ([581850c](https://github.com/ethan-heo/git-chronicle/commit/581850c1c5800cbb8499c3b8969a7f0a3a10afa3))
+* reorganize documentation structure ([7d5ab6a](https://github.com/ethan-heo/git-chronicle/commit/7d5ab6aaefd0e426e2e94691bfd55a0038f1f5f5))
+
 ## [0.8.0](https://github.com/ethan-heo/git-chronicle/compare/v0.7.1...v0.8.0) (2026-07-01)
 
 ### Features
