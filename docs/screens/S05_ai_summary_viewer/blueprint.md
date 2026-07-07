@@ -40,7 +40,7 @@ S04_AISummaryViewerScreen
 │   └─ SettingsIcon (⚙) → S06
 ├─ TokenLimitWarning (조건부)
 └─ AISummaryViewer (스크롤 영역)
-    ├─ RegenerateButton (저장본/저장 완료본 있을 때)
+    ├─ RegenerateButton (저장본/저장 완료본 있을 때, 재생성 아이콘)
     ├─ AI 전용 로딩 프리뷰 (설정/저장본 확인 중)
     ├─ StreamingTextRenderer (생성 중)
     ├─ [react-markdown] (완료 후)

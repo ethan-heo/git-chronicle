@@ -23,7 +23,7 @@ export const WorkspaceHeading: FC<WorkspaceHeadingProps> = ({
           {context}
         </p>
       </div>
-      {endSlot ? <div className="flex items-center gap-1">{endSlot}</div> : null}
+      {endSlot ? <div className="flex h-9 shrink-0 items-center gap-1 self-center">{endSlot}</div> : null}
     </header>
   );
 };

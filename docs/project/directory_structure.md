@@ -130,7 +130,7 @@ src/webview/
 │   │   ├── S04_AISummaryViewerScreen.tsx # S04 화면 조합, AI 요약 메시지 구독
 │   │   ├── AISummaryViewer.tsx       # 상태 분기 + 마크다운 렌더링
 │   │   ├── StreamingTextRenderer.tsx # 실시간 스트리밍 텍스트 + 커서
-│   │   ├── RegenerateButton.tsx      # 저장본 재생성 버튼
+│   │   ├── RegenerateButton.tsx      # 저장본 재생성 아이콘 버튼
 │   │   ├── TokenLimitWarning.tsx     # 대용량 diff 경고 + 접기
 │   │   ├── OverwriteConfirmDialog.tsx # 저장본 덮어쓰기 확인 모달
 │   │   └── index.ts                  # F05b barrel export

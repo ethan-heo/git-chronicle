@@ -8,7 +8,7 @@
 
 ## Purpose
 
-커밋 전체 diff를 AI CLI로 전달하여 커밋 단위 종합 요약을 스트리밍으로 생성·표시·저장한다. 저장본이 있으면 즉시 표시하고, [재생성] 기능을 제공한다.
+커밋 전체 diff를 AI CLI로 전달하여 커밋 단위 종합 요약을 스트리밍으로 생성·표시·저장한다. 저장본이 있으면 즉시 표시하고, 재생성 아이콘 버튼 기능을 제공한다.
 
 ---
 
@@ -119,7 +119,7 @@ F05b_AISummaryCommit 전용. AISummaryViewer 내에서만 사용.
 ### Component: RegenerateButton
 
 #### Purpose
-기존 저장본 덮어쓰기 재생성을 요청하는 버튼.
+기존 저장본 덮어쓰기 재생성을 요청하는 아이콘 버튼.
 
 #### Data
 - `isVisible: boolean` — 저장본이 있을 때만 표시
@@ -135,7 +135,7 @@ interface RegenerateButtonProps {
 
 #### Interaction
 - `hasSavedSummary && content !== "" && !isGenerating`일 때 노출
-- 클릭 시 `OverwriteConfirmDialog` 표시
+- 재생성 아이콘 클릭 시 `OverwriteConfirmDialog` 표시
 
 #### States
 - `default`, `disabled` (생성 중)
@@ -237,7 +237,7 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 | 인터랙션 | 트리거 | 결과 |
 |---------|--------|------|
 | 화면 진입 | S-04 진입 | 저장본 존재 시 즉시 표시, 없으면 AI 생성 시작 |
-| [재생성] | 클릭 | `OverwriteConfirmDialog` 표시 |
+| 재생성 아이콘 | 클릭 | `OverwriteConfirmDialog` 표시 |
 | [확인] | 다이얼로그 확인 | 동일 diff로 AI 재호출, 결과 덮어쓰기 |
 | [취소] | 다이얼로그 취소 | 현재 저장본 유지 |
 | [재시도] | `ErrorState` 버튼 클릭 | AI 재호출 |
