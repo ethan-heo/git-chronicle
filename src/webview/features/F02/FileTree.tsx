@@ -37,7 +37,7 @@ export const FileTree: FC<FileTreeProps> = ({
 
   if (isLoading) {
     return (
-      <section className="flex flex-1 items-center justify-center p-8 text-center">
+      <section className="flex h-full min-h-0 flex-1 items-center justify-center p-8 text-center">
         <LoadingState label={t('file_tree.loading')} size="lg" />
       </section>
     );
@@ -45,7 +45,7 @@ export const FileTree: FC<FileTreeProps> = ({
 
   if (error) {
     return (
-      <section className="flex flex-1 items-center justify-center p-8 text-center">
+      <section className="flex h-full min-h-0 flex-1 items-center justify-center p-8 text-center">
         <ErrorState message={t('file_tree.error')} onRetry={onRetry} />
       </section>
     );
@@ -53,14 +53,14 @@ export const FileTree: FC<FileTreeProps> = ({
 
   if (changedFiles.length === 0) {
     return (
-      <section className="flex flex-1 items-center justify-center p-8 text-center">
+      <section className="flex h-full min-h-0 flex-1 items-center justify-center p-8 text-center">
         <EmptyState message={t('file_tree.empty')} />
       </section>
     );
   }
 
   return (
-    <section className="min-h-0 flex-1 overflow-y-auto bg-surface" aria-label={t('file_tree.panel_aria')}>
+    <section className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-surface" aria-label={t('file_tree.panel_aria')}>
       <div className="flex items-center gap-[7px] px-2.5 pt-1.5 pb-[5px] text-[11px] text-muted">
         <span className="font-bold uppercase">{t('file_tree.panel_aria')}</span>
         <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">{changedFiles.length}</strong>
@@ -71,7 +71,7 @@ export const FileTree: FC<FileTreeProps> = ({
           {stats.R > 0 ? <span className="text-renamed">R{stats.R}</span> : null}
         </div>
       </div>
-      <div className="px-0 pt-0.5 pb-2" role="tree" aria-label={t('file_tree.tree_aria')}>
+      <div className="min-h-0 flex-1 overflow-y-auto px-0 pt-0.5 pb-2" role="tree" aria-label={t('file_tree.tree_aria')}>
         {tree.children.map((child) =>
           isDirectoryNode(child) ? (
             <DirectoryNode

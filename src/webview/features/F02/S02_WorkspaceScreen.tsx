@@ -337,7 +337,7 @@ export const S02WorkspaceScreen: FC = () => {
               />
             </div>
           </div>
-          <div className="min-h-0 flex-1 bg-surface">
+          <div className="flex min-h-0 flex-1 overflow-hidden bg-surface">
             <FileTree
               changedFiles={changedFiles}
               isLoading={isLoadingChangedFiles}
