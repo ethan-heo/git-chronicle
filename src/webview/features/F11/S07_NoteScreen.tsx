@@ -197,7 +197,7 @@ export const S07NoteScreen: FC = () => {
 
                       return <pre>{children}</pre>;
                     },
-                    code({ className, children, node, ...props }) {
+                    code({ className, children, ...props }) {
                       const match = /language-(\w+)/.exec(className ?? '');
                       const language = match?.[1];
                       const content = String(children).replace(/\n$/, '');

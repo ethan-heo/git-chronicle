@@ -1,13 +1,15 @@
-import { useEffect, useRef, type FC } from 'react';
+import { isValidElement, useEffect, useMemo, useRef, type FC, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { rehypeAnnotateSourceOffsets } from './rehypeAnnotateSourceOffsets';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState } from '../../shared/components';
-import { useAppStore } from '../../store/appStore';
 import { QAInputArea } from '../F09/QAInputArea';
 import { CopyMarkdownButton } from '../F11';
+import { MermaidBlock } from '../F11/MermaidBlock';
 import { RegenerateButton } from './RegenerateButton';
 import { StreamingTextRenderer } from './StreamingTextRenderer';
+import { useMarkdownSourceCopy } from './useMarkdownSourceCopy';
 import './AISummaryViewer.css';
 
 interface AISummaryViewerProps {
@@ -46,8 +48,89 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   onRetry,
 }) => {
   const { t } = useTranslation();
-  const pushToast = useAppStore((state) => state.pushToast);
   const summaryEndRef = useRef<HTMLDivElement | null>(null);
+  const markdownContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useMarkdownSourceCopy(markdownContainerRef, content);
+
+  const showRegenerate = hasSavedSummary && (Boolean(content) || isGenerating);
+  const showSavedPath = hasSavedSummary && Boolean(savedPath);
+  const canAskQuestion = !isGenerating && Boolean(content);
+  const markdownComponents = useMemo(() => {
+    let mermaidBlockIndex = 0;
+
+    return {
+      pre({
+        children,
+        node,
+      }: {
+        children?: ReactNode;
+        node?: { position?: { start?: { offset?: number | null }; end?: { offset?: number | null } } };
+      }) {
+        const rawMarkdown = sliceFromPosition(content, node?.position);
+
+        if (containsMermaidBlock(children) || rawMarkdown?.startsWith('```mermaid')) {
+          return <>{children}</>;
+        }
+
+        const blockStart = node?.position?.start?.offset;
+        const blockEnd = node?.position?.end?.offset;
+
+        return (
+          <div
+            className="ai-summary-code-block relative"
+            data-md-block-start={typeof blockStart === 'number' ? String(blockStart) : undefined}
+            data-md-block-end={typeof blockEnd === 'number' ? String(blockEnd) : undefined}
+          >
+            {rawMarkdown ? (
+              <CopyMarkdownButton
+                className="ai-summary-copy-button absolute top-2 right-2 z-[1]"
+                onClick={() => {
+                  void navigator.clipboard.writeText(rawMarkdown);
+                }}
+              />
+            ) : null}
+            <pre>{children}</pre>
+          </div>
+        );
+      },
+      code({ className, children, node, ...props }: { className?: string; children?: ReactNode; node?: { position?: { start?: { offset?: number | null }; end?: { offset?: number | null } } } }) {
+        const match = /language-(\w+)/.exec(className ?? '');
+        const language = match?.[1];
+        const codeContent = String(children).replace(/\n$/, '');
+
+        if (language === 'mermaid') {
+          const mermaidCacheKey = `ai-summary-mermaid-${mermaidBlockIndex}`;
+          mermaidBlockIndex += 1;
+          const rawMarkdown = sliceFromPosition(content, node?.position) ?? `\`\`\`mermaid\n${codeContent}\n\`\`\``;
+          const blockStart = node?.position?.start?.offset;
+          const blockEnd = node?.position?.end?.offset;
+
+          return (
+            <div
+              className="ai-summary-mermaid-block relative"
+              data-md-block-start={typeof blockStart === 'number' ? String(blockStart) : undefined}
+              data-md-block-end={typeof blockEnd === 'number' ? String(blockEnd) : undefined}
+            >
+              <CopyMarkdownButton
+                className="ai-summary-copy-button absolute top-2 right-2 z-[1]"
+                onClick={() => {
+                  void navigator.clipboard.writeText(rawMarkdown);
+                }}
+              />
+              <MermaidBlock cacheKey={mermaidCacheKey} code={codeContent} />
+            </div>
+          );
+        }
+
+        return (
+          <code className={className} {...props}>
+            {children}
+          </code>
+        );
+      },
+    };
+  }, [content]);
 
   useEffect(() => {
     if (qaCompletionCount > 0) {
@@ -99,9 +182,6 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
     return <ErrorState message={error} onRetry={onRetry} />;
   }
 
-  const showRegenerate = hasSavedSummary && (Boolean(content) || isGenerating);
-  const showSavedPath = hasSavedSummary && Boolean(savedPath);
-  const canAskQuestion = !isGenerating && Boolean(content);
   return (
     <section className="flex min-h-0 flex-1 flex-col" role="region" aria-label={t('ai_summary.ai_result')} aria-live={isGenerating ? 'polite' : undefined}>
       <div className="flex items-center justify-between gap-3 border-b border-line bg-panel px-6 py-2">
@@ -124,15 +204,14 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
             <StreamingTextRenderer content={content} isStreaming />
           ) : content ? (
             <>
-              <div className="group relative ai-summary-markdown">
-                <CopyMarkdownButton
-                  className="absolute top-0 right-0 z-[1] group-hover:opacity-100"
-                  onClick={() => {
-                    void navigator.clipboard.writeText(content);
-                    pushToast('마크다운을 복사했습니다', 'success');
-                  }}
-                />
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+              <div ref={markdownContainerRef} className="group relative ai-summary-markdown">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeAnnotateSourceOffsets]}
+                  components={markdownComponents}
+                >
+                  {content}
+                </ReactMarkdown>
               </div>
               <div ref={summaryEndRef} />
             </>
@@ -145,6 +224,41 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
     </section>
   );
 };
+
+function containsMermaidBlock(children: ReactNode): boolean {
+  if (Array.isArray(children)) {
+    return children.some((child) => containsMermaidBlock(child));
+  }
+
+  if (!isValidElement(children)) {
+    return false;
+  }
+
+  if (children.type === MermaidBlock) {
+    return true;
+  }
+
+  const className = (children.props as { className?: string }).className ?? '';
+  if (typeof className === 'string' && className.includes('ai-summary-mermaid-block')) {
+    return true;
+  }
+
+  return containsMermaidBlock((children.props as { children?: ReactNode }).children);
+}
+
+function sliceFromPosition(
+  content: string,
+  position?: { start?: { offset?: number | null }; end?: { offset?: number | null } },
+): string | null {
+  const start = position?.start?.offset;
+  const end = position?.end?.offset;
+
+  if (typeof start !== 'number' || typeof end !== 'number' || end < start) {
+    return null;
+  }
+
+  return content.slice(start, end);
+}
 
 function formatSourceTag(
   t: (key: string, vars?: Record<string, string | number>) => string,
