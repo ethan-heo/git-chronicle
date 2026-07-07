@@ -49,9 +49,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
 }) => {
   const { t } = useTranslation();
   const summaryEndRef = useRef<HTMLDivElement | null>(null);
-  const markdownContainerRef = useRef<HTMLDivElement | null>(null);
-
-  useMarkdownSourceCopy(markdownContainerRef, content);
+  const markdownContainerRef = useMarkdownSourceCopy(content);
 
   const showRegenerate = hasSavedSummary && (Boolean(content) || isGenerating);
   const showSavedPath = hasSavedSummary && Boolean(savedPath);
@@ -90,7 +88,12 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
                 }}
               />
             ) : null}
-            <pre>{children}</pre>
+            <pre
+              data-md-block-start={typeof blockStart === 'number' ? String(blockStart) : undefined}
+              data-md-block-end={typeof blockEnd === 'number' ? String(blockEnd) : undefined}
+            >
+              {children}
+            </pre>
           </div>
         );
       },
@@ -207,7 +210,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
               <div ref={markdownContainerRef} className="group relative ai-summary-markdown">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeAnnotateSourceOffsets]}
+                  rehypePlugins={[[rehypeAnnotateSourceOffsets, content]]}
                   components={markdownComponents}
                 >
                   {content}

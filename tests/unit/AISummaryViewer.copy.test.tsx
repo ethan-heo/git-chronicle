@@ -12,6 +12,33 @@ This keeps **raw markdown** intact.
 - second item
 `;
 
+const CODE_BLOCK_CONTENT = '```ts\nconst value = 12345;\n```';
+const TABLE_CONTENT = `| Name | Score |
+| --- | --- |
+| Alice | 10 |
+| Bob | 20 |
+`;
+
+function findTextNode(node: Node | null, text: string): Text | null {
+  if (!node) {
+    return null;
+  }
+
+  if (node.nodeType === Node.TEXT_NODE && node.textContent?.includes(text)) {
+    return node as Text;
+  }
+
+  for (const child of node.childNodes) {
+    const match = findTextNode(child, text);
+
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
 describe('AISummaryViewer source copy', () => {
   beforeEach(() => {
     initI18n('ko');
@@ -135,6 +162,82 @@ describe('AISummaryViewer source copy', () => {
     );
   });
 
+  it('preserves the first bullet marker when copying an entire list block', () => {
+    render(
+      <AISummaryViewer
+        content={SUMMARY_CONTENT}
+        error={null}
+        isLoading={false}
+        isGenerating={false}
+        isGeneratingQA={false}
+        hasSavedSummary={false}
+        hasAIProvider
+        hasSavePath
+        savedPath={null}
+        providerLabel="Codex"
+        qaCompletionCount={0}
+        onAskQuestion={() => {}}
+        onGoToSettings={() => {}}
+        onRegenerate={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+
+    const markdownContainer = document.querySelector<HTMLElement>('.ai-summary-markdown');
+    const list = document.querySelector('ul');
+
+    expect(markdownContainer).not.toBeNull();
+    expect(list).not.toBeNull();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(list as HTMLUListElement);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    expect(getMarkdownSliceFromSelection(markdownContainer as HTMLElement, SUMMARY_CONTENT, selection)).toBe(
+      '- first item\n- second item',
+    );
+  });
+
+  it('preserves markdown table syntax when copying an entire table block', () => {
+    render(
+      <AISummaryViewer
+        content={TABLE_CONTENT}
+        error={null}
+        isLoading={false}
+        isGenerating={false}
+        isGeneratingQA={false}
+        hasSavedSummary={false}
+        hasAIProvider
+        hasSavePath
+        savedPath={null}
+        providerLabel="Codex"
+        qaCompletionCount={0}
+        onAskQuestion={() => {}}
+        onGoToSettings={() => {}}
+        onRegenerate={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+
+    const markdownContainer = document.querySelector<HTMLElement>('.ai-summary-markdown');
+    const table = document.querySelector('table');
+
+    expect(markdownContainer).not.toBeNull();
+    expect(table).not.toBeNull();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(table as HTMLTableElement);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    expect(getMarkdownSliceFromSelection(markdownContainer as HTMLElement, TABLE_CONTENT, selection)).toBe(
+      '| Name | Score |\n| --- | --- |\n| Alice | 10 |\n| Bob | 20 |',
+    );
+  });
+
   it('writes markdown slices to both plain text and markdown clipboard formats', () => {
     const values = new Map<string, string>();
     const clipboardData = {
@@ -148,6 +251,70 @@ describe('AISummaryViewer source copy', () => {
     expect(values.get('text/plain')).toBe('**raw**');
     expect(values.get('text/markdown')).toBe('**raw**');
     expect(values.get('text')).toBe('**raw**');
+  });
+
+  it('keeps markdown copy interception after streaming completes with unchanged content', () => {
+    const setData = vi.fn();
+    const clipboardData = { setData } as unknown as DataTransfer;
+    const { rerender } = render(
+      <AISummaryViewer
+        content={SUMMARY_CONTENT}
+        error={null}
+        isLoading={false}
+        isGenerating
+        isGeneratingQA={false}
+        hasSavedSummary={false}
+        hasAIProvider
+        hasSavePath
+        savedPath={null}
+        providerLabel="Codex"
+        qaCompletionCount={0}
+        onAskQuestion={() => {}}
+        onGoToSettings={() => {}}
+        onRegenerate={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+
+    rerender(
+      <AISummaryViewer
+        content={SUMMARY_CONTENT}
+        error={null}
+        isLoading={false}
+        isGenerating={false}
+        isGeneratingQA={false}
+        hasSavedSummary={false}
+        hasAIProvider
+        hasSavePath
+        savedPath={null}
+        providerLabel="Codex"
+        qaCompletionCount={0}
+        onAskQuestion={() => {}}
+        onGoToSettings={() => {}}
+        onRegenerate={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+
+    const paragraph = screen.getByText(/This keeps/).closest('p');
+    expect(paragraph).not.toBeNull();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(paragraph as HTMLParagraphElement);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    const copyEvent = new Event('copy', { bubbles: true, cancelable: true }) as ClipboardEvent;
+    Object.defineProperty(copyEvent, 'clipboardData', {
+      value: clipboardData,
+    });
+
+    document.dispatchEvent(copyEvent);
+
+    expect(copyEvent.defaultPrevented).toBe(true);
+    expect(setData).toHaveBeenCalledWith('text/plain', 'This keeps **raw markdown** intact.');
+    expect(setData).toHaveBeenCalledWith('text/markdown', 'This keeps **raw markdown** intact.');
   });
 
   it('copies fenced code blocks with the copy button and keeps it hidden until hover', () => {
@@ -188,5 +355,82 @@ describe('AISummaryViewer source copy', () => {
     fireEvent.click(copyButton);
 
     expect(writeText).toHaveBeenCalledWith('```ts\nconst value = 1;\n```');
+  });
+
+  it('extracts a mid-word selection from inside a fenced code block as markdown source text', () => {
+    render(
+      <AISummaryViewer
+        content={CODE_BLOCK_CONTENT}
+        error={null}
+        isLoading={false}
+        isGenerating={false}
+        isGeneratingQA={false}
+        hasSavedSummary={false}
+        hasAIProvider
+        hasSavePath
+        savedPath={null}
+        providerLabel="Codex"
+        qaCompletionCount={0}
+        onAskQuestion={() => {}}
+        onGoToSettings={() => {}}
+        onRegenerate={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+
+    const markdownContainer = document.querySelector<HTMLElement>('.ai-summary-markdown');
+    const codeElement = document.querySelector('pre code');
+    const textNode = findTextNode(codeElement, 'const value = 12345;');
+
+    expect(markdownContainer).not.toBeNull();
+    expect(textNode?.textContent).toContain('12345');
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    const textContent = textNode?.textContent ?? '';
+    const wordStart = textContent.indexOf('value');
+    const wordEnd = wordStart + 'value'.length;
+
+    range.setStart(textNode as Text, wordStart);
+    range.setEnd(textNode as Text, wordEnd);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    expect(getMarkdownSliceFromSelection(markdownContainer as HTMLElement, CODE_BLOCK_CONTENT, selection)).toBe('value');
+  });
+
+  it('includes fences when the full fenced code block is selected', () => {
+    render(
+      <AISummaryViewer
+        content={CODE_BLOCK_CONTENT}
+        error={null}
+        isLoading={false}
+        isGenerating={false}
+        isGeneratingQA={false}
+        hasSavedSummary={false}
+        hasAIProvider
+        hasSavePath
+        savedPath={null}
+        providerLabel="Codex"
+        qaCompletionCount={0}
+        onAskQuestion={() => {}}
+        onGoToSettings={() => {}}
+        onRegenerate={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+
+    const markdownContainer = document.querySelector<HTMLElement>('.ai-summary-markdown');
+    const preElement = document.querySelector('pre');
+    expect(markdownContainer).not.toBeNull();
+    expect(preElement).not.toBeNull();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(preElement as HTMLPreElement);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    expect(getMarkdownSliceFromSelection(markdownContainer as HTMLElement, CODE_BLOCK_CONTENT, selection)).toBe(CODE_BLOCK_CONTENT);
   });
 });

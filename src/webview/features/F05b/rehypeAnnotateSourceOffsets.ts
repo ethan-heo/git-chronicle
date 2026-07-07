@@ -12,7 +12,8 @@ interface HastNodeLike {
   tagName?: string;
 }
 
-const BLOCK_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'pre', 'blockquote', 'th', 'td']);
+const BLOCK_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'pre', 'blockquote']);
+const TABLE_STRUCTURE_TAGS = new Set(['table', 'thead', 'tbody', 'tr']);
 
 function getOffsets(position?: PositionLike): { start: number; end: number } | null {
   const start = position?.start?.offset;
@@ -25,7 +26,37 @@ function getOffsets(position?: PositionLike): { start: number; end: number } | n
   return { start, end };
 }
 
-function annotateNode(node: HastNodeLike | undefined): void {
+function resolveTextOffsets(content: string, child: HastNodeLike, parent: HastNodeLike | undefined): { start: number; end: number } | null {
+  const directOffsets = getOffsets(child.position);
+
+  if (directOffsets) {
+    return directOffsets;
+  }
+
+  if (typeof child.value !== 'string' || child.value.length === 0 || !parent) {
+    return null;
+  }
+
+  const parentOffsets = getOffsets(parent.position);
+
+  if (!parentOffsets) {
+    return null;
+  }
+
+  const parentRaw = content.slice(parentOffsets.start, parentOffsets.end);
+  const localIndex = parentRaw.indexOf(child.value);
+
+  if (localIndex < 0) {
+    return null;
+  }
+
+  return {
+    start: parentOffsets.start + localIndex,
+    end: parentOffsets.start + localIndex + child.value.length,
+  };
+}
+
+function annotateNode(content: string, node: HastNodeLike | undefined): void {
   if (!node) {
     return;
   }
@@ -56,7 +87,11 @@ function annotateNode(node: HastNodeLike | undefined): void {
     }
 
     if (child.type === 'text') {
-      const offsets = getOffsets(child.position);
+      if (node.tagName && TABLE_STRUCTURE_TAGS.has(node.tagName) && child.value?.trim() === '') {
+        continue;
+      }
+
+      const offsets = resolveTextOffsets(content, child, node);
 
       if (!offsets) {
         continue;
@@ -74,12 +109,12 @@ function annotateNode(node: HastNodeLike | undefined): void {
       continue;
     }
 
-    annotateNode(child);
+    annotateNode(content, child);
   }
 }
 
-export function rehypeAnnotateSourceOffsets() {
+export function rehypeAnnotateSourceOffsets(content: string) {
   return (tree: HastNodeLike): void => {
-    annotateNode(tree);
+    annotateNode(content, tree);
   };
 }

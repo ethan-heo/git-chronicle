@@ -1,7 +1,7 @@
-import { useEffect, type RefObject } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const SOURCE_OFFSET_SELECTOR = 'span[data-md-start][data-md-end]';
-const BLOCK_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, li, pre, blockquote, th, td, .ai-summary-mermaid-block';
+const BLOCK_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, ul, ol, li, table, thead, tbody, tr, th, td, pre, blockquote, .ai-summary-mermaid-block';
 
 function isNodeWithinContainer(container: HTMLElement, node: Node): boolean {
   return container === node || container.contains(node);
@@ -146,10 +146,10 @@ export function writeMarkdownSelectionToClipboardData(clipboardData: DataTransfe
   clipboardData.setData('text', slice);
 }
 
-export function useMarkdownSourceCopy(containerRef: RefObject<HTMLElement | null>, content: string): void {
-  useEffect(() => {
-    const container = containerRef.current;
+export function useMarkdownSourceCopy(content: string): (node: HTMLElement | null) => void {
+  const [container, setContainer] = useState<HTMLElement | null>(null);
 
+  useEffect(() => {
     if (!container || !content) {
       return;
     }
@@ -169,5 +169,9 @@ export function useMarkdownSourceCopy(containerRef: RefObject<HTMLElement | null
     return () => {
       document.removeEventListener('copy', handleCopy, true);
     };
-  }, [content, containerRef]);
+  }, [container, content]);
+
+  return useCallback((node: HTMLElement | null) => {
+    setContainer(node);
+  }, []);
 }
