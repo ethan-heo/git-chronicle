@@ -20,12 +20,12 @@ export const SymbolCodePanel: FC<SymbolCodePanelProps> = ({ isOpen, filePath, fi
   return (
     <aside
       className={[
-        'symbol-code-panel flex min-h-0 min-w-0 flex-col overflow-hidden bg-panel',
+        'symbol-code-panel flex min-h-0 min-w-0 flex-col overflow-hidden bg-transparent',
         isOpen ? 'symbol-code-panel-open opacity-100 pointer-events-auto' : 'symbol-code-panel-closed opacity-0 pointer-events-none',
       ].join(' ')}
       aria-hidden={!isOpen}
     >
-      <header className="flex items-center justify-between gap-md border-b border-line px-[18px] py-[14px]">
+      <header className="flex items-center justify-between gap-md border-b border-line bg-panel px-[18px] py-[14px]">
         <div className="min-w-0">
           <div className="overflow-hidden text-sm font-bold whitespace-nowrap text-ellipsis">{filePath}</div>
           <div className="mt-1.5 text-xs text-muted">{t('symbol_graph.code_panel_title')}</div>
@@ -34,7 +34,9 @@ export const SymbolCodePanel: FC<SymbolCodePanelProps> = ({ isOpen, filePath, fi
           ×
         </button>
       </header>
-      <SymbolFileCodeViewer filePath={filePath} fileContent={fileContent} language={language} highlightRange={highlightRange} scrollToRange={scrollToRange} scrollRequestId={scrollRequestId} />
+      <div className="min-h-0 flex-1 bg-transparent">
+        <SymbolFileCodeViewer filePath={filePath} fileContent={fileContent} language={language} highlightRange={highlightRange} scrollToRange={scrollToRange} scrollRequestId={scrollRequestId} />
+      </div>
     </aside>
   );
 };
