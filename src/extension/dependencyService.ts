@@ -724,7 +724,7 @@ function resolveExistingSourceFile(candidate: string, tmpDir: string, repoPath: 
 function findTsConfigPath(repoPath: string): string | undefined {
   let currentDir = repoPath;
 
-  while (true) {
+  while (currentDir) {
     const tsConfigPath = path.join(currentDir, 'tsconfig.json');
 
     if (fs.existsSync(tsConfigPath)) {
@@ -739,6 +739,8 @@ function findTsConfigPath(repoPath: string): string | undefined {
 
     currentDir = parentDir;
   }
+
+  return undefined;
 }
 
 function readTsConfigPaths(tsConfigPath: string | undefined): TsConfigPaths | undefined {
