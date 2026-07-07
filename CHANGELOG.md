@@ -1,4 +1,10 @@
 
+## [1.1.1](https://github.com/ethan-heo/git-chronicle/compare/v1.1.0...v1.1.1) (2026-07-07)
+
+### Bug Fixes
+
+* restore F10 symbol code viewer vertical scrolling ([becf8c6](https://github.com/ethan-heo/git-chronicle/commit/becf8c69c49602f282e132ad51cbe2eae895208a))
+
 ## [1.1.0](https://github.com/ethan-heo/git-chronicle/compare/v1.0.0...v1.1.0) (2026-07-07)
 
 ### Features
