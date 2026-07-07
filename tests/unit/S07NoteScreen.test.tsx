@@ -72,6 +72,7 @@ describe('S07NoteScreen', () => {
   it('keeps the previous mermaid preview visible while a new diagram is rendering', async () => {
     let resolveRender: ((value: RenderResult) => void) | undefined;
     const renderMock = vi.mocked(mermaid.render);
+    renderMock.mockClear();
 
     renderMock.mockImplementationOnce(async (id: string, code: string): Promise<RenderResult> => ({
       diagramType: 'flowchart',
@@ -93,20 +94,23 @@ describe('S07NoteScreen', () => {
     fireEvent.change(textarea, { target: { value: '```mermaid\nflowchart TD\n  A --> B\n```' } });
 
     await waitFor(() => {
-      expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
+      expect(renderMock).toHaveBeenCalledTimes(1);
     });
+    expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
 
     fireEvent.change(textarea, { target: { value: '```mermaid\nflowchart TD\n  A --> C\n```' } });
 
     expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
     expect(screen.queryByText('Mermaid 다이어그램을 렌더링하는 중...')).not.toBeInTheDocument();
 
-    if (resolveRender) {
-      resolveRender({
-        diagramType: 'flowchart',
-        svg: '<svg data-testid="mermaid-svg" data-id="updated"><text>updated</text></svg>',
-      });
-    }
+    await waitFor(() => {
+      expect(resolveRender).toBeDefined();
+    });
+
+    resolveRender?.({
+      diagramType: 'flowchart',
+      svg: '<svg data-testid="mermaid-svg" data-id="updated"><text>updated</text></svg>',
+    });
 
     await waitFor(() => {
       expect(screen.getByText('updated')).toBeInTheDocument();

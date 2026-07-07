@@ -4,6 +4,7 @@ import mermaid from 'mermaid';
 mermaid.initialize({
   startOnLoad: false,
   securityLevel: 'loose',
+  suppressErrorRendering: true,
   theme: 'base',
   themeVariables: {
     primaryColor: '#1f6feb',
@@ -29,7 +30,14 @@ interface MermaidBlockProps {
   code: string;
 }
 
+const RENDER_DEBOUNCE_MS = 300;
+
 const renderedDiagramCache = new Map<string, string>();
+
+// mermaid's parser/renderer is not reentrant; concurrent render() calls race on
+// shared DOM sandbox elements, so all renders across every MermaidBlock instance
+// are chained through a single queue.
+let renderQueue: Promise<void> = Promise.resolve();
 
 export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
   const [svgMarkup, setSvgMarkup] = useState<string | null>(() => renderedDiagramCache.get(cacheKey) ?? null);
@@ -60,10 +68,13 @@ export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
       }
     };
 
-    void renderDiagram();
+    const timer = window.setTimeout(() => {
+      renderQueue = renderQueue.then(renderDiagram);
+    }, RENDER_DEBOUNCE_MS);
 
     return () => {
       isDisposed = true;
+      window.clearTimeout(timer);
     };
   }, [cacheKey, code, diagramId]);
 
