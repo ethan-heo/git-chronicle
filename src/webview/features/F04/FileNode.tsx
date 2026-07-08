@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import type { FC } from 'react';
+import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileStatusBadge } from '../../shared/components';
 import { getSourceHandleId, getTargetHandleId, type FileNodeType } from './graph';
@@ -12,7 +12,7 @@ const handlePositions = [
   { face: 'left', position: Position.Left },
 ] as const;
 
-export const FileNode: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
+const FileNodeComponent: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
   const { t } = useTranslation();
   const title = data.canAnalyze ? `${data.directory}${data.label}` : 'JS/TS 외 파일은 노드로만 표시됩니다.';
 
@@ -79,3 +79,5 @@ export const FileNode: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
     </div>
   );
 };
+
+export const FileNode = memo(FileNodeComponent);

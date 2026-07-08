@@ -85,7 +85,23 @@ export const MyComponent: React.FC<MyComponentProps> = ({ value, onChange }) => 
 - 화면 조합 컴포넌트(`S##_*Screen.tsx`)가 Zustand selector를 15개 이상 직접 구독하면, 그 컴포넌트가 오케스트레이션하는 각 Feature 패널에 필요한 상태를 각 Feature의 커스텀 훅(`useXxx()`)으로 옮기고, 화면 컴포넌트는 "어떤 패널을 보여줄지"만 결정한다.
 - 화면 조합 컴포넌트가 2개 이상의 커스텀 훅에서 총 10개 이상의 필드를 구조 분해하면, 훅의 반환값을 직접 펼쳐 쓰지 않고 해당 패널 컴포넌트에 훅의 반환 객체를 그대로 전달하거나, 패널 내부에서 같은 훅을 다시 호출한다.
 - 화면 조합 컴포넌트는 "데이터 페칭 트리거 + 레이아웃 배치 + 패널 전환"만 담당하고, 개별 패널의 렌더링 세부사항(빈 상태/에러 상태 분기 등)은 각 Feature 컴포넌트(`DiffViewer`, `DependencyGraph`, `SymbolGraph` 등)에 위임한다 — 화면 컴포넌트에서 패널 내부 조건 분기가 발견되면 해당 패널 컴포넌트로 이동한다.
-- 위 기준은 새로 작성하는 코드에 적용하는 기준이며, 이미 기준을 넘긴 기존 화면 컴포넌트에 대한 소급 리팩토링은 별도 계획서에서 다룬다. `S02_WorkspaceScreen.tsx`는 별도 계획서로 이미 소급 분해를 완료했다(38개 selector → 10개, 2개 훅 22개 필드 구조분해 → 0개. F04/F10에 신규 데이터 훅(`useDependencyCanvas`/`useSymbolGraph`)과 F02/F03/F04/F05b/F10 각각의 패널 컴포넌트를 추가).
+- 위 기준은 새로 작성하는 코드에 적용하는 기준이며, 이미 기준을 넘긴 기존 화면 컴포넌트에 대한 소급 리팩토링은 별도 계획서에서 다룬다. `S02_WorkspaceScreen.tsx`는 별도 계획서로 이미 소급 분해를 완료했다(38개 selector → 10개, 2개 훅 22개 필드 구조분해 → 0개. F04/F10에 신규 데이터 훅(`useDependencyCanvas`/`useSymbolGraph`)과 F02/F03/F04/F05b/F10 각각의 패널 컴포넌트를 추가). `S01_CommitListScreen.tsx`도 동일한 소급 분해를 완료했다(20개 selector → 9개, 커밋 리스트 도메인을 `useCommitList()` 훅으로 이관).
+
+### 렌더링 안티패턴 방지 기준
+
+- **Selector 개별화**: `useAppStore()`를 인자 없이 호출해 스토어 전체 또는 여러 필드를 구조분해하지 않는다. 필드마다 `useAppStore((state) => state.field)` 형태로 개별 selector를 작성한다(이 프로젝트는 shallow 비교 유틸을 쓰지 않는다 — 각 selector가 항상 단일 값을 반환하도록 유지한다). 전체 구독은 무관한 store 변경에도 컴포넌트 전체를 리렌더시킨다. 구독 대상이 15개를 넘으면 위 "God 컴포넌트 방지 기준"에 따라 Feature 커스텀 훅으로 이관한다.
+- **자식에 전달하는 콜백 prop 안정화**: 자식 컴포넌트가 전달받은 콜백을 `useEffect`/`useCallback`의 의존성 배열에 사용한다면(디바운스, 구독 재설정 등), 인라인 화살표 함수를 그대로 넘기지 않고 `useCallback`으로 감싼다. 콜백이 참조하는 값(예: Zustand 액션)이 이미 안정적이면 의존성 배열도 안정적으로 유지된다. 예: `CommitFilterPanel.tsx`의 `handleKeywordChange`/`handleExcludeKeywordChange` — 인라인 함수였다면 `KeywordSearchInput`의 debounce effect가 매 렌더 재실행되어 검색 지연/누락으로 이어질 수 있었다.
+- **prop 변경 시 로컬 state 초기화는 effect 대신 렌더 중 비교로 처리한다**: `useEffect(() => setState(초기값), [dep])` 패턴은 아래처럼 이전 값과 비교해 렌더 중 바로 `setState`를 호출하는 패턴으로 대체한다.
+  ```tsx
+  const [prevDep, setPrevDep] = useState(dep);
+  if (prevDep !== dep) {
+    setPrevDep(dep);
+    setState(초기값);
+  }
+  ```
+  이 패턴은 effect 기반 리셋에서 발생하는 "리셋 전 한 프레임 동안 이전 값이 그대로 보이는" 깜빡임을 없앤다(effect는 paint 이후 스케줄링되지만, 렌더 중 비교는 같은 렌더 패스에서 즉시 처리된다). 커스텀 훅 내부에서도 동일하게 적용한다 — 훅도 컴포넌트와 동일한 렌더 타이밍을 따른다. 실제 적용 예: `S02_WorkspaceScreen.tsx`의 `activeAIFilePath`(커밋 전환 시 리셋), `useAISummary.ts`의 `qaMessages`/`qaCompletionCount`(커밋·파일 전환 시 리셋, 두 dep을 합성 키로 묶어 비교).
+- **xyflow(`useNodesState`/`useEdgesState`) 계산/동기화 원칙**: 원본 그래프 데이터(`buildGraphData` 등)는 반드시 별도 `useMemo`로 계산한다. 그 결과를 hover/선택 상태에 따라 하이라이트·dim 필드로 가공해 `setEdges`/`setNodes`에 반영하는 effect는, 그 가공이 "이미 useMemo로 계산된 데이터를 얇게 재구성"하는 수준이라면 계산과 동기화를 effect 안에 함께 두는 것을 허용한다 — 강제로 분리해도 의존성 배열이 같아 재실행 빈도가 줄지 않기 때문이다(`DependencyGraph.tsx`/`SymbolGraph.tsx`의 하이라이트 effect가 이 예외에 해당한다). 단, 이 effect가 아직 memo화되지 않은 새로운 원본 데이터를 계산하기 시작하면(예: 원시 API 응답을 여기서 처음 변환) 그 계산을 다시 `useMemo`로 분리한다.
+- **반복 렌더되는 leaf 컴포넌트는 `React.memo`로 감싼다**: 리스트 아이템(`CommitListItem`), xyflow 커스텀 노드(`FileNode`, `SymbolNode`)처럼 형제가 여러 개 동시에 렌더되는 컴포넌트는 기본 `memo()`를 적용한다. 단, `memo()`를 적용하기 전에 해당 컴포넌트에 전달되는 모든 prop(특히 객체/함수)이 값이 바뀌지 않는 한 참조도 유지되는지 먼저 확인한다 — 상위에서 매번 새 객체를 만들어 넘기면(예: 하이라이트 effect가 매 렌더 새 `data` 객체를 생성하는 `DependencyEdge`/`SymbolEdge`) 기본 얕은 비교로는 효과가 없으므로, `memo(Component, areEqual)` 형태로 실제 렌더 결과에 영향을 주는 필드만 값 비교하는 커스텀 비교 함수를 함께 작성한다. xyflow 커스텀 노드/엣지에 memo를 적용할 때는 `nodeTypes`/`edgeTypes` 객체 자체도 컴포넌트 모듈 스코프 상수로 선언해 매 렌더 재생성되지 않도록 한다(그렇지 않으면 memo 여부와 무관하게 xyflow가 매번 새 컴포넌트 타입으로 인식한다).
 
 ---
 

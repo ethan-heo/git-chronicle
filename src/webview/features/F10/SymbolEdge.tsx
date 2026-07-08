@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps, type Position } from '@xyflow/react';
-import type { CSSProperties, FC } from 'react';
+import { memo, type CSSProperties, type FC } from 'react';
 import type { SymbolDependencyKind } from '../../types/commit';
 import type { SymbolEdgeType } from './symbolGraphUtils';
 
@@ -8,7 +8,7 @@ const TRIANGLE_HALF_WIDTH = 7;
 const OPEN_ARROW_LENGTH = 11;
 const OPEN_ARROW_HALF_WIDTH = 5;
 
-export const SymbolEdge: FC<EdgeProps<SymbolEdgeType>> = ({
+const SymbolEdgeComponent: FC<EdgeProps<SymbolEdgeType>> = ({
   id,
   sourceX,
   sourceY,
@@ -55,6 +55,25 @@ export const SymbolEdge: FC<EdgeProps<SymbolEdgeType>> = ({
     </>
   );
 };
+
+function arePropsEqual(
+  prev: EdgeProps<SymbolEdgeType>,
+  next: EdgeProps<SymbolEdgeType>,
+): boolean {
+  return (
+    prev.sourceX === next.sourceX &&
+    prev.sourceY === next.sourceY &&
+    prev.targetX === next.targetX &&
+    prev.targetY === next.targetY &&
+    prev.sourcePosition === next.sourcePosition &&
+    prev.targetPosition === next.targetPosition &&
+    (prev.data?.kind ?? 'uses') === (next.data?.kind ?? 'uses') &&
+    Boolean(prev.data?.highlighted) === Boolean(next.data?.highlighted) &&
+    Boolean(prev.data?.dimmed) === Boolean(next.data?.dimmed)
+  );
+}
+
+export const SymbolEdge = memo(SymbolEdgeComponent, arePropsEqual);
 
 function getEdgeStyle(kind: SymbolDependencyKind, stroke: string, highlighted: boolean): CSSProperties {
   const base: CSSProperties = {

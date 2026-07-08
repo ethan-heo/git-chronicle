@@ -1,8 +1,8 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react';
-import type { FC } from 'react';
+import { memo, type FC } from 'react';
 import type { DependencyEdgeType } from './graph';
 
-export const DependencyEdge: FC<EdgeProps<DependencyEdgeType>> = ({
+const DependencyEdgeComponent: FC<EdgeProps<DependencyEdgeType>> = ({
   id,
   sourceX,
   sourceY,
@@ -62,3 +62,23 @@ export const DependencyEdge: FC<EdgeProps<DependencyEdgeType>> = ({
     </>
   );
 };
+
+function arePropsEqual(
+  prev: EdgeProps<DependencyEdgeType>,
+  next: EdgeProps<DependencyEdgeType>,
+): boolean {
+  return (
+    prev.sourceX === next.sourceX &&
+    prev.sourceY === next.sourceY &&
+    prev.targetX === next.targetX &&
+    prev.targetY === next.targetY &&
+    prev.sourcePosition === next.sourcePosition &&
+    prev.targetPosition === next.targetPosition &&
+    prev.markerEnd === next.markerEnd &&
+    (prev.data?.kind ?? 'import') === (next.data?.kind ?? 'import') &&
+    Boolean(prev.data?.highlighted) === Boolean(next.data?.highlighted) &&
+    Boolean(prev.data?.dimmed) === Boolean(next.data?.dimmed)
+  );
+}
+
+export const DependencyEdge = memo(DependencyEdgeComponent, arePropsEqual);

@@ -110,6 +110,14 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   const [hasLoadedSettings, setHasLoadedSettings] = useState(!isVSCodeRuntime());
   const [qaMessages, setQAMessages] = useState<QAMessage[]>([]);
   const [qaCompletionCount, setQACompletionCount] = useState(0);
+  const qaResetKey = `${selectedCommit?.hash ?? ''}::${targetFile?.path ?? ''}`;
+  const [prevQAResetKey, setPrevQAResetKey] = useState(qaResetKey);
+
+  if (prevQAResetKey !== qaResetKey) {
+    setPrevQAResetKey(qaResetKey);
+    setQAMessages([]);
+    setQACompletionCount(0);
+  }
 
   const canStartSummary = Boolean(selectedCommit && activeAIProvider && savePath);
   const summaryScope = targetFile ? 'file' : 'commit';
@@ -306,11 +314,6 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, [appendAISummaryChunk, completeAIQA, completeAISummary, failAIQA, failAISummary, hasCurrentSavedSummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration, summaryScope]);
-
-  useEffect(() => {
-    setQAMessages([]);
-    setQACompletionCount(0);
-  }, [selectedCommit?.hash, targetFile?.path]);
 
   useEffect(() => {
     if (!isActive || !hasLoadedSettings || !canStartSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) return;

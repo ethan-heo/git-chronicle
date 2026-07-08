@@ -1,4 +1,4 @@
-import type { KeyboardEvent, FC } from 'react';
+import { memo, type KeyboardEvent, type FC } from 'react';
 import type { Commit } from '../../types/commit';
 import { useAppStore } from '../../store/appStore';
 import { CopyMarkdownButton } from '../F11';
@@ -9,7 +9,7 @@ interface CommitListItemProps {
   onClick: (commit: Commit) => void;
 }
 
-export const CommitListItem: FC<CommitListItemProps> = ({ commit, onClick }) => {
+const CommitListItemComponent: FC<CommitListItemProps> = ({ commit, onClick }) => {
   const pushToast = useAppStore((state) => state.pushToast);
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -47,6 +47,8 @@ export const CommitListItem: FC<CommitListItemProps> = ({ commit, onClick }) => 
     </div>
   );
 };
+
+export const CommitListItem = memo(CommitListItemComponent);
 
 function formatDate(date: string): string {
   const parsedDate = new Date(date);

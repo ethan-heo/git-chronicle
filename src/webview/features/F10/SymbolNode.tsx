@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import type { CSSProperties, FC, ReactNode } from 'react';
+import { memo, type CSSProperties, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SymbolKindBadge } from './SymbolKindBadge';
 import type { SymbolNodeType } from './symbolGraphUtils';
@@ -12,7 +12,7 @@ const handlePositions = [
   { face: 'left', position: Position.Left },
 ] as const;
 
-export const SymbolNode: FC<NodeProps<SymbolNodeType>> = ({ data, selected }) => {
+const SymbolNodeComponent: FC<NodeProps<SymbolNodeType>> = ({ data, selected }) => {
   const { t } = useTranslation();
   const isImportNode = data.symbolNode.nodeCategory === 'import';
   const importKind = data.symbolNode.importKind ?? 'named';
@@ -97,6 +97,8 @@ export const SymbolNode: FC<NodeProps<SymbolNodeType>> = ({ data, selected }) =>
     </div>
   );
 };
+
+export const SymbolNode = memo(SymbolNodeComponent);
 
 function renderMember(
   member: NonNullable<SymbolNodeType['data']['symbolNode']['members']>[number],

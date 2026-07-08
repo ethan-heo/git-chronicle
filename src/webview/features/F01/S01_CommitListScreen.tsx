@@ -1,17 +1,17 @@
-import { useCallback, useEffect, type FC } from 'react';
+import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TopHeader } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
-import type { Commit } from '../../types/commit';
 import { CommitFilterPanel } from './CommitFilterPanel';
 import { CommitList } from './CommitList';
+import { useCommitList } from './useCommitList';
 
 export const S01CommitListScreen: FC = () => {
   const { t } = useTranslation();
+  const isRouteSlotActive = useRouteSlotActive();
   const {
     commitList,
-    authorList,
     hasMoreCommits,
     isLoadingCommits,
     isGitRepoDetected,
@@ -19,84 +19,27 @@ export const S01CommitListScreen: FC = () => {
     commitListScrollTop,
     commitLoadError,
     loadMoreError,
-    filterDateStart,
-    filterDateEnd,
-    filterAuthor,
-    filterKeyword,
-    filterExcludeKeyword,
-    sortOrder,
-    loadCommits,
     setCommitListScrollTop,
-    setFilter,
-    clearFilters,
     selectCommit,
-    goToSettingsView,
-    openRepository,
-  } = useAppStore();
-  const isRouteSlotActive = useRouteSlotActive();
+    onLoadMore,
+    retry,
+  } = useCommitList({ isActive: isRouteSlotActive });
+
+  const authorList = useAppStore((state) => state.authorList);
+  const filterDateStart = useAppStore((state) => state.filterDateStart);
+  const filterDateEnd = useAppStore((state) => state.filterDateEnd);
+  const filterAuthor = useAppStore((state) => state.filterAuthor);
+  const filterKeyword = useAppStore((state) => state.filterKeyword);
+  const filterExcludeKeyword = useAppStore((state) => state.filterExcludeKeyword);
+  const sortOrder = useAppStore((state) => state.sortOrder);
+  const setFilter = useAppStore((state) => state.setFilter);
+  const clearFilters = useAppStore((state) => state.clearFilters);
+  const goToSettingsView = useAppStore((state) => state.goToSettingsView);
+  const openRepository = useAppStore((state) => state.openRepository);
+
   const isFilterActive = Boolean(
     filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim(),
   );
-
-  useEffect(() => {
-    if (!isRouteSlotActive) {
-      return;
-    }
-
-    if (hasLoadedCommits) {
-      return;
-    }
-
-    loadCommits(true);
-  }, [hasLoadedCommits, isRouteSlotActive, loadCommits]);
-
-  useEffect(() => {
-    if (!isRouteSlotActive) {
-      return;
-    }
-
-    const handler = (
-      event: MessageEvent<{
-        type: string;
-        payload?: {
-          commits?: Commit[];
-          page?: number;
-          pageSize?: number;
-          hasMore?: boolean;
-          requestId?: number;
-          message?: string;
-        };
-      }>,
-    ): void => {
-      const store = useAppStore.getState();
-
-      if (event.data.type === 'COMMITS_LOADED' && event.data.payload) {
-        store.handleCommitsLoaded({
-          commits: event.data.payload.commits ?? [],
-          page: event.data.payload.page ?? 0,
-          pageSize: event.data.payload.pageSize ?? 200,
-          hasMore: event.data.payload.hasMore,
-          requestId: event.data.payload.requestId,
-        });
-        return;
-      }
-
-      if (event.data.type === 'GIT_REPOSITORY_NOT_FOUND') {
-        store.handleRepositoryNotFound();
-        return;
-      }
-
-      if (event.data.type === 'COMMITS_LOAD_FAILED') {
-        store.handleCommitsLoadFailed(event.data.payload?.message);
-      }
-    };
-
-    window.addEventListener('message', handler);
-
-    return () => window.removeEventListener('message', handler);
-  }, [isRouteSlotActive]);
-
-  const retry = useCallback(() => loadCommits(commitList.length === 0), [commitList.length, loadCommits]);
 
   return (
     <main className="app-shell flex h-screen min-h-0 flex-col overflow-hidden">
@@ -122,7 +65,7 @@ export const S01CommitListScreen: FC = () => {
         commitLoadError={commitLoadError}
         loadMoreError={loadMoreError}
         onCommitClick={selectCommit}
-        onLoadMore={() => loadCommits(false)}
+        onLoadMore={onLoadMore}
         onRetry={retry}
         onOpenRepository={openRepository}
         onClearFilters={clearFilters}

@@ -43,6 +43,13 @@ export const S02WorkspaceScreen: FC = () => {
   const changedFileTree = useChangedFileTree({ isActive: isRouteSlotActive });
   const symbolGraph = useSymbolGraph({ isActive: isRouteSlotActive && activeWorkspacePanel === 'symbolGraph' });
   const [activeAIFilePath, setActiveAIFilePath] = useState<string | null>(null);
+  const [prevSelectedCommitHash, setPrevSelectedCommitHash] = useState(selectedCommit?.hash);
+
+  if (prevSelectedCommitHash !== selectedCommit?.hash) {
+    setPrevSelectedCommitHash(selectedCommit?.hash);
+    setActiveAIFilePath(null);
+  }
+
   const activeAIFile = useMemo(
     () => changedFileTree.changedFiles.find((file) => file.path === activeAIFilePath) ?? null,
     [activeAIFilePath, changedFileTree.changedFiles],
@@ -53,10 +60,6 @@ export const S02WorkspaceScreen: FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
   const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
-
-  useEffect(() => {
-    setActiveAIFilePath(null);
-  }, [selectedCommit?.hash]);
 
   const openCommitAISummaryFromSidebar = useCallback(() => {
     setActiveAIFilePath(null);

@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react';
+import { useCallback, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FilterState } from '../../types/commit';
 import { AuthorDropdown } from './AuthorDropdown';
@@ -33,6 +33,14 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
     filterExcludeKeyword.trim(),
   ].filter(Boolean).length;
   const isActive = activeFilterCount > 0;
+  const handleKeywordChange = useCallback(
+    (keyword: string) => onFilterChange({ filterKeyword: keyword }),
+    [onFilterChange],
+  );
+  const handleExcludeKeywordChange = useCallback(
+    (keyword: string) => onFilterChange({ filterExcludeKeyword: keyword }),
+    [onFilterChange],
+  );
 
   return (
     <section
@@ -89,7 +97,7 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
             id="commit-keyword-filter"
             label={t('commit.filter_include_label')}
             keyword={filterKeyword}
-            onKeywordChange={(keyword) => onFilterChange({ filterKeyword: keyword })}
+            onKeywordChange={handleKeywordChange}
             ariaLabel={t('commit.filter_include_aria')}
             placeholder={t('commit.filter_include_placeholder')}
           />
@@ -97,7 +105,7 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
             id="commit-exclude-keyword-filter"
             label={t('commit.filter_exclude_label')}
             keyword={filterExcludeKeyword}
-            onKeywordChange={(keyword) => onFilterChange({ filterExcludeKeyword: keyword })}
+            onKeywordChange={handleExcludeKeywordChange}
             ariaLabel={t('commit.filter_exclude_aria')}
             placeholder={t('commit.filter_exclude_placeholder')}
           />
