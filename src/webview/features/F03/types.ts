@@ -1,9 +1,8 @@
-export type DiffLineType = 'added' | 'removed' | 'context';
+import type { HighlightToken } from '../../shared/highlighter';
 
-export interface HighlightToken {
-  content: string;
-  color?: string;
-}
+export type { HighlightToken };
+
+export type DiffLineType = 'added' | 'removed' | 'context';
 
 export interface DiffLineData {
   type: DiffLineType;

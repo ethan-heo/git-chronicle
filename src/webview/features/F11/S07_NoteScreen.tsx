@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
 import { translate } from '../../i18n/runtime';
 import { EmptyState, ErrorState, LoadingState, TopHeader } from '../../shared/components';
+import { HighlightedCode } from '../../shared/highlighter';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
@@ -137,6 +138,7 @@ export const S07NoteScreen: FC = () => {
   }, [hasSavedNote, isSavingNote, noteError]);
 
   let mermaidBlockIndex = 0;
+  let highlightedCodeBlockIndex = 0;
 
   if (!selectedCommit) {
     return null;
@@ -204,15 +206,27 @@ export const S07NoteScreen: FC = () => {
 
                       return <pre>{children}</pre>;
                     },
-                    code({ className, children, ...props }) {
+                    code({ className, children, node, ...props }) {
                       const match = /language-(\w+)/.exec(className ?? '');
                       const language = match?.[1];
                       const content = String(children).replace(/\n$/, '');
+                      const blockStart = node?.position?.start?.offset;
 
                       if (language === 'mermaid') {
-                        const mermaidCacheKey = `mermaid-block-${mermaidBlockIndex}`;
-                        mermaidBlockIndex += 1;
+                        const mermaidCacheKey = getStableNotePreviewCacheKey('mermaid-block', blockStart, mermaidBlockIndex);
+                        if (typeof blockStart !== 'number') {
+                          mermaidBlockIndex += 1;
+                        }
                         return <MermaidBlock cacheKey={mermaidCacheKey} code={content} />;
+                      }
+
+                      if (language) {
+                        const highlightedCacheKey = getStableNotePreviewCacheKey('note-code-block', blockStart, highlightedCodeBlockIndex);
+                        if (typeof blockStart !== 'number') {
+                          highlightedCodeBlockIndex += 1;
+                        }
+
+                        return <HighlightedCode cacheKey={highlightedCacheKey} className={className} code={content} language={language} />;
                       }
 
                       return (
@@ -262,4 +276,12 @@ function containsMermaidBlock(children: ReactNode): boolean {
   }
 
   return containsMermaidBlock((children.props as { children?: ReactNode }).children);
+}
+
+function getStableNotePreviewCacheKey(prefix: string, blockStart: number | null | undefined, fallbackIndex: number): string {
+  if (typeof blockStart === 'number') {
+    return `${prefix}-${blockStart}`;
+  }
+
+  return `${prefix}-fallback-${fallbackIndex}`;
 }

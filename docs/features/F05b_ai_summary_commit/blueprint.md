@@ -30,6 +30,7 @@
 ## Components
 
 - `AISummaryViewer`
+- `HighlightedCode`
 - `StreamingTextRenderer`
 - `RegenerateButton`
 - `TokenLimitWarning`
@@ -72,6 +73,7 @@ interface AISummaryViewerProps {
 - 수정 불가 (읽기 전용)
 - 완료된 마크다운 본문에서 드래그 선택 후 복사 시, 선택 범위에 대응하는 원본 마크다운 조각을 클립보드에 기록한다
 - fenced 코드블록 위에는 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 복사하고 성공 토스트를 표시한다
+- fenced 코드블록에 언어 태그가 있으면 `HighlightedCode`가 `shiki` 기반 문법 강조 결과를 `<code>` 내부 토큰 span으로 렌더링한다
 - Mermaid 코드블록은 다이어그램 preview로 렌더링되며, preview 우측 상단 hover 복사 버튼 또는 preview 선택 복사 시 원본 Mermaid 마크다운 블록을 복사하고, 복사 버튼 클릭 시 성공 토스트를 표시한다
 
 #### States
@@ -85,6 +87,24 @@ interface AISummaryViewerProps {
 
 #### Reusability
 F05b_AISummaryCommit 전용.
+
+### Component: HighlightedCode
+
+#### Purpose
+언어 태그가 있는 fenced code block을 `shiki` 기반 토큰 색상으로 렌더링한다.
+
+#### Data
+- `cacheKey: string`
+- `className?: string`
+- `code: string`
+- `language?: string`
+
+#### Interaction
+- 지원 언어면 비동기 하이라이트 결과를 캐시해 재사용한다
+- 지원하지 않는 언어거나 하이라이트 실패 시 평문 `<code>`로 폴백한다
+
+#### Reusability
+F05b와 F11 프리뷰에서 공용 사용.
 
 ---
 

@@ -4,6 +4,7 @@ import { rehypeAnnotateSourceOffsets } from './rehypeAnnotateSourceOffsets';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState } from '../../shared/components';
+import { HighlightedCode } from '../../shared/highlighter';
 import { QAInputArea } from '../F09/QAInputArea';
 import { CopyMarkdownButton } from '../F11';
 import { MermaidBlock } from '../F11/MermaidBlock';
@@ -57,6 +58,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const canAskQuestion = !isGenerating && Boolean(content);
   const markdownComponents = useMemo(() => {
     let mermaidBlockIndex = 0;
+    let highlightedCodeBlockIndex = 0;
 
     return {
       pre({
@@ -104,10 +106,10 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
         const match = /language-(\w+)/.exec(className ?? '');
         const language = match?.[1];
         const codeContent = String(children).replace(/\n$/, '');
+        const blockStart = node?.position?.start?.offset;
+        const blockEnd = node?.position?.end?.offset;
 
         if (language === 'mermaid') {
-          const blockStart = node?.position?.start?.offset;
-          const blockEnd = node?.position?.end?.offset;
           const mermaidCacheKey = getStableMermaidCacheKey(blockStart, mermaidBlockIndex);
           if (typeof blockStart !== 'number') {
             mermaidBlockIndex += 1;
@@ -131,6 +133,15 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
               <MermaidBlock cacheKey={mermaidCacheKey} code={codeContent} />
             </div>
           );
+        }
+
+        if (language) {
+          const highlightedCacheKey = getStableHighlightedCodeCacheKey(blockStart, highlightedCodeBlockIndex);
+          if (typeof blockStart !== 'number') {
+            highlightedCodeBlockIndex += 1;
+          }
+
+          return <HighlightedCode cacheKey={highlightedCacheKey} className={className} code={codeContent} language={language} />;
         }
 
         return (
@@ -262,6 +273,14 @@ function getStableMermaidCacheKey(blockStart: number | null | undefined, fallbac
   }
 
   return `ai-summary-mermaid-fallback-${fallbackIndex}`;
+}
+
+function getStableHighlightedCodeCacheKey(blockStart: number | null | undefined, fallbackIndex: number): string {
+  if (typeof blockStart === 'number') {
+    return `ai-summary-code-offset-${blockStart}`;
+  }
+
+  return `ai-summary-code-fallback-${fallbackIndex}`;
 }
 
 function sliceFromPosition(

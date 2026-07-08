@@ -20,6 +20,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 - 저장 경로가 없으면 F05b와 동일한 "저장 경로를 먼저 설정해주세요" 안내를 사용한다.
 - F01/F02/F03/F04/F10에서 복사한 내용은 마크다운 또는 Mermaid 코드블록으로 클립보드에 기록된다.
 - 미리보기는 일반 마크다운을 렌더링하고, ```mermaid 코드블록은 다이어그램으로 렌더링한다.
+- 미리보기의 fenced code block은 언어 태그가 있으면 `shiki` 기반 문법 강조를 적용한다. 지원 언어 범위는 css/html/javascript/json/jsx/markdown/mdx/tsx/typescript/yaml/bash/python/sql/diff다.
 
 ## Data Sources
 

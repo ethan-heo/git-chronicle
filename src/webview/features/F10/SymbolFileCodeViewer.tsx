@@ -1,19 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createHighlighterCore, type HighlighterCore } from 'shiki/core';
-import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
-import langCss from 'shiki/langs/css.mjs';
-import langHtml from 'shiki/langs/html.mjs';
-import langJavascript from 'shiki/langs/javascript.mjs';
-import langJson from 'shiki/langs/json.mjs';
-import langJsx from 'shiki/langs/jsx.mjs';
-import langMarkdown from 'shiki/langs/markdown.mjs';
-import langMdx from 'shiki/langs/mdx.mjs';
-import langTsx from 'shiki/langs/tsx.mjs';
-import langTypescript from 'shiki/langs/typescript.mjs';
-import langYaml from 'shiki/langs/yaml.mjs';
-import themeDarkPlus from 'shiki/themes/dark-plus.mjs';
 import { useAppStore } from '../../store/appStore';
+import { getMarkdownHighlighter, inferLanguageFromPath, type HighlightToken } from '../../shared/highlighter';
 import { CopyMarkdownButton, codeRangeToMarkdown } from '../F11';
 import './SymbolFileCodeViewer.css';
 
@@ -31,10 +19,6 @@ interface SymbolFileCodeViewerProps {
   scrollRequestId: number;
 }
 
-type TokensResult = ReturnType<HighlighterCore['codeToTokens']>;
-
-let highlighterPromise: Promise<HighlighterCore> | null = null;
-
 export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ filePath, fileContent, language, highlightRange, scrollToRange, scrollRequestId }) => {
   const { t } = useTranslation();
   const pushToast = useAppStore((state) => state.pushToast);
@@ -43,7 +27,7 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ filePath, 
   const pendingSelectionStartRef = useRef<number | null>(null);
   const hasDraggedSelectionRef = useRef(false);
   const lines = useMemo(() => fileContent.split('\n'), [fileContent]);
-  const [tokensByLine, setTokensByLine] = useState<TokensResult['tokens']>([]);
+  const [tokensByLine, setTokensByLine] = useState<HighlightToken[][]>([]);
   const [selectionStart, setSelectionStart] = useState<number | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
   const [isDraggingSelection, setIsDraggingSelection] = useState(false);
@@ -88,17 +72,17 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ filePath, 
       };
     }
 
-    void getHighlighter()
+    void getMarkdownHighlighter()
       .then((highlighter) =>
         highlighter.codeToTokens(fileContent, {
-          lang: inferLanguage(language),
+          lang: inferLanguageFromPath(language),
           theme: 'dark-plus',
           tokenizeMaxLineLength: 500,
         }),
       )
       .then((result) => {
         if (!cancelled) {
-          setTokensByLine(result.tokens);
+          setTokensByLine(result.tokens.map((lineTokens, index) => normalizeTokens(lineTokens, lines[index] ?? '')));
         }
       })
       .catch(() => {
@@ -110,7 +94,7 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ filePath, 
     return () => {
       cancelled = true;
     };
-  }, [fileContent, language]);
+  }, [fileContent, language, lines]);
 
   useLayoutEffect(() => {
     if (!scrollToRange) {
@@ -259,33 +243,13 @@ export const SymbolFileCodeViewer: FC<SymbolFileCodeViewerProps> = ({ filePath, 
   );
 };
 
-function getHighlighter(): Promise<HighlighterCore> {
-  highlighterPromise ??= createHighlighterCore({
-    engine: createJavaScriptRegexEngine(),
-    themes: [themeDarkPlus],
-    langs: [langCss, langHtml, langJavascript, langJson, langJsx, langMarkdown, langMdx, langTsx, langTypescript, langYaml],
-  });
+function normalizeTokens(tokens: Array<{ content: string; color?: string }> | undefined, fallback: string): HighlightToken[] {
+  if (!tokens || tokens.length === 0) {
+    return [{ content: fallback }];
+  }
 
-  return highlighterPromise;
-}
-
-function inferLanguage(filePath: string): 'css' | 'html' | 'javascript' | 'json' | 'jsx' | 'markdown' | 'mdx' | 'text' | 'tsx' | 'typescript' | 'yaml' {
-  const extension = filePath.split('.').at(-1)?.toLowerCase() ?? '';
-  const map: Record<string, 'css' | 'html' | 'javascript' | 'json' | 'jsx' | 'markdown' | 'mdx' | 'text' | 'tsx' | 'typescript' | 'yaml'> = {
-    cjs: 'javascript',
-    css: 'css',
-    html: 'html',
-    js: 'javascript',
-    json: 'json',
-    jsx: 'jsx',
-    md: 'markdown',
-    mdx: 'mdx',
-    mjs: 'javascript',
-    ts: 'typescript',
-    tsx: 'tsx',
-    yaml: 'yaml',
-    yml: 'yaml',
-  };
-
-  return map[extension] ?? 'text';
+  return tokens.map((token) => ({
+    content: token.content,
+    color: token.color,
+  }));
 }
