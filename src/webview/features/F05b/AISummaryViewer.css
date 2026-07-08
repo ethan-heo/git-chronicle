@@ -165,11 +165,10 @@
 }
 
 .ai-summary-markdown code {
-  border: 1px solid var(--gae-border-color-default);
   border-radius: var(--gae-border-radius-sm);
-  background: var(--gae-color-surface-elevated);
+  background: color-mix(in srgb, var(--gae-color-text-primary) 8%, transparent);
   padding: 1px 5px;
-  color: #ce9178;
+  color: var(--gae-color-text-primary);
   font-family: var(--gae-font-family-mono);
   font-size: var(--gae-font-size-sm);
 }
