@@ -7,6 +7,7 @@ import { EmptyState, ErrorState } from '../../shared/components';
 import { QAInputArea } from '../F09/QAInputArea';
 import { CopyMarkdownButton } from '../F11';
 import { MermaidBlock } from '../F11/MermaidBlock';
+import { useAppStore } from '../../store/appStore';
 import { RegenerateButton } from './RegenerateButton';
 import { StreamingTextRenderer } from './StreamingTextRenderer';
 import { useMarkdownSourceCopy } from './useMarkdownSourceCopy';
@@ -84,7 +85,9 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
               <CopyMarkdownButton
                 className="ai-summary-copy-button absolute top-2 right-2 z-[1]"
                 onClick={() => {
-                  void navigator.clipboard.writeText(rawMarkdown);
+                  void navigator.clipboard.writeText(rawMarkdown).then(() => {
+                    useAppStore.getState().pushToast('코드 블록 마크다운을 복사했습니다', 'success');
+                  });
                 }}
               />
             ) : null}
@@ -120,7 +123,9 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
               <CopyMarkdownButton
                 className="ai-summary-copy-button absolute top-2 right-2 z-[1]"
                 onClick={() => {
-                  void navigator.clipboard.writeText(rawMarkdown);
+                  void navigator.clipboard.writeText(rawMarkdown).then(() => {
+                    useAppStore.getState().pushToast('Mermaid 마크다운을 복사했습니다', 'success');
+                  });
                 }}
               />
               <MermaidBlock cacheKey={mermaidCacheKey} code={codeContent} />

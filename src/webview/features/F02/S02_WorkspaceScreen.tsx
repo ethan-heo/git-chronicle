@@ -39,46 +39,44 @@ const SIDEBAR_COLLAPSE_WIDTH = 0;
 
 export const S02WorkspaceScreen: FC = () => {
   const { t } = useTranslation();
-  const {
-    selectedCommit,
-    changedFiles,
-    selectedFile,
-    isLoadingChangedFiles,
-    changedFilesError,
-    hasLoadedChangedFiles,
-    dependencyEdges,
-    isLoadingDependencies,
-    dependenciesError,
-    activeWorkspacePanel,
-    selectedFileForSymbolGraph,
-    symbolNodes,
-    symbolEdges,
-    symbolFileContent,
-    isLoadingSymbolGraph,
-    hasLoadedSymbolGraph,
-    symbolGraphError,
-    isCodePanelOpen,
-    activeSymbolNodeId,
-    hoveredSymbolNodeId,
-    goToCommitList,
-    loadChangedFiles,
-    loadDependencies,
-    loadSymbolGraph,
-    selectFileForCode,
-    goToCommitAISummary,
-    goToCanvasView,
-    goToSymbolGraphView,
-    goToSettingsView,
-    goToNoteView,
-    handleChangedFilesLoaded,
-    handleChangedFilesLoadFailed,
-    handleDependenciesLoaded,
-    handleDependenciesLoadFailed,
-    openCodePanel,
-    closeCodePanel,
-    setActiveSymbolNode,
-    setHoveredSymbolNode,
-  } = useAppStore();
+  const selectedCommit = useAppStore((state) => state.selectedCommit);
+  const changedFiles = useAppStore((state) => state.changedFiles);
+  const selectedFile = useAppStore((state) => state.selectedFile);
+  const isLoadingChangedFiles = useAppStore((state) => state.isLoadingChangedFiles);
+  const changedFilesError = useAppStore((state) => state.changedFilesError);
+  const hasLoadedChangedFiles = useAppStore((state) => state.hasLoadedChangedFiles);
+  const dependencyEdges = useAppStore((state) => state.dependencyEdges);
+  const isLoadingDependencies = useAppStore((state) => state.isLoadingDependencies);
+  const dependenciesError = useAppStore((state) => state.dependenciesError);
+  const activeWorkspacePanel = useAppStore((state) => state.activeWorkspacePanel);
+  const selectedFileForSymbolGraph = useAppStore((state) => state.selectedFileForSymbolGraph);
+  const symbolNodes = useAppStore((state) => state.symbolNodes);
+  const symbolEdges = useAppStore((state) => state.symbolEdges);
+  const symbolFileContent = useAppStore((state) => state.symbolFileContent);
+  const isLoadingSymbolGraph = useAppStore((state) => state.isLoadingSymbolGraph);
+  const hasLoadedSymbolGraph = useAppStore((state) => state.hasLoadedSymbolGraph);
+  const symbolGraphError = useAppStore((state) => state.symbolGraphError);
+  const isCodePanelOpen = useAppStore((state) => state.isCodePanelOpen);
+  const activeSymbolNodeId = useAppStore((state) => state.activeSymbolNodeId);
+  const hoveredSymbolNodeId = useAppStore((state) => state.hoveredSymbolNodeId);
+  const goToCommitList = useAppStore((state) => state.goToCommitList);
+  const loadChangedFiles = useAppStore((state) => state.loadChangedFiles);
+  const loadDependencies = useAppStore((state) => state.loadDependencies);
+  const loadSymbolGraph = useAppStore((state) => state.loadSymbolGraph);
+  const selectFileForCode = useAppStore((state) => state.selectFileForCode);
+  const goToCommitAISummary = useAppStore((state) => state.goToCommitAISummary);
+  const goToCanvasView = useAppStore((state) => state.goToCanvasView);
+  const goToSymbolGraphView = useAppStore((state) => state.goToSymbolGraphView);
+  const goToSettingsView = useAppStore((state) => state.goToSettingsView);
+  const goToNoteView = useAppStore((state) => state.goToNoteView);
+  const handleChangedFilesLoaded = useAppStore((state) => state.handleChangedFilesLoaded);
+  const handleChangedFilesLoadFailed = useAppStore((state) => state.handleChangedFilesLoadFailed);
+  const handleDependenciesLoaded = useAppStore((state) => state.handleDependenciesLoaded);
+  const handleDependenciesLoadFailed = useAppStore((state) => state.handleDependenciesLoadFailed);
+  const openCodePanel = useAppStore((state) => state.openCodePanel);
+  const closeCodePanel = useAppStore((state) => state.closeCodePanel);
+  const setActiveSymbolNode = useAppStore((state) => state.setActiveSymbolNode);
+  const setHoveredSymbolNode = useAppStore((state) => state.setHoveredSymbolNode);
   const isRouteSlotActive = useRouteSlotActive();
   const [scrollRequestId, setScrollRequestId] = useState(0);
   const [activeAIFilePath, setActiveAIFilePath] = useState<string | null>(null);

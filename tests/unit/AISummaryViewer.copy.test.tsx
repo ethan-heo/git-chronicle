@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { initI18n } from '../../src/webview/i18n';
 import { AISummaryViewer } from '../../src/webview/features/F05b/AISummaryViewer';
 import { getMarkdownSliceFromSelection, writeMarkdownSelectionToClipboardData } from '../../src/webview/features/F05b/useMarkdownSourceCopy';
+import { useAppStore } from '../../src/webview/store/appStore';
 
 const SUMMARY_CONTENT = `### Summary
 
@@ -43,6 +44,7 @@ describe('AISummaryViewer source copy', () => {
   beforeEach(() => {
     initI18n('ko');
     window.getSelection()?.removeAllRanges();
+    useAppStore.setState({ toasts: [] });
   });
 
   it('extracts the original markdown slice for a multi-span selection', () => {
@@ -317,7 +319,7 @@ describe('AISummaryViewer source copy', () => {
     expect(setData).toHaveBeenCalledWith('text/markdown', 'This keeps **raw markdown** intact.');
   });
 
-  it('copies fenced code blocks with the copy button and keeps it hidden until hover', () => {
+  it('copies fenced code blocks with the copy button and keeps it hidden until hover', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, {
       clipboard: {
@@ -355,6 +357,56 @@ describe('AISummaryViewer source copy', () => {
     fireEvent.click(copyButton);
 
     expect(writeText).toHaveBeenCalledWith('```ts\nconst value = 1;\n```');
+    await waitFor(() => {
+      expect(useAppStore.getState().toasts.at(-1)).toMatchObject({
+        message: '코드 블록 마크다운을 복사했습니다',
+        type: 'success',
+      });
+    });
+
+    expect(document.querySelector('pre code')).not.toBeNull();
+    expect(screen.getByText('const value = 1;')).toBeInTheDocument();
+  });
+
+  it('shows a success toast when copying a Mermaid block from the preview copy button', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText,
+      },
+    });
+
+    render(
+      <AISummaryViewer
+        content={'```mermaid\ngraph TD\n  A --> B\n```'}
+        error={null}
+        isLoading={false}
+        isGenerating={false}
+        isGeneratingQA={false}
+        hasSavedSummary={false}
+        hasAIProvider
+        hasSavePath
+        savedPath={null}
+        providerLabel="Codex"
+        qaCompletionCount={0}
+        onAskQuestion={() => {}}
+        onGoToSettings={() => {}}
+        onRegenerate={() => {}}
+        onRetry={() => {}}
+      />,
+    );
+
+    const copyButton = screen.getByRole('button', { name: '마크다운으로 복사' });
+
+    fireEvent.click(copyButton);
+
+    expect(writeText).toHaveBeenCalledWith('```mermaid\ngraph TD\n  A --> B\n```');
+    await waitFor(() => {
+      expect(useAppStore.getState().toasts.at(-1)).toMatchObject({
+        message: 'Mermaid 마크다운을 복사했습니다',
+        type: 'success',
+      });
+    });
   });
 
   it('falls back to the whole fenced code block when selecting inside rendered code text', () => {

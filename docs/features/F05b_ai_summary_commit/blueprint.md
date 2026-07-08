@@ -71,8 +71,8 @@ interface AISummaryViewerProps {
 - 스크롤 가능
 - 수정 불가 (읽기 전용)
 - 완료된 마크다운 본문에서 드래그 선택 후 복사 시, 선택 범위에 대응하는 원본 마크다운 조각을 클립보드에 기록한다
-- fenced 코드블록 위에는 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 복사한다
-- Mermaid 코드블록은 다이어그램 preview로 렌더링되며, preview 우측 상단 hover 복사 버튼 또는 preview 선택 복사 시 원본 Mermaid 마크다운 블록을 복사한다
+- fenced 코드블록 위에는 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 복사하고 성공 토스트를 표시한다
+- Mermaid 코드블록은 다이어그램 preview로 렌더링되며, preview 우측 상단 hover 복사 버튼 또는 preview 선택 복사 시 원본 Mermaid 마크다운 블록을 복사하고, 복사 버튼 클릭 시 성공 토스트를 표시한다
 
 #### States
 - `generating`: `StreamingTextRenderer` 표시
@@ -245,8 +245,8 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 | [취소] | 다이얼로그 취소 | 현재 저장본 유지 |
 | [재시도] | `ErrorState` 버튼 클릭 | AI 재호출 |
 | 드래그 복사 | 완료된 요약 본문에서 텍스트 선택 후 복사 | 렌더링 결과 대신 원본 마크다운 조각을 클립보드에 기록 |
-| 코드블록 복사 | fenced 코드블록 hover 후 복사 버튼 클릭 | 해당 코드블록의 원본 마크다운(```` 포함)을 클립보드에 기록 |
-| Mermaid preview 복사 | Mermaid 다이어그램 preview의 복사 버튼 클릭 또는 preview 선택 후 복사 | 원본 ```` ```mermaid ```` 블록을 클립보드에 기록 |
+| 코드블록 복사 | fenced 코드블록 hover 후 복사 버튼 클릭 | 해당 코드블록의 원본 마크다운(```` 포함)을 클립보드에 기록하고 성공 토스트를 표시 |
+| Mermaid preview 복사 | Mermaid 다이어그램 preview의 복사 버튼 클릭 또는 preview 선택 후 복사 | 원본 ```` ```mermaid ```` 블록을 클립보드에 기록하고, 복사 버튼 클릭 시 성공 토스트를 표시 |
 | 뒤로가기 | `BackButton` 클릭 | S-02 복귀 |
 
 ---
