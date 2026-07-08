@@ -1,4 +1,21 @@
 
+## [1.2.0](https://github.com/ethan-heo/git-chronicle/compare/v1.1.2...v1.2.0) (2026-07-08)
+
+### Features
+
+* **highlighter:** add shared markdown code syntax highlighting ([2172762](https://github.com/ethan-heo/git-chronicle/commit/2172762d4bcfa4712795e2822b1f6296b12fea62))
+* preserve markdown source copy in AI summaries ([aac064a](https://github.com/ethan-heo/git-chronicle/commit/aac064a53c517fff328583f847c0e252137d6511))
+
+### Bug Fixes
+
+* **webview:** keep note preview pane height bounded ([a70c665](https://github.com/ethan-heo/git-chronicle/commit/a70c66525e94c5cbfa24cb59a5284f5e9a3ac601))
+* preserve file ai summary context across detail navigation ([e933eb9](https://github.com/ethan-heo/git-chronicle/commit/e933eb9799a8b8ec8a2db395b07048e1fac5ca36))
+* reposition canvas copy buttons below nodes ([41cb99b](https://github.com/ethan-heo/git-chronicle/commit/41cb99b2e1e28258d5a948bfc4b3e58466ec057c))
+* stabilize ai summary mermaid preview ([3b213dc](https://github.com/ethan-heo/git-chronicle/commit/3b213dcbefb00d548ae181f94dc6a42525582e3b))
+* restore mermaid rendering in ai summary viewer ([5a0a559](https://github.com/ethan-heo/git-chronicle/commit/5a0a5596dd71840a14ed0d87d8a008f458b5c01c))
+* preserve AI summary markdown copy syntax ([67d901a](https://github.com/ethan-heo/git-chronicle/commit/67d901a2eeeb04c14eb2783bf728f1fea8fe8bea))
+* tighten tsconfig lookup and clean cli install link ([aa1e19f](https://github.com/ethan-heo/git-chronicle/commit/aa1e19ff0ffdeed99b5468b69a6526e8d5b3e88d))
+
 ## [1.1.2](https://github.com/ethan-heo/git-chronicle/compare/v1.1.1...v1.1.2) (2026-07-07)
 
 ### Bug Fixes
