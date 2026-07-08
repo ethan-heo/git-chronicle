@@ -55,8 +55,16 @@ function checkDocLinks() {
 // 2) Extension ↔ Webview 메시지 타입이 architecture.md와 어긋나지 않는지 확인
 function checkMessageTypes() {
   const handlerPath = path.join(ROOT, 'src/extension/messageHandler.ts');
+  const handlerDir = path.join(ROOT, 'src/extension/messageHandler');
   const archPath = path.join(ROOT, 'docs/project/architecture.md');
-  const handlerContent = fs.readFileSync(handlerPath, 'utf8');
+  const handlerFiles = [
+    handlerPath,
+    ...fs
+      .readdirSync(handlerDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.ts'))
+      .map((entry) => path.join(handlerDir, entry.name)),
+  ];
+  const handlerContent = handlerFiles.map((file) => fs.readFileSync(file, 'utf8')).join('\n');
   const archContent = fs.readFileSync(archPath, 'utf8');
 
   // `type:`에 즉시 이어지지 않는 3항 연산자 형태(`type: cond ? 'A' : 'B'`)도 잡기 위해
@@ -74,12 +82,12 @@ function checkMessageTypes() {
 
   for (const type of codeTypes) {
     if (!docTypes.has(type)) {
-      fail(`architecture.md 메시지 프로토콜에 "${type}"가 없습니다 (src/extension/messageHandler.ts 기준).`);
+      fail(`architecture.md 메시지 프로토콜에 "${type}"가 없습니다 (src/extension/messageHandler.ts + messageHandler/ 기준).`);
     }
   }
   for (const type of docTypes) {
     if (!codeTypes.has(type)) {
-      fail(`architecture.md가 "${type}"를 문서화하고 있지만 src/extension/messageHandler.ts에는 없습니다 (stale 가능성).`);
+      fail(`architecture.md가 "${type}"를 문서화하고 있지만 src/extension/messageHandler.ts + messageHandler/에는 없습니다 (stale 가능성).`);
     }
   }
 }

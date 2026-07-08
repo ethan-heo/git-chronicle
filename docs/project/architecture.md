@@ -84,7 +84,7 @@ Webview UI 문자열은 컴포넌트 내부 하드코딩을 줄이고 `react-i18
 
 ### Extension ↔ Webview 메시지 프로토콜
 
-모든 메시지는 `{ type: string, payload?: unknown }` 구조를 따른다. 실제 정의는 `src/extension/messageHandler.ts`를 유일한 진실로 삼는다.
+모든 메시지는 `{ type: string, payload?: unknown }` 구조를 따른다. 실제 정의는 `src/extension/messageHandler.ts`(라우터)와 `src/extension/messageHandler/` 하위 도메인 핸들러 파일 전체를 유일한 진실로 삼는다.
 
 ```typescript
 // Webview → Extension (요청)

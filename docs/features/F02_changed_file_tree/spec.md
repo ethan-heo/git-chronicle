@@ -15,6 +15,17 @@
 
 ---
 
+## Domain Glossary
+
+Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를 참고한다. 아래는 F02 전용 용어다.
+
+| 용어 | 정의 | 관련 코드 식별자 |
+|---|---|---|
+| 파일 상태 뱃지 | `ChangedFile`의 변경 상태를 나타내는 레터 코드(`A` 추가/`M` 수정/`D` 삭제/`R` 이름 변경) | `FileStatusBadge` |
+| hasSavedCommitSummary | 커밋 단위 AI 정리 저장본이 이미 존재해 `aiSummary` 패널 진입 시 즉시 표시할 수 있는지 여부 | `hasSavedCommitSummary` |
+
+---
+
 ## User Goal
 
 특정 커밋에서 어떤 파일이 어떻게 변경되었는지 트리 형태로 확인하고, 관심 있는 파일의 diff나 파일 단위 AI 정리를 바로 연다. 필요하면 별도로 커밋 전체 AI 정리도 연다.
@@ -98,16 +109,3 @@
 | S02 `code` 패널 활성화 | `selectedFile` 설정 + [코드 보기] | `activeWorkspacePanel = "code"` |
 | S02 `aiSummary` 패널 활성화 | [커밋 AI 정리] 클릭 | `activeWorkspacePanel = "aiSummary"` |
 | S02 `fileCanvas` 패널 활성화 | [캔버스 보기] 클릭 | `activeWorkspacePanel = "fileCanvas"` |
-
----
-
-## Current Implementation Notes
-
-| 항목 | 현재 구현 |
-|------|-----------|
-| 화면 파일 | `src/webview/features/F02/S02_WorkspaceScreen.tsx` |
-| 트리 구성 유틸 | `src/webview/features/F02/tree.ts` |
-| 메시지 요청 | Webview → Extension: `FETCH_CHANGED_FILES` |
-| 메시지 응답 | Extension → Webview: `CHANGED_FILES_LOADED`, `CHANGED_FILES_LOAD_FAILED` |
-| 브라우저 개발 모드 | VSCode API가 없으면 `appStore.ts`의 `demoChangedFiles`를 사용 |
-| 후속 패널 | `code`는 F03 코드 뷰어, `aiSummary`는 F05b 커밋 단위 AI 요약 뷰어, `fileCanvas`는 F04 의존성 캔버스를 S02 본문에 표시 |

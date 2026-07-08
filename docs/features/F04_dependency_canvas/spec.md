@@ -15,6 +15,18 @@
 
 ---
 
+## Domain Glossary
+
+Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를 참고한다. 아래는 F04 전용 용어다.
+
+| 용어 | 정의 | 관련 코드 식별자 |
+|---|---|---|
+| 감쇠(Dimmed) 엣지 | 호버 중인 노드와 연결되지 않은 엣지의 시각적 강조 해제 상태 | `graph.ts`, `LegendPanel.tsx` |
+| 입력 재구성 | 디스크의 현재 파일 + `git show`로 복원한 누락 파일을 임시 디렉토리에 모아 분석 입력으로 만드는 과정 | `analyzeDependencies()` (`dependencyService.ts`) |
+| 고립 노드 | 의존 관계가 없는 변경 파일도 엣지 없이 단독 노드로 표시하는 것 | `graph.ts` |
+
+---
+
 ## User Goal
 
 변경된 파일들이 서로 어떻게 의존하는지 시각적 그래프로 확인하고, 관심 있는 파일 노드에서 코드 뷰어로 진입한다.

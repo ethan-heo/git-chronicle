@@ -21,124 +21,20 @@ GitChronicle의 상태는 두 레이어에 분리하여 관리한다.
 
 ## Zustand 스토어 구조
 
-```typescript
-// src/webview/store/appStore.ts
+`useAppStore`(`src/webview/store/appStore.ts`)는 8개 도메인 slice를 조합하는 combinator다. 각 slice는 `src/webview/store/slices/`에 독립 파일로 존재하며, slice 경계는 "화면/기능 전이 또는 단일 비동기 라이프사이클에 대한 응집도" 기준으로 나뉜다([coding_standards.md](./coding_standards.md)의 "레이어/모듈 구조 규칙" 참고). 실제 필드/액션 목록은 `ttsc_graph`로 조회한다 — 아래는 slice 파일과 담당 도메인 매핑만 표로 유지한다.
 
-interface AppState {
-  // === Navigation ===
-  currentScreen: ScreenID;
-  previousScreen: ScreenID | null;
-  transitionDirection: RouteTransitionDirection;
+| Slice 파일 | 담당 도메인 | 비고 |
+|---|---|---|
+| `commitListSlice.ts` | Filter(F01) + CommitList(F01) | `setFilter`/`clearFilters`가 목록 리로드를 직접 호출하는 강결합 관계라 하나로 통합. `openRepository`, 데모 커밋 데이터도 포함 |
+| `navigationSlice.ts` | Navigation | `selectCommit` 등 화면 전이 액션이 여러 slice 필드를 리셋하는 hub. Zustand slices 패턴상 `set`/`get`이 전체 `AppState` 기준이라 cross-slice 참조가 정상 동작 |
+| `changedFilesSlice.ts` | ChangedFiles(F02) | 파일 목록 갱신 시 DependencyGraph slice의 캐시도 함께 무효화 |
+| `dependencyGraphSlice.ts` | DependencyGraph(F04) | |
+| `symbolGraphSlice.ts` | SymbolGraph(F10) | 코드 패널 열림/호버 상태 포함 |
+| `aiSlice.ts` | AI 통합(F05b/F06/F07/F09) | 설정(`savePath`/`registeredProviders`/`activeAIProvider`/모델)과 요약/QA 런타임 상태를 하나로 유지 — `setAISummarySettings`가 여러 필드를 한 번에 부분 병합하기 때문 |
+| `noteSlice.ts` | Note(F11) | |
+| `toastSlice.ts` | Toast | cross-slice 의존 없음 |
 
-  // === Git Repository ===
-  isGitRepoDetected: boolean;
-
-  // === Commit ===
-  commitList: Commit[];
-  selectedCommit: Commit | null;
-  isLoadingCommits: boolean;
-  hasMoreCommits: boolean;
-  commitPage: number;
-  lastRequestId: number;
-  pendingRequestId: number | null;
-  hasPendingCommitReload: boolean;
-  commitLoadError: string | null;
-  loadMoreError: string | null;
-  hasLoadedCommits: boolean;
-
-  // === Filter ===
-  filterDateStart: string | null;
-  filterDateEnd: string | null;
-  filterAuthor: string | null;
-  filterKeyword: string;
-  filterExcludeKeyword: string;
-  sortOrder: 'desc' | 'asc';
-  authorList: string[];
-
-  // === File ===
-  changedFiles: ChangedFile[];
-  hasSavedCommitSummary: boolean;
-  selectedFile: ChangedFile | null;
-  isLoadingChangedFiles: boolean;
-  changedFilesError: string | null;
-
-  // === Dependency Canvas (F04) ===
-  dependencyEdges: DependencyEdge[];
-  isLoadingDependencies: boolean;
-  dependenciesError: string | null;
-
-  // === Symbol Graph (F10) ===
-  selectedFileForSymbolGraph: ChangedFile | null;
-  symbolNodes: SymbolNode[];
-  symbolEdges: SymbolEdge[];
-  isLoadingSymbolGraph: boolean;
-  symbolGraphError: string | null;
-  isCodePanelOpen: boolean;
-  activeSymbolNodeId: string | null;
-  hoveredSymbolNodeId: string | null;
-
-  // === AI Summary ===
-  summaryModel: string | null;
-  qaModel: string | null;
-  currentSummaryContent: string;
-  isLoadingSummary: boolean;
-  isGeneratingSummary: boolean;
-  isGeneratingQA: boolean;
-  summaryError: string | null;
-  qaError: string | null;
-  summarySavedPath: string | null;
-  hasCurrentSavedSummary: boolean;
-  isSummaryTokenLimitExceeded: boolean;
-
-  // === Toast ===
-  toasts: ToastItem[];
-
-  // === AI Providers ===
-  activeAIProvider: AIProviderName | null;
-  registeredProviders: AIProviderName[];
-
-  // === Save Path ===
-  savePath: string | null;
-
-  // === Actions ===
-  loadCommits: (reset?: boolean) => void;
-  loadChangedFiles: () => void;
-  handleCommitsLoaded: (payload: { commits: Commit[]; page: number; pageSize: number; hasMore?: boolean; requestId?: number }) => void;
-  handleRepositoryNotFound: () => void;
-  handleCommitsLoadFailed: (message?: string) => void;
-  selectCommit: (commit: Commit) => void;
-  goToCommitList: () => void;
-  goToHistoryView: () => void;
-  goBackFromDetail: () => void;
-  setFilter: (filter: Partial<FilterState>) => void;
-  clearFilters: () => void;
-  openRepository: () => void;
-  selectFileForCode: (file: ChangedFile) => void;
-  goToCommitAISummary: () => void;
-  goToCanvasView: () => void;
-  goToSymbolGraphView: (file: ChangedFile) => void;
-  loadSymbolGraph: () => void;
-  handleSymbolGraphLoaded: (nodes: SymbolNode[], edges: SymbolEdge[]) => void;
-  handleSymbolGraphLoadFailed: (message?: string) => void;
-  goToSettingsView: () => void;
-  pushToast: (message: string, type: ToastType) => void;
-  dismissToast: (id: string) => void;
-  handleChangedFilesLoaded: (payload: { files: ChangedFile[]; hasSavedCommitSummary?: boolean }) => void;
-  handleChangedFilesLoadFailed: (message?: string) => void;
-  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null; summaryModel?: string | null; qaModel?: string | null }) => void;
-  resetAISummary: () => void;
-  startAISummaryLoading: () => void;
-  startAISummaryGeneration: () => void;
-  appendAISummaryChunk: (chunk: string) => void;
-  completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
-  loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
-  failAISummary: (message?: string) => void;
-  startAIQA: () => void;
-  completeAIQA: (payload: { appendedContent: string }) => void;
-  failAIQA: (message?: string) => void;
-  setSummaryTokenWarning: (isOverLimit: boolean) => void;
-}
-```
+각 slice의 정확한 상태/액션 목록, cross-slice 참조 지점은 `ttsc_graph`로 조회하거나 해당 slice 파일을 직접 연다 — 이 표는 "어느 파일을 열어야 하는가"까지만 안내한다.
 
 ---
 

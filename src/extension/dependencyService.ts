@@ -3,10 +3,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { fetchFileContentAtCommit } from './gitService';
-
-const JS_TS_ANALYZABLE_FILE_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i;
-const PYTHON_ANALYZABLE_FILE_PATTERN = /\.py$/i;
-const GO_ANALYZABLE_FILE_PATTERN = /\.go$/i;
+import { detectSourceLanguage } from './lang/fileExtensions';
+import { collectModuleReferences, createTsSourceFile } from './lang/tsSourceWalker';
 
 export type DependencyKind = 'import' | 'require';
 
@@ -113,18 +111,16 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
 }
 
 function isAnalyzableFile(filePath: string): boolean {
-  return JS_TS_ANALYZABLE_FILE_PATTERN.test(filePath) || PYTHON_ANALYZABLE_FILE_PATTERN.test(filePath) || GO_ANALYZABLE_FILE_PATTERN.test(filePath);
+  return detectSourceLanguage(filePath) !== null;
 }
 
 function groupFilesByAnalyzer(filePaths: string[]): Record<AnalyzableGroup, string[]> {
   return filePaths.reduce<Record<AnalyzableGroup, string[]>>(
     (groups, filePath) => {
-      if (JS_TS_ANALYZABLE_FILE_PATTERN.test(filePath)) {
-        groups.jsTs.push(filePath);
-      } else if (PYTHON_ANALYZABLE_FILE_PATTERN.test(filePath)) {
-        groups.python.push(filePath);
-      } else if (GO_ANALYZABLE_FILE_PATTERN.test(filePath)) {
-        groups.go.push(filePath);
+      const language = detectSourceLanguage(filePath);
+
+      if (language) {
+        groups[language].push(filePath);
       }
 
       return groups;
@@ -303,7 +299,8 @@ function analyzeJsTsDependenciesFromSource(
     }
 
     const content = fs.readFileSync(sourcePath, 'utf8');
-    const dependencies = extractJsTsDependencySpecifiers(content);
+    const sourceFile = createTsSourceFile(from, content);
+    const dependencies = collectModuleReferences(sourceFile).map((reference) => reference.specifier);
 
     for (const dependency of dependencies) {
       const to = resolveJsTsDependencyTarget(from, dependency, changedFilePaths, tmpDir, repoPath, tsConfigPaths);
@@ -367,36 +364,6 @@ function resolveJsTsDependencyTarget(
   }
 
   return null;
-}
-
-function extractJsTsDependencySpecifiers(content: string): string[] {
-  const specifiers = new Set<string>();
-  const lines = content.split(/\r?\n/);
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    if (!trimmed || trimmed.startsWith('//')) {
-      continue;
-    }
-
-    const importFromMatch = trimmed.match(/^import\s+.*\s+from\s+['"]([^'"]+)['"]/);
-    if (importFromMatch) {
-      specifiers.add(importFromMatch[1]);
-    }
-
-    const exportFromMatch = trimmed.match(/^export\s+.*\s+from\s+['"]([^'"]+)['"]/);
-    if (exportFromMatch) {
-      specifiers.add(exportFromMatch[1]);
-    }
-
-    const sideEffectImportMatch = trimmed.match(/^import\s+['"]([^'"]+)['"]/);
-    if (sideEffectImportMatch) {
-      specifiers.add(sideEffectImportMatch[1]);
-    }
-  }
-
-  return [...specifiers];
 }
 
 function extractPythonImports(content: string): string[] {

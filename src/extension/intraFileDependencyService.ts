@@ -2,6 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import { fetchFileContentAtCommit } from './gitService';
+import { detectSourceLanguage } from './lang/fileExtensions';
+import { createTsSourceFile } from './lang/tsSourceWalker';
 
 type SymbolKind = 'function' | 'class' | 'interface' | 'type' | 'variable' | 'constant' | 'enum';
 type ImportKind = 'named' | 'default' | 'namespace';
@@ -41,10 +43,6 @@ interface SymbolEdge {
   kind: SymbolDependencyKind;
 }
 
-const SUPPORTED_FILE_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx|py|go)$/i;
-const JS_TS_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i;
-const PY_PATTERN = /\.py$/i;
-const GO_PATTERN = /\.go$/i;
 const TYPE_TEXT_LIMIT = 24;
 const ENUM_LIMIT = 6;
 
@@ -53,7 +51,8 @@ export async function analyzeSymbolGraph(
   filePath: string,
   commitHash: string | null | undefined,
 ): Promise<{ nodes: SymbolNode[]; edges: SymbolEdge[]; fileContent: string }> {
-  if (!SUPPORTED_FILE_PATTERN.test(filePath)) {
+  const language = detectSourceLanguage(filePath);
+  if (!language) {
     return { nodes: [], edges: [], fileContent: '' };
   }
 
@@ -62,17 +61,13 @@ export async function analyzeSymbolGraph(
     return { nodes: [], edges: [], fileContent: '' };
   }
 
-  if (JS_TS_PATTERN.test(filePath)) {
+  if (language === 'jsTs') {
     return { ...analyzeJsTs(content, filePath), fileContent: content };
   }
-  if (PY_PATTERN.test(filePath)) {
+  if (language === 'python') {
     return { ...analyzePython(content), fileContent: content };
   }
-  if (GO_PATTERN.test(filePath)) {
-    return { ...analyzeGo(content), fileContent: content };
-  }
-
-  return { nodes: [], edges: [], fileContent: content };
+  return { ...analyzeGo(content), fileContent: content };
 }
 
 async function readFileContent(repoPath: string, filePath: string, commitHash: string): Promise<string | null> {
@@ -90,7 +85,7 @@ async function readFileContent(repoPath: string, filePath: string, commitHash: s
 }
 
 function analyzeJsTs(content: string, filePath: string): { nodes: SymbolNode[]; edges: SymbolEdge[] } {
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, filePath.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const sourceFile = createTsSourceFile(filePath, content);
   const nodes: SymbolNode[] = [];
   const byName = new Map<string, SymbolNode>();
   const nodeById = new Map<string, ts.Node>();

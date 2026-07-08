@@ -12,6 +12,18 @@
 
 ---
 
+## Domain Glossary
+
+Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를 참고한다. 아래는 F10 전용 용어다. (Symbol과 Node/Edge 자체 정의는 core/glossary.md 참고)
+
+| 용어 | 정의 | 관련 코드 식별자 |
+|---|---|---|
+| import 노드 | JS/TS에서 외부 모듈 import(`default`/`named`/`namespace`)를 개별 심볼 노드로 표현한 것 | `nodeCategory: "import"`, `modulePath`, `importKind` |
+| 심볼 종류(kind) | 심볼의 선언 유형 분류 | `SymbolKind` (`function`/`class`/`interface`/`type`/`variable`/`constant`/`enum`) |
+| 엣지 종류 | 심볼 간 관계 분류 | `SymbolEdge` (`calls`/`uses`/`extends`/`implements`) |
+
+---
+
 ## User Goal
 
 S02 워크스페이스의 파일 트리에서 특정 파일의 `[심볼 그래프]` 액션을 실행하면, 해당 파일 안에서 각 노드가 다른 노드를 어떻게 사용·호출하는지를 그래프로 탐색한다.

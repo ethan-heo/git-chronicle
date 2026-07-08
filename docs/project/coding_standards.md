@@ -80,6 +80,13 @@ export const MyComponent: React.FC<MyComponentProps> = ({ value, onChange }) => 
 - boolean prop은 `is`/`has` 접두사: `isLoading`, `hasError`, `isActive`.
 - Optional prop은 `?`로 표시하고 기본값을 `defaultProps`가 아닌 구조 분해 시 설정.
 
+### God 컴포넌트 방지 기준
+
+- 화면 조합 컴포넌트(`S##_*Screen.tsx`)가 Zustand selector를 15개 이상 직접 구독하면, 그 컴포넌트가 오케스트레이션하는 각 Feature 패널에 필요한 상태를 각 Feature의 커스텀 훅(`useXxx()`)으로 옮기고, 화면 컴포넌트는 "어떤 패널을 보여줄지"만 결정한다.
+- 화면 조합 컴포넌트가 2개 이상의 커스텀 훅에서 총 10개 이상의 필드를 구조 분해하면, 훅의 반환값을 직접 펼쳐 쓰지 않고 해당 패널 컴포넌트에 훅의 반환 객체를 그대로 전달하거나, 패널 내부에서 같은 훅을 다시 호출한다.
+- 화면 조합 컴포넌트는 "데이터 페칭 트리거 + 레이아웃 배치 + 패널 전환"만 담당하고, 개별 패널의 렌더링 세부사항(빈 상태/에러 상태 분기 등)은 각 Feature 컴포넌트(`DiffViewer`, `DependencyGraph`, `SymbolGraph` 등)에 위임한다 — 화면 컴포넌트에서 패널 내부 조건 분기가 발견되면 해당 패널 컴포넌트로 이동한다.
+- 위 기준은 새로 작성하는 코드에 적용하는 기준이며, 이미 기준을 넘긴 기존 화면 컴포넌트에 대한 소급 리팩토링은 별도 계획서에서 다룬다. `S02_WorkspaceScreen.tsx`는 별도 계획서로 이미 소급 분해를 완료했다(38개 selector → 10개, 2개 훅 22개 필드 구조분해 → 0개. F04/F10에 신규 데이터 훅(`useDependencyCanvas`/`useSymbolGraph`)과 F02/F03/F04/F05b/F10 각각의 패널 컴포넌트를 추가).
+
 ---
 
 ## 상태 관리 규칙
@@ -90,6 +97,33 @@ export const MyComponent: React.FC<MyComponentProps> = ({ value, onChange }) => 
 
 ---
 
+## 레이어/모듈 구조 규칙
+
+### Zustand 스토어 slice 분리 기준
+
+- 단일 스토어가 다루는 도메인이 4개를 넘으면, 계속 flat 구조에 필드를 추가하지 않고 도메인별 slice 파일(`store/slices/<domain>Slice.ts`)로 분리한다. `appStore.ts`는 Zustand의 slice 패턴(`create<AppState>()((...a) => ({ ...createXSlice(...a), ...createYSlice(...a) }))`)으로 조합만 담당한다.
+- slice 경계는 각 필드/액션이 어떤 하나의 화면·기능 전이(screen/panel transition)나 단일 async 라이프사이클에 가장 강하게 종속되는지로 판단한다. [state_management.md](./state_management.md)의 도메인 분류는 참고 자료일 뿐 그대로 파일 경계로 승격하지 않는다 — 실제로는 서로 강결합된 필드(예: 필터 변경이 커밋 목록 재로드를 직접 호출)를 하나로 묶는 편이 더 응집도가 높을 수 있다. slice를 분리·재편했으면 state_management.md도 실제 파일 구조에 맞춰 갱신한다.
+- 여러 slice에 걸친 부수효과(예: 커밋 선택 시 여러 도메인의 상태를 함께 초기화)는, 그 부수효과를 가장 자연스럽게 소유하는 slice 안에 그대로 둔다. Zustand slices 패턴에서 각 slice creator는 `StateCreator<AppState, [], [], XSlice>`로 타입이 잡혀 `set`/`get`이 slice 자신의 필드가 아니라 전체 `AppState` 기준이므로, 한 slice의 액션이 다른 slice 소유 필드를 읽고 쓰는 것은 정상 동작이며 안티패턴이 아니다. 이 부수효과를 전부 `appStore.ts`로 빼내면 hub 액션의 로직이 사실상 다시 monolith로 되돌아가 분리 효과가 없어지므로 피한다.
+
+### 반복되는 비동기 상태 패턴(isLoadingX/xError/hasLoadedX) 처리 원칙
+
+- `shared/hooks/`나 `shared/utils/`를 새로 만들지 않는다([directory_structure.md](./directory_structure.md)의 공용 디렉터리 금지 원칙을 유지한다).
+- 대신 스토어 내부 전용 팩토리(`createAsyncStatusFields()` 등, store 디렉터리 안에 위치)로 필드/액션 세트를 생성해 각 slice에서 조합한다. 컴포넌트에서의 접근이 반복되면 해당 Feature 디렉터리에 colocate된 훅(`useXxxAsyncState()`)으로 감싸되, 이 훅은 `shared/`가 아니라 소비하는 Feature 디렉터리에 둔다.
+
+### 서비스 파일 언어별 로직 재사용 원칙
+
+- 여러 서비스 파일이 같은 언어(JS/TS/Python/Go)의 소스를 다루면, "무엇을 추출하는가"(의존성 엣지 vs 심볼 노드)가 달라도 "어떻게 소스를 순회/파싱하는가"는 공통 유틸로 추출한다. 단, 실제로 순회/스캔 로직 자체가 겹치는지 먼저 확인한다 — 전략만 같고(예: "줄 단위 정규식 스캔") 실제 패턴이 목적별로 다르면(import 추출 vs 함수/구조체 선언 추출) 공통화 대상이 아니다.
+- 공통 유틸 위치는 `src/extension/lang/<language>Parser.ts`로 한다. 실제 구현 예시: `lang/fileExtensions.ts`(확장자 판별), `lang/tsSourceWalker.ts`(TS Compiler API로 SourceFile 생성 + import/export 모듈 참조 수집 — `dependencyService.ts`의 JS/TS 정규식 fallback과 `intraFileDependencyService.ts`가 공유). Python/Go는 소급 조사 결과 두 서비스의 정규식 패턴이 서로 달라(import 추출 vs def/class/struct 선언 추출) 공통 유틸을 만들지 않았다 — 억지로 뽑으면 재사용되는 코드 없이 간접비만 늘어난다.
+- 각 서비스는 공통 유틸이 반환한 중간 표현(AST 노드 목록, 모듈 참조 문자열 등)을 받아 자신의 도메인 모델로 변환하는 부분만 유지한다.
+- 새 언어별 파싱 로직을 추가하기 전, 기존 서비스 파일에 이미 유사한 순회/스캔 로직이 있는지 `ttsc_graph`로 먼저 확인한다.
+
+### 파일 크기/책임 분리 트리거
+
+- 파일이 500줄을 넘거나, 하나의 파일이 3개 이상의 독립된 도메인(Feature ID 기준)을 처리하면 다음에 그 파일을 수정할 때 분리 여부를 먼저 판단한다. 즉시 분리를 강제하지는 않는다.
+- 위 기준(500줄, slice 분리, 서비스 재사용)은 새로 작성하는 코드에 적용하는 잠정 기준이며, 이미 기준을 넘긴 기존 파일에 대한 소급 리팩토링은 별도 계획서에서 다룬다. `appStore.ts`(slice 분리)와 `messageHandler.ts`(도메인별 파일 분리)는 각각 별도 계획서로 이미 소급 리팩토링을 완료했다. `dependencyService.ts`/`intraFileDependencyService.ts`는 "서비스 파일 언어별 로직 재사용 원칙"(위 섹션)에 따른 공통 유틸 추출은 완료했으나, 이는 500줄 기준 자체의 파일 분리와는 별개 관심사이며 두 파일 모두 여전히 500줄을 넘긴 상태로 남아 있다 — 크기 자체를 줄이는 소급 분리는 이번 범위 밖이다.
+
+---
+
 ## Extension Host 코드 규칙
 
 ### 메시지 핸들러
@@ -97,6 +131,7 @@ export const MyComponent: React.FC<MyComponentProps> = ({ value, onChange }) => 
 - `messageHandler.ts`에서 모든 메시지 타입을 switch문으로 처리한다.
 - 각 케이스는 별도 함수로 분리하여 가독성을 확보한다.
 - 처리 중 예외는 반드시 catch하여 `{ type: 'XXX_ERROR', payload: { message } }`를 응답한다.
+- **도메인별 파일 분리 임계치**: switch문의 case가 15개를 넘으면, 케이스를 도메인(git/dependency/symbol/ai/note 등)별로 묶어 `messageHandler/<domain>Handlers.ts`로 분리하고, `messageHandler.ts`는 각 도메인 핸들러 맵으로 라우팅만 담당하는 진입점으로 남긴다. 도메인 판단 기준은 메시지 타입 접두어(`FETCH_COMMITS`/`FETCH_CHANGED_FILES` → git, `START_AI_SUMMARY_*`/`START_AI_QA` → ai 등)를 그대로 쓴다. `messageHandler.ts`는 별도 계획서로 이미 이 구조로 소급 분리를 완료했다 — 새로 case를 추가할 때도 위임 함수는 해당 도메인 핸들러 파일에 두고, 라우터에는 `switch` 분기만 추가한다.
 
 ```typescript
 // 올바른 예
@@ -199,6 +234,7 @@ refactor(webview): simplify summary state handling
 
 - [architecture.md](./architecture.md)
 - [state_management.md](./state_management.md)
+- [directory_structure.md](./directory_structure.md)
 - [testing_strategy.md](./testing_strategy.md)
 - [../core/naming_rules.md](../core/naming_rules.md)
 - [Conventional Commits 1.0.0](https://www.conventionalcommits.org/ko/v1.0.0/)

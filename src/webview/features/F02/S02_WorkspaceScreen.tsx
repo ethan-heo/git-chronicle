@@ -1,4 +1,3 @@
-import { ReactFlowProvider } from '@xyflow/react';
 import {
   useCallback,
   useEffect,
@@ -8,27 +7,18 @@ import {
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackButton, EmptyState, ResizableSplitPane } from '../../shared/components';
+import { BackButton, EmptyState } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
-import type {
-  ChangedFile,
-  DependencyEdge,
-  SymbolEdge,
-  SymbolNode,
-} from '../../types/commit';
-import { DiffViewer, useFileDiff } from '../F03';
-import { DependencyGraph } from '../F04';
-import {
-  AISummaryViewer,
-  OverwriteConfirmDialog,
-  TokenLimitWarning,
-  useAISummary,
-} from '../F05b';
-import { SymbolCodePanel, SymbolGraph } from '../F10';
+import type { ChangedFile } from '../../types/commit';
+import { CodeDiffPanel } from '../F03';
+import { DependencyCanvasPanel } from '../F04';
+import { AISummaryPanel } from '../F05b';
+import { SymbolCodePanelToggleButton, SymbolGraphPanel, useSymbolGraph } from '../F10';
 import { AISummaryToggleButton } from './AISummaryToggleButton';
 import { FileCanvasToggleButton } from './FileCanvasToggleButton';
 import { FileTree } from './FileTree';
+import { useChangedFileTree } from './useChangedFileTree';
 import { WorkspaceHeading } from './WorkspaceHeading';
 
 const SIDEBAR_DEFAULT_WIDTH = 320;
@@ -40,49 +30,22 @@ const SIDEBAR_COLLAPSE_WIDTH = 0;
 export const S02WorkspaceScreen: FC = () => {
   const { t } = useTranslation();
   const selectedCommit = useAppStore((state) => state.selectedCommit);
-  const changedFiles = useAppStore((state) => state.changedFiles);
   const selectedFile = useAppStore((state) => state.selectedFile);
-  const isLoadingChangedFiles = useAppStore((state) => state.isLoadingChangedFiles);
-  const changedFilesError = useAppStore((state) => state.changedFilesError);
-  const hasLoadedChangedFiles = useAppStore((state) => state.hasLoadedChangedFiles);
-  const dependencyEdges = useAppStore((state) => state.dependencyEdges);
-  const isLoadingDependencies = useAppStore((state) => state.isLoadingDependencies);
-  const dependenciesError = useAppStore((state) => state.dependenciesError);
   const activeWorkspacePanel = useAppStore((state) => state.activeWorkspacePanel);
-  const selectedFileForSymbolGraph = useAppStore((state) => state.selectedFileForSymbolGraph);
-  const symbolNodes = useAppStore((state) => state.symbolNodes);
-  const symbolEdges = useAppStore((state) => state.symbolEdges);
-  const symbolFileContent = useAppStore((state) => state.symbolFileContent);
-  const isLoadingSymbolGraph = useAppStore((state) => state.isLoadingSymbolGraph);
-  const hasLoadedSymbolGraph = useAppStore((state) => state.hasLoadedSymbolGraph);
-  const symbolGraphError = useAppStore((state) => state.symbolGraphError);
-  const isCodePanelOpen = useAppStore((state) => state.isCodePanelOpen);
-  const activeSymbolNodeId = useAppStore((state) => state.activeSymbolNodeId);
-  const hoveredSymbolNodeId = useAppStore((state) => state.hoveredSymbolNodeId);
   const goToCommitList = useAppStore((state) => state.goToCommitList);
-  const loadChangedFiles = useAppStore((state) => state.loadChangedFiles);
-  const loadDependencies = useAppStore((state) => state.loadDependencies);
-  const loadSymbolGraph = useAppStore((state) => state.loadSymbolGraph);
   const selectFileForCode = useAppStore((state) => state.selectFileForCode);
   const goToCommitAISummary = useAppStore((state) => state.goToCommitAISummary);
   const goToCanvasView = useAppStore((state) => state.goToCanvasView);
   const goToSymbolGraphView = useAppStore((state) => state.goToSymbolGraphView);
   const goToSettingsView = useAppStore((state) => state.goToSettingsView);
   const goToNoteView = useAppStore((state) => state.goToNoteView);
-  const handleChangedFilesLoaded = useAppStore((state) => state.handleChangedFilesLoaded);
-  const handleChangedFilesLoadFailed = useAppStore((state) => state.handleChangedFilesLoadFailed);
-  const handleDependenciesLoaded = useAppStore((state) => state.handleDependenciesLoaded);
-  const handleDependenciesLoadFailed = useAppStore((state) => state.handleDependenciesLoadFailed);
-  const openCodePanel = useAppStore((state) => state.openCodePanel);
-  const closeCodePanel = useAppStore((state) => state.closeCodePanel);
-  const setActiveSymbolNode = useAppStore((state) => state.setActiveSymbolNode);
-  const setHoveredSymbolNode = useAppStore((state) => state.setHoveredSymbolNode);
   const isRouteSlotActive = useRouteSlotActive();
-  const [scrollRequestId, setScrollRequestId] = useState(0);
+  const changedFileTree = useChangedFileTree({ isActive: isRouteSlotActive });
+  const symbolGraph = useSymbolGraph({ isActive: isRouteSlotActive && activeWorkspacePanel === 'symbolGraph' });
   const [activeAIFilePath, setActiveAIFilePath] = useState<string | null>(null);
   const activeAIFile = useMemo(
-    () => changedFiles.find((file) => file.path === activeAIFilePath) ?? null,
-    [activeAIFilePath, changedFiles],
+    () => changedFileTree.changedFiles.find((file) => file.path === activeAIFilePath) ?? null,
+    [activeAIFilePath, changedFileTree.changedFiles],
   );
   const isCommitAISummaryActive =
     activeWorkspacePanel === 'aiSummary' && activeAIFilePath === null;
@@ -90,157 +53,11 @@ export const S02WorkspaceScreen: FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
   const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
-  const {
-    activeAIProvider,
-    currentSummaryContent,
-    hasCurrentSavedSummary,
-    hasLoadedSettings,
-    isDialogOpen,
-    isGeneratingQA,
-    isGeneratingSummary,
-    isLoadingSummary,
-    isSummaryTokenLimitExceeded,
-    isTokenWarningDismissed,
-    onAskQuestion,
-    onConfirmRegenerate,
-    onRegenerate,
-    onRetry,
-    qaCompletionCount,
-    savePath,
-    setIsDialogOpen,
-    setIsTokenWarningDismissed,
-    summaryError,
-    summarySavedPath,
-  } = useAISummary({
-    isActive: isRouteSlotActive && activeWorkspacePanel === 'aiSummary',
-    targetFile: activeAIFile,
-  });
-  const { diffState, loadFileDiff } = useFileDiff({
-    isActive: isRouteSlotActive && activeWorkspacePanel === 'code',
-    commitHash: selectedCommit?.hash ?? null,
-    filePath: selectedFile?.path ?? null,
-    isDeletedFile: selectedFile?.status === 'D',
-  });
-
-  useEffect(() => {
-    if (!isRouteSlotActive) {
-      return;
-    }
-
-    loadChangedFiles();
-  }, [isRouteSlotActive, loadChangedFiles, selectedCommit?.hash]);
 
   useEffect(() => {
     setActiveAIFilePath(null);
   }, [selectedCommit?.hash]);
 
-  useEffect(() => {
-    if (!isRouteSlotActive) {
-      return;
-    }
-
-    const handler = (
-      event: MessageEvent<{
-        type: string;
-        payload?: {
-          files?: ChangedFile[];
-          hasSavedCommitSummary?: boolean;
-          edges?: DependencyEdge[];
-          nodes?: SymbolNode[];
-          symbolEdges?: SymbolEdge[];
-          message?: string;
-        };
-      }>,
-    ): void => {
-      if (event.data.type === 'CHANGED_FILES_LOADED') {
-        handleChangedFilesLoaded({
-          files: event.data.payload?.files ?? [],
-          hasSavedCommitSummary: event.data.payload?.hasSavedCommitSummary ?? false,
-        });
-        return;
-      }
-
-      if (event.data.type === 'CHANGED_FILES_LOAD_FAILED') {
-        handleChangedFilesLoadFailed(event.data.payload?.message);
-        return;
-      }
-
-      if (event.data.type === 'DEPENDENCIES_LOADED') {
-        handleDependenciesLoaded(event.data.payload?.edges ?? []);
-        return;
-      }
-
-      if (event.data.type === 'DEPENDENCIES_LOAD_FAILED') {
-        handleDependenciesLoadFailed(event.data.payload?.message);
-      }
-    };
-
-    window.addEventListener('message', handler);
-
-    return () => window.removeEventListener('message', handler);
-  }, [
-    handleChangedFilesLoaded,
-    handleChangedFilesLoadFailed,
-    handleDependenciesLoaded,
-    handleDependenciesLoadFailed,
-    isRouteSlotActive,
-  ]);
-
-  useEffect(() => {
-    if (!isRouteSlotActive || activeWorkspacePanel !== 'fileCanvas') {
-      return;
-    }
-
-    if (!hasLoadedChangedFiles && changedFiles.length === 0 && !changedFilesError) {
-      loadChangedFiles();
-      return;
-    }
-
-    if (changedFiles.length > 0 && !isLoadingChangedFiles && !changedFilesError) {
-      loadDependencies();
-    }
-  }, [
-    activeWorkspacePanel,
-    changedFiles.length,
-    changedFilesError,
-    hasLoadedChangedFiles,
-    isLoadingChangedFiles,
-    isRouteSlotActive,
-    loadChangedFiles,
-    loadDependencies,
-  ]);
-
-  useEffect(() => {
-    if (
-      isRouteSlotActive &&
-      activeWorkspacePanel === 'symbolGraph' &&
-      selectedFileForSymbolGraph &&
-      !hasLoadedSymbolGraph &&
-      !symbolGraphError
-    ) {
-      loadSymbolGraph();
-    }
-  }, [
-    activeWorkspacePanel,
-    hasLoadedSymbolGraph,
-    isRouteSlotActive,
-    loadSymbolGraph,
-    selectedFileForSymbolGraph,
-    symbolGraphError,
-  ]);
-
-  const retryTree = useCallback(() => loadChangedFiles(), [loadChangedFiles]);
-
-  const retryCanvas = useCallback(() => {
-    if (changedFilesError || changedFiles.length === 0) {
-      loadChangedFiles();
-      return;
-    }
-
-    loadDependencies();
-  }, [changedFiles.length, changedFilesError, loadChangedFiles, loadDependencies]);
-
-  const retrySymbolGraph = useCallback(() => loadSymbolGraph(), [loadSymbolGraph]);
   const openCommitAISummaryFromSidebar = useCallback(() => {
     setActiveAIFilePath(null);
     goToCommitAISummary();
@@ -250,22 +67,6 @@ export const S02WorkspaceScreen: FC = () => {
     goToCommitAISummary();
   }, [goToCommitAISummary]);
 
-  const hoveredNode = useMemo(
-    () => symbolNodes.find((node) => node.id === hoveredSymbolNodeId) ?? null,
-    [hoveredSymbolNodeId, symbolNodes],
-  );
-  const activeNode = useMemo(
-    () => symbolNodes.find((node) => node.id === activeSymbolNodeId) ?? null,
-    [activeSymbolNodeId, symbolNodes],
-  );
-  const highlightedRange = useMemo(
-    () => (isCodePanelOpen ? activeNode ?? hoveredNode : null),
-    [activeNode, hoveredNode, isCodePanelOpen],
-  );
-  const scrollToRange = useMemo(
-    () => (activeNode ? { start: activeNode.lineStart, end: activeNode.lineEnd } : null),
-    [activeNode],
-  );
   useEffect(() => {
     if (!isSidebarDragging) {
       return;
@@ -337,16 +138,16 @@ export const S02WorkspaceScreen: FC = () => {
           </div>
           <div className="flex min-h-0 flex-1 overflow-hidden bg-surface">
             <FileTree
-              changedFiles={changedFiles}
-              isLoading={isLoadingChangedFiles}
-              error={changedFilesError}
-              onRetry={retryTree}
+              changedFiles={changedFileTree.changedFiles}
+              isLoading={changedFileTree.isLoading}
+              error={changedFileTree.error}
+              onRetry={changedFileTree.retryTree}
               onFileCodeView={selectFileForCode}
               onFileAIView={openCommitAISummaryFromFile}
               onFileSymbolGraph={goToSymbolGraphView}
               activeAIFilePath={activeWorkspacePanel === 'aiSummary' ? activeAIFilePath : null}
               activeCodeFilePath={activeWorkspacePanel === 'code' ? selectedFile?.path ?? null : null}
-              activeSymbolGraphFilePath={activeWorkspacePanel === 'symbolGraph' ? selectedFileForSymbolGraph?.path ?? null : null}
+              activeSymbolGraphFilePath={activeWorkspacePanel === 'symbolGraph' ? symbolGraph.selectedFile?.path ?? null : null}
             />
           </div>
         </aside>
@@ -409,25 +210,11 @@ export const S02WorkspaceScreen: FC = () => {
                 </svg>
               </button>
               {activeWorkspacePanel === 'symbolGraph' ? (
-                <button
-                  className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-45"
-                  type="button"
-                  aria-label={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
-                  title={isCodePanelOpen ? t('symbol_graph.code_panel_hide') : t('symbol_graph.code_panel_show')}
-                  disabled={symbolNodes.length === 0 || Boolean(symbolGraphError) || isLoadingSymbolGraph}
-                  onClick={() => {
-                    if (!isCodePanelOpen) {
-                      openCodePanel();
-                    } else {
-                      closeCodePanel();
-                    }
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-                    <rect x="1.6" y="2" width="4.9" height="12" rx="1.1" />
-                    <rect x="9.5" y="2" width="4.9" height="12" rx="1.1" />
-                  </svg>
-                </button>
+                <SymbolCodePanelToggleButton
+                  isOpen={symbolGraph.isCodePanelOpen}
+                  disabled={!symbolGraph.canToggleCodePanel}
+                  onClick={symbolGraph.toggleCodePanel}
+                />
               ) : null}
             </>
           )}
@@ -440,112 +227,31 @@ export const S02WorkspaceScreen: FC = () => {
           ) : null}
 
           {activeWorkspacePanel === 'code' && selectedFile ? (
-            <div className="h-full min-h-0">
-              <DiffViewer
-                diffLines={diffState.diffLines}
-                filePath={selectedFile.path}
-                isLoading={diffState.isLoading}
-                error={diffState.error}
-                isBinaryFile={diffState.isBinaryFile}
-                isDeletedFile={diffState.isDeletedFile}
-                onRetry={loadFileDiff}
-              />
-            </div>
+            <CodeDiffPanel
+              isActive={isRouteSlotActive && activeWorkspacePanel === 'code'}
+              commitHash={selectedCommit.hash}
+              filePath={selectedFile.path}
+              isDeletedFile={selectedFile.status === 'D'}
+            />
           ) : null}
 
           {activeWorkspacePanel === 'aiSummary' ? (
-            <div className="flex h-full min-h-0 flex-col">
-              <TokenLimitWarning
-                isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed}
-                onDismiss={() => setIsTokenWarningDismissed(true)}
-              />
-              <AISummaryViewer
-                content={currentSummaryContent}
-                error={summaryError}
-                isLoading={!hasLoadedSettings || isLoadingSummary || !isRouteSlotActive}
-                isGenerating={isGeneratingSummary}
-                isGeneratingQA={isGeneratingQA}
-                hasSavedSummary={hasCurrentSavedSummary}
-                hasAIProvider={Boolean(activeAIProvider)}
-                hasSavePath={Boolean(savePath)}
-                savedPath={summarySavedPath}
-                providerLabel={activeAIProvider}
-                qaCompletionCount={qaCompletionCount}
-                onAskQuestion={onAskQuestion}
-                onGoToSettings={goToSettingsView}
-                onRegenerate={onRegenerate}
-                onRetry={onRetry}
-              />
-              <OverwriteConfirmDialog
-                isOpen={isDialogOpen}
-                onCancel={() => setIsDialogOpen(false)}
-                onConfirm={onConfirmRegenerate}
-              />
-            </div>
+            <AISummaryPanel
+              isActive={isRouteSlotActive && activeWorkspacePanel === 'aiSummary'}
+              targetFile={activeAIFile}
+              onGoToSettings={goToSettingsView}
+            />
           ) : null}
 
           {activeWorkspacePanel === 'fileCanvas' ? (
-            <div className="h-full min-h-0">
-              <ReactFlowProvider>
-                <DependencyGraph
-                  files={changedFiles}
-                  dependencyEdges={dependencyEdges}
-                  isLoading={isLoadingChangedFiles || isLoadingDependencies}
-                  error={changedFilesError ?? dependenciesError}
-                  onRetry={retryCanvas}
-                  onFileCodeView={selectFileForCode}
-                />
-              </ReactFlowProvider>
-            </div>
+            <DependencyCanvasPanel
+              isActive={isRouteSlotActive && activeWorkspacePanel === 'fileCanvas'}
+              onFileCodeView={selectFileForCode}
+            />
           ) : null}
 
-          {activeWorkspacePanel === 'symbolGraph' && selectedFileForSymbolGraph ? (
-            <ResizableSplitPane
-              isOpen={isCodePanelOpen}
-              className="h-full min-h-0"
-              defaultLeftPercent={62}
-              left={(
-                <div className="flex h-full min-h-0 w-full min-w-0 flex-1 overflow-hidden">
-                  <ReactFlowProvider>
-                    <SymbolGraph
-                      symbolNodes={symbolNodes}
-                      symbolEdges={symbolEdges}
-                      isLoading={isLoadingSymbolGraph}
-                      error={symbolGraphError}
-                      onRetry={retrySymbolGraph}
-                      activeNodeId={activeSymbolNodeId ?? hoveredSymbolNodeId}
-                      onNodeClick={(nodeId) => {
-                        setActiveSymbolNode(nodeId);
-                        setScrollRequestId((current) => current + 1);
-                      }}
-                      onNodeHover={(nodeId) => {
-                        setHoveredSymbolNode(nodeId);
-                      }}
-                      onPaneClick={() => {
-                        setActiveSymbolNode(null);
-                        setHoveredSymbolNode(null);
-                      }}
-                    />
-                  </ReactFlowProvider>
-                </div>
-              )}
-              right={(
-                <SymbolCodePanel
-                  isOpen={isCodePanelOpen}
-                  filePath={selectedFileForSymbolGraph.path}
-                  fileContent={symbolFileContent ?? ''}
-                  language={selectedFileForSymbolGraph.path}
-                  highlightRange={
-                    highlightedRange
-                      ? { start: highlightedRange.lineStart, end: highlightedRange.lineEnd }
-                      : null
-                  }
-                  scrollToRange={scrollToRange}
-                  scrollRequestId={scrollRequestId}
-                  onClose={closeCodePanel}
-                />
-              )}
-            />
+          {activeWorkspacePanel === 'symbolGraph' ? (
+            <SymbolGraphPanel data={symbolGraph} />
           ) : null}
         </div>
       </section>

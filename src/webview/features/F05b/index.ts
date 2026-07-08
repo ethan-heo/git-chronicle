@@ -1,3 +1,4 @@
+export { AISummaryPanel } from './AISummaryPanel';
 export { AISummaryViewer } from './AISummaryViewer';
 export { OverwriteConfirmDialog } from './OverwriteConfirmDialog';
 export { TokenLimitWarning } from './TokenLimitWarning';

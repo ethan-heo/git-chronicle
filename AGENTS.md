@@ -12,7 +12,7 @@ TypeScript 구현 코드의 구조 탐색이 필요한 작업에서는 `ttsc_gra
 
 ## 기능 추가/수정 계획 수립 시 체크리스트
 
-계획을 세우기 전 [docs/README.md](./docs/README.md)의 "프로젝트 문서"·"코어 설계" 표에서 관련 문서와, 비슷한 기존 기능(F##)의 `spec.md`/`blueprint.md`를 먼저 확인한다. 디자인/구현 상세 프롬프트를 영구 문서로 만들지 않는 이유와 방식은 [문서 작성 가이드](./docs/project/documentation_guidelines.md)를 따른다.
+계획을 세우기 전 [docs/README.md](./docs/README.md)의 "프로젝트 문서"·"코어 설계" 표에서 관련 문서와, 비슷한 기존 기능(F##)의 `spec.md`/`blueprint.md`를 먼저 확인한다. 여러 Feature에 걸친 도메인 용어는 [docs/core/glossary.md](./docs/core/glossary.md)를 먼저 확인해 재정의하지 않는다. 디자인/구현 상세 프롬프트를 영구 문서로 만들지 않는 이유와 방식은 [문서 작성 가이드](./docs/project/documentation_guidelines.md)를 따른다.
 
 ## 계획서(Plan) 확인 및 이어받기 체크리스트
 

@@ -49,16 +49,26 @@ git-chronicle/
 src/extension/
 ├── index.ts                          # activate() / deactivate() 진입점
 ├── webviewPanel.ts                   # WebviewPanel 생성·HTML 주입·패널 관리
-├── messageHandler.ts                 # Webview → Extension 메시지 switch 라우터
+├── messageHandler.ts                 # Webview → Extension 메시지 라우터(도메인 핸들러로 위임, 액션 없음)
+├── messageHandler/                   # 도메인별 메시지 핸들러
+│   ├── shared.ts                     # l10n() 등 여러 도메인이 공유하는 헬퍼
+│   ├── gitHandlers.ts                # FETCH_COMMITS/FETCH_CHANGED_FILES/FETCH_FILE_DIFF (F01/F02/F03)
+│   ├── dependencyHandlers.ts         # ANALYZE_DEPENDENCIES (F04)
+│   ├── symbolHandlers.ts             # ANALYZE_SYMBOL_GRAPH (F10)
+│   ├── aiHandlers.ts                 # AI 설정/요약/QA 전체 (F05b/F06/F07/F09)
+│   └── noteHandlers.ts               # FETCH_NOTE/SAVE_NOTE (F11)
 ├── gitService.ts                     # simple-git 기반 Git 조회 서비스
 │   - fetchCommits(filter, page)      # git log 실행
 │   - GitRepositoryNotFoundError      # Git 저장소 미감지 오류 타입
 ├── dependencyService.ts              # 언어별 의존 관계 분석 서비스
 │   - analyzeDependencies(repoPath, files[]) → DependencyEdge[]
-│   - JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통한 dependency-cruiser API, Python/Go는 텍스트 파싱 사용
+│   - JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통한 dependency-cruiser API 우선 + `lang/tsSourceWalker.ts` 기반 AST 보완, Python/Go는 정규식 파싱 사용
 ├── intraFileDependencyService.ts     # F10 파일 내부 심볼 의존성 분석
 │   - analyzeSymbolGraph(repoPath, filePath, commitHash) → { nodes: SymbolNode[], edges: SymbolEdge[] }
-│   - JS/TS는 TypeScript Compiler API, Python/Go는 정규식 파서 사용
+│   - JS/TS는 `lang/tsSourceWalker.ts`를 통한 TypeScript Compiler API, Python/Go는 정규식 파서 사용
+├── lang/                             # 서비스 파일 간 공유하는 언어별 파싱 원시 유틸(도메인 모델 변환은 각 서비스에 남김)
+│   ├── fileExtensions.ts             # detectSourceLanguage() — 확장자로 jsTs/python/go 판별
+│   └── tsSourceWalker.ts             # createTsSourceFile() / collectModuleReferences() — TS Compiler API 공통 헬퍼
 ├── aiService.ts                      # child_process.spawn 기반 AI CLI 스트리밍 실행
 │   - streamAISummary(options)        # stdout chunk 전달, 120초 타임아웃, 취소 함수 반환
 ├── depcruiser-runner.mjs             # dependency-cruiser API를 별도 Node 프로세스로 실행하는 러너 (dist로 복사되어 빌드 산출물에서 실행)
@@ -85,7 +95,8 @@ src/webview/
 ├── main.tsx                          # ReactDOM.createRoot 진입점
 ├── App.tsx                           # currentScreen에 따라 Screen 렌더링 + 라우트 전환 슬롯 관리
 ├── store/
-│   └── appStore.ts                   # Zustand 전역 스토어 (상태 + 액션 정의)
+│   ├── appStore.ts                   # Zustand 스토어 combinator (8개 slice 조합, 상태/액션 정의 없음)
+│   └── slices/                       # 도메인별 slice (commitList/navigation/changedFiles/dependencyGraph/symbolGraph/ai/note/toast)
 ├── types/
 │   └── commit.ts                     # Commit, FilterState, ScreenID, RouteTransitionDirection 타입
 ├── bridge/

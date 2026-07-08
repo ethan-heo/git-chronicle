@@ -15,6 +15,17 @@
 
 ---
 
+## Domain Glossary
+
+Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를 참고한다. 아래는 F05b 전용 용어다.
+
+| 용어 | 정의 | 관련 코드 식별자 |
+|---|---|---|
+| 저장본(Saved Summary) | 이미 생성되어 로컬에 저장된 AI 정리 결과. 재생성 전까지 패널 진입 시 즉시 표시된다 | `hasSavedCommitSummary`, `loadCommitSummary()` |
+| 재생성(Regenerate) | 기존 저장본을 덮어쓰기 확인 다이얼로그 통과 후 동일 입력으로 다시 생성하는 동작 | `RegenerateButton.tsx`, `forceRegenerate` |
+
+---
+
 ## User Goal
 
 커밋 전체에서 무엇이 달성되었는지를 AI가 종합 요약한 마크다운으로 파악하고, 로컬에 저장하여 나중에 재활용한다.

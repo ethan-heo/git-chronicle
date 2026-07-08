@@ -15,6 +15,12 @@
 
 ---
 
+## Domain Glossary
+
+Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를 참고한다. 이 Feature는 공유 용어 외 전용 용어가 없다.
+
+---
+
 ## User Goal
 
 선택한 파일에서 어떤 코드가 추가되고 삭제되었는지 신텍스 하이라이팅이 적용된 unified diff로 확인한다.

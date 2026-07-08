@@ -15,6 +15,12 @@
 
 ---
 
+## Domain Glossary
+
+Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를 참고한다. 이 Feature는 공유 용어 외 전용 용어가 없다.
+
+---
+
 ## User Goal
 
 내가 작업한 특정 커밋을 날짜, 작성자, 메시지 키워드 기준으로 빠르게 찾아 상세 이력 조회로 진입한다.

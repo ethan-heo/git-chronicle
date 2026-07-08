@@ -55,11 +55,13 @@ S02_WorkspaceScreen
    │  ├─ NoteIcon → S07
    │  └─ SettingsIcon (⚙) → S06
    └─ ContentPanel
-      ├─ code → DiffViewer
-      ├─ aiSummary → AISummaryViewer + QAInputArea
-      ├─ fileCanvas → DependencyGraph
-      └─ symbolGraph → SymbolGraph + SymbolCodePanel
+      ├─ code → CodeDiffPanel(useFileDiff) → DiffViewer
+      ├─ aiSummary → AISummaryPanel(useAISummary) → AISummaryViewer + QAInputArea
+      ├─ fileCanvas → DependencyCanvasPanel(useDependencyCanvas) → DependencyGraph
+      └─ symbolGraph → SymbolGraphPanel(data: useSymbolGraph 결과) → SymbolGraph + SymbolCodePanel
 ```
+
+각 Feature 전용 데이터(로딩 effect, 재시도, 파생 상태)는 화면 컴포넌트가 아니라 위 괄호 안 훅에 캡슐화되어 있다(`docs/project/coding_standards.md`의 "God 컴포넌트 방지 기준" 참고). `symbolGraph`만 `useSymbolGraph`를 `S02_WorkspaceScreen`에서 1회 호출해 헤더의 코드패널 토글 버튼과 `SymbolGraphPanel`이 결과 객체를 공유한다 — 나머지는 패널 컴포넌트가 훅을 자체 호출한다.
 
 ---
 
@@ -71,10 +73,17 @@ S02_WorkspaceScreen
 | `AISummaryToggleButton` | 이 문서 | `src/webview/features/F02/AISummaryToggleButton.tsx` |
 | `FileCanvasToggleButton` | 이 문서 | `src/webview/features/F02/FileCanvasToggleButton.tsx` |
 | `FileTree` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filetree) | `src/webview/features/F02/FileTree.tsx` |
+| `useChangedFileTree` | 이 문서 (F02 소속 훅, 변경 파일 로딩/재시도) | `src/webview/features/F02/useChangedFileTree.ts` |
 | `WorkspaceHeading` | 이 문서 | `src/webview/features/F02/WorkspaceHeading.tsx` |
+| `CodeDiffPanel` | 이 문서 (F03 소속, `useFileDiff` 자체 호출 후 `DiffViewer` 렌더) | `src/webview/features/F03/CodeDiffPanel.tsx` |
 | `DiffViewer` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) | `src/webview/features/F03/DiffViewer.tsx` |
+| `AISummaryPanel` | 이 문서 (F05b 소속, `useAISummary` 자체 호출 후 `AISummaryViewer`+`TokenLimitWarning`+`OverwriteConfirmDialog` 렌더) | `src/webview/features/F05b/AISummaryPanel.tsx` |
 | `AISummaryViewer` | [F05b blueprint](../../features/F05b_ai_summary_commit/blueprint.md) | `src/webview/features/F05b/AISummaryViewer.tsx` |
+| `DependencyCanvasPanel` | 이 문서 (F04 소속, `useDependencyCanvas` 자체 호출 후 `DependencyGraph` 렌더) | `src/webview/features/F04/DependencyCanvasPanel.tsx` |
 | `DependencyGraph` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md#component-dependencygraph) | `src/webview/features/F04/DependencyGraph.tsx` |
+| `useSymbolGraph` | 이 문서 (F10 소속 훅, `S02_WorkspaceScreen`에서 1회 호출해 헤더 토글 버튼과 공유) | `src/webview/features/F10/useSymbolGraph.ts` |
+| `SymbolGraphPanel` | 이 문서 (F10 소속, `useSymbolGraph` 결과 객체를 받아 `SymbolGraph`+`SymbolCodePanel` 렌더) | `src/webview/features/F10/SymbolGraphPanel.tsx` |
+| `SymbolCodePanelToggleButton` | 이 문서 (F10 소속, 헤더 코드패널 토글) | `src/webview/features/F10/SymbolCodePanelToggleButton.tsx` |
 | `SymbolGraph` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolgraph) | `src/webview/features/F10/SymbolGraph.tsx` |
 | `SymbolCodePanel` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolcodepanel) | `src/webview/features/F10/SymbolCodePanel.tsx` |
 

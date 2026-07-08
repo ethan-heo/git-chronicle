@@ -1,0 +1,46 @@
+- generic [ref=e2]:
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e8]:
+        - heading "GitChronicle" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Commit List
+      - button "Open settings" [ref=e12]:
+        - img [ref=e13]
+    - search [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - button "Filters" [expanded] [ref=e19]:
+            - generic [ref=e20]: ▾
+            - generic [ref=e21]: Filters
+          - button "Change sort order, current Newest" [ref=e22]:
+            - generic [ref=e23]: ↓
+            - generic [ref=e24]: Newest
+        - generic [ref=e25]:
+          - generic [ref=e26]: No filters
+          - button "Clear filters" [ref=e27]
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e30]: Filters
+          - generic [ref=e31]:
+            - textbox "Start date" [ref=e32]
+            - generic [ref=e33]: ~
+            - textbox "End date" [ref=e34]
+        - generic [ref=e35]:
+          - generic [ref=e36]: Author
+          - combobox "Author filter" [ref=e37] [cursor=pointer]:
+            - option "All" [selected]
+        - generic [ref=e38]:
+          - generic [ref=e39]: Include keywords
+          - generic [ref=e40]:
+            - generic:
+              - img
+            - searchbox "Search commit message include keywords" [ref=e41]
+        - generic [ref=e42]:
+          - generic [ref=e43]: Exclude keywords
+          - generic [ref=e44]:
+            - generic:
+              - img
+            - searchbox "Search commit message exclude keywords" [ref=e45]
+    - status "Loading commits..." [ref=e47]:
+      - generic [ref=e49]: Loading commits...
+  - generic "Notifications"

@@ -1,0 +1,220 @@
+- generic [ref=e2]:
+  - main [ref=e1140]:
+    - complementary [ref=e1141]:
+      - generic [ref=e1142]:
+        - button "Go to previous screen" [ref=e1143]:
+          - img [ref=e1144]
+        - generic [ref=e1146]:
+          - button "Summarize the entire commit with AI" [ref=e1147]:
+            - generic [ref=e1148]: AI
+          - button "Open dependency canvas" [ref=e1149]:
+            - img [ref=e1150]
+      - region "Changed files" [ref=e1154]:
+        - generic [ref=e1155]:
+          - generic [ref=e1156]: Changed files
+          - strong [ref=e1157]: "10"
+          - generic "Files by status" [ref=e1158]:
+            - generic [ref=e1159]: "+2"
+            - generic [ref=e1160]: ~6
+            - generic [ref=e1161]: "-1"
+            - generic [ref=e1162]: R1
+        - tree "Changed file tree" [ref=e1163]:
+          - treeitem "docs" [expanded] [ref=e1164]:
+            - button "docs" [ref=e1165]:
+              - generic [ref=e1166]: ▾
+              - img [ref=e1168]
+              - generic [ref=e1170]: docs
+            - group [ref=e1171]:
+              - treeitem "docs/F01_blueprint.md - Modified" [ref=e1172]:
+                - 'generic "File status: 수정" [ref=e1173]': M
+                - img [ref=e1175]
+                - generic "docs/F01_blueprint.md" [ref=e1178]: F01_blueprint.md
+                - generic:
+                  - button "Copy as Markdown":
+                    - img
+                  - button "View code":
+                    - img
+                  - button "View AI summary":
+                    - generic: AI
+                  - button "Open symbol graph" [disabled]:
+                    - img
+          - treeitem "src" [expanded] [ref=e1179]:
+            - button "src" [ref=e1180]:
+              - generic [ref=e1181]: ▾
+              - img [ref=e1183]
+              - generic [ref=e1185]: src
+            - group [ref=e1186]:
+              - treeitem "components" [expanded] [ref=e1187]:
+                - button "components" [ref=e1188]:
+                  - generic [ref=e1189]: ▾
+                  - img [ref=e1191]
+                  - generic [ref=e1193]: components
+                - group [ref=e1194]:
+                  - treeitem "CommitFilter" [expanded] [ref=e1195]:
+                    - button "CommitFilter" [ref=e1196]:
+                      - generic [ref=e1197]: ▾
+                      - img [ref=e1199]
+                      - generic [ref=e1201]: CommitFilter
+                    - group [ref=e1202]:
+                      - treeitem "src/components/CommitFilter/CommitFilterPanel.tsx - Modified" [ref=e1203]:
+                        - 'generic "File status: 수정" [ref=e1204]': M
+                        - img [ref=e1206]
+                        - generic "src/components/CommitFilter/CommitFilterPanel.tsx" [ref=e1209]: CommitFilterPanel.tsx
+                        - generic:
+                          - button "Copy as Markdown":
+                            - img
+                          - button "View code":
+                            - img
+                          - button "View AI summary":
+                            - generic: AI
+                          - button "Open symbol graph":
+                            - img
+                  - treeitem "CommitList" [expanded] [ref=e1210]:
+                    - button "CommitList" [ref=e1211]:
+                      - generic [ref=e1212]: ▾
+                      - img [ref=e1214]
+                      - generic [ref=e1216]: CommitList
+                    - group [ref=e1217]:
+                      - treeitem "src/components/CommitList/CommitList.tsx - Modified" [ref=e1218]:
+                        - 'generic "File status: 수정" [ref=e1219]': M
+                        - img [ref=e1221]
+                        - generic "src/components/CommitList/CommitList.tsx" [ref=e1224]: CommitList.tsx
+                        - generic:
+                          - button "Copy as Markdown":
+                            - img
+                          - button "View code":
+                            - img
+                          - button "View AI summary":
+                            - generic: AI
+                          - button "Open symbol graph":
+                            - img
+                      - treeitem "src/components/CommitList/CommitListItem.tsx - Modified" [ref=e1225]:
+                        - 'generic "File status: 수정" [ref=e1226]': M
+                        - img [ref=e1228]
+                        - generic "src/components/CommitList/CommitListItem.tsx" [ref=e1231]: CommitListItem.tsx
+                        - generic:
+                          - button "Copy as Markdown":
+                            - img
+                          - button "View code":
+                            - img
+                          - button "View AI summary":
+                            - generic: AI
+                          - button "Open symbol graph":
+                            - img
+                      - treeitem "src/components/CommitList/useInfiniteScroll.ts - Added" [ref=e1232]:
+                        - 'generic "File status: 추가" [ref=e1233]': A
+                        - img [ref=e1235]
+                        - generic "src/components/CommitList/useInfiniteScroll.ts" [ref=e1238]: useInfiniteScroll.ts
+                        - generic:
+                          - button "Copy as Markdown":
+                            - img
+                          - button "View code":
+                            - img
+                          - button "View AI summary":
+                            - generic: AI
+                          - button "Open symbol graph":
+                            - img
+              - treeitem "hooks" [expanded] [ref=e1239]:
+                - button "hooks" [ref=e1240]:
+                  - generic [ref=e1241]: ▾
+                  - img [ref=e1243]
+                  - generic [ref=e1245]: hooks
+                - group [ref=e1246]:
+                  - treeitem "src/hooks/useIntersectionObserver.ts - Added" [ref=e1247]:
+                    - 'generic "File status: 추가" [ref=e1248]': A
+                    - img [ref=e1250]
+                    - generic "src/hooks/useIntersectionObserver.ts" [ref=e1253]: useIntersectionObserver.ts
+                    - generic:
+                      - button "Copy as Markdown":
+                        - img
+                      - button "View code":
+                        - img
+                      - button "View AI summary":
+                        - generic: AI
+                      - button "Open symbol graph":
+                        - img
+                  - treeitem "src/hooks/useScrollTrigger.ts - Deleted" [ref=e1254]:
+                    - 'generic "File status: 삭제" [ref=e1255]': D
+                    - img [ref=e1257]
+                    - generic "src/hooks/useScrollTrigger.ts" [ref=e1260]: useScrollTrigger.ts
+                    - generic:
+                      - button "Copy as Markdown":
+                        - img
+                      - button "View code":
+                        - img
+                      - button "View AI summary":
+                        - generic: AI
+                      - button "Open symbol graph":
+                        - img
+              - treeitem "types" [expanded] [ref=e1261]:
+                - button "types" [ref=e1262]:
+                  - generic [ref=e1263]: ▾
+                  - img [ref=e1265]
+                  - generic [ref=e1267]: types
+                - group [ref=e1268]:
+                  - treeitem "src/types/commit.ts - Renamed" [ref=e1269]:
+                    - 'generic "File status: 이름 변경" [ref=e1270]': R
+                    - img [ref=e1272]
+                    - generic "src/types/git.ts -> src/types/commit.ts" [ref=e1275]: commit.ts
+                    - generic:
+                      - button "Copy as Markdown":
+                        - img
+                      - button "View code":
+                        - img
+                      - button "View AI summary":
+                        - generic: AI
+                      - button "Open symbol graph":
+                        - img
+              - treeitem "utils" [expanded] [ref=e1276]:
+                - button "utils" [ref=e1277]:
+                  - generic [ref=e1278]: ▾
+                  - img [ref=e1280]
+                  - generic [ref=e1282]: utils
+                - group [ref=e1283]:
+                  - treeitem "src/utils/pagination.ts - Modified" [ref=e1284]:
+                    - 'generic "File status: 수정" [ref=e1285]': M
+                    - img [ref=e1287]
+                    - generic "src/utils/pagination.ts" [ref=e1290]: pagination.ts
+                    - generic:
+                      - button "Copy as Markdown":
+                        - img
+                      - button "View code":
+                        - img
+                      - button "View AI summary":
+                        - generic: AI
+                      - button "Open symbol graph":
+                        - img
+          - treeitem "tests" [expanded] [ref=e1291]:
+            - button "tests" [ref=e1292]:
+              - generic [ref=e1293]: ▾
+              - img [ref=e1295]
+              - generic [ref=e1297]: tests
+            - group [ref=e1298]:
+              - treeitem "tests/CommitList.test.tsx - Modified" [ref=e1299]:
+                - 'generic "File status: 수정" [ref=e1300]': M
+                - img [ref=e1302]
+                - generic "tests/CommitList.test.tsx" [ref=e1305]: CommitList.test.tsx
+                - generic:
+                  - button "Copy as Markdown":
+                    - img
+                  - button "View code":
+                    - img
+                  - button "View AI summary":
+                    - generic: AI
+                  - button "Open symbol graph":
+                    - img
+    - separator [ref=e1306]
+    - generic [ref=e1308]:
+      - generic [ref=e1309]:
+        - generic [ref=e1310]:
+          - 'heading "refactor: CommitFilterPanel 상태 끌어올리기" [level=1] [ref=e1311]'
+          - paragraph [ref=e1312]: 9c8d7e6 · 김지훈 · 2026.06.24.
+        - generic [ref=e1313]:
+          - button "노트 열기" [ref=e1314]:
+            - img [ref=e1315]
+          - button "Open settings" [ref=e1319]:
+            - img [ref=e1320]
+      - generic [ref=e1325]:
+        - img [ref=e1327]
+        - paragraph [ref=e1330]: No AI summary
+  - generic "Notifications"

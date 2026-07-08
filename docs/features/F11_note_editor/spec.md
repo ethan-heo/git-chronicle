@@ -4,6 +4,14 @@
 
 커밋 컨텍스트를 유지한 채 독립 화면에서 마크다운 노트를 작성하고 자동 저장한다. 기존 기능에서 복사한 마크다운/mermaid 조각을 붙여넣어 사용자 주도의 분석 기록을 남긴다.
 
+## Domain Glossary
+
+Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를 참고한다. 아래는 F11 전용 용어다.
+
+| 용어 | 정의 | 관련 코드 식별자 |
+|---|---|---|
+| 노트(Note) | 커밋 컨텍스트에 종속된 자유 형식 마크다운 메모. 명시적 저장 버튼 없이 디바운스로 자동저장된다 | `noteContent`, `SAVE_NOTE` |
+
 ## Business Rules
 
 - 노트 화면은 `S07_NoteScreen`으로 S02 워크스페이스 본문 `WorkspaceHeading`의 노트 아이콘 클릭 시 진입한다.

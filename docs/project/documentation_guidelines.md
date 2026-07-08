@@ -36,8 +36,8 @@
 
 문서가 코드보다 뒤처져 남아있는 stale 콘텐츠는 두 종류로 나눠서 다르게 처리한다.
 
-- **기계적으로 확인 가능한 사실 불일치**: 파일 경로, 컴포넌트/함수명, 메시지 타입, Feature ID처럼 grep이나 `ttsc_graph`로 존재 여부를 바로 확인할 수 있는 대상. 발견 즉시 코드 기준으로 고친다 — 별도 논의 없이 수정한다. `pnpm docs:check`가 검증하는 범위(문서 내부 링크, 메시지 프로토콜, Feature ID)는 커밋 전 자동으로 걸러지지만, 그 외의 grep 가능한 사실(컴포넌트 Props, state 필드명 등)은 수동으로 확인해야 한다.
-- **판단이 필요한 stale**: "이 흐름이 아직 유효한가", "이 설계 근거가 여전히 맞는가"처럼 코드 존재 여부만으로 답할 수 없는 서술. 확신 없이 삭제·수정하지 말고 관련 코드를 `ttsc_graph`로 먼저 확인한다. 그래도 판단이 서지 않으면 사용자에게 묻거나 [project/known_issues.md](known_issues.md)에 근거와 함께 남긴다 — known_issues.md는 "발견했지만 지금 해결하지 않는 불일치"를 위한 임시 보관소이며, 해결되면 항목을 제거한다.
+- **기계적으로 확인 가능한 사실 불일치**: 파일 경로, 컴포넌트/함수명, 메시지 타입, Feature ID, `glossary.md`/Domain Glossary의 "관련 코드 식별자" 컬럼처럼 grep이나 `ttsc_graph`로 존재 여부를 바로 확인할 수 있는 대상. 발견 즉시 코드 기준으로 고친다 — 별도 논의 없이 수정한다. `pnpm docs:check`가 검증하는 범위(문서 내부 링크, 메시지 프로토콜, Feature ID)는 커밋 전 자동으로 걸러지지만, 그 외의 grep 가능한 사실(컴포넌트 Props, state 필드명, 용어집의 코드 식별자 등)은 수동으로 확인해야 한다.
+- **판단이 필요한 stale**: "이 흐름이 아직 유효한가", "이 설계 근거가 여전히 맞는가", "이 용어의 정의가 여전히 맞는가"처럼 코드 존재 여부만으로 답할 수 없는 서술. 확신 없이 삭제·수정하지 말고 관련 코드를 `ttsc_graph`로 먼저 확인한다. 그래도 판단이 서지 않으면 사용자에게 묻거나 [project/known_issues.md](known_issues.md)에 근거와 함께 남긴다 — known_issues.md는 "발견했지만 지금 해결하지 않는 불일치"를 위한 임시 보관소이며, 해결되면 항목을 제거한다.
 
 Stale 여부를 판단하는 계기:
 
@@ -79,6 +79,8 @@ Stale 여부를 판단하는 계기:
 
 AI 디자인/구현 생성용 프롬프트는 영구 문서로 두지 않는다. 계획(Plan) 수립 시 spec·blueprint·project·core 문서를 근거로 그때그때 생성하고, 작업 완료 후 변경 사항만 spec/blueprint에 반영한 뒤 폐기한다.
 
+> `spec.md`에 "개념 → 실제 파일/함수/메시지" 매핑 섹션(예: Current Implementation Notes)을 두는 방식은 검토했으나 채택하지 않았다. 파일 경로·함수명은 리팩토링마다 바뀌는 항목이라 stale 위험이 크고, `pnpm docs:check`가 이런 자유 형식 텍스트의 정확성까지 자동 검증하지는 못한다. 코드 위치 탐색은 `ttsc_graph`를 그때그때 사용하는 것으로 대신한다.
+
 ---
 
 ## Screens 문서 구성
@@ -95,6 +97,17 @@ Feature 전용 컴포넌트(예: `CommitListItem`, `DiffViewer`, `DependencyGrap
 
 ---
 
+## 용어집 문서화 규칙
+
+2개 이상 Feature가 공유하는 도메인 용어(Commit, Diff, Provider, Node/Edge 등)는 [core/glossary.md](../core/glossary.md) 하나에만 문서화한다.
+
+Feature 전용 용어(해당 F##에서만 쓰이는 개념)는 별도 문서를 두지 않고 해당 기능 `spec.md`의 **Domain Glossary** 섹션이 유일한 문서다.
+
+- 이미 `core/glossary.md`에 있는 용어를 Feature `spec.md`에서 다시 정의하지 않는다 — "중복 서술 금지 원칙"을 용어에도 동일하게 적용한 것이다.
+- 어떤 Feature에서 쓰던 전용 용어가 다른 Feature에서도 쓰이기 시작하면, 그 용어를 `spec.md`의 Domain Glossary에서 삭제하고 `core/glossary.md`로 승격한 뒤 "등장 Feature" 컬럼에 관련 Feature를 모두 적는다. 반대로 공유 용어를 쓰던 Feature가 모두 제거되어 등장 Feature가 1개 이하로 줄면 `core/glossary.md`에서 제거하고 필요하면 해당 `spec.md`로 다시 내린다.
+
+---
+
 ## 문서 갱신 체크리스트
 
 구현이 끝나면 실제로 바뀐 부분만 아래 문서에 반영한다. 새 메시지 타입이나 상태 필드를 추가하고 이 단계를 건너뛰면 문서가 바로 stale해진다 — F09/F10 추가 당시 이 단계가 누락되어 architecture.md, state_management.md, naming_rules.md, design_tokens.md 등이 한동안 낡은 상태로 방치된 적이 있으니 유의한다.
@@ -103,6 +116,8 @@ Feature 전용 컴포넌트(예: `CommitListItem`, `DiffViewer`, `DependencyGrap
 - `docs/project/architecture.md` — 새 메시지 타입(`WebviewToExtensionMessage`/`ExtensionToWebviewMessage`)이나 디렉토리 구조가 바뀌면 갱신.
 - `docs/project/state_management.md` — Zustand 상태 필드·액션을 추가/변경하면 갱신.
 - `docs/core/naming_rules.md` — 새 Screen ID/Feature ID를 추가하면 갱신.
+- `docs/core/glossary.md` — 2개 이상 Feature가 공유하는 새 도메인 용어가 생기거나, Feature 전용 용어가 공유 용어로 승격/강등되면 갱신.
+- `docs/features/F##_*/spec.md`의 Domain Glossary — 해당 Feature에 전용 용어가 추가/변경되면 갱신.
 - `docs/core/design_tokens.md` — 새 색상/타이포그래피/간격 토큰을 추가하면 갱신.
 - `docs/core/global_components.md` — 2개 이상 기능이 공유하는 컴포넌트를 추가/변경하면 갱신 (단일 기능 전용 컴포넌트는 해당 `blueprint.md`의 Component Definitions에만 반영).
 - `docs/README.md` — 새 기능/화면을 추가하면 해당 표에 항목 추가.

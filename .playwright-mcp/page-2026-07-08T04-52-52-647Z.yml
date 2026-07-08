@@ -1,0 +1,157 @@
+- generic [ref=e2]:
+  - main [ref=e964]:
+    - generic [ref=e965]:
+      - generic [ref=e967]:
+        - heading "GitChronicle" [level=1] [ref=e968]
+        - paragraph [ref=e969]: Commit List
+      - button "Open settings" [ref=e971]:
+        - img [ref=e972]
+    - search [ref=e975]:
+      - generic [ref=e976]:
+        - generic [ref=e977]:
+          - button "Filters" [expanded] [ref=e978]:
+            - generic [ref=e979]: ▾
+            - generic [ref=e980]: Filters
+          - button "Change sort order, current Newest" [ref=e981]:
+            - generic [ref=e982]: ↓
+            - generic [ref=e983]: Newest
+        - generic [ref=e984]:
+          - generic [ref=e985]: No filters
+          - button "Clear filters" [ref=e986]
+      - generic [ref=e987]:
+        - generic [ref=e988]:
+          - generic [ref=e989]: Filters
+          - generic [ref=e990]:
+            - textbox "Start date" [ref=e991]
+            - generic [ref=e992]: ~
+            - textbox "End date" [ref=e993]
+        - generic [ref=e994]:
+          - generic [ref=e995]: Author
+          - combobox "Author filter" [ref=e996] [cursor=pointer]:
+            - option "All" [selected]
+            - option "김지훈"
+            - option "박서준"
+            - option "이수민"
+            - option "Jane Cooper"
+        - generic [ref=e997]:
+          - generic [ref=e998]: Include keywords
+          - generic [ref=e999]:
+            - generic:
+              - img
+            - searchbox "Search commit message include keywords" [ref=e1000]
+        - generic [ref=e1001]:
+          - generic [ref=e1002]: Exclude keywords
+          - generic [ref=e1003]:
+            - generic:
+              - img
+            - searchbox "Search commit message exclude keywords" [ref=e1004]
+    - list [ref=e1006]:
+      - 'listitem "feat: 무한 스크롤 트리거를 IntersectionObserver로 교체 by 김지훈 on 2026.06.25." [ref=e1007] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1008]:
+          - img [ref=e1009]
+        - generic [ref=e1012]: "feat: 무한 스크롤 트리거를 IntersectionObserver로 교체"
+        - generic [ref=e1013]:
+          - generic [ref=e1014]: a1b2c3d
+          - generic [ref=e1015]: 김지훈
+          - generic [ref=e1016]: ·
+          - time [ref=e1017]: 2026.06.25.
+      - 'listitem "fix: 키워드 디바운스 타이머 초기화 누락 수정 by 이수민 on 2026.06.25." [ref=e1018] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1019]:
+          - img [ref=e1020]
+        - generic [ref=e1023]: "fix: 키워드 디바운스 타이머 초기화 누락 수정"
+        - generic [ref=e1024]:
+          - generic [ref=e1025]: e4f5a6b
+          - generic [ref=e1026]: 이수민
+          - generic [ref=e1027]: ·
+          - time [ref=e1028]: 2026.06.25.
+      - 'listitem "refactor: CommitFilterPanel 상태 끌어올리기 by 김지훈 on 2026.06.24." [ref=e1029] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1030]:
+          - img [ref=e1031]
+        - generic [ref=e1034]: "refactor: CommitFilterPanel 상태 끌어올리기"
+        - generic [ref=e1035]:
+          - generic [ref=e1036]: 9c8d7e6
+          - generic [ref=e1037]: 김지훈
+          - generic [ref=e1038]: ·
+          - time [ref=e1039]: 2026.06.24.
+      - 'listitem "feat: AuthorDropdown 작성자 목록 자동 추출 by 박서준 on 2026.06.24." [ref=e1040] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1041]:
+          - img [ref=e1042]
+        - generic [ref=e1045]: "feat: AuthorDropdown 작성자 목록 자동 추출"
+        - generic [ref=e1046]:
+          - generic [ref=e1047]: b3a2c1d
+          - generic [ref=e1048]: 박서준
+          - generic [ref=e1049]: ·
+          - time [ref=e1050]: 2026.06.24.
+      - 'listitem "style: CommitListItem 밀도 조정 by 이수민 on 2026.06.23." [ref=e1051] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1052]:
+          - img [ref=e1053]
+        - generic [ref=e1056]: "style: CommitListItem 밀도 조정"
+        - generic [ref=e1057]:
+          - generic [ref=e1058]: f0e1d2c
+          - generic [ref=e1059]: 이수민
+          - generic [ref=e1060]: ·
+          - time [ref=e1061]: 2026.06.23.
+      - 'listitem "docs: F01 blueprint 인터랙션 모델 업데이트 by 김지훈 on 2026.06.23." [ref=e1062] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1063]:
+          - img [ref=e1064]
+        - generic [ref=e1067]: "docs: F01 blueprint 인터랙션 모델 업데이트"
+        - generic [ref=e1068]:
+          - generic [ref=e1069]: 7a6b5c4
+          - generic [ref=e1070]: 김지훈
+          - generic [ref=e1071]: ·
+          - time [ref=e1072]: 2026.06.23.
+      - 'listitem "feat: DateRangeFilter 종료일 자동 보정 로직 추가 by 박서준 on 2026.06.22." [ref=e1073] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1074]:
+          - img [ref=e1075]
+        - generic [ref=e1078]: "feat: DateRangeFilter 종료일 자동 보정 로직 추가"
+        - generic [ref=e1079]:
+          - generic [ref=e1080]: 1d2e3f4
+          - generic [ref=e1081]: 박서준
+          - generic [ref=e1082]: ·
+          - time [ref=e1083]: 2026.06.22.
+      - 'listitem "test: CommitList 빈 상태 분기 스냅샷 추가 by Jane Cooper on 2026.06.21." [ref=e1084] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1085]:
+          - img [ref=e1086]
+        - generic [ref=e1089]: "test: CommitList 빈 상태 분기 스냅샷 추가"
+        - generic [ref=e1090]:
+          - generic [ref=e1091]: c5b4a39
+          - generic [ref=e1092]: Jane Cooper
+          - generic [ref=e1093]: ·
+          - time [ref=e1094]: 2026.06.21.
+      - 'listitem "perf: git log 페이지네이션 200개 단위로 변경 by 이수민 on 2026.06.20." [ref=e1095] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1096]:
+          - img [ref=e1097]
+        - generic [ref=e1100]: "perf: git log 페이지네이션 200개 단위로 변경"
+        - generic [ref=e1101]:
+          - generic [ref=e1102]: 88f7e6d
+          - generic [ref=e1103]: 이수민
+          - generic [ref=e1104]: ·
+          - time [ref=e1105]: 2026.06.20.
+      - 'listitem "fix: EmptyState noResults CTA 미표시 처리 by 김지훈 on 2026.06.20." [ref=e1106] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1107]:
+          - img [ref=e1108]
+        - generic [ref=e1111]: "fix: EmptyState noResults CTA 미표시 처리"
+        - generic [ref=e1112]:
+          - generic [ref=e1113]: 2c3d4e5
+          - generic [ref=e1114]: 김지훈
+          - generic [ref=e1115]: ·
+          - time [ref=e1116]: 2026.06.20.
+      - 'listitem "feat: TopHeader 설정 아이콘 키보드 포커스 지원 by 박서준 on 2026.06.19." [ref=e1117] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1118]:
+          - img [ref=e1119]
+        - generic [ref=e1122]: "feat: TopHeader 설정 아이콘 키보드 포커스 지원"
+        - generic [ref=e1123]:
+          - generic [ref=e1124]: a9b8c7d
+          - generic [ref=e1125]: 박서준
+          - generic [ref=e1126]: ·
+          - time [ref=e1127]: 2026.06.19.
+      - 'listitem "chore: VSCode 테마 토큰 매핑 정리 by Jane Cooper on 2026.06.18." [ref=e1128] [cursor=pointer]':
+        - button "Copy as Markdown" [ref=e1129]:
+          - img [ref=e1130]
+        - generic [ref=e1133]: "chore: VSCode 테마 토큰 매핑 정리"
+        - generic [ref=e1134]:
+          - generic [ref=e1135]: 6f5e4d3
+          - generic [ref=e1136]: Jane Cooper
+          - generic [ref=e1137]: ·
+          - time [ref=e1138]: 2026.06.18.
+  - generic "Notifications"
