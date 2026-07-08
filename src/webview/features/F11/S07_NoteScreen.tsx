@@ -170,10 +170,17 @@ export const S07NoteScreen: FC = () => {
           <ErrorState message={noteError} />
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-0 overflow-hidden md:grid-cols-2">
+        <div className={`grid min-h-0 flex-1 gap-0 overflow-hidden ${
+          mode === 'split'
+            ? 'grid-cols-1 grid-rows-2 md:grid-cols-2 md:grid-rows-1'
+            : 'grid-cols-1'
+        }`}
+        >
           {mode !== 'preview' ? (
             <textarea
-              className={`min-h-0 w-full resize-none border-0 border-r border-line bg-panel px-6 py-5 font-mono text-sm text-text outline-none ${mode === 'edit' ? 'md:col-span-2' : ''}`}
+              className={`min-h-0 w-full resize-none border-0 border-b border-line bg-panel px-6 py-5 font-mono text-sm text-text outline-none ${
+                mode === 'split' ? 'md:border-b-0 md:border-r' : ''
+              } ${mode === 'edit' ? 'md:col-span-2' : ''}`}
               value={draftContent}
               onChange={(event) => {
                 const nextValue = event.target.value;
