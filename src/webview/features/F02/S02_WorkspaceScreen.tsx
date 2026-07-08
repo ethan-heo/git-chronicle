@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type FC,
@@ -32,6 +31,7 @@ export const S02WorkspaceScreen: FC = () => {
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const selectedFile = useAppStore((state) => state.selectedFile);
   const activeWorkspacePanel = useAppStore((state) => state.activeWorkspacePanel);
+  const activeAISummaryFilePath = useAppStore((state) => state.activeAISummaryFilePath);
   const goToCommitList = useAppStore((state) => state.goToCommitList);
   const selectFileForCode = useAppStore((state) => state.selectFileForCode);
   const goToCommitAISummary = useAppStore((state) => state.goToCommitAISummary);
@@ -42,32 +42,27 @@ export const S02WorkspaceScreen: FC = () => {
   const isRouteSlotActive = useRouteSlotActive();
   const changedFileTree = useChangedFileTree({ isActive: isRouteSlotActive });
   const symbolGraph = useSymbolGraph({ isActive: isRouteSlotActive && activeWorkspacePanel === 'symbolGraph' });
-  const [activeAIFilePath, setActiveAIFilePath] = useState<string | null>(null);
   const [prevSelectedCommitHash, setPrevSelectedCommitHash] = useState(selectedCommit?.hash);
 
   if (prevSelectedCommitHash !== selectedCommit?.hash) {
     setPrevSelectedCommitHash(selectedCommit?.hash);
-    setActiveAIFilePath(null);
   }
 
-  const activeAIFile = useMemo(
-    () => changedFileTree.changedFiles.find((file) => file.path === activeAIFilePath) ?? null,
-    [activeAIFilePath, changedFileTree.changedFiles],
-  );
+  const activeAIFile = changedFileTree.changedFiles.find(
+    (file) => file.path === activeAISummaryFilePath,
+  ) ?? null;
   const isCommitAISummaryActive =
-    activeWorkspacePanel === 'aiSummary' && activeAIFilePath === null;
+    activeWorkspacePanel === 'aiSummary' && activeAISummaryFilePath === null;
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
   const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const openCommitAISummaryFromSidebar = useCallback(() => {
-    setActiveAIFilePath(null);
     goToCommitAISummary();
   }, [goToCommitAISummary]);
   const openCommitAISummaryFromFile = useCallback((file: ChangedFile) => {
-    setActiveAIFilePath(file.path);
-    goToCommitAISummary();
+    goToCommitAISummary(file);
   }, [goToCommitAISummary]);
 
   useEffect(() => {
@@ -148,7 +143,7 @@ export const S02WorkspaceScreen: FC = () => {
               onFileCodeView={selectFileForCode}
               onFileAIView={openCommitAISummaryFromFile}
               onFileSymbolGraph={goToSymbolGraphView}
-              activeAIFilePath={activeWorkspacePanel === 'aiSummary' ? activeAIFilePath : null}
+              activeAIFilePath={activeWorkspacePanel === 'aiSummary' ? activeAISummaryFilePath : null}
               activeCodeFilePath={activeWorkspacePanel === 'code' ? selectedFile?.path ?? null : null}
               activeSymbolGraphFilePath={activeWorkspacePanel === 'symbolGraph' ? symbolGraph.selectedFile?.path ?? null : null}
             />

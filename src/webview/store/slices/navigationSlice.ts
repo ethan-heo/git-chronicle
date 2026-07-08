@@ -10,13 +10,14 @@ export interface NavigationSlice {
   previousScreen: ScreenID | null;
   transitionDirection: RouteTransitionDirection;
   activeWorkspacePanel: WorkspacePanel;
+  activeAISummaryFilePath: string | null;
 
   selectCommit: (commit: Commit) => void;
   goToCommitList: () => void;
   goToHistoryView: () => void;
   goBackFromDetail: () => void;
   selectFileForCode: (file: ChangedFile) => void;
-  goToCommitAISummary: () => void;
+  goToCommitAISummary: (file?: ChangedFile | null) => void;
   goToCanvasView: () => void;
   goToSymbolGraphView: (file: ChangedFile) => void;
   goToSettingsView: () => void;
@@ -29,11 +30,13 @@ export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSli
   previousScreen: null,
   transitionDirection: 'forward',
   activeWorkspacePanel: 'none',
+  activeAISummaryFilePath: null,
 
   selectCommit: (commit) => {
     set({
       selectedCommit: commit,
       selectedFile: null,
+      activeAISummaryFilePath: null,
       changedFiles: [],
       hasSavedCommitSummary: false,
       changedFilesError: null,
@@ -120,7 +123,7 @@ export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSli
     });
   },
 
-  goToCommitAISummary: () => {
+  goToCommitAISummary: (file = null) => {
     set({
       selectedFile: null,
       currentSummaryContent: '',
@@ -132,6 +135,7 @@ export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSli
       summarySavedPath: null,
       hasCurrentSavedSummary: get().hasSavedCommitSummary,
       isSummaryTokenLimitExceeded: false,
+      activeAISummaryFilePath: file?.path ?? null,
       activeWorkspacePanel: 'aiSummary',
     });
   },
