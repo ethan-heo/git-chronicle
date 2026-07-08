@@ -103,11 +103,13 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
         const codeContent = String(children).replace(/\n$/, '');
 
         if (language === 'mermaid') {
-          const mermaidCacheKey = `ai-summary-mermaid-${mermaidBlockIndex}`;
-          mermaidBlockIndex += 1;
-          const rawMarkdown = sliceFromPosition(content, node?.position) ?? `\`\`\`mermaid\n${codeContent}\n\`\`\``;
           const blockStart = node?.position?.start?.offset;
           const blockEnd = node?.position?.end?.offset;
+          const mermaidCacheKey = getStableMermaidCacheKey(blockStart, mermaidBlockIndex);
+          if (typeof blockStart !== 'number') {
+            mermaidBlockIndex += 1;
+          }
+          const rawMarkdown = sliceFromPosition(content, node?.position) ?? `\`\`\`mermaid\n${codeContent}\n\`\`\``;
 
           return (
             <div
@@ -247,6 +249,14 @@ function containsMermaidBlock(children: ReactNode): boolean {
   }
 
   return containsMermaidBlock((children.props as { children?: ReactNode }).children);
+}
+
+function getStableMermaidCacheKey(blockStart: number | null | undefined, fallbackIndex: number): string {
+  if (typeof blockStart === 'number') {
+    return `ai-summary-mermaid-offset-${blockStart}`;
+  }
+
+  return `ai-summary-mermaid-fallback-${fallbackIndex}`;
 }
 
 function sliceFromPosition(
