@@ -14,19 +14,22 @@ import './S07_NoteScreen.css';
 const SAVE_DEBOUNCE_MS = 1000;
 
 interface NoteEditorPanelProps {
+  paneId: string;
   commit: Commit;
   isActive: boolean;
 }
 
-export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) => {
+export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isActive }) => {
   const { t } = useTranslation();
   const savePath = useAppStore((state) => state.savePath);
-  const noteContent = useAppStore((state) => state.noteContent);
-  const noteSavedPath = useAppStore((state) => state.noteSavedPath);
-  const isLoadingNote = useAppStore((state) => state.isLoadingNote);
-  const isSavingNote = useAppStore((state) => state.isSavingNote);
-  const noteError = useAppStore((state) => state.noteError);
-  const hasSavedNote = useAppStore((state) => state.hasSavedNote);
+  const noteState = useAppStore((state) => state.notesByPane[paneId] ?? {
+    noteContent: '',
+    noteSavedPath: null,
+    isLoading: false,
+    isSaving: false,
+    error: null,
+    hasSavedNote: false,
+  });
   const startNoteLoading = useAppStore((state) => state.startNoteLoading);
   const setNoteContent = useAppStore((state) => state.setNoteContent);
   const startNoteSaving = useAppStore((state) => state.startNoteSaving);
@@ -47,31 +50,37 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
     if (!savePath) {
       setHasInitializedLoad(false);
       setDraftContent('');
-      handleNoteLoadFailed(translate('ai_summary.no_save_path'));
+      handleNoteLoadFailed({ paneId, message: translate('ai_summary.no_save_path') });
       return;
     }
 
     if (!isVSCodeRuntime()) {
-      handleNoteLoaded({ content: '', savedPath: null, hasSavedNote: false });
+      handleNoteLoaded({ paneId, content: '', savedPath: null, hasSavedNote: false });
       lastSavedContentRef.current = '';
       setDraftContent('');
       setHasInitializedLoad(true);
       return;
     }
 
-    startNoteLoading();
+    startNoteLoading(paneId);
     postMessage('FETCH_NOTE', {
+      paneId,
       commitHash: commit.hash,
       commitMessage: commit.message,
       savePath,
     });
-  }, [commit.hash, commit.message, handleNoteLoadFailed, handleNoteLoaded, isActive, savePath, startNoteLoading]);
+  }, [commit.hash, commit.message, handleNoteLoadFailed, handleNoteLoaded, isActive, paneId, savePath, startNoteLoading]);
 
   useEffect(() => {
-    const handler = (event: MessageEvent<{ type: string; payload?: { content?: string; savedPath?: string | null; hasSavedNote?: boolean; message?: string } }>): void => {
+    const handler = (event: MessageEvent<{ type: string; payload?: { paneId?: string; content?: string; savedPath?: string | null; hasSavedNote?: boolean; message?: string } }>): void => {
+      if (event.data.payload?.paneId !== paneId) {
+        return;
+      }
+
       if (event.data.type === 'NOTE_LOADED') {
         const loadedContent = event.data.payload?.content ?? '';
         handleNoteLoaded({
+          paneId,
           content: loadedContent,
           savedPath: event.data.payload?.savedPath ?? null,
           hasSavedNote: event.data.payload?.hasSavedNote ?? false,
@@ -85,7 +94,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
       if (event.data.type === 'NOTE_LOAD_FAILED') {
         setHasInitializedLoad(false);
         setDraftContent('');
-        handleNoteLoadFailed(event.data.payload?.message);
+        handleNoteLoadFailed({ paneId, message: event.data.payload?.message });
         return;
       }
 
@@ -93,6 +102,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
         const savedContent = event.data.payload?.content ?? '';
         lastSavedContentRef.current = savedContent;
         handleNoteSaved({
+          paneId,
           content: savedContent,
           savedPath: event.data.payload?.savedPath ?? null,
           hasSavedNote: event.data.payload?.hasSavedNote ?? true,
@@ -101,13 +111,13 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
       }
 
       if (event.data.type === 'NOTE_SAVE_FAILED') {
-        handleNoteSaveFailed(event.data.payload?.message);
+        handleNoteSaveFailed({ paneId, message: event.data.payload?.message });
       }
     };
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [handleNoteLoadFailed, handleNoteLoaded, handleNoteSaveFailed, handleNoteSaved]);
+  }, [handleNoteLoadFailed, handleNoteLoaded, handleNoteSaveFailed, handleNoteSaved, paneId]);
 
   useEffect(() => {
     if (!isActive || !savePath || !hasInitializedLoad) {
@@ -115,14 +125,15 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
     }
 
     const saveNow = (): void => {
-      startNoteSaving();
+      startNoteSaving(paneId);
       if (!isVSCodeRuntime()) {
         lastSavedContentRef.current = draftContent;
-        handleNoteSaved({ content: draftContent, savedPath: noteSavedPath, hasSavedNote: draftContent.length > 0 || hasSavedNote });
+        handleNoteSaved({ paneId, content: draftContent, savedPath: noteState.noteSavedPath, hasSavedNote: draftContent.length > 0 || noteState.hasSavedNote });
         return;
       }
 
       postMessage('SAVE_NOTE', {
+        paneId,
         commitHash: commit.hash,
         commitMessage: commit.message,
         savePath,
@@ -138,14 +149,14 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
         saveNow();
       }
     };
-  }, [commit.hash, commit.message, draftContent, handleNoteSaved, hasInitializedLoad, hasSavedNote, isActive, noteSavedPath, savePath, startNoteSaving]);
+  }, [commit.hash, commit.message, draftContent, handleNoteSaved, hasInitializedLoad, isActive, noteState.hasSavedNote, noteState.noteSavedPath, paneId, savePath, startNoteSaving]);
 
   const statusLabel = useMemo(() => {
-    if (isSavingNote) return '저장 중...';
-    if (noteError) return noteError;
-    if (hasSavedNote) return '저장됨';
+    if (noteState.isSaving) return '저장 중...';
+    if (noteState.error) return noteState.error;
+    if (noteState.hasSavedNote) return '저장됨';
     return '자동 저장 대기 중';
-  }, [hasSavedNote, isSavingNote, noteError]);
+  }, [noteState.error, noteState.hasSavedNote, noteState.isSaving]);
 
   let mermaidBlockIndex = 0;
   let highlightedCodeBlockIndex = 0;
@@ -161,13 +172,13 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
         <div className="flex min-h-0 flex-1 items-center justify-center p-8">
           <EmptyState message={t('ai_summary.no_save_path')} />
         </div>
-      ) : isLoadingNote ? (
+      ) : noteState.isLoading ? (
         <div className="flex min-h-0 flex-1 items-center justify-center p-8">
           <LoadingState label="노트를 불러오는 중..." size="lg" />
         </div>
-      ) : noteError && !noteContent ? (
+      ) : noteState.error && !noteState.noteContent ? (
         <div className="flex min-h-0 flex-1 items-center justify-center p-8">
-          <ErrorState message={noteError} />
+          <ErrorState message={noteState.error} />
         </div>
       ) : (
         <div className={`grid min-h-0 flex-1 gap-0 overflow-hidden ${mode === 'split' ? 'grid-cols-1 grid-rows-2 md:grid-cols-2 md:grid-rows-1' : 'grid-cols-1'}`}>
@@ -178,7 +189,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
               onChange={(event) => {
                 const nextValue = event.target.value;
                 setDraftContent(nextValue);
-                setNoteContent(nextValue);
+                setNoteContent(paneId, nextValue);
               }}
               placeholder="마크다운으로 메모를 남겨보세요."
               spellCheck={false}
@@ -237,7 +248,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ commit, isActive }) 
       )}
       <div className="border-t border-line bg-panel px-6 py-2 text-sm text-muted">
         {statusLabel}
-        {noteSavedPath ? <span className="ml-2 font-mono text-xs">{noteSavedPath}</span> : null}
+        {noteState.noteSavedPath ? <span className="ml-2 font-mono text-xs">{noteState.noteSavedPath}</span> : null}
       </div>
     </div>
   );

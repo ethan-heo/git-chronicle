@@ -3,6 +3,7 @@ import { analyzeDependencies, DependencyCruiserNotFoundError } from '../dependen
 import { l10n } from './shared';
 
 export interface AnalyzeDependenciesPayload {
+  paneId?: string;
   filePaths?: string[];
   commitHash?: string;
 }
@@ -15,6 +16,7 @@ export async function handleAnalyzeDependencies(panel: vscode.WebviewPanel, payl
       type: 'DEPENDENCIES_LOAD_FAILED',
       payload: {
         message: l10n('No Git repository detected'),
+        paneId: payload.paneId,
       },
     });
     return;
@@ -27,6 +29,7 @@ export async function handleAnalyzeDependencies(panel: vscode.WebviewPanel, payl
       type: 'DEPENDENCIES_LOADED',
       payload: {
         edges,
+        paneId: payload.paneId,
       },
     });
   } catch (error) {
@@ -41,6 +44,7 @@ export async function handleAnalyzeDependencies(panel: vscode.WebviewPanel, payl
       type: 'DEPENDENCIES_LOAD_FAILED',
       payload: {
         message,
+        paneId: payload.paneId,
       },
     });
   }

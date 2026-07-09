@@ -1,19 +1,22 @@
 import type { StateCreator } from 'zustand';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
-import type { ChangedFile } from '../../types/commit';
+import type { ChangedFile, Commit } from '../../types/commit';
 import type { AppState } from '../appStore';
 
-export interface ChangedFilesSlice {
+export interface ChangedFilesStateEntry {
   changedFiles: ChangedFile[];
   hasSavedCommitSummary: boolean;
-  selectedFile: ChangedFile | null;
-  isLoadingChangedFiles: boolean;
-  changedFilesError: string | null;
-  hasLoadedChangedFiles: boolean;
+  isLoading: boolean;
+  error: string | null;
+  hasLoaded: boolean;
+}
 
-  loadChangedFiles: () => void;
-  handleChangedFilesLoaded: (payload: { files: ChangedFile[]; hasSavedCommitSummary?: boolean }) => void;
-  handleChangedFilesLoadFailed: (message?: string) => void;
+export interface ChangedFilesSlice {
+  changedFilesByCommit: Record<string, ChangedFilesStateEntry>;
+
+  loadChangedFiles: (input: { commit: Commit }) => void;
+  handleChangedFilesLoaded: (payload: { commitHash: string; files: ChangedFile[]; hasSavedCommitSummary?: boolean }) => void;
+  handleChangedFilesLoadFailed: (payload: { commitHash: string; message?: string }) => void;
 }
 
 const demoChangedFiles: ChangedFile[] = [
@@ -29,30 +32,45 @@ const demoChangedFiles: ChangedFile[] = [
   { path: 'docs/F01_blueprint.md', status: 'M' },
 ];
 
-export const createChangedFilesSlice: StateCreator<AppState, [], [], ChangedFilesSlice> = (set, get) => ({
+export const EMPTY_CHANGED_FILES_STATE: ChangedFilesStateEntry = {
   changedFiles: [],
   hasSavedCommitSummary: false,
-  selectedFile: null,
-  isLoadingChangedFiles: false,
-  changedFilesError: null,
-  hasLoadedChangedFiles: false,
+  isLoading: false,
+  error: null,
+  hasLoaded: false,
+};
 
-  loadChangedFiles: () => {
+function getEntry(state: AppState, commitHash: string): ChangedFilesStateEntry {
+  return state.changedFilesByCommit[commitHash] ?? EMPTY_CHANGED_FILES_STATE;
+}
+
+export const createChangedFilesSlice: StateCreator<AppState, [], [], ChangedFilesSlice> = (set, get) => ({
+  changedFilesByCommit: {},
+
+  loadChangedFiles: ({ commit }) => {
     const state = get();
+    const entry = getEntry(state, commit.hash);
 
-    if (!state.selectedCommit || state.isLoadingChangedFiles) {
+    if (entry.isLoading) {
       return;
     }
 
-    set({
-      isLoadingChangedFiles: true,
-      changedFilesError: null,
-      hasLoadedChangedFiles: false,
-    });
+    set((current) => ({
+      changedFilesByCommit: {
+        ...current.changedFilesByCommit,
+        [commit.hash]: {
+          ...getEntry(current, commit.hash),
+          isLoading: true,
+          error: null,
+          hasLoaded: false,
+        },
+      },
+    }));
 
     if (!isVSCodeRuntime()) {
       window.setTimeout(() => {
         get().handleChangedFilesLoaded({
+          commitHash: commit.hash,
           files: demoChangedFiles,
           hasSavedCommitSummary: true,
         });
@@ -61,34 +79,39 @@ export const createChangedFilesSlice: StateCreator<AppState, [], [], ChangedFile
     }
 
     postMessage('FETCH_CHANGED_FILES', {
-      commitHash: state.selectedCommit.hash,
-      commitMessage: state.selectedCommit.message,
+      commitHash: commit.hash,
+      commitMessage: commit.message,
       savePath: state.savePath,
     });
   },
 
-  handleChangedFilesLoaded: ({ files, hasSavedCommitSummary = false }) => {
-    set({
-      changedFiles: files,
-      hasSavedCommitSummary,
-      isLoadingChangedFiles: false,
-      changedFilesError: null,
-      hasLoadedChangedFiles: true,
-      dependencyEdges: [],
-      dependenciesError: null,
-      isLoadingDependencies: false,
-    });
+  handleChangedFilesLoaded: ({ commitHash, files, hasSavedCommitSummary = false }) => {
+    set((state) => ({
+      changedFilesByCommit: {
+        ...state.changedFilesByCommit,
+        [commitHash]: {
+          changedFiles: files,
+          hasSavedCommitSummary,
+          isLoading: false,
+          error: null,
+          hasLoaded: true,
+        },
+      },
+    }));
   },
 
-  handleChangedFilesLoadFailed: (message = 'Failed to load changed file list') => {
-    set({
-      changedFiles: [],
-      isLoadingChangedFiles: false,
-      changedFilesError: message,
-      hasLoadedChangedFiles: true,
-      dependencyEdges: [],
-      dependenciesError: null,
-      isLoadingDependencies: false,
-    });
+  handleChangedFilesLoadFailed: ({ commitHash, message = 'Failed to load changed file list' }) => {
+    set((state) => ({
+      changedFilesByCommit: {
+        ...state.changedFilesByCommit,
+        [commitHash]: {
+          changedFiles: [],
+          hasSavedCommitSummary: false,
+          isLoading: false,
+          error: message,
+          hasLoaded: true,
+        },
+      },
+    }));
   },
 });

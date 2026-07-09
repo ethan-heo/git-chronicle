@@ -4,7 +4,7 @@ import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
 import { RouteSlotProvider } from './shared/route/RouteSlotContext';
 import { useAppStore } from './store/appStore';
-import type { AIProviderName, RouteTransitionDirection, ScreenID, SymbolEdge, SymbolNode } from './types/commit';
+import type { AIProviderName, RouteTransitionDirection, ScreenID } from './types/commit';
 
 const ROUTE_TRANSITION_DURATION_MS = 200;
 
@@ -19,9 +19,6 @@ interface WebviewEventPayload {
   content?: string;
   savedPath?: string | null;
   provider?: AIProviderName | null;
-  nodes?: SymbolNode[];
-  edges?: SymbolEdge[];
-  fileContent?: string;
   message?: string;
 }
 
@@ -114,17 +111,6 @@ export const App: FC = () => {
         return;
       }
 
-      if (event.data.type === 'SYMBOL_GRAPH_LOADED') {
-        useAppStore.getState().handleSymbolGraphLoaded({
-          nodes: event.data.payload?.nodes ?? [],
-          edges: event.data.payload?.edges ?? [],
-          fileContent: event.data.payload?.fileContent ?? '',
-        });
-      }
-
-      if (event.data.type === 'SYMBOL_GRAPH_LOAD_FAILED') {
-        useAppStore.getState().handleSymbolGraphLoadFailed(event.data.payload?.message);
-      }
     };
 
     window.addEventListener('message', handler);

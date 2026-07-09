@@ -19,15 +19,17 @@ export interface AISlice {
   hasCurrentSavedSummary: boolean;
   isSummaryTokenLimitExceeded: boolean;
   activeSummaryCommitHash: string | null;
+  activeSummaryTargetKey: string | null;
   completedSummaryCache: Record<string, { content: string; savedPath: string | null; provider: AIProviderName | null }>;
+  summaryViewCache: Record<string, { content: string; savedPath: string | null; provider: AIProviderName | null; hasSavedSummary: boolean }>;
 
   setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null; summaryModel?: string | null; qaModel?: string | null }) => void;
   resetAISummary: () => void;
-  startAISummaryLoading: (options?: { preserveSavedSummary?: boolean; commitHash?: string | null }) => void;
-  startAISummaryGeneration: (options?: { preserveSavedSummary?: boolean; commitHash?: string | null }) => void;
+  startAISummaryLoading: (options?: { preserveSavedSummary?: boolean; commitHash?: string | null; targetKey?: string | null }) => void;
+  startAISummaryGeneration: (options?: { preserveSavedSummary?: boolean; commitHash?: string | null; targetKey?: string | null }) => void;
   appendAISummaryChunk: (chunk: string) => void;
-  completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null; scope?: 'commit' | 'file'; commitHash?: string | null }) => void;
-  loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null; scope?: 'commit' | 'file'; commitHash?: string | null }) => void;
+  completeAISummary: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null; scope?: 'commit' | 'file'; commitHash?: string | null; targetKey?: string | null }) => void;
+  loadSavedAISummary: (payload: { content: string; savedPath?: string | null; provider?: AIProviderName | null; scope?: 'commit' | 'file'; commitHash?: string | null; targetKey?: string | null }) => void;
   failAISummary: (message?: string) => void;
   startAIQA: () => void;
   appendAIQAChunk: (chunk: string) => void;
@@ -52,7 +54,9 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
   hasCurrentSavedSummary: false,
   isSummaryTokenLimitExceeded: false,
   activeSummaryCommitHash: null,
+  activeSummaryTargetKey: null,
   completedSummaryCache: {},
+  summaryViewCache: {},
 
   setAISummarySettings: (settings) => {
     set({
@@ -76,6 +80,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
       hasCurrentSavedSummary: false,
       isSummaryTokenLimitExceeded: false,
       activeSummaryCommitHash: null,
+      activeSummaryTargetKey: null,
     });
   },
 
@@ -90,6 +95,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
       summarySavedPath: options.preserveSavedSummary ? state.summarySavedPath : null,
       hasCurrentSavedSummary: options.preserveSavedSummary ? state.hasCurrentSavedSummary : false,
       activeSummaryCommitHash: options.commitHash ?? state.activeSummaryCommitHash,
+      activeSummaryTargetKey: options.targetKey ?? state.activeSummaryTargetKey,
     }));
   },
 
@@ -104,6 +110,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
       summarySavedPath: options.preserveSavedSummary ? state.summarySavedPath : null,
       hasCurrentSavedSummary: options.preserveSavedSummary ? state.hasCurrentSavedSummary : false,
       activeSummaryCommitHash: options.commitHash ?? state.activeSummaryCommitHash,
+      activeSummaryTargetKey: options.targetKey ?? state.activeSummaryTargetKey,
     }));
   },
 
@@ -118,7 +125,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
     }));
   },
 
-  completeAISummary: ({ content, savedPath, provider, scope = 'commit', commitHash }) => {
+  completeAISummary: ({ content, savedPath, provider, commitHash, targetKey }) => {
     set((state) => ({
       currentSummaryContent: content ?? state.currentSummaryContent,
       isLoadingSummary: false,
@@ -129,6 +136,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
       summarySavedPath: savedPath ?? null,
       hasCurrentSavedSummary: true,
       activeSummaryCommitHash: commitHash ?? state.activeSummaryCommitHash,
+      activeSummaryTargetKey: targetKey ?? state.activeSummaryTargetKey,
       completedSummaryCache: commitHash
         ? {
           ...state.completedSummaryCache,
@@ -139,12 +147,22 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
           },
         }
         : state.completedSummaryCache,
+      summaryViewCache: (targetKey ?? state.activeSummaryTargetKey)
+        ? {
+          ...state.summaryViewCache,
+          [targetKey ?? state.activeSummaryTargetKey ?? '']: {
+            content: content ?? state.currentSummaryContent,
+            savedPath: savedPath ?? null,
+            provider: provider ?? null,
+            hasSavedSummary: true,
+          },
+        }
+        : state.summaryViewCache,
       ...(provider ? { activeAIProvider: provider } : {}),
-      ...(scope === 'commit' ? { hasSavedCommitSummary: true } : {}),
     }));
   },
 
-  loadSavedAISummary: ({ content, savedPath, provider, scope = 'commit', commitHash }) => {
+  loadSavedAISummary: ({ content, savedPath, provider, commitHash, targetKey }) => {
     set((state) => ({
       currentSummaryContent: content,
       isLoadingSummary: false,
@@ -156,6 +174,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
       hasCurrentSavedSummary: true,
       isSummaryTokenLimitExceeded: false,
       activeSummaryCommitHash: commitHash ?? state.activeSummaryCommitHash,
+      activeSummaryTargetKey: targetKey ?? state.activeSummaryTargetKey,
       completedSummaryCache: commitHash
         ? {
           ...state.completedSummaryCache,
@@ -166,8 +185,18 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
           },
         }
         : state.completedSummaryCache,
+      summaryViewCache: (targetKey ?? state.activeSummaryTargetKey)
+        ? {
+          ...state.summaryViewCache,
+          [targetKey ?? state.activeSummaryTargetKey ?? '']: {
+            content,
+            savedPath: savedPath ?? null,
+            provider: provider ?? null,
+            hasSavedSummary: true,
+          },
+        }
+        : state.summaryViewCache,
       ...(provider ? { activeAIProvider: provider } : {}),
-      ...(scope === 'commit' ? { hasSavedCommitSummary: true } : {}),
     }));
   },
 

@@ -9,5 +9,5 @@ export const S07NoteScreen: FC = () => {
     return null;
   }
 
-  return <NoteEditorPanel commit={selectedCommit} isActive />;
+  return <NoteEditorPanel paneId="legacy-note-screen" commit={selectedCommit} isActive />;
 };

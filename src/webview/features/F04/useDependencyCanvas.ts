@@ -1,6 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import { useAppStore } from '../../store/appStore';
-import type { ChangedFile, DependencyEdge } from '../../types/commit';
+import { EMPTY_CHANGED_FILES_STATE } from '../../store/slices/changedFilesSlice';
+import { EMPTY_DEPENDENCY_GRAPH_STATE } from '../../store/slices/dependencyGraphSlice';
+import type { ChangedFile, Commit, DependencyEdge } from '../../types/commit';
 
 interface UseDependencyCanvasResult {
   files: ChangedFile[];
@@ -10,41 +12,47 @@ interface UseDependencyCanvasResult {
   retryCanvas: () => void;
 }
 
-export function useDependencyCanvas(options: { isActive: boolean }): UseDependencyCanvasResult {
-  const { isActive } = options;
-  const changedFiles = useAppStore((state) => state.changedFiles);
-  const isLoadingChangedFiles = useAppStore((state) => state.isLoadingChangedFiles);
-  const changedFilesError = useAppStore((state) => state.changedFilesError);
-  const hasLoadedChangedFiles = useAppStore((state) => state.hasLoadedChangedFiles);
-  const dependencyEdges = useAppStore((state) => state.dependencyEdges);
-  const isLoadingDependencies = useAppStore((state) => state.isLoadingDependencies);
-  const dependenciesError = useAppStore((state) => state.dependenciesError);
+export function useDependencyCanvas(options: { isActive: boolean; paneId: string; commit: Commit | null }): UseDependencyCanvasResult {
+  const { isActive, paneId, commit } = options;
+  const changedFilesState = useAppStore((state) => (
+    commit ? state.changedFilesByCommit[commit.hash] ?? EMPTY_CHANGED_FILES_STATE : EMPTY_CHANGED_FILES_STATE
+  ));
+  const dependencyState = useAppStore((state) => state.dependencyGraphsByPane[paneId] ?? EMPTY_DEPENDENCY_GRAPH_STATE);
   const loadChangedFiles = useAppStore((state) => state.loadChangedFiles);
   const loadDependencies = useAppStore((state) => state.loadDependencies);
   const handleDependenciesLoaded = useAppStore((state) => state.handleDependenciesLoaded);
   const handleDependenciesLoadFailed = useAppStore((state) => state.handleDependenciesLoadFailed);
 
   useEffect(() => {
-    if (!isActive) {
+    if (!isActive || !commit) {
       return;
     }
 
-    if (!hasLoadedChangedFiles && changedFiles.length === 0 && !changedFilesError) {
-      loadChangedFiles();
+    if (!changedFilesState.hasLoaded && changedFilesState.changedFiles.length === 0 && !changedFilesState.error) {
+      loadChangedFiles({ commit });
       return;
     }
 
-    if (changedFiles.length > 0 && !isLoadingChangedFiles && !changedFilesError) {
-      loadDependencies();
+    if (changedFilesState.changedFiles.length > 0 && !changedFilesState.isLoading && !changedFilesState.error && dependencyState.dependencyEdges.length === 0 && !dependencyState.isLoading && !dependencyState.error) {
+      loadDependencies({
+        paneId,
+        commitHash: commit.hash,
+        filePaths: changedFilesState.changedFiles.map((file) => file.path),
+      });
     }
   }, [
-    changedFiles.length,
-    changedFilesError,
-    hasLoadedChangedFiles,
+    changedFilesState.changedFiles,
+    changedFilesState.error,
+    changedFilesState.hasLoaded,
+    changedFilesState.isLoading,
+    commit,
+    dependencyState.dependencyEdges.length,
+    dependencyState.error,
+    dependencyState.isLoading,
     isActive,
-    isLoadingChangedFiles,
     loadChangedFiles,
     loadDependencies,
+    paneId,
   ]);
 
   useEffect(() => {
@@ -56,40 +64,55 @@ export function useDependencyCanvas(options: { isActive: boolean }): UseDependen
       event: MessageEvent<{
         type: string;
         payload?: {
+          paneId?: string;
           edges?: DependencyEdge[];
           message?: string;
         };
       }>,
     ): void => {
       if (event.data.type === 'DEPENDENCIES_LOADED') {
-        handleDependenciesLoaded(event.data.payload?.edges ?? []);
+        if (event.data.payload?.paneId !== paneId) {
+          return;
+        }
+        handleDependenciesLoaded({ paneId, edges: event.data.payload?.edges ?? [] });
         return;
       }
 
       if (event.data.type === 'DEPENDENCIES_LOAD_FAILED') {
-        handleDependenciesLoadFailed(event.data.payload?.message);
+        if (event.data.payload?.paneId !== paneId) {
+          return;
+        }
+        handleDependenciesLoadFailed({ paneId, message: event.data.payload?.message });
       }
     };
 
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [handleDependenciesLoaded, handleDependenciesLoadFailed, isActive]);
+  }, [handleDependenciesLoaded, handleDependenciesLoadFailed, isActive, paneId]);
 
   const retryCanvas = useCallback(() => {
-    if (changedFilesError || changedFiles.length === 0) {
-      loadChangedFiles();
+    if (!commit) {
       return;
     }
 
-    loadDependencies();
-  }, [changedFiles.length, changedFilesError, loadChangedFiles, loadDependencies]);
+    if (changedFilesState.error || changedFilesState.changedFiles.length === 0) {
+      loadChangedFiles({ commit });
+      return;
+    }
+
+    loadDependencies({
+      paneId,
+      commitHash: commit.hash,
+      filePaths: changedFilesState.changedFiles.map((file) => file.path),
+    });
+  }, [changedFilesState.changedFiles, changedFilesState.error, commit, loadChangedFiles, loadDependencies, paneId]);
 
   return {
-    files: changedFiles,
-    dependencyEdges,
-    isLoading: isLoadingChangedFiles || isLoadingDependencies,
-    error: changedFilesError ?? dependenciesError,
+    files: changedFilesState.changedFiles,
+    dependencyEdges: dependencyState.dependencyEdges,
+    isLoading: changedFilesState.isLoading || dependencyState.isLoading,
+    error: changedFilesState.error ?? dependencyState.error,
     retryCanvas,
   };
 }

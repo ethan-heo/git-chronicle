@@ -1,5 +1,4 @@
 import type { FilterState } from '../types/commit';
-import type { PersistedWorkspaceTab } from '../store/slices/workspaceTabsSlice';
 import { getWebviewState, setWebviewState } from './vscodeApi';
 
 export interface PersistedWorkspaceSidebarState {
@@ -16,12 +15,6 @@ export interface PersistedWorkspaceSidebarState {
 export interface PersistedWebviewState {
   filter?: Partial<FilterState>;
   workspaceSidebar?: PersistedWorkspaceSidebarState;
-  workspaceTabs?: PersistedWorkspaceTabsState;
-}
-
-export interface PersistedWorkspaceTabsState {
-  tabs: PersistedWorkspaceTab[];
-  activeTabId: string | null;
 }
 
 export function readPersistedWebviewState(): PersistedWebviewState {

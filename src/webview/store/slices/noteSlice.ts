@@ -1,87 +1,139 @@
 import type { StateCreator } from 'zustand';
 import type { AppState } from '../appStore';
 
-export interface NoteSlice {
+export interface NoteStateEntry {
   noteContent: string;
   noteSavedPath: string | null;
-  isLoadingNote: boolean;
-  isSavingNote: boolean;
-  noteError: string | null;
+  isLoading: boolean;
+  isSaving: boolean;
+  error: string | null;
   hasSavedNote: boolean;
+}
 
-  startNoteLoading: () => void;
-  setNoteContent: (content: string) => void;
-  startNoteSaving: () => void;
-  handleNoteLoaded: (payload: { content: string; savedPath?: string | null; hasSavedNote?: boolean }) => void;
-  handleNoteLoadFailed: (message?: string) => void;
-  handleNoteSaved: (payload: { content: string; savedPath?: string | null; hasSavedNote?: boolean }) => void;
-  handleNoteSaveFailed: (message?: string) => void;
+export interface NoteSlice {
+  notesByPane: Record<string, NoteStateEntry>;
+
+  startNoteLoading: (paneId: string) => void;
+  setNoteContent: (paneId: string, content: string) => void;
+  startNoteSaving: (paneId: string) => void;
+  handleNoteLoaded: (payload: { paneId: string; content: string; savedPath?: string | null; hasSavedNote?: boolean }) => void;
+  handleNoteLoadFailed: (payload: { paneId: string; message?: string }) => void;
+  handleNoteSaved: (payload: { paneId: string; content: string; savedPath?: string | null; hasSavedNote?: boolean }) => void;
+  handleNoteSaveFailed: (payload: { paneId: string; message?: string }) => void;
+}
+
+export const EMPTY_NOTE_STATE: NoteStateEntry = {
+  noteContent: '',
+  noteSavedPath: null,
+  isLoading: false,
+  isSaving: false,
+  error: null,
+  hasSavedNote: false,
+};
+
+function getEntry(state: AppState, paneId: string): NoteStateEntry {
+  return state.notesByPane[paneId] ?? EMPTY_NOTE_STATE;
 }
 
 export const createNoteSlice: StateCreator<AppState, [], [], NoteSlice> = (set) => ({
-  noteContent: '',
-  noteSavedPath: null,
-  isLoadingNote: false,
-  isSavingNote: false,
-  noteError: null,
-  hasSavedNote: false,
+  notesByPane: {},
 
-  startNoteLoading: () => {
-    set({
-      isLoadingNote: true,
-      isSavingNote: false,
-      noteError: null,
-    });
+  startNoteLoading: (paneId) => {
+    set((state) => ({
+      notesByPane: {
+        ...state.notesByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          isLoading: true,
+          isSaving: false,
+          error: null,
+        },
+      },
+    }));
   },
 
-  setNoteContent: (content) => {
-    set({
-      noteContent: content,
-      noteError: null,
-    });
+  setNoteContent: (paneId, content) => {
+    set((state) => ({
+      notesByPane: {
+        ...state.notesByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          noteContent: content,
+          error: null,
+        },
+      },
+    }));
   },
 
-  startNoteSaving: () => {
-    set({
-      isSavingNote: true,
-      noteError: null,
-    });
+  startNoteSaving: (paneId) => {
+    set((state) => ({
+      notesByPane: {
+        ...state.notesByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          isSaving: true,
+          error: null,
+        },
+      },
+    }));
   },
 
-  handleNoteLoaded: (payload) => {
-    set({
-      noteContent: payload.content,
-      noteSavedPath: payload.savedPath ?? null,
-      isLoadingNote: false,
-      isSavingNote: false,
-      noteError: null,
-      hasSavedNote: payload.hasSavedNote ?? Boolean(payload.savedPath),
-    });
+  handleNoteLoaded: ({ paneId, content, savedPath, hasSavedNote }) => {
+    set((state) => ({
+      notesByPane: {
+        ...state.notesByPane,
+        [paneId]: {
+          noteContent: content,
+          noteSavedPath: savedPath ?? null,
+          isLoading: false,
+          isSaving: false,
+          error: null,
+          hasSavedNote: hasSavedNote ?? Boolean(savedPath),
+        },
+      },
+    }));
   },
 
-  handleNoteLoadFailed: (message = '노트를 불러오지 못했습니다') => {
-    set({
-      isLoadingNote: false,
-      isSavingNote: false,
-      noteError: message,
-    });
+  handleNoteLoadFailed: ({ paneId, message = '노트를 불러오지 못했습니다' }) => {
+    set((state) => ({
+      notesByPane: {
+        ...state.notesByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          isLoading: false,
+          isSaving: false,
+          error: message,
+        },
+      },
+    }));
   },
 
-  handleNoteSaved: (payload) => {
-    set({
-      noteContent: payload.content,
-      noteSavedPath: payload.savedPath ?? null,
-      isLoadingNote: false,
-      isSavingNote: false,
-      noteError: null,
-      hasSavedNote: payload.hasSavedNote ?? Boolean(payload.savedPath),
-    });
+  handleNoteSaved: ({ paneId, content, savedPath, hasSavedNote }) => {
+    set((state) => ({
+      notesByPane: {
+        ...state.notesByPane,
+        [paneId]: {
+          noteContent: content,
+          noteSavedPath: savedPath ?? null,
+          isLoading: false,
+          isSaving: false,
+          error: null,
+          hasSavedNote: hasSavedNote ?? Boolean(savedPath),
+        },
+      },
+    }));
   },
 
-  handleNoteSaveFailed: (message = '노트를 저장하지 못했습니다') => {
-    set({
-      isSavingNote: false,
-      noteError: message,
-    });
+  handleNoteSaveFailed: ({ paneId, message = '노트를 저장하지 못했습니다' }) => {
+    set((state) => ({
+      notesByPane: {
+        ...state.notesByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          isSaving: false,
+          error: message,
+        },
+      },
+    }));
   },
 });

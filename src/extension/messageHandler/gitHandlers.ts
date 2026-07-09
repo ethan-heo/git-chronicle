@@ -15,6 +15,7 @@ export interface FetchCommitsPayload {
 }
 
 export interface FetchChangedFilesPayload {
+  paneId?: string;
   commitHash?: string;
   commitMessage?: string;
   savePath?: string | null;
@@ -116,6 +117,8 @@ export async function handleFetchChangedFiles(panel: vscode.WebviewPanel, contex
       type: 'CHANGED_FILES_LOAD_FAILED',
       payload: {
         message: 'No commit selected',
+        commitHash: payload.commitHash,
+        paneId: payload.paneId,
       },
     });
     return;
@@ -130,6 +133,8 @@ export async function handleFetchChangedFiles(panel: vscode.WebviewPanel, contex
       payload: {
         files: changedFiles.files,
         hasSavedCommitSummary: changedFiles.hasSavedCommitSummary,
+        commitHash: payload.commitHash,
+        paneId: payload.paneId,
       },
     });
   } catch (error) {
@@ -137,6 +142,8 @@ export async function handleFetchChangedFiles(panel: vscode.WebviewPanel, contex
       type: 'CHANGED_FILES_LOAD_FAILED',
       payload: {
         message: error instanceof Error ? error.message : 'Failed to load changed files',
+        commitHash: payload.commitHash,
+        paneId: payload.paneId,
       },
     });
   }

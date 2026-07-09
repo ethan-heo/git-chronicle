@@ -3,14 +3,18 @@ import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import type { DependencyEdge } from '../../types/commit';
 import type { AppState } from '../appStore';
 
-export interface DependencyGraphSlice {
+export interface DependencyGraphStateEntry {
   dependencyEdges: DependencyEdge[];
-  isLoadingDependencies: boolean;
-  dependenciesError: string | null;
+  isLoading: boolean;
+  error: string | null;
+}
 
-  loadDependencies: () => void;
-  handleDependenciesLoaded: (edges: DependencyEdge[]) => void;
-  handleDependenciesLoadFailed: (message?: string) => void;
+export interface DependencyGraphSlice {
+  dependencyGraphsByPane: Record<string, DependencyGraphStateEntry>;
+
+  loadDependencies: (input: { paneId: string; commitHash: string; filePaths: string[] }) => void;
+  handleDependenciesLoaded: (payload: { paneId: string; edges: DependencyEdge[] }) => void;
+  handleDependenciesLoadFailed: (payload: { paneId: string; message?: string }) => void;
 }
 
 const demoDependencyEdges: DependencyEdge[] = [
@@ -24,49 +28,75 @@ const demoDependencyEdges: DependencyEdge[] = [
   { from: 'src/utils/pagination.ts', to: 'src/types/commit.ts', kind: 'require' },
 ];
 
-export const createDependencyGraphSlice: StateCreator<AppState, [], [], DependencyGraphSlice> = (set, get) => ({
+export const EMPTY_DEPENDENCY_GRAPH_STATE: DependencyGraphStateEntry = {
   dependencyEdges: [],
-  isLoadingDependencies: false,
-  dependenciesError: null,
+  isLoading: false,
+  error: null,
+};
 
-  loadDependencies: () => {
+function getEntry(state: AppState, paneId: string): DependencyGraphStateEntry {
+  return state.dependencyGraphsByPane[paneId] ?? EMPTY_DEPENDENCY_GRAPH_STATE;
+}
+
+export const createDependencyGraphSlice: StateCreator<AppState, [], [], DependencyGraphSlice> = (set, get) => ({
+  dependencyGraphsByPane: {},
+
+  loadDependencies: ({ paneId, commitHash, filePaths }) => {
     const state = get();
+    const entry = getEntry(state, paneId);
 
-    if (state.changedFiles.length === 0 || state.isLoadingDependencies) {
+    if (filePaths.length === 0 || entry.isLoading) {
       return;
     }
 
-    set({
-      isLoadingDependencies: true,
-      dependenciesError: null,
-    });
+    set((current) => ({
+      dependencyGraphsByPane: {
+        ...current.dependencyGraphsByPane,
+        [paneId]: {
+          ...getEntry(current, paneId),
+          isLoading: true,
+          error: null,
+        },
+      },
+    }));
 
     if (!isVSCodeRuntime()) {
       window.setTimeout(() => {
-        get().handleDependenciesLoaded(demoDependencyEdges);
+        get().handleDependenciesLoaded({ paneId, edges: demoDependencyEdges });
       }, 260);
       return;
     }
 
     postMessage('ANALYZE_DEPENDENCIES', {
-      filePaths: state.changedFiles.map((file) => file.path),
-      commitHash: state.selectedCommit?.hash,
+      paneId,
+      filePaths,
+      commitHash,
     });
   },
 
-  handleDependenciesLoaded: (edges) => {
-    set({
-      dependencyEdges: edges,
-      isLoadingDependencies: false,
-      dependenciesError: null,
-    });
+  handleDependenciesLoaded: ({ paneId, edges }) => {
+    set((state) => ({
+      dependencyGraphsByPane: {
+        ...state.dependencyGraphsByPane,
+        [paneId]: {
+          dependencyEdges: edges,
+          isLoading: false,
+          error: null,
+        },
+      },
+    }));
   },
 
-  handleDependenciesLoadFailed: (message = 'Failed to analyze dependencies') => {
-    set({
-      dependencyEdges: [],
-      isLoadingDependencies: false,
-      dependenciesError: message,
-    });
+  handleDependenciesLoadFailed: ({ paneId, message = 'Failed to analyze dependencies' }) => {
+    set((state) => ({
+      dependencyGraphsByPane: {
+        ...state.dependencyGraphsByPane,
+        [paneId]: {
+          dependencyEdges: [],
+          isLoading: false,
+          error: message,
+        },
+      },
+    }));
   },
 });

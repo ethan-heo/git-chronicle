@@ -2,22 +2,28 @@ import type { FC, ReactNode } from 'react';
 import type { WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
 
 interface WorkspaceTabBarProps {
+  paneId: string;
   tabs: WorkspaceTab[];
   activeTabId: string | null;
   activeSummaryCommitHash: string | null;
   isGeneratingSummary: boolean;
   onActivateTab: (tabId: string) => void;
   onCloseTab: (tabId: string) => void;
+  onDragTabStart?: (tabId: string) => void;
+  onDragTabEnd?: () => void;
   fixedActions: ReactNode;
 }
 
 export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
+  paneId,
   tabs,
   activeTabId,
   activeSummaryCommitHash,
   isGeneratingSummary,
   onActivateTab,
   onCloseTab,
+  onDragTabStart,
+  onDragTabEnd,
   fixedActions,
 }) => {
   return (
@@ -32,6 +38,9 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
               isGenerating={isGeneratingSummary && tab.panelType === 'aiSummary' && tab.commit.hash === activeSummaryCommitHash}
               onActivate={() => onActivateTab(tab.id)}
               onClose={() => onCloseTab(tab.id)}
+              onDragStart={() => onDragTabStart?.(tab.id)}
+              onDragEnd={onDragTabEnd}
+              paneId={paneId}
             />
           ))}
         </div>
@@ -44,21 +53,28 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
 };
 
 interface WorkspaceTabItemProps {
+  paneId: string;
   tab: WorkspaceTab;
   isActive: boolean;
   isGenerating: boolean;
   onActivate: () => void;
   onClose: () => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }
 
-const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ tab, isActive, isGenerating, onActivate, onClose }) => (
+const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, isGenerating, onActivate, onClose, onDragStart, onDragEnd }) => (
   <div
+    draggable
+    data-pane-id={paneId}
     className={[
       'group flex h-10 items-center gap-2 rounded-md border pl-3 pr-2 text-sm transition-colors',
       isActive
         ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_16%,transparent)] text-text'
         : 'border-line bg-surface text-muted hover:bg-hover hover:text-text',
     ].join(' ')}
+    onDragStart={onDragStart}
+    onDragEnd={onDragEnd}
   >
     <button type="button" className="flex items-center gap-2" onClick={onActivate}>
       <span className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text">

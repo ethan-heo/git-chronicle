@@ -20,7 +20,7 @@
 
 ## Entry Condition
 
-확장 프로그램을 열면 항상 S02로 진입한다. 초기 상태는 `selectedCommit = null`, `openTabs = []`, `activeTabId = null`이며, 사용자가 사이드바 커밋 목록에서 커밋을 선택하면 커밋 종속 상태만 리셋되고 화면 전환은 발생하지 않는다.
+확장 프로그램을 열면 항상 S02로 진입한다. 초기 상태는 `selectedCommit = null`, 단일 leaf pane 1개를 가진 `paneTree`, `focusedPaneId = rootPaneId`이며, 사용자가 사이드바 커밋 목록에서 커밋을 선택하면 커밋 종속 상태만 리셋되고 화면 전환은 발생하지 않는다.
 
 ---
 
@@ -58,18 +58,22 @@ S02_WorkspaceScreen
 │        └─ SavePathSection
 ├─ SidebarResizeHandle
 └─ Main
-   ├─ WorkspaceTabBar
-   │  ├─ WorkspaceTabItem[] (가로 스크롤)
-   │  └─ FixedActions
-   │     ├─ AISummaryToggleButton
-   │     ├─ FileCanvasToggleButton
-   │     └─ NoteToggleButton
-   └─ ActiveTabPanel
-      ├─ code → CodeDiffPanel
-      ├─ aiSummary → AISummaryPanel
-      ├─ fileCanvas → DependencyCanvasPanel
-      ├─ symbolGraph → SymbolGraphPanel (+ 내부 우측 상단 `SymbolCodePanelToggleButton`)
-      └─ note → NoteEditorPanel
+   └─ PaneTree
+      ├─ leaf → WorkspacePane
+      │  ├─ WorkspaceTabBar
+      │  │  ├─ WorkspaceTabItem[] (가로 스크롤, draggable)
+      │  │  └─ FixedActions
+      │  │     ├─ AISummaryToggleButton
+      │  │     ├─ FileCanvasToggleButton
+      │  │     └─ NoteToggleButton
+      │  ├─ DropZoneOverlay (drag 중 left/right/top/bottom)
+      │  └─ ActiveTabPanel
+      │     ├─ code → CodeDiffPanel
+      │     ├─ aiSummary → AISummaryPanel
+      │     ├─ fileCanvas → DependencyCanvasPanel
+      │     ├─ symbolGraph → SymbolGraphPanel (+ 내부 우측 상단 `SymbolCodePanelToggleButton`)
+      │     └─ note → NoteEditorPanel
+      └─ split → ResizableSplitPane (재귀)
 ```
 
 사이드바 안의 세 섹션은 각각 독립적으로 접고 펼칠 수 있으며, 펼쳐진 섹션이 2개 이상일 때는 `ResizableSplitPane`의 세로 분할로 높이를 드래그 조정한다. 이 펼침 상태와 마지막 높이는 Webview State에 저장된다.
@@ -91,6 +95,7 @@ S02_WorkspaceScreen
 | `SettingsToggleButton` | 이 문서 | `src/webview/features/F02/SettingsToggleButton.tsx` |
 | `SidebarSettingsPanel` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-sidebarsettingspanel) | `src/webview/features/F06/SidebarSettingsPanel.tsx` |
 | `ResizableSplitPane` | [global_components](../../core/global_components.md#resizablesplitpane) | `src/webview/shared/components/ResizableSplitPane.tsx` |
+| `PaneTree` | 이 문서 | `src/webview/features/F02/PaneTree.tsx` |
 | `useChangedFileTree` | 이 문서 (F02 소속 훅) | `src/webview/features/F02/useChangedFileTree.ts` |
 | `useSymbolGraph` | 이 문서 (F10 소속 훅) | `src/webview/features/F10/useSymbolGraph.ts` |
 
@@ -100,13 +105,14 @@ S02_WorkspaceScreen
 
 | 상태 | 조건 | UI |
 |------|------|----|
-| `idle` | `selectedCommit === null`, `activeTabId === null` | 사이드바 헤더/파일트리에 placeholder, 본문 빈 상태 |
-| `commitSelected` | `selectedCommit !== null`, `activeTabId === null` | 커밋 컨텍스트만 갱신, 본문은 탭 미선택 상태 |
-| `code` | `activeTab.panelType === "code"` | `CodeDiffPanel` |
-| `aiSummary` | `activeTab.panelType === "aiSummary"` | `AISummaryPanel` |
-| `fileCanvas` | `activeTab.panelType === "fileCanvas"` | `DependencyCanvasPanel` |
-| `symbolGraph` | `activeTab.panelType === "symbolGraph"` | `SymbolGraphPanel` |
-| `note` | `activeTab.panelType === "note"` | `NoteEditorPanel` |
+| `idle` | `selectedCommit === null`, 모든 leaf pane의 `activeTabId === null` | 사이드바 헤더/파일트리에 placeholder, 각 pane 본문 빈 상태 |
+| `commitSelected` | `selectedCommit !== null`, 포커스 pane의 `activeTabId === null` | 커밋 컨텍스트만 갱신, 포커스 pane은 탭 미선택 상태 |
+| `split` | `paneTree.kind === "split"` | `ResizableSplitPane`로 재귀 분할된 다중 pane |
+| `code` | leaf pane의 `activeTab.panelType === "code"` | `CodeDiffPanel` |
+| `aiSummary` | leaf pane의 `activeTab.panelType === "aiSummary"` | `AISummaryPanel` |
+| `fileCanvas` | leaf pane의 `activeTab.panelType === "fileCanvas"` | `DependencyCanvasPanel` |
+| `symbolGraph` | leaf pane의 `activeTab.panelType === "symbolGraph"` | `SymbolGraphPanel` |
+| `note` | leaf pane의 `activeTab.panelType === "note"` | `NoteEditorPanel` |
 
 ---
 
@@ -117,7 +123,11 @@ S02_WorkspaceScreen
 - 사이드바 전체 폭은 별도 리사이즈 핸들로 조정하며, 폭을 0까지 줄이면 사이드바 전체가 접힌다.
 - 사이드바 헤더의 설정 버튼은 헤더를 포함한 사이드바 뷰 전체를 `settings` 로컬 뷰로 전환하며, 본문 탭과 사이드바 리사이즈/섹션 펼침 상태는 유지된다.
 - AI 요약 패널의 "설정으로 이동" CTA도 동일한 사이드바 `settings` 로컬 뷰를 연다.
+- `PaneTree`는 leaf pane 또는 split pane으로 이루어진 재귀 트리다. split pane은 `ResizableSplitPane`을 재사용해 좌우/상하 분할을 렌더링한다.
 - `WorkspaceTabBar`의 좌측 탭 목록은 가로 스크롤되고, 스크롤바가 탭 내용을 덮지 않도록 `scrollbar-gutter`와 하단 여백을 둔다.
-- 같은 대상(`panelType + commitHash + filePath`) 탭이 이미 열려 있으면 새 탭을 만들지 않고 기존 탭을 활성화한다.
-- 탭을 닫으면 오른쪽 탭 우선, 없으면 왼쪽 탭을 활성화한다. 마지막 탭을 닫으면 `activeTabId = null`이 된다.
+- 같은 대상(`panelType + commitHash + filePath`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.
+- 탭을 드래그해 다른 leaf pane의 상/하/좌/우 가장자리로 드롭하면 해당 방향으로 pane이 분할된다. 중앙 합류 드롭은 지원하지 않는다.
+- 탭을 닫으면 같은 pane 안에서 오른쪽 우선 fallback 탭을 활성화하고, leaf pane의 마지막 탭을 닫으면 그 pane은 트리에서 제거되며 sibling pane이 공간을 승계한다.
+- 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환되며, 사이드바의 커밋/파일 컨텍스트는 `focusedPaneId`가 가리키는 leaf pane을 따른다.
+- 분할 레이아웃은 Webview State에 저장하지 않는다. 웹뷰 재생성 후에는 단일 pane으로 초기화된다.
 - 노트는 더 이상 S07 화면으로 이동하지 않고 S02 내부 `note` 탭으로 열리며, 탭 이탈 시 저장되지 않은 초안은 즉시 플러시 저장된다.

@@ -29,12 +29,16 @@ describe('S07NoteScreen', () => {
         date: '2026-07-06T12:00:00+09:00',
       },
       savePath: '.git-author',
-      noteContent: '',
-      noteSavedPath: null,
-      isLoadingNote: false,
-      isSavingNote: false,
-      noteError: null,
-      hasSavedNote: false,
+      notesByPane: {
+        'legacy-note-screen': {
+          noteContent: '',
+          noteSavedPath: null,
+          isLoading: false,
+          isSaving: false,
+          error: null,
+          hasSavedNote: false,
+        },
+      },
     });
   });
 

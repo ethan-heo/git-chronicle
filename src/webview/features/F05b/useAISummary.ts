@@ -84,6 +84,8 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
   const summaryModel = useAppStore((state) => state.summaryModel);
   const qaModel = useAppStore((state) => state.qaModel);
+  const activeSummaryTargetKey = useAppStore((state) => state.activeSummaryTargetKey);
+  const summaryViewCache = useAppStore((state) => state.summaryViewCache);
   const currentSummaryContent = useAppStore((state) => state.currentSummaryContent);
   const isLoadingSummary = useAppStore((state) => state.isLoadingSummary);
   const isGeneratingSummary = useAppStore((state) => state.isGeneratingSummary);
@@ -119,6 +121,17 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
 
   const canStartSummary = Boolean(commit && activeAIProvider && savePath);
   const summaryScope = targetFile ? 'file' : 'commit';
+  const summaryTargetKey = `${commit?.hash ?? 'none'}::${targetFile?.path ?? '__commit__'}`;
+  const cachedSummary = summaryViewCache[summaryTargetKey] ?? null;
+  const isActiveSummaryTarget = activeSummaryTargetKey === summaryTargetKey;
+  const displayedSummaryContent = isActiveSummaryTarget ? currentSummaryContent : (cachedSummary?.content ?? '');
+  const displayedSavedPath = isActiveSummaryTarget ? summarySavedPath : (cachedSummary?.savedPath ?? null);
+  const displayedHasSavedSummary = isActiveSummaryTarget ? hasCurrentSavedSummary : Boolean(cachedSummary?.hasSavedSummary);
+  const displayedSummaryError = isActiveSummaryTarget ? summaryError : null;
+  const displayedIsLoadingSummary = isActiveSummaryTarget ? isLoadingSummary : false;
+  const displayedIsGeneratingSummary = isActiveSummaryTarget ? isGeneratingSummary : false;
+  const displayedIsGeneratingQA = isActiveSummaryTarget ? isGeneratingQA : false;
+  const displayedIsSummaryTokenLimitExceeded = isActiveSummaryTarget ? isSummaryTokenLimitExceeded : false;
 
   const headerContext = useMemo(() => {
     if (!commit) return t('shared.loading');
@@ -138,7 +151,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
       setIsTokenWarningDismissed(false);
 
       if (!isVSCodeRuntime()) {
-        startAISummaryGeneration({ preserveSavedSummary: forceRegenerate });
+        startAISummaryGeneration({ preserveSavedSummary: forceRegenerate, targetKey: summaryTargetKey, commitHash: commit.hash });
         streamDemoSummary({
           forceRegenerate,
           commitHash: commit.shortHash,
@@ -146,12 +159,12 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
           filePath: targetFile?.path ?? null,
           scope: summaryScope,
           appendChunk: appendAISummaryChunk,
-          complete: (payload) => completeAISummary({ ...payload, scope: summaryScope, commitHash: commit.hash }),
+          complete: (payload) => completeAISummary({ ...payload, scope: summaryScope, commitHash: commit.hash, targetKey: summaryTargetKey }),
         });
         return;
       }
 
-      startAISummaryLoading({ preserveSavedSummary: forceRegenerate, commitHash: commit.hash });
+      startAISummaryLoading({ preserveSavedSummary: forceRegenerate, commitHash: commit.hash, targetKey: summaryTargetKey });
       if (targetFile) {
         postMessage('START_AI_SUMMARY_FILE', {
           commitHash: commit.hash,
@@ -174,12 +187,12 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
         forceRegenerate,
       });
     },
-    [activeAIProvider, appendAISummaryChunk, commit, completeAISummary, savePath, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryModel, summaryScope, targetFile],
+    [activeAIProvider, appendAISummaryChunk, commit, completeAISummary, savePath, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryModel, summaryScope, summaryTargetKey, targetFile],
   );
 
   const askQuestion = useCallback(
     (question: string): void => {
-      if (!commit || !activeAIProvider || !savePath || !currentSummaryContent || !qaModel) {
+      if (!commit || !activeAIProvider || !savePath || !displayedSummaryContent || !qaModel) {
         return;
       }
 
@@ -214,7 +227,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
 
       postMessage('START_AI_QA', {
         question,
-        summaryContent: currentSummaryContent,
+        summaryContent: displayedSummaryContent,
         commitHash: commit.hash,
         commitMessage: commit.message,
         filePath: targetFile?.path,
@@ -223,7 +236,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
         savePath,
       });
     },
-    [activeAIProvider, commit, completeAIQA, currentSummaryContent, qaModel, savePath, startAIQA, targetFile],
+    [activeAIProvider, commit, completeAIQA, displayedSummaryContent, qaModel, savePath, startAIQA, targetFile],
   );
 
   useEffect(() => {
@@ -290,21 +303,21 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   }, [completeAIQA, failAIQA, setAISummarySettings]);
 
   useEffect(() => {
-    if (!isActive || !hasLoadedSettings || !canStartSummary || currentSummaryContent || isLoadingSummary || isGeneratingSummary || summaryError) return;
+    if (!isActive || !hasLoadedSettings || !canStartSummary || displayedSummaryContent || displayedIsLoadingSummary || displayedIsGeneratingSummary || displayedSummaryError) return;
     startSummary(false);
-  }, [canStartSummary, currentSummaryContent, hasLoadedSettings, isActive, isGeneratingSummary, isLoadingSummary, startSummary, summaryError]);
+  }, [canStartSummary, displayedIsGeneratingSummary, displayedIsLoadingSummary, displayedSummaryContent, displayedSummaryError, hasLoadedSettings, isActive, startSummary]);
 
   return {
     activeAIProvider,
-    currentSummaryContent,
+    currentSummaryContent: displayedSummaryContent,
     headerContext,
-    hasCurrentSavedSummary,
+    hasCurrentSavedSummary: displayedHasSavedSummary,
     hasLoadedSettings,
     isDialogOpen,
-    isGeneratingQA,
-    isGeneratingSummary,
-    isLoadingSummary,
-    isSummaryTokenLimitExceeded,
+    isGeneratingQA: displayedIsGeneratingQA,
+    isGeneratingSummary: displayedIsGeneratingSummary,
+    isLoadingSummary: displayedIsLoadingSummary,
+    isSummaryTokenLimitExceeded: displayedIsSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
     onAskQuestion: askQuestion,
     onConfirmRegenerate: () => {
@@ -321,8 +334,8 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
     qaError,
     qaMessages,
     qaCompletionCount,
-    summaryError,
-    summarySavedPath,
+    summaryError: displayedSummaryError,
+    summarySavedPath: displayedSavedPath,
   };
 }
 

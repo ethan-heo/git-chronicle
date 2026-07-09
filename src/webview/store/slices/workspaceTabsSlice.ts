@@ -1,8 +1,10 @@
 import type { StateCreator } from 'zustand';
-import type { ChangedFile, Commit } from '../../types/commit';
+import type { Commit } from '../../types/commit';
 import type { AppState } from '../appStore';
 
 export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'symbolGraph' | 'note';
+export type PaneSplitOrientation = 'horizontal' | 'vertical';
+export type DropZone = 'left' | 'right' | 'top' | 'bottom';
 
 export interface WorkspaceTab {
   id: string;
@@ -11,22 +13,32 @@ export interface WorkspaceTab {
   filePath: string | null;
 }
 
-export interface PersistedWorkspaceTab {
-  id: string;
-  panelType: WorkspaceTabPanelType;
-  commitHash: string;
-  commitShortHash: string;
-  commitMessage: string;
-  filePath: string | null;
+export interface PaneLeafNode {
+  paneId: string;
+  kind: 'leaf';
+  tabs: WorkspaceTab[];
+  activeTabId: string | null;
 }
 
+export interface PaneSplitNode {
+  paneId: string;
+  kind: 'split';
+  orientation: PaneSplitOrientation;
+  children: [PaneNode, PaneNode];
+  sizePercent: number;
+}
+
+export type PaneNode = PaneLeafNode | PaneSplitNode;
+
 export interface WorkspaceTabsSlice {
-  openTabs: WorkspaceTab[];
-  activeTabId: string | null;
-  openWorkspaceTab: (input: { panelType: WorkspaceTabPanelType; commit: Commit; filePath?: string | null }) => void;
-  closeWorkspaceTab: (tabId: string) => void;
-  activateWorkspaceTab: (tabId: string) => void;
-  restoreWorkspaceTabs: (payload: { tabs: WorkspaceTab[]; activeTabId: string | null }) => void;
+  paneTree: PaneNode;
+  focusedPaneId: string;
+  openWorkspaceTab: (input: { panelType: WorkspaceTabPanelType; commit: Commit; filePath?: string | null; paneId?: string }) => void;
+  closeWorkspaceTab: (paneId: string, tabId: string) => void;
+  activateWorkspaceTab: (paneId: string, tabId: string) => void;
+  focusPane: (paneId: string) => void;
+  splitWorkspacePaneWithTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
+  setPaneSplitSize: (paneId: string, sizePercent: number) => void;
 }
 
 export function computeWorkspaceTabId(panelType: WorkspaceTabPanelType, commitHash: string, filePath?: string | null): string {
@@ -42,92 +54,232 @@ export function createWorkspaceTab(input: { panelType: WorkspaceTabPanelType; co
   };
 }
 
-export function toPersistedWorkspaceTab(tab: WorkspaceTab): PersistedWorkspaceTab {
+function createLeafPane(tabs: WorkspaceTab[] = [], activeTabId: string | null = null): PaneLeafNode {
   return {
-    id: tab.id,
-    panelType: tab.panelType,
-    commitHash: tab.commit.hash,
-    commitShortHash: tab.commit.shortHash,
-    commitMessage: tab.commit.message,
-    filePath: tab.filePath,
+    paneId: crypto.randomUUID(),
+    kind: 'leaf',
+    tabs,
+    activeTabId,
   };
 }
 
-function findChangedFile(files: ChangedFile[], filePath: string | null): ChangedFile | null {
-  if (!filePath) {
+export function getActiveTab(node: PaneLeafNode): WorkspaceTab | null {
+  return node.tabs.find((tab) => tab.id === node.activeTabId) ?? null;
+}
+
+export function findLeafPane(node: PaneNode, paneId: string): PaneLeafNode | null {
+  if (node.kind === 'leaf') {
+    return node.paneId === paneId ? node : null;
+  }
+
+  return findLeafPane(node.children[0], paneId) ?? findLeafPane(node.children[1], paneId);
+}
+
+function getFirstLeafPane(node: PaneNode): PaneLeafNode {
+  return node.kind === 'leaf' ? node : getFirstLeafPane(node.children[0]);
+}
+
+function replacePaneNode(node: PaneNode, paneId: string, replacer: (pane: PaneLeafNode | PaneSplitNode) => PaneNode): PaneNode {
+  if (node.paneId === paneId) {
+    return replacer(node);
+  }
+
+  if (node.kind === 'leaf') {
+    return node;
+  }
+
+  return {
+    ...node,
+    children: [
+      replacePaneNode(node.children[0], paneId, replacer),
+      replacePaneNode(node.children[1], paneId, replacer),
+    ],
+  };
+}
+
+function removeLeafPane(node: PaneNode, paneId: string): PaneNode | null {
+  if (node.kind === 'leaf') {
+    return node.paneId === paneId ? null : node;
+  }
+
+  const left = removeLeafPane(node.children[0], paneId);
+  const right = removeLeafPane(node.children[1], paneId);
+
+  if (!left && !right) {
     return null;
   }
 
-  return files.find((file) => file.path === filePath) ?? null;
-}
+  if (!left) {
+    return right;
+  }
 
-function syncStateToTab(state: AppState, tab: WorkspaceTab): Partial<AppState> {
-  const selectedFile = findChangedFile(state.changedFiles, tab.filePath);
+  if (!right) {
+    return left;
+  }
 
   return {
-    selectedCommit: tab.commit,
-    selectedFile: tab.panelType === 'code' ? selectedFile : state.selectedFile,
-    selectedFileForSymbolGraph: tab.panelType === 'symbolGraph' ? selectedFile : state.selectedFileForSymbolGraph,
+    ...node,
+    children: [left, right],
   };
 }
 
-export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceTabsSlice> = (set, get) => ({
-  openTabs: [],
-  activeTabId: null,
+function moveTabBetweenLeaves(root: PaneNode, sourcePaneId: string, targetPaneId: string, tabId: string, zone: DropZone): PaneNode {
+  const sourcePane = findLeafPane(root, sourcePaneId);
+  const targetPane = findLeafPane(root, targetPaneId);
+  const movingTab = sourcePane?.tabs.find((tab) => tab.id === tabId) ?? null;
 
-  openWorkspaceTab: ({ panelType, commit, filePath = null }) => {
-    const nextTab = createWorkspaceTab({ panelType, commit, filePath });
-    const state = get();
-    const existingTab = state.openTabs.find((tab) => tab.id === nextTab.id);
+  if (!sourcePane || !targetPane || !movingTab) {
+    return root;
+  }
 
-    if (existingTab) {
-      get().activateWorkspaceTab(existingTab.id);
-      return;
-    }
+  const sourceRemainingTabs = sourcePane.tabs.filter((tab) => tab.id !== tabId);
+  const sourceAfterRemoval = replacePaneNode(root, sourcePaneId, () => ({
+    ...sourcePane,
+    tabs: sourceRemainingTabs,
+    activeTabId: sourcePane.activeTabId === tabId
+      ? sourceRemainingTabs.at(sourceRemainingTabs.length - 1)?.id ?? sourceRemainingTabs[0]?.id ?? null
+      : sourcePane.activeTabId,
+  }));
 
-    set((current) => ({
-      openTabs: [...current.openTabs, nextTab],
-      activeTabId: nextTab.id,
-      ...syncStateToTab(current, nextTab),
-    }));
-  },
+  const nextRoot = sourceRemainingTabs.length === 0
+    ? removeLeafPane(sourceAfterRemoval, sourcePaneId) ?? createLeafPane([movingTab], movingTab.id)
+    : sourceAfterRemoval;
 
-  closeWorkspaceTab: (tabId) => {
-    const state = get();
-    const closedIndex = state.openTabs.findIndex((tab) => tab.id === tabId);
+  const resolvedTargetPane = findLeafPane(nextRoot, targetPaneId);
+  if (!resolvedTargetPane) {
+    return nextRoot;
+  }
 
-    if (closedIndex === -1) {
-      return;
-    }
+  const newPane = createLeafPane([movingTab], movingTab.id);
+  const orientation: PaneSplitOrientation = zone === 'left' || zone === 'right' ? 'horizontal' : 'vertical';
+  const children: [PaneNode, PaneNode] =
+    zone === 'left' || zone === 'top'
+      ? [newPane, resolvedTargetPane]
+      : [resolvedTargetPane, newPane];
 
-    const remainingTabs = state.openTabs.filter((tab) => tab.id !== tabId);
-    const fallbackTab = remainingTabs[closedIndex] ?? remainingTabs[closedIndex - 1] ?? null;
+  return replacePaneNode(nextRoot, targetPaneId, () => ({
+    paneId: crypto.randomUUID(),
+    kind: 'split',
+    orientation,
+    children,
+    sizePercent: 50,
+  }));
+}
 
-    set((current) => ({
-      openTabs: remainingTabs,
-      activeTabId: current.activeTabId === tabId ? fallbackTab?.id ?? null : current.activeTabId,
-      ...(current.activeTabId === tabId && fallbackTab ? syncStateToTab(current, fallbackTab) : {}),
-    }));
-  },
+export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceTabsSlice> = (set, get) => {
+  const rootPane = createLeafPane();
 
-  activateWorkspaceTab: (tabId) => {
-    const state = get();
-    const nextTab = state.openTabs.find((tab) => tab.id === tabId);
+  return {
+    paneTree: rootPane,
+    focusedPaneId: rootPane.paneId,
 
-    if (!nextTab) {
-      return;
-    }
+    openWorkspaceTab: ({ panelType, commit, filePath = null, paneId }) => {
+      const nextTab = createWorkspaceTab({ panelType, commit, filePath });
+      const state = get();
+      const targetPaneId = paneId ?? state.focusedPaneId;
+      const targetPane = findLeafPane(state.paneTree, targetPaneId);
 
-    set((current) => ({
-      activeTabId: tabId,
-      ...syncStateToTab(current, nextTab),
-    }));
-  },
+      if (!targetPane) {
+        return;
+      }
 
-  restoreWorkspaceTabs: ({ tabs, activeTabId }) => {
-    set({
-      openTabs: tabs,
-      activeTabId,
-    });
-  },
-});
+      const existingTab = targetPane.tabs.find((tab) => tab.id === nextTab.id);
+      if (existingTab) {
+        get().activateWorkspaceTab(targetPaneId, existingTab.id);
+        return;
+      }
+
+      set((current) => ({
+        paneTree: replacePaneNode(current.paneTree, targetPaneId, (pane) => {
+          if (pane.kind !== 'leaf') {
+            return pane;
+          }
+
+          return {
+            ...pane,
+            tabs: [...pane.tabs, nextTab],
+            activeTabId: nextTab.id,
+          };
+        }),
+        focusedPaneId: targetPaneId,
+        selectedCommit: commit,
+      }));
+    },
+
+    closeWorkspaceTab: (paneId, tabId) => {
+      const state = get();
+      const pane = findLeafPane(state.paneTree, paneId);
+      if (!pane) {
+        return;
+      }
+
+      const remainingTabs = pane.tabs.filter((tab) => tab.id !== tabId);
+      const fallbackTab = remainingTabs.at(remainingTabs.length - 1) ?? null;
+
+      const updatedTree = replacePaneNode(state.paneTree, paneId, () => ({
+        ...pane,
+        tabs: remainingTabs,
+        activeTabId: pane.activeTabId === tabId ? fallbackTab?.id ?? null : pane.activeTabId,
+      }));
+
+      const collapsedTree = remainingTabs.length === 0
+        ? removeLeafPane(updatedTree, paneId) ?? createLeafPane()
+        : updatedTree;
+      const nextFocusedPane = findLeafPane(collapsedTree, state.focusedPaneId) ?? getFirstLeafPane(collapsedTree);
+      const nextActiveTab = getActiveTab(nextFocusedPane);
+
+      set({
+        paneTree: collapsedTree,
+        focusedPaneId: nextFocusedPane.paneId,
+        selectedCommit: nextActiveTab?.commit ?? (state.focusedPaneId === paneId ? null : state.selectedCommit),
+      });
+    },
+
+    activateWorkspaceTab: (paneId, tabId) => {
+      const state = get();
+      const pane = findLeafPane(state.paneTree, paneId);
+      const tab = pane?.tabs.find((item) => item.id === tabId) ?? null;
+      if (!pane || !tab) {
+        return;
+      }
+
+      set((current) => ({
+        paneTree: replacePaneNode(current.paneTree, paneId, (currentPane) => currentPane.kind === 'leaf'
+          ? { ...currentPane, activeTabId: tabId }
+          : currentPane),
+        focusedPaneId: paneId,
+        selectedCommit: tab.commit,
+      }));
+    },
+
+    focusPane: (paneId) => {
+      const pane = findLeafPane(get().paneTree, paneId);
+      if (!pane) {
+        return;
+      }
+
+      set({
+        focusedPaneId: paneId,
+        selectedCommit: getActiveTab(pane)?.commit ?? null,
+      });
+    },
+
+    splitWorkspacePaneWithTab: ({ sourcePaneId, tabId, targetPaneId, zone }) => {
+      const nextTree = moveTabBetweenLeaves(get().paneTree, sourcePaneId, targetPaneId, tabId, zone);
+      const nextFocusedPane = getFirstLeafPane(nextTree);
+      const focusedPane = findLeafPane(nextTree, get().focusedPaneId) ?? nextFocusedPane;
+      set({
+        paneTree: nextTree,
+        focusedPaneId: focusedPane.paneId,
+      });
+    },
+
+    setPaneSplitSize: (paneId, sizePercent) => {
+      set((state) => ({
+        paneTree: replacePaneNode(state.paneTree, paneId, (pane) => pane.kind === 'split'
+          ? { ...pane, sizePercent }
+          : pane),
+      }));
+    },
+  };
+};

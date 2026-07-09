@@ -3,26 +3,31 @@ import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import type { ChangedFile, SymbolEdge, SymbolNode } from '../../types/commit';
 import type { AppState } from '../appStore';
 
-export interface SymbolGraphSlice {
-  selectedFileForSymbolGraph: ChangedFile | null;
+export interface SymbolGraphStateEntry {
+  selectedFile: ChangedFile | null;
   symbolNodes: SymbolNode[];
   symbolEdges: SymbolEdge[];
   symbolFileContent: string | null;
-  isLoadingSymbolGraph: boolean;
-  hasLoadedSymbolGraph: boolean;
-  symbolGraphError: string | null;
+  isLoading: boolean;
+  hasLoaded: boolean;
+  error: string | null;
   isCodePanelOpen: boolean;
   activeSymbolNodeId: string | null;
   hoveredSymbolNodeId: string | null;
+}
 
-  loadSymbolGraph: () => void;
-  handleSymbolGraphLoaded: (payload: { nodes?: SymbolNode[]; edges?: SymbolEdge[]; fileContent?: string }) => void;
-  handleSymbolGraphLoadFailed: (message?: string) => void;
-  openCodePanel: () => void;
-  closeCodePanel: () => void;
-  toggleCodePanel: () => void;
-  setActiveSymbolNode: (nodeId: string | null) => void;
-  setHoveredSymbolNode: (nodeId: string | null) => void;
+export interface SymbolGraphSlice {
+  symbolGraphsByPane: Record<string, SymbolGraphStateEntry>;
+
+  prepareSymbolGraphPane: (input: { paneId: string; selectedFile: ChangedFile | null }) => void;
+  loadSymbolGraph: (input: { paneId: string; selectedFile: ChangedFile; commitHash: string }) => void;
+  handleSymbolGraphLoaded: (payload: { paneId: string; nodes?: SymbolNode[]; edges?: SymbolEdge[]; fileContent?: string }) => void;
+  handleSymbolGraphLoadFailed: (payload: { paneId: string; message?: string }) => void;
+  openCodePanel: (paneId: string) => void;
+  closeCodePanel: (paneId: string) => void;
+  toggleCodePanel: (paneId: string) => void;
+  setActiveSymbolNode: (paneId: string, nodeId: string | null) => void;
+  setHoveredSymbolNode: (paneId: string, nodeId: string | null) => void;
 }
 
 const demoSymbolNodes: SymbolNode[] = [
@@ -59,39 +64,76 @@ export interface GraphState {
 
 export const GRAPH_LIMIT = 120;`;
 
-export const createSymbolGraphSlice: StateCreator<AppState, [], [], SymbolGraphSlice> = (set, get) => ({
-  selectedFileForSymbolGraph: null,
+export const EMPTY_SYMBOL_GRAPH_STATE: SymbolGraphStateEntry = {
+  selectedFile: null,
   symbolNodes: [],
   symbolEdges: [],
   symbolFileContent: null,
-  isLoadingSymbolGraph: false,
-  hasLoadedSymbolGraph: false,
-  symbolGraphError: null,
+  isLoading: false,
+  hasLoaded: false,
+  error: null,
   isCodePanelOpen: false,
   activeSymbolNodeId: null,
   hoveredSymbolNodeId: null,
+};
 
-  loadSymbolGraph: () => {
-    const state = get();
-    if (!state.selectedFileForSymbolGraph || state.isLoadingSymbolGraph) {
+function getEntry(state: AppState, paneId: string): SymbolGraphStateEntry {
+  return state.symbolGraphsByPane[paneId] ?? EMPTY_SYMBOL_GRAPH_STATE;
+}
+
+export const createSymbolGraphSlice: StateCreator<AppState, [], [], SymbolGraphSlice> = (set, get) => ({
+  symbolGraphsByPane: {},
+
+  prepareSymbolGraphPane: ({ paneId, selectedFile }) => {
+    set((state) => ({
+      symbolGraphsByPane: {
+        ...state.symbolGraphsByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          selectedFile,
+          symbolNodes: [],
+          symbolEdges: [],
+          symbolFileContent: null,
+          isLoading: false,
+          hasLoaded: false,
+          error: null,
+          isCodePanelOpen: false,
+          activeSymbolNodeId: null,
+          hoveredSymbolNodeId: null,
+        },
+      },
+    }));
+  },
+
+  loadSymbolGraph: ({ paneId, selectedFile, commitHash }) => {
+    const entry = getEntry(get(), paneId);
+    if (entry.isLoading) {
       return;
     }
 
-    set({
-      isLoadingSymbolGraph: true,
-      hasLoadedSymbolGraph: false,
-      symbolGraphError: null,
-      symbolNodes: [],
-      symbolEdges: [],
-      symbolFileContent: null,
-      isCodePanelOpen: false,
-      activeSymbolNodeId: null,
-      hoveredSymbolNodeId: null,
-    });
+    set((state) => ({
+      symbolGraphsByPane: {
+        ...state.symbolGraphsByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          selectedFile,
+          symbolNodes: [],
+          symbolEdges: [],
+          symbolFileContent: null,
+          isLoading: true,
+          hasLoaded: false,
+          error: null,
+          isCodePanelOpen: false,
+          activeSymbolNodeId: null,
+          hoveredSymbolNodeId: null,
+        },
+      },
+    }));
 
     if (!isVSCodeRuntime()) {
       window.setTimeout(() => {
         get().handleSymbolGraphLoaded({
+          paneId,
           nodes: demoSymbolNodes,
           edges: demoSymbolEdges,
           fileContent: demoSymbolFileContent,
@@ -101,45 +143,95 @@ export const createSymbolGraphSlice: StateCreator<AppState, [], [], SymbolGraphS
     }
 
     postMessage('ANALYZE_SYMBOL_GRAPH', {
-      filePath: state.selectedFileForSymbolGraph.path,
-      commitHash: state.selectedCommit?.hash,
+      paneId,
+      filePath: selectedFile.path,
+      commitHash,
     });
   },
 
-  handleSymbolGraphLoaded: (payload) => {
-    set({
-      symbolNodes: payload.nodes ?? [],
-      symbolEdges: payload.edges ?? [],
-      symbolFileContent: payload.fileContent ?? '',
-      isLoadingSymbolGraph: false,
-      hasLoadedSymbolGraph: true,
-      symbolGraphError: null,
-    });
+  handleSymbolGraphLoaded: ({ paneId, nodes, edges, fileContent }) => {
+    set((state) => ({
+      symbolGraphsByPane: {
+        ...state.symbolGraphsByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          symbolNodes: nodes ?? [],
+          symbolEdges: edges ?? [],
+          symbolFileContent: fileContent ?? '',
+          isLoading: false,
+          hasLoaded: true,
+          error: null,
+        },
+      },
+    }));
   },
 
-  handleSymbolGraphLoadFailed: (message) => {
-    set({
-      symbolNodes: [],
-      symbolEdges: [],
-      symbolFileContent: null,
-      isLoadingSymbolGraph: false,
-      hasLoadedSymbolGraph: true,
-      symbolGraphError: message ?? '심볼을 분석하지 못했습니다',
-    });
+  handleSymbolGraphLoadFailed: ({ paneId, message }) => {
+    set((state) => ({
+      symbolGraphsByPane: {
+        ...state.symbolGraphsByPane,
+        [paneId]: {
+          ...getEntry(state, paneId),
+          symbolNodes: [],
+          symbolEdges: [],
+          symbolFileContent: null,
+          isLoading: false,
+          hasLoaded: true,
+          error: message ?? '심볼을 분석하지 못했습니다',
+        },
+      },
+    }));
   },
 
-  openCodePanel: () => set({ isCodePanelOpen: true }),
+  openCodePanel: (paneId) => set((state) => ({
+    symbolGraphsByPane: {
+      ...state.symbolGraphsByPane,
+      [paneId]: {
+        ...getEntry(state, paneId),
+        isCodePanelOpen: true,
+      },
+    },
+  })),
 
-  closeCodePanel: () =>
-    set({
-      isCodePanelOpen: false,
-      activeSymbolNodeId: null,
-      hoveredSymbolNodeId: null,
-    }),
+  closeCodePanel: (paneId) => set((state) => ({
+    symbolGraphsByPane: {
+      ...state.symbolGraphsByPane,
+      [paneId]: {
+        ...getEntry(state, paneId),
+        isCodePanelOpen: false,
+        activeSymbolNodeId: null,
+        hoveredSymbolNodeId: null,
+      },
+    },
+  })),
 
-  toggleCodePanel: () => set((state) => ({ isCodePanelOpen: !state.isCodePanelOpen })),
+  toggleCodePanel: (paneId) => set((state) => ({
+    symbolGraphsByPane: {
+      ...state.symbolGraphsByPane,
+      [paneId]: {
+        ...getEntry(state, paneId),
+        isCodePanelOpen: !getEntry(state, paneId).isCodePanelOpen,
+      },
+    },
+  })),
 
-  setActiveSymbolNode: (nodeId) => set({ activeSymbolNodeId: nodeId }),
+  setActiveSymbolNode: (paneId, nodeId) => set((state) => ({
+    symbolGraphsByPane: {
+      ...state.symbolGraphsByPane,
+      [paneId]: {
+        ...getEntry(state, paneId),
+        activeSymbolNodeId: nodeId,
+      },
+    },
+  })),
 
-  setHoveredSymbolNode: (nodeId) => set({ hoveredSymbolNodeId: nodeId }),
+  setHoveredSymbolNode: (paneId, nodeId) => set((state) => ({
+    symbolGraphsByPane: {
+      ...state.symbolGraphsByPane,
+      [paneId]: {
+        ...getEntry(state, paneId),
+        hoveredSymbolNodeId: nodeId,
+      },
+    },
+  })),
 });

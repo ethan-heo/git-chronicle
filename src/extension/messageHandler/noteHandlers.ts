@@ -3,6 +3,7 @@ import { loadNote, saveNote, SummarySaveError } from '../summaryFileService';
 import { l10n } from './shared';
 
 export interface NotePayload {
+  paneId?: string;
   commitHash?: string;
   commitMessage?: string;
   savePath?: string | null;
@@ -13,7 +14,7 @@ export async function handleFetchNote(panel: vscode.WebviewPanel, payload: NoteP
   if (!payload.savePath) {
     await panel.webview.postMessage({
       type: 'NOTE_LOAD_FAILED',
-      payload: { message: l10n('저장 경로를 먼저 설정해주세요') },
+      payload: { message: l10n('저장 경로를 먼저 설정해주세요'), paneId: payload.paneId },
     });
     return;
   }
@@ -21,7 +22,7 @@ export async function handleFetchNote(panel: vscode.WebviewPanel, payload: NoteP
   if (!payload.commitHash) {
     await panel.webview.postMessage({
       type: 'NOTE_LOAD_FAILED',
-      payload: { message: l10n('커밋 정보가 없습니다') },
+      payload: { message: l10n('커밋 정보가 없습니다'), paneId: payload.paneId },
     });
     return;
   }
@@ -33,6 +34,7 @@ export async function handleFetchNote(panel: vscode.WebviewPanel, payload: NoteP
       content: loaded?.content ?? '',
       savedPath: loaded?.savedPath ?? null,
       hasSavedNote: Boolean(loaded),
+      paneId: payload.paneId,
     },
   });
 }
@@ -41,7 +43,7 @@ export async function handleSaveNote(panel: vscode.WebviewPanel, payload: NotePa
   if (!payload.savePath) {
     await panel.webview.postMessage({
       type: 'NOTE_SAVE_FAILED',
-      payload: { message: l10n('저장 경로를 먼저 설정해주세요') },
+      payload: { message: l10n('저장 경로를 먼저 설정해주세요'), paneId: payload.paneId },
     });
     return;
   }
@@ -49,7 +51,7 @@ export async function handleSaveNote(panel: vscode.WebviewPanel, payload: NotePa
   if (!payload.commitHash) {
     await panel.webview.postMessage({
       type: 'NOTE_SAVE_FAILED',
-      payload: { message: l10n('커밋 정보가 없습니다') },
+      payload: { message: l10n('커밋 정보가 없습니다'), paneId: payload.paneId },
     });
     return;
   }
@@ -62,13 +64,14 @@ export async function handleSaveNote(panel: vscode.WebviewPanel, payload: NotePa
         content: payload.content ?? '',
         savedPath,
         hasSavedNote: true,
+        paneId: payload.paneId,
       },
     });
   } catch (error) {
     const message = error instanceof SummarySaveError ? error.message : l10n('노트를 저장하지 못했습니다');
     await panel.webview.postMessage({
       type: 'NOTE_SAVE_FAILED',
-      payload: { message },
+      payload: { message, paneId: payload.paneId },
     });
   }
 }
