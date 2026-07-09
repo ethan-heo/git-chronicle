@@ -137,6 +137,31 @@
   color: var(--color-text);
 }
 
+.workspace-tab-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+
+.workspace-tab-scrollbar::-webkit-scrollbar {
+  height: 10px;
+}
+
+.workspace-tab-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workspace-tab-scrollbar::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--color-line);
+  background-clip: content-box;
+}
+
+.workspace-tab-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+  background-clip: content-box;
+}
+
 * {
   box-sizing: border-box;
 }

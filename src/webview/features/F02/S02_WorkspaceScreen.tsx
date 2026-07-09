@@ -1,21 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { mergePersistedWebviewState, readPersistedWebviewState, type PersistedWorkspaceSidebarState } from '../../bridge/persistedWebviewState';
+import { mergePersistedWebviewState, readPersistedWebviewState, type PersistedWorkspaceSidebarState, type PersistedWorkspaceTabsState } from '../../bridge/persistedWebviewState';
 import { EmptyState, ResizableSplitPane, SidebarSection } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
+import { computeWorkspaceTabId, createWorkspaceTab, toPersistedWorkspaceTab, type WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
 import type { ChangedFile } from '../../types/commit';
 import { CommitFilterPanel, CommitList, useCommitList } from '../F01';
 import { CodeDiffPanel } from '../F03';
 import { DependencyCanvasPanel } from '../F04';
 import { AISummaryPanel } from '../F05b';
 import { SidebarSettingsPanel } from '../F06';
-import { SymbolCodePanelToggleButton, SymbolGraphPanel, useSymbolGraph } from '../F10';
+import { NoteEditorPanel } from '../F11';
+import { SymbolGraphPanel, useSymbolGraph } from '../F10';
 import { AISummaryToggleButton } from './AISummaryToggleButton';
 import { FileCanvasToggleButton } from './FileCanvasToggleButton';
 import { FileTree } from './FileTree';
 import { NoteToggleButton } from './NoteToggleButton';
 import { SettingsToggleButton } from './SettingsToggleButton';
+import { WorkspaceTabBar } from './WorkspaceTabBar';
 import { useChangedFileTree } from './useChangedFileTree';
 import { WorkspaceHeading } from './WorkspaceHeading';
 
@@ -40,6 +43,10 @@ const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
   sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
   lastSidebarWidth: SIDEBAR_DEFAULT_WIDTH,
 };
+const EMPTY_WORKSPACE_TABS_STATE: PersistedWorkspaceTabsState = {
+  tabs: [],
+  activeTabId: null,
+};
 
 type SectionKey = 'filter' | 'commit' | 'file';
 type SidebarView = 'default' | 'settings';
@@ -47,14 +54,12 @@ type SidebarView = 'default' | 'settings';
 export const S02WorkspaceScreen: FC = () => {
   const { t } = useTranslation();
   const selectedCommit = useAppStore((state) => state.selectedCommit);
-  const selectedFile = useAppStore((state) => state.selectedFile);
-  const activeWorkspacePanel = useAppStore((state) => state.activeWorkspacePanel);
-  const activeAISummaryFilePath = useAppStore((state) => state.activeAISummaryFilePath);
-  const selectFileForCode = useAppStore((state) => state.selectFileForCode);
-  const goToCommitAISummary = useAppStore((state) => state.goToCommitAISummary);
-  const goToCanvasView = useAppStore((state) => state.goToCanvasView);
-  const goToSymbolGraphView = useAppStore((state) => state.goToSymbolGraphView);
-  const goToNoteView = useAppStore((state) => state.goToNoteView);
+  const openTabs = useAppStore((state) => state.openTabs);
+  const activeTabId = useAppStore((state) => state.activeTabId);
+  const openWorkspaceTab = useAppStore((state) => state.openWorkspaceTab);
+  const closeWorkspaceTab = useAppStore((state) => state.closeWorkspaceTab);
+  const activateWorkspaceTab = useAppStore((state) => state.activateWorkspaceTab);
+  const restoreWorkspaceTabs = useAppStore((state) => state.restoreWorkspaceTabs);
   const authorList = useAppStore((state) => state.authorList);
   const filterDateStart = useAppStore((state) => state.filterDateStart);
   const filterDateEnd = useAppStore((state) => state.filterDateEnd);
@@ -65,9 +70,13 @@ export const S02WorkspaceScreen: FC = () => {
   const setFilter = useAppStore((state) => state.setFilter);
   const clearFilters = useAppStore((state) => state.clearFilters);
   const openRepository = useAppStore((state) => state.openRepository);
+  const isGeneratingSummary = useAppStore((state) => state.isGeneratingSummary);
+  const activeSummaryCommitHash = useAppStore((state) => state.activeSummaryCommitHash);
+  const pushToast = useAppStore((state) => state.pushToast);
   const isRouteSlotActive = useRouteSlotActive();
   const changedFileTree = useChangedFileTree({ isActive: isRouteSlotActive });
-  const symbolGraph = useSymbolGraph({ isActive: isRouteSlotActive && activeWorkspacePanel === 'symbolGraph' });
+  const activeTab = openTabs.find((tab) => tab.id === activeTabId) ?? null;
+  const symbolGraph = useSymbolGraph({ isActive: isRouteSlotActive && activeTab?.panelType === 'symbolGraph' });
   const {
     commitList,
     hasMoreCommits,
@@ -83,6 +92,7 @@ export const S02WorkspaceScreen: FC = () => {
     retry,
   } = useCommitList({ isActive: isRouteSlotActive });
   const persistedSidebarState = readPersistedWebviewState().workspaceSidebar ?? DEFAULT_SIDEBAR_STATE;
+  const persistedTabsState = readPersistedWebviewState().workspaceTabs ?? EMPTY_WORKSPACE_TABS_STATE;
   const [sidebarWidth, setSidebarWidth] = useState(
     persistedSidebarState.sidebarWidth > SIDEBAR_COLLAPSE_WIDTH
       ? persistedSidebarState.sidebarWidth
@@ -103,14 +113,17 @@ export const S02WorkspaceScreen: FC = () => {
   const [sidebarView, setSidebarView] = useState<SidebarView>('default');
   const [renderedSidebarView, setRenderedSidebarView] = useState<SidebarView>('default');
   const [exitingSidebarView, setExitingSidebarView] = useState<SidebarView | null>(null);
+  const [hasRestoredTabs, setHasRestoredTabs] = useState(false);
   const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   if (prevSelectedCommitHash !== selectedCommit?.hash) {
     setPrevSelectedCommitHash(selectedCommit?.hash);
   }
 
-  const activeAIFile = changedFileTree.changedFiles.find((file) => file.path === activeAISummaryFilePath) ?? null;
-  const isCommitAISummaryActive = activeWorkspacePanel === 'aiSummary' && activeAISummaryFilePath === null;
+  const activeAIFile = activeTab?.panelType === 'aiSummary' && activeTab.filePath
+    ? changedFileTree.changedFiles.find((file) => file.path === activeTab.filePath) ?? null
+    : null;
+  const isActiveTabCommitSelected = Boolean(activeTab && selectedCommit && activeTab.commit.hash === selectedCommit.hash);
   const isFilterActive = Boolean(
     filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim(),
   );
@@ -132,13 +145,38 @@ export const S02WorkspaceScreen: FC = () => {
     );
   }, [changedFileTree.changedFiles]);
 
+  const openTab = useCallback((panelType: WorkspaceTab['panelType'], file?: ChangedFile | null) => {
+    if (!selectedCommit) {
+      return;
+    }
+
+    if (panelType === 'aiSummary' && isGeneratingSummary && activeSummaryCommitHash && activeSummaryCommitHash !== selectedCommit.hash) {
+      pushToast('다른 탭에서 AI 요약 생성 중입니다.', 'warning');
+      return;
+    }
+
+    openWorkspaceTab({
+      panelType,
+      commit: selectedCommit,
+      filePath: file?.path ?? null,
+    });
+  }, [activeSummaryCommitHash, isGeneratingSummary, openWorkspaceTab, pushToast, selectedCommit]);
+
   const openCommitAISummaryFromSidebar = useCallback(() => {
-    goToCommitAISummary();
-  }, [goToCommitAISummary]);
+    openTab('aiSummary');
+  }, [openTab]);
 
   const openCommitAISummaryFromFile = useCallback((file: ChangedFile) => {
-    goToCommitAISummary(file);
-  }, [goToCommitAISummary]);
+    openTab('aiSummary', file);
+  }, [openTab]);
+
+  const openCodeTab = useCallback((file: ChangedFile) => {
+    openTab('code', file);
+  }, [openTab]);
+
+  const openSymbolGraphTab = useCallback((file: ChangedFile) => {
+    openTab('symbolGraph', file);
+  }, [openTab]);
 
   useEffect(() => {
     mergePersistedWebviewState({
@@ -164,6 +202,39 @@ export const S02WorkspaceScreen: FC = () => {
     lastSidebarWidth,
     sidebarWidth,
   ]);
+
+  useEffect(() => {
+    mergePersistedWebviewState({
+      workspaceTabs: {
+        tabs: openTabs.map(toPersistedWorkspaceTab),
+        activeTabId,
+      },
+    });
+  }, [activeTabId, openTabs]);
+
+  useEffect(() => {
+    if (hasRestoredTabs) {
+      return;
+    }
+
+    const restoredTabs = persistedTabsState.tabs.map((tab) => createWorkspaceTab({
+      panelType: tab.panelType,
+      commit: {
+        hash: tab.commitHash,
+        shortHash: tab.commitShortHash,
+        message: tab.commitMessage,
+        author: '',
+        date: '',
+      },
+      filePath: tab.filePath,
+    }));
+
+    restoreWorkspaceTabs({
+      tabs: restoredTabs,
+      activeTabId: persistedTabsState.activeTabId,
+    });
+    setHasRestoredTabs(true);
+  }, [hasRestoredTabs, persistedTabsState.activeTabId, persistedTabsState.tabs, restoreWorkspaceTabs]);
 
   useEffect(() => {
     if (!isSidebarDragging) {
@@ -322,12 +393,12 @@ export const S02WorkspaceScreen: FC = () => {
           isLoading={changedFileTree.isLoading}
           error={changedFileTree.error}
           onRetry={changedFileTree.retryTree}
-          onFileCodeView={selectFileForCode}
+          onFileCodeView={openCodeTab}
           onFileAIView={openCommitAISummaryFromFile}
-          onFileSymbolGraph={goToSymbolGraphView}
-          activeAIFilePath={activeWorkspacePanel === 'aiSummary' ? activeAISummaryFilePath : null}
-          activeCodeFilePath={activeWorkspacePanel === 'code' ? selectedFile?.path ?? null : null}
-          activeSymbolGraphFilePath={activeWorkspacePanel === 'symbolGraph' ? symbolGraph.selectedFile?.path ?? null : null}
+          onFileSymbolGraph={openSymbolGraphTab}
+          activeAIFilePath={isActiveTabCommitSelected && activeTab?.panelType === 'aiSummary' ? activeTab.filePath : null}
+          activeCodeFilePath={isActiveTabCommitSelected && activeTab?.panelType === 'code' ? activeTab.filePath : null}
+          activeSymbolGraphFilePath={isActiveTabCommitSelected && activeTab?.panelType === 'symbolGraph' ? activeTab.filePath : null}
           showHeader={false}
         />
       ) : (
@@ -616,61 +687,68 @@ export const S02WorkspaceScreen: FC = () => {
       </div>
 
       <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex items-center justify-between gap-4 border-b border-line bg-panel px-6 py-4">
-          <div className="flex items-center gap-2">
-            <AISummaryToggleButton
-              isActive={isCommitAISummaryActive}
-              onClick={openCommitAISummaryFromSidebar}
-            />
-            <FileCanvasToggleButton
-              isActive={activeWorkspacePanel === 'fileCanvas'}
-              onClick={goToCanvasView}
-            />
-            <NoteToggleButton onClick={goToNoteView} />
-          </div>
-          <div className="flex items-center gap-2">
-            {activeWorkspacePanel === 'symbolGraph' ? (
-              <SymbolCodePanelToggleButton
-                isOpen={symbolGraph.isCodePanelOpen}
-                disabled={!symbolGraph.canToggleCodePanel}
-                onClick={symbolGraph.toggleCodePanel}
+        <WorkspaceTabBar
+          tabs={openTabs}
+          activeTabId={activeTabId}
+          activeSummaryCommitHash={activeSummaryCommitHash}
+          isGeneratingSummary={isGeneratingSummary}
+          onActivateTab={activateWorkspaceTab}
+          onCloseTab={closeWorkspaceTab}
+          fixedActions={(
+            <>
+              <AISummaryToggleButton
+                isActive={Boolean(selectedCommit && activeTabId === computeWorkspaceTabId('aiSummary', selectedCommit.hash))}
+                onClick={openCommitAISummaryFromSidebar}
               />
-            ) : null}
-          </div>
-        </header>
+              <FileCanvasToggleButton
+                isActive={Boolean(selectedCommit && activeTabId === computeWorkspaceTabId('fileCanvas', selectedCommit.hash))}
+                onClick={() => openTab('fileCanvas')}
+              />
+              <NoteToggleButton
+                isActive={Boolean(selectedCommit && activeTabId === computeWorkspaceTabId('note', selectedCommit.hash))}
+                onClick={() => openTab('note')}
+              />
+            </>
+          )}
+        />
         <div className="min-h-0 flex-1 overflow-hidden">
-          {activeWorkspacePanel === 'none' ? (
+          {!activeTab ? (
             <div className="flex h-full items-center justify-center p-8">
               <EmptyState message={selectedCommit ? t('ai_summary.empty') : t('workspace.commit_placeholder_body')} />
             </div>
           ) : null}
 
-          {activeWorkspacePanel === 'code' && selectedCommit && selectedFile ? (
+          {activeTab?.panelType === 'code' && activeTab.filePath ? (
             <CodeDiffPanel
-              isActive={isRouteSlotActive && activeWorkspacePanel === 'code'}
-              commitHash={selectedCommit.hash}
-              filePath={selectedFile.path}
-              isDeletedFile={selectedFile.status === 'D'}
+              isActive={isRouteSlotActive}
+              commitHash={activeTab.commit.hash}
+              filePath={activeTab.filePath}
+              isDeletedFile={Boolean(changedFileTree.changedFiles.find((file) => file.path === activeTab.filePath)?.status === 'D')}
             />
           ) : null}
 
-          {activeWorkspacePanel === 'aiSummary' && selectedCommit ? (
+          {activeTab?.panelType === 'aiSummary' ? (
             <AISummaryPanel
-              isActive={isRouteSlotActive && activeWorkspacePanel === 'aiSummary'}
+              isActive={isRouteSlotActive}
               targetFile={activeAIFile}
+              commit={activeTab.commit}
               onGoToSettings={openSidebarSettings}
             />
           ) : null}
 
-          {activeWorkspacePanel === 'fileCanvas' && selectedCommit ? (
+          {activeTab?.panelType === 'fileCanvas' ? (
             <DependencyCanvasPanel
-              isActive={isRouteSlotActive && activeWorkspacePanel === 'fileCanvas'}
-              onFileCodeView={selectFileForCode}
+              isActive={isRouteSlotActive}
+              onFileCodeView={openCodeTab}
             />
           ) : null}
 
-          {activeWorkspacePanel === 'symbolGraph' && selectedCommit ? (
+          {activeTab?.panelType === 'symbolGraph' ? (
             <SymbolGraphPanel data={symbolGraph} />
+          ) : null}
+
+          {activeTab?.panelType === 'note' ? (
+            <NoteEditorPanel commit={activeTab.commit} isActive={isRouteSlotActive} />
           ) : null}
         </div>
       </section>

@@ -41,7 +41,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
    - **[커밋 AI 정리]**(`AISummaryToggleButton`) → S02 본문 헤더의 좌측 버튼 그룹에서 `aiSummary` 패널 활성화. 해당 커밋의 AI 정리 저장본이 이미 존재하면 패널 진입 후 `AISummaryViewer`가 저장본을 즉시 표시한다.
    - **[캔버스 보기]**(`FileCanvasToggleButton`) → S02 본문 헤더의 좌측 버튼 그룹에서 `fileCanvas` 패널 활성화
 
-> S02_WorkspaceScreen 통합 이후 코드 뷰어·AI 요약 뷰어·의존성 캔버스는 모두 독립 화면이 아니라 S02 본문의 `activeWorkspacePanel` 전환으로 구현된다.
+> S02_WorkspaceScreen 통합 이후 코드 뷰어·AI 요약 뷰어·의존성 캔버스는 모두 독립 화면이 아니라 S02 본문의 탭 전환으로 구현된다.
 
 ---
 
@@ -106,6 +106,6 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 효과 | 트리거 | 설명 |
 |------|--------|------|
 | `changedFiles` 전역 상태 업데이트 | `selectedCommit` 설정 시 | 해당 커밋의 변경 파일 목록 로드 |
-| S02 `code` 패널 활성화 | `selectedFile` 설정 + [코드 보기] | `activeWorkspacePanel = "code"` |
-| S02 `aiSummary` 패널 활성화 | [커밋 AI 정리] 클릭 | `activeWorkspacePanel = "aiSummary"` |
-| S02 `fileCanvas` 패널 활성화 | [캔버스 보기] 클릭 | `activeWorkspacePanel = "fileCanvas"` |
+| S02 `code` 탭 활성화 | `selectedFile` 설정 + [코드 보기] | `openWorkspaceTab({ panelType: "code" })` |
+| S02 `aiSummary` 탭 활성화 | [커밋 AI 정리] 클릭 | `openWorkspaceTab({ panelType: "aiSummary" })` |
+| S02 `fileCanvas` 탭 활성화 | [캔버스 보기] 클릭 | `openWorkspaceTab({ panelType: "fileCanvas" })` |

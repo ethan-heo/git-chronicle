@@ -88,7 +88,7 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | [F07_SavePathSettings](../features/F07_save_path_settings/spec.md) | 저장 경로 설정 | AI 정리 결과물 저장 경로 지정·삭제 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문/답변으로 개별 파일까지 파고들며 분석. 커밋 전체 diff를 근거로 답변하며, 답변을 기존 요약 문서 하단에 append | [S02](../screens/S02_history_view/blueprint.md) |
 | [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S02](../screens/S02_history_view/blueprint.md) |
-| [F11_NoteEditor](../features/F11_note_editor/spec.md) | 노트 에디터 | 커밋 컨텍스트를 유지한 채 마크다운 노트를 작성하고 디바운스 자동저장 | [S07](../screens/S07_note/blueprint.md) |
+| [F11_NoteEditor](../features/F11_note_editor/spec.md) | 노트 에디터 | 커밋 컨텍스트를 유지한 채 S02 내부 노트 탭에서 마크다운 노트를 작성하고 디바운스 자동저장 | [S02](../screens/S02_history_view/blueprint.md) |
 
 ---
 

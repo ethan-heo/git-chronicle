@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState, type FC, type ReactElement } from 'react';
+import { useEffect, useRef, useState, type FC } from 'react';
 import { S02WorkspaceScreen } from './features/F02';
-import { S07NoteScreen } from './features/F11';
 import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
 import { RouteSlotProvider } from './shared/route/RouteSlotContext';
@@ -15,6 +14,11 @@ interface WebviewEventPayload {
   registeredProviders?: AIProviderName[];
   summaryModel?: string | null;
   qaModel?: string | null;
+  isOverLimit?: boolean;
+  chunk?: string;
+  content?: string;
+  savedPath?: string | null;
+  provider?: AIProviderName | null;
   nodes?: SymbolNode[];
   edges?: SymbolEdge[];
   fileContent?: string;
@@ -27,6 +31,13 @@ export const App: FC = () => {
   const toasts = useAppStore((state) => state.toasts);
   const setAISummarySettings = useAppStore((state) => state.setAISummarySettings);
   const dismissToast = useAppStore((state) => state.dismissToast);
+  const appendAISummaryChunk = useAppStore((state) => state.appendAISummaryChunk);
+  const completeAISummary = useAppStore((state) => state.completeAISummary);
+  const loadSavedAISummary = useAppStore((state) => state.loadSavedAISummary);
+  const failAISummary = useAppStore((state) => state.failAISummary);
+  const setSummaryTokenWarning = useAppStore((state) => state.setSummaryTokenWarning);
+  const startAISummaryGeneration = useAppStore((state) => state.startAISummaryGeneration);
+  const activeSummaryCommitHash = useAppStore((state) => state.activeSummaryCommitHash);
   const [outgoingScreen, setOutgoingScreen] = useState<{
     screen: ScreenID;
     direction: RouteTransitionDirection;
@@ -61,6 +72,48 @@ export const App: FC = () => {
         return;
       }
 
+      if (event.data.type === 'AI_SUMMARY_STARTED') {
+        startAISummaryGeneration({ preserveSavedSummary: true, commitHash: activeSummaryCommitHash });
+        return;
+      }
+
+      if (event.data.type === 'AI_SUMMARY_TOKEN_WARNING') {
+        setSummaryTokenWarning(Boolean(event.data.payload?.isOverLimit));
+        return;
+      }
+
+      if (event.data.type === 'AI_SUMMARY_CHUNK') {
+        appendAISummaryChunk(event.data.payload?.chunk ?? '');
+        return;
+      }
+
+      if (event.data.type === 'AI_SUMMARY_LOADED') {
+        loadSavedAISummary({
+          content: event.data.payload?.content ?? '',
+          savedPath: event.data.payload?.savedPath ?? null,
+          provider: event.data.payload?.provider ?? null,
+          scope: 'commit',
+          commitHash: activeSummaryCommitHash,
+        });
+        return;
+      }
+
+      if (event.data.type === 'AI_SUMMARY_DONE') {
+        completeAISummary({
+          content: event.data.payload?.content,
+          savedPath: event.data.payload?.savedPath ?? null,
+          provider: event.data.payload?.provider ?? null,
+          scope: 'commit',
+          commitHash: activeSummaryCommitHash,
+        });
+        return;
+      }
+
+      if (event.data.type === 'AI_SUMMARY_ERROR') {
+        failAISummary(event.data.payload?.message);
+        return;
+      }
+
       if (event.data.type === 'SYMBOL_GRAPH_LOADED') {
         useAppStore.getState().handleSymbolGraphLoaded({
           nodes: event.data.payload?.nodes ?? [],
@@ -77,7 +130,7 @@ export const App: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [setAISummarySettings]);
+  }, [activeSummaryCommitHash, appendAISummaryChunk, completeAISummary, failAISummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration]);
 
   useEffect(() => {
     if (previousScreenRef.current === currentScreen) {
@@ -102,28 +155,17 @@ export const App: FC = () => {
       <div className="relative h-screen overflow-hidden bg-surface">
         {outgoingScreen && (
           <div className={getScreenSlotClassName(outgoingScreen.direction, 'exiting')} aria-hidden="true">
-            <RouteSlotProvider isActive={false}>{renderScreen(outgoingScreen.screen)}</RouteSlotProvider>
+            <RouteSlotProvider isActive={false}><S02WorkspaceScreen /></RouteSlotProvider>
           </div>
         )}
         <div className={getScreenSlotClassName(transitionDirection, outgoingScreen ? 'entering' : null)}>
-          <RouteSlotProvider isActive>{renderScreen(currentScreen)}</RouteSlotProvider>
+          <RouteSlotProvider isActive><S02WorkspaceScreen /></RouteSlotProvider>
         </div>
       </div>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 };
-
-function renderScreen(currentScreen: ScreenID): ReactElement {
-  if (currentScreen === 'S02') {
-    return <S02WorkspaceScreen />;
-  }
-
-  if (currentScreen === 'S07') {
-    return <S07NoteScreen />;
-  }
-  return <S02WorkspaceScreen />;
-}
 
 function getScreenSlotClassName(
   direction: RouteTransitionDirection,

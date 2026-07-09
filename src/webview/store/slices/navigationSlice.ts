@@ -1,42 +1,27 @@
 import type { StateCreator } from 'zustand';
-import type { ChangedFile, Commit, RouteTransitionDirection, ScreenID } from '../../types/commit';
+import type { Commit, RouteTransitionDirection, ScreenID } from '../../types/commit';
 import type { AppState } from '../appStore';
-
-export type WorkspacePanel = 'none' | 'code' | 'aiSummary' | 'fileCanvas' | 'symbolGraph';
 
 export interface NavigationSlice {
   selectedCommit: Commit | null;
   currentScreen: ScreenID;
-  previousScreen: ScreenID | null;
   transitionDirection: RouteTransitionDirection;
-  activeWorkspacePanel: WorkspacePanel;
-  activeAISummaryFilePath: string | null;
 
   selectCommit: (commit: Commit) => void;
   goToCommitList: () => void;
   goToHistoryView: () => void;
-  goBackFromDetail: () => void;
-  selectFileForCode: (file: ChangedFile) => void;
-  goToCommitAISummary: (file?: ChangedFile | null) => void;
-  goToCanvasView: () => void;
-  goToSymbolGraphView: (file: ChangedFile) => void;
   goToSettingsView: () => void;
-  goToNoteView: () => void;
 }
 
-export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSlice> = (set, get) => ({
+export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSlice> = (set) => ({
   selectedCommit: null,
   currentScreen: 'S02',
-  previousScreen: null,
   transitionDirection: 'forward',
-  activeWorkspacePanel: 'none',
-  activeAISummaryFilePath: null,
 
   selectCommit: (commit) => {
     set({
       selectedCommit: commit,
       selectedFile: null,
-      activeAISummaryFilePath: null,
       changedFiles: [],
       hasSavedCommitSummary: false,
       changedFilesError: null,
@@ -70,106 +55,24 @@ export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSli
       isSavingNote: false,
       noteError: null,
       hasSavedNote: false,
-      activeWorkspacePanel: 'none',
     });
   },
 
   goToCommitList: () => {
     set({
       currentScreen: 'S02',
-      previousScreen: null,
       transitionDirection: 'back',
-      activeWorkspacePanel: 'none',
     });
   },
 
   goToHistoryView: () => {
     set({
       currentScreen: 'S02',
-      previousScreen: null,
       transitionDirection: 'back',
-      activeWorkspacePanel: 'none',
-    });
-  },
-
-  goBackFromDetail: () => {
-    const state = get();
-    const previousScreen = state.previousScreen ?? 'S02';
-
-    set({
-      currentScreen: previousScreen,
-      previousScreen: null,
-      transitionDirection: 'back',
-    });
-  },
-
-  selectFileForCode: (file) => {
-    const state = get();
-
-    set({
-      selectedFile: file,
-      currentSummaryContent: '',
-      isLoadingSummary: false,
-      isGeneratingSummary: false,
-      isGeneratingQA: false,
-      summaryError: null,
-      qaError: null,
-      summarySavedPath: null,
-      hasCurrentSavedSummary: state.hasSavedCommitSummary,
-      isSummaryTokenLimitExceeded: false,
-      activeWorkspacePanel: 'code',
-    });
-  },
-
-  goToCommitAISummary: (file = null) => {
-    set({
-      selectedFile: null,
-      currentSummaryContent: '',
-      isLoadingSummary: false,
-      isGeneratingSummary: false,
-      isGeneratingQA: false,
-      summaryError: null,
-      qaError: null,
-      summarySavedPath: null,
-      hasCurrentSavedSummary: get().hasSavedCommitSummary,
-      isSummaryTokenLimitExceeded: false,
-      activeAISummaryFilePath: file?.path ?? null,
-      activeWorkspacePanel: 'aiSummary',
-    });
-  },
-
-  goToCanvasView: () => {
-    set({
-      activeWorkspacePanel: 'fileCanvas',
-    });
-  },
-
-  goToSymbolGraphView: (file) => {
-    set({
-      selectedFileForSymbolGraph: file,
-      symbolNodes: [],
-      symbolEdges: [],
-      symbolFileContent: null,
-      symbolGraphError: null,
-      isLoadingSymbolGraph: false,
-      hasLoadedSymbolGraph: false,
-      isCodePanelOpen: false,
-      activeSymbolNodeId: null,
-      hoveredSymbolNodeId: null,
-      activeWorkspacePanel: 'symbolGraph',
     });
   },
 
   goToSettingsView: () => {
     set({});
-  },
-
-  goToNoteView: () => {
-    set((state) => ({
-      currentScreen: 'S07',
-      previousScreen: state.currentScreen === 'S07' ? state.previousScreen : state.currentScreen,
-      transitionDirection: 'forward',
-      noteError: null,
-    }));
   },
 });

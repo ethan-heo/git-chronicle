@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import type { ChangedFile } from '../../types/commit';
+import type { ChangedFile, Commit } from '../../types/commit';
 import { AISummaryViewer } from './AISummaryViewer';
 import { OverwriteConfirmDialog } from './OverwriteConfirmDialog';
 import { TokenLimitWarning } from './TokenLimitWarning';
@@ -8,10 +8,11 @@ import { useAISummary } from './useAISummary';
 interface AISummaryPanelProps {
   isActive: boolean;
   targetFile: ChangedFile | null;
+  commit: Commit | null;
   onGoToSettings: () => void;
 }
 
-export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, onGoToSettings }) => {
+export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, commit, onGoToSettings }) => {
   const {
     activeAIProvider,
     currentSummaryContent,
@@ -33,7 +34,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
     setIsTokenWarningDismissed,
     summaryError,
     summarySavedPath,
-  } = useAISummary({ isActive, targetFile });
+  } = useAISummary({ isActive, targetFile, commit });
 
   return (
     <div className="flex h-full min-h-0 flex-col">

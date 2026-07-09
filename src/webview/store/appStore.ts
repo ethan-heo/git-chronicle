@@ -7,6 +7,7 @@ import { createSymbolGraphSlice, type SymbolGraphSlice } from './slices/symbolGr
 import { createAISlice, type AISlice } from './slices/aiSlice';
 import { createNoteSlice, type NoteSlice } from './slices/noteSlice';
 import { createToastSlice, type ToastSlice } from './slices/toastSlice';
+import { createWorkspaceTabsSlice, type WorkspaceTabsSlice } from './slices/workspaceTabsSlice';
 
 export type AppState = CommitListSlice &
   NavigationSlice &
@@ -15,7 +16,8 @@ export type AppState = CommitListSlice &
   SymbolGraphSlice &
   AISlice &
   NoteSlice &
-  ToastSlice;
+  ToastSlice &
+  WorkspaceTabsSlice;
 
 export const useAppStore = create<AppState>()((...a) => ({
   ...createCommitListSlice(...a),
@@ -26,4 +28,5 @@ export const useAppStore = create<AppState>()((...a) => ({
   ...createAISlice(...a),
   ...createNoteSlice(...a),
   ...createToastSlice(...a),
+  ...createWorkspaceTabsSlice(...a),
 }));

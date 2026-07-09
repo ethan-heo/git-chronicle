@@ -2,15 +2,21 @@ import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface NoteToggleButtonProps {
+  isActive: boolean;
   onClick: () => void;
 }
 
-export const NoteToggleButton: FC<NoteToggleButtonProps> = ({ onClick }) => {
+export const NoteToggleButton: FC<NoteToggleButtonProps> = ({ isActive, onClick }) => {
   const { t } = useTranslation();
 
   return (
     <button
-      className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+      className={[
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-md border transition-colors duration-100 ease-in-out',
+        isActive
+          ? 'border-focus bg-[color-mix(in_srgb,var(--color-focus)_16%,transparent)] text-text'
+          : 'border-line bg-panel text-muted hover:bg-hover hover:text-text',
+      ].join(' ')}
       type="button"
       aria-label={t('action_bar.note_aria')}
       title={t('action_bar.note_aria')}

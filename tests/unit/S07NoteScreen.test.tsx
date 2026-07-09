@@ -20,8 +20,7 @@ describe('S07NoteScreen', () => {
   beforeEach(() => {
     initI18n('ko');
     useAppStore.setState({
-      currentScreen: 'S07',
-      previousScreen: 'S02',
+      currentScreen: 'S02',
       selectedCommit: {
         hash: 'abc123456789',
         shortHash: 'abc1234',

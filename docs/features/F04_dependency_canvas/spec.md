@@ -115,4 +115,4 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 효과 | 트리거 | 설명 |
 |------|--------|------|
 | `selectedFile` 전역 상태 업데이트 | 노드 액션 버튼 클릭 | 선택된 파일 설정 후 패널 전환 |
-| S02 `code` 패널 활성화 | [코드 보기] 클릭 | `activeWorkspacePanel = "code"` |
+| S02 `code` 탭 활성화 | [코드 보기] 클릭 | `openWorkspaceTab({ panelType: "code" })` |
