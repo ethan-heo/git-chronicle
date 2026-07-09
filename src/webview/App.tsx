@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type FC, type ReactElement } from 'react';
-import { S01CommitListScreen } from './features/F01';
 import { S02WorkspaceScreen } from './features/F02';
 import { S06SettingsScreen } from './features/F06';
 import { S07NoteScreen } from './features/F11';
@@ -128,8 +127,7 @@ function renderScreen(currentScreen: ScreenID): ReactElement {
   if (currentScreen === 'S07') {
     return <S07NoteScreen />;
   }
-
-  return <S01CommitListScreen />;
+  return <S02WorkspaceScreen />;
 }
 
 function getScreenSlotClassName(

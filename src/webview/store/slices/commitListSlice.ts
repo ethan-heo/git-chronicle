@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
-import { getWebviewState, isVSCodeRuntime, postMessage, setWebviewState } from '../../bridge/vscodeApi';
+import { mergePersistedWebviewState, readPersistedWebviewState } from '../../bridge/persistedWebviewState';
+import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import type { Commit, FilterState } from '../../types/commit';
 import type { AppState } from '../appStore';
 
@@ -13,10 +14,6 @@ const DEFAULT_FILTER_STATE: FilterState = {
   filterExcludeKeyword: '',
   sortOrder: 'desc',
 };
-
-interface PersistedWebviewState {
-  filter?: Partial<FilterState>;
-}
 
 interface CommitsLoadedPayload {
   commits: Commit[];
@@ -52,7 +49,7 @@ export interface CommitListSlice extends FilterState {
 }
 
 function persistFilterState(state: FilterState): void {
-  setWebviewState<PersistedWebviewState>({
+  mergePersistedWebviewState({
     filter: {
       filterDateStart: state.filterDateStart,
       filterDateEnd: state.filterDateEnd,
@@ -147,7 +144,7 @@ const demoCommits: Commit[] = [
 
 export const createCommitListSlice: StateCreator<AppState, [], [], CommitListSlice> = (set, get) => ({
   ...DEFAULT_FILTER_STATE,
-  ...getWebviewState<PersistedWebviewState>()?.filter,
+  ...readPersistedWebviewState().filter,
   commitList: [],
   authorList: [],
   commitPage: 0,

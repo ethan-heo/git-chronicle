@@ -7,6 +7,7 @@ import { InfiniteScrollTrigger } from './InfiniteScrollTrigger';
 
 interface CommitListProps {
   commitList: Commit[];
+  selectedCommitHash: string | null;
   isLoadingCommits: boolean;
   hasMoreCommits: boolean;
   isGitRepoDetected: boolean;
@@ -25,6 +26,7 @@ interface CommitListProps {
 
 export const CommitList: FC<CommitListProps> = ({
   commitList,
+  selectedCommitHash,
   isLoadingCommits,
   hasMoreCommits,
   isGitRepoDetected,
@@ -125,7 +127,12 @@ export const CommitList: FC<CommitListProps> = ({
     <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollContainerRef} onScroll={handleScroll}>
       <div className="flex flex-col" role="list">
         {commitList.map((commit) => (
-          <CommitListItem key={commit.hash} commit={commit} onClick={onCommitClick} />
+          <CommitListItem
+            key={commit.hash}
+            commit={commit}
+            isSelected={commit.hash === selectedCommitHash}
+            onClick={onCommitClick}
+          />
         ))}
       </div>
       {loadMoreError ? <div className="flex items-center justify-center px-3 py-3 text-[11px] text-error">{loadMoreError}</div> : null}

@@ -36,6 +36,7 @@ export const S01CommitListScreen: FC = () => {
   const clearFilters = useAppStore((state) => state.clearFilters);
   const goToSettingsView = useAppStore((state) => state.goToSettingsView);
   const openRepository = useAppStore((state) => state.openRepository);
+  const selectedCommitHash = useAppStore((state) => state.selectedCommit?.hash ?? null);
 
   const isFilterActive = Boolean(
     filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim(),
@@ -57,6 +58,7 @@ export const S01CommitListScreen: FC = () => {
       />
       <CommitList
         commitList={commitList}
+        selectedCommitHash={selectedCommitHash}
         isLoadingCommits={isLoadingCommits}
         hasMoreCommits={hasMoreCommits}
         isGitRepoDetected={isGitRepoDetected}

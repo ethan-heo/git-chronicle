@@ -38,8 +38,8 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 2. 파일 항목에 마우스를 호버링하면 액션 버튼이 활성화된다.
    - **[코드 보기]** → `selectedFile` 설정 후 S02 본문 `code` 패널 활성화
 3. 사이드바 헤더에는 워크스페이스 패널 전환 버튼이 위치한다.
-   - **[커밋 AI 정리]**(`AISummaryToggleButton`) → S02 본문 `aiSummary` 패널 활성화. 해당 커밋의 AI 정리 저장본이 이미 존재하면 패널 진입 후 `AISummaryViewer`가 저장본을 즉시 표시한다.
-   - **[캔버스 보기]**(`FileCanvasToggleButton`) → S02 본문 `fileCanvas` 패널 활성화
+   - **[커밋 AI 정리]**(`AISummaryToggleButton`) → S02 본문 헤더의 좌측 버튼 그룹에서 `aiSummary` 패널 활성화. 해당 커밋의 AI 정리 저장본이 이미 존재하면 패널 진입 후 `AISummaryViewer`가 저장본을 즉시 표시한다.
+   - **[캔버스 보기]**(`FileCanvasToggleButton`) → S02 본문 헤더의 좌측 버튼 그룹에서 `fileCanvas` 패널 활성화
 
 > S02_WorkspaceScreen 통합 이후 코드 뷰어·AI 요약 뷰어·의존성 캔버스는 모두 독립 화면이 아니라 S02 본문의 `activeWorkspacePanel` 전환으로 구현된다.
 

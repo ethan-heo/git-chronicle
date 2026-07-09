@@ -193,17 +193,20 @@
 
 ## ResizableSplitPane
 
-**용도:** 좌우 두 패널 사이에 드래그 가능한 Divider를 제공하는 공용 레이아웃 컨테이너. F10 파일 내부 심볼 캔버스에서 인라인 분할 패널 용도로 사용한다.
+**용도:** 두 패널 사이에 드래그 가능한 Divider를 제공하는 공용 레이아웃 컨테이너. F10 파일 내부 심볼 캔버스의 좌우 분할과 S02 사이드바 섹션의 상하 분할에 공통으로 사용한다.
 
 | 속성 | 타입 | 설명 |
 |------|------|------|
 | `isOpen` | `boolean` | `false`면 Divider와 우측 패널을 렌더링하지 않음 |
+| `orientation` | `'horizontal' \| 'vertical' \| undefined` | 분할 방향. 기본값은 좌우(`horizontal`) |
 | `defaultLeftPercent` | `number \| undefined` | `isOpen`이 `true`가 될 때 좌측 너비 초기값 |
 | `minLeftPx` / `minRightPx` | `number \| undefined` | 좌/우 패널 최소 너비 제한 |
+| `controlledLeftPx` | `number \| undefined` | 첫 번째 패널의 제어된 크기(px). `vertical`일 때는 상단 높이로 해석 |
+| `onLeftPxChange` | `(leftPx: number, rightPx: number) => void` | Divider 드래그 시 두 패널의 계산된 px 크기를 반환 |
 | `left` / `right` | `React.ReactNode` | 좌/우 패널 콘텐츠 |
 | `className` | `string \| undefined` | 추가 클래스 |
 
-**동작:** Divider 드래그는 `mousemove`/`mouseup` 이벤트로 처리하며, 드래그 중에는 텍스트 선택을 막고 커서를 `col-resize`로 바꾼다.
+**동작:** Divider 드래그는 `mousemove`/`mouseup` 이벤트로 처리하며, 드래그 중에는 텍스트 선택을 막고 분할 방향에 맞는 resize 커서로 바꾼다.
 
 **구현 파일:** `src/webview/shared/components/ResizableSplitPane.tsx`, `ResizableSplitPane.css`
 

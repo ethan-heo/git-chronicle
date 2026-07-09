@@ -26,7 +26,7 @@ export interface NavigationSlice {
 
 export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSlice> = (set, get) => ({
   selectedCommit: null,
-  currentScreen: 'S01',
+  currentScreen: 'S02',
   previousScreen: null,
   transitionDirection: 'forward',
   activeWorkspacePanel: 'none',
@@ -70,18 +70,16 @@ export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSli
       isSavingNote: false,
       noteError: null,
       hasSavedNote: false,
-      currentScreen: 'S02',
-      previousScreen: null,
-      transitionDirection: 'forward',
       activeWorkspacePanel: 'none',
     });
   },
 
   goToCommitList: () => {
     set({
-      currentScreen: 'S01',
+      currentScreen: 'S02',
       previousScreen: null,
       transitionDirection: 'back',
+      activeWorkspacePanel: 'none',
     });
   },
 
@@ -96,7 +94,7 @@ export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSli
 
   goBackFromDetail: () => {
     const state = get();
-    const previousScreen = state.previousScreen ?? (state.currentScreen === 'S06' ? 'S01' : 'S02');
+    const previousScreen = state.previousScreen ?? 'S02';
 
     set({
       currentScreen: previousScreen,

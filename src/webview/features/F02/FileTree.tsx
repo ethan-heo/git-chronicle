@@ -17,6 +17,7 @@ interface FileTreeProps {
   activeAIFilePath?: string | null;
   activeCodeFilePath?: string | null;
   activeSymbolGraphFilePath?: string | null;
+  showHeader?: boolean;
 }
 
 export const FileTree: FC<FileTreeProps> = ({
@@ -30,6 +31,7 @@ export const FileTree: FC<FileTreeProps> = ({
   activeAIFilePath = null,
   activeCodeFilePath = null,
   activeSymbolGraphFilePath = null,
+  showHeader = true,
 }) => {
   const { t } = useTranslation();
   const tree = useMemo(() => buildFileTree(changedFiles), [changedFiles]);
@@ -61,16 +63,18 @@ export const FileTree: FC<FileTreeProps> = ({
 
   return (
     <section className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-surface" aria-label={t('file_tree.panel_aria')}>
-      <div className="flex items-center gap-[7px] px-2.5 pt-1.5 pb-[5px] text-[11px] text-muted">
-        <span className="font-bold uppercase">{t('file_tree.panel_aria')}</span>
-        <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">{changedFiles.length}</strong>
-        <div className="inline-flex flex-1 justify-end gap-2 font-mono text-xs" aria-label={t('file_tree.stats_aria')}>
-          {stats.A > 0 ? <span className="text-added">+{stats.A}</span> : null}
-          {stats.M > 0 ? <span className="text-modified">~{stats.M}</span> : null}
-          {stats.D > 0 ? <span className="text-deleted">-{stats.D}</span> : null}
-          {stats.R > 0 ? <span className="text-renamed">R{stats.R}</span> : null}
+      {showHeader ? (
+        <div className="flex items-center gap-[7px] px-2.5 pt-1.5 pb-[5px] text-[11px] text-muted">
+          <span className="font-bold uppercase">{t('file_tree.panel_aria')}</span>
+          <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">{changedFiles.length}</strong>
+          <div className="inline-flex flex-1 justify-end gap-2 font-mono text-xs" aria-label={t('file_tree.stats_aria')}>
+            {stats.A > 0 ? <span className="text-added">+{stats.A}</span> : null}
+            {stats.M > 0 ? <span className="text-modified">~{stats.M}</span> : null}
+            {stats.D > 0 ? <span className="text-deleted">-{stats.D}</span> : null}
+            {stats.R > 0 ? <span className="text-renamed">R{stats.R}</span> : null}
+          </div>
         </div>
-      </div>
+      ) : null}
       <div className="min-h-0 flex-1 overflow-y-auto px-0 pt-0.5 pb-2" role="tree" aria-label={t('file_tree.tree_aria')}>
         {tree.children.map((child) =>
           isDirectoryNode(child) ? (

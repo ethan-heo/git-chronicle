@@ -8,7 +8,7 @@
 
 ## Purpose
 
-선택된 커밋의 변경 파일을 디렉토리 트리로 렌더링하고, 파일 호버 시 복사/코드 보기/파일 AI 요약 보기/심볼 그래프 액션 버튼을 하나의 그룹으로 노출한다. 워크스페이스 통합 이후 F02는 S02 사이드바 영역으로 배치된다.
+선택된 커밋의 변경 파일을 디렉토리 트리로 렌더링하고, 파일 호버 시 복사/코드 보기/파일 AI 요약 보기/심볼 그래프 액션 버튼을 하나의 그룹으로 노출한다. 현재 F02는 S02 사이드바의 `FileTreeSection` 안에서 렌더링된다.
 
 ---
 
@@ -70,7 +70,7 @@ interface FileTreeProps {
 - `role="tree"`, `aria-label="변경 파일 트리"`
 
 #### Reusability
-F02_ChangedFileTree 전용. S02_WorkspaceScreen 사이드바 스크롤 영역에서만 사용.
+F02_ChangedFileTree 전용. S02_WorkspaceScreen 사이드바 `FileTreeSection` 본문에서만 사용한다.
 
 ---
 
@@ -234,8 +234,9 @@ interface FileStatusBadgeProps {
 
 ## Responsive Rules
 
-- 현재 구현은 사이드바 헤더의 `AISummaryToggleButton` / `FileCanvasToggleButton` 아이콘 버튼을 유지한다.
-- 좁은 사이드바 폭에서의 추가 개선은 후속 UI polish 항목으로 남긴다.
+- S02 사이드바 최상단에는 `WorkspaceHeading`이 고정되고, 그 아래 `FileTreeSection`이 남은 세로 공간을 차지한다.
+- `AISummaryToggleButton` / `FileCanvasToggleButton`은 더 이상 사이드바에 있지 않고, S02 본문 `MainHeader` 좌측 버튼 그룹으로 이동했다.
+- 좁은 사이드바 폭에서는 섹션 헤더와 파일 행 모두 말줄임을 사용한다.
 
 ---
 

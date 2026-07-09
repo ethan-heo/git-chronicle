@@ -4,9 +4,12 @@ import './ResizableSplitPane.css';
 
 interface ResizableSplitPaneProps {
   isOpen: boolean;
+  orientation?: 'horizontal' | 'vertical';
   defaultLeftPercent?: number;
   minLeftPx?: number;
   minRightPx?: number;
+  controlledLeftPx?: number;
+  onLeftPxChange?: (leftPx: number, rightPx: number) => void;
   left: ReactNode;
   right: ReactNode;
   className?: string;
@@ -16,9 +19,12 @@ const DIVIDER_WIDTH_PX = 6;
 
 export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
   isOpen,
+  orientation = 'horizontal',
   defaultLeftPercent = 60,
   minLeftPx = 280,
   minRightPx = 280,
+  controlledLeftPx,
+  onLeftPxChange,
   left,
   right,
   className,
@@ -39,19 +45,27 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
     const previousUserSelect = document.body.style.userSelect;
     const previousCursor = document.body.style.cursor;
     document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'col-resize';
+    document.body.style.cursor = orientation === 'horizontal' ? 'col-resize' : 'row-resize';
 
     const handleMove = (event: MouseEvent): void => {
       const container = containerRef.current;
       if (!container) return;
 
       const rect = container.getBoundingClientRect();
-      const usableWidth = rect.width - DIVIDER_WIDTH_PX;
-      if (usableWidth <= 0) return;
+      const usableMainAxis = (orientation === 'horizontal' ? rect.width : rect.height) - DIVIDER_WIDTH_PX;
+      if (usableMainAxis <= 0) return;
 
-      const minLeftPercent = (minLeftPx / usableWidth) * 100;
-      const minRightPercent = (minRightPx / usableWidth) * 100;
-      const nextLeftPercent = ((event.clientX - rect.left) / usableWidth) * 100;
+      const pointerOffset = orientation === 'horizontal' ? event.clientX - rect.left : event.clientY - rect.top;
+      const clampedLeftPx = Math.min(usableMainAxis - minRightPx, Math.max(minLeftPx, pointerOffset));
+
+      if (typeof controlledLeftPx === 'number') {
+        onLeftPxChange?.(clampedLeftPx, usableMainAxis - clampedLeftPx);
+        return;
+      }
+
+      const minLeftPercent = (minLeftPx / usableMainAxis) * 100;
+      const minRightPercent = (minRightPx / usableMainAxis) * 100;
+      const nextLeftPercent = (clampedLeftPx / usableMainAxis) * 100;
       const clampedLeftPercent = Math.min(100 - minRightPercent, Math.max(minLeftPercent, nextLeftPercent));
       setLeftWidthPercent(clampedLeftPercent);
     };
@@ -69,26 +83,50 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
       document.body.style.userSelect = previousUserSelect;
       document.body.style.cursor = previousCursor;
     };
-  }, [isDragging, minLeftPx, minRightPx]);
+  }, [controlledLeftPx, isDragging, minLeftPx, minRightPx, onLeftPxChange, orientation]);
 
-  const leftStyle: CSSProperties = isOpen
-    ? { flex: `0 0 ${leftWidthPercent}%`, width: `${leftWidthPercent}%` }
-    : { flex: '1 1 auto', width: '100%' };
+  const leftStyle: CSSProperties = !isOpen
+    ? { flex: '1 1 auto', width: '100%', height: '100%' }
+    : typeof controlledLeftPx === 'number'
+      ? orientation === 'horizontal'
+        ? { flex: `0 0 ${controlledLeftPx}px`, width: `${controlledLeftPx}px` }
+        : { flex: `0 0 ${controlledLeftPx}px`, height: `${controlledLeftPx}px` }
+      : orientation === 'horizontal'
+        ? { flex: `0 0 ${leftWidthPercent}%`, width: `${leftWidthPercent}%` }
+        : { flex: `0 0 ${leftWidthPercent}%`, height: `${leftWidthPercent}%` };
 
   return (
-    <section ref={containerRef} className={['flex h-full min-h-0 w-full flex-1 overflow-hidden', className].filter(Boolean).join(' ')}>
+    <section
+      ref={containerRef}
+      className={[
+        'flex h-full min-h-0 w-full flex-1 overflow-hidden',
+        orientation === 'vertical' ? 'flex-col' : '',
+        className,
+      ].filter(Boolean).join(' ')}
+    >
       <div className="flex min-h-0 min-w-0 flex-col overflow-hidden flex-[1_1_auto]" style={leftStyle}>
         {left}
       </div>
       {isOpen ? (
         <div
-          className={['split-pane-divider relative flex-[0_0_6px] cursor-col-resize bg-transparent transition-colors duration-[var(--gae-motion-duration-fast)] ease-[var(--gae-motion-easing-default)] hover:bg-[color-mix(in_srgb,var(--gae-color-accent-primary)_20%,transparent)]', isDragging ? 'split-pane-divider--dragging' : ''].filter(Boolean).join(' ')}
+          className={[
+            'split-pane-divider relative bg-transparent transition-colors duration-[var(--gae-motion-duration-fast)] ease-[var(--gae-motion-easing-default)] hover:bg-[color-mix(in_srgb,var(--gae-color-accent-primary)_20%,transparent)]',
+            orientation === 'horizontal' ? 'flex-[0_0_6px] cursor-col-resize' : 'flex-[0_0_6px] cursor-row-resize',
+            isDragging ? 'split-pane-divider--dragging' : '',
+          ].filter(Boolean).join(' ')}
           role="separator"
-          aria-orientation="vertical"
+          aria-orientation={orientation === 'horizontal' ? 'vertical' : 'horizontal'}
           tabIndex={0}
           onMouseDown={() => setIsDragging(true)}
         >
-          <span className="split-pane-divider-line absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line" />
+          <span
+            className={[
+              'split-pane-divider-line absolute bg-line',
+              orientation === 'horizontal'
+                ? 'inset-y-0 left-1/2 w-px -translate-x-1/2'
+                : 'inset-x-0 top-1/2 h-px -translate-y-1/2',
+            ].join(' ')}
+          />
         </div>
       ) : null}
       {isOpen ? <div className="flex min-h-0 min-w-0 flex-[1_1_auto] flex-col overflow-hidden">{right}</div> : null}

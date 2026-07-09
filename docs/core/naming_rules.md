@@ -12,12 +12,11 @@
 
 | Screen ID | 이름 |
 |-----------|------|
-| S01 | S01_CommitListScreen |
 | S02 | S02_WorkspaceScreen |
 | S06 | S06_SettingsScreen |
 | S07 | S07_NoteScreen |
 
-> S03, S04, S05, S08은 현재 독립 화면으로 사용하지 않는다. S03/S04/S05/S08 콘텐츠는 S02_WorkspaceScreen 본문 패널로 통합되었다.
+> S01, S03, S04, S05, S08은 현재 독립 화면으로 사용하지 않는다. S01은 S02_WorkspaceScreen 사이드바 섹션으로, S03/S04/S05/S08 콘텐츠는 S02_WorkspaceScreen 본문 패널로 통합되었다.
 
 - 번호는 2자리 zero-padding (`S01`, `S02`, ...).
 - 이름은 PascalCase, 반드시 `Screen` 접미사로 끝낸다.
@@ -106,7 +105,6 @@ docs/
     F02_changed_file_tree/
     F04_dependency_canvas/
   screens/
-    S01_commit_list/
     S02_history_view/
 ```
 

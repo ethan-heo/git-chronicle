@@ -2,6 +2,7 @@
 
 ## Related Features
 
+- [F01_CommitLog](../../features/F01_commit_log/spec.md)
 - [F02_ChangedFileTree](../../features/F02_changed_file_tree/spec.md)
 - [F03_CodeViewer](../../features/F03_code_viewer/spec.md)
 - [F04_DependencyCanvas](../../features/F04_dependency_canvas/spec.md)
@@ -13,55 +14,58 @@
 
 ## Purpose
 
-선택된 커밋을 하나의 지속형 워크스페이스에서 탐색한다. 좌측 사이드바 상단 통합 헤더에는 왼쪽의 뒤로가기와 오른쪽의 패널 토글 버튼들이 있고, 그 아래 변경 파일 트리가 이어진다. 우측 본문은 코드 diff, AI 요약, 의존성 캔버스, 심볼 그래프 중 하나를 표시한다.
+하나의 지속형 워크스페이스 안에서 필터, 커밋 목록, 변경 파일 탐색, 본문 패널 전환을 모두 처리한다. S01은 별도 화면이 아니라 S02 사이드바 섹션으로 통합되었다.
 
 ---
 
 ## Entry Condition
 
-S01_CommitListScreen에서 커밋 항목 클릭 시 진입. `selectedCommit` 설정과 함께 `currentScreen = "S02"`, `activeWorkspacePanel = "none"`으로 초기화된다.
+확장 프로그램을 열면 항상 S02로 진입한다. 초기 상태는 `selectedCommit = null`, `activeWorkspacePanel = "none"`이며, 사용자가 사이드바 커밋 목록에서 커밋을 선택하면 커밋 종속 상태만 리셋되고 화면 전환은 발생하지 않는다.
 
 ---
 
 ## Parent Screen
 
-- [S01_CommitListScreen](../S01_commit_list/blueprint.md)
+- 없음
 
 ---
 
 ## Child Screens
 
-- [S07_NoteScreen](../S07_note/blueprint.md) — 본문 `WorkspaceHeading`의 노트 아이콘 클릭 시 진입
-- 그 외 없음. 기존 S03/S04/S05/S08 콘텐츠는 모두 S02 본문 패널로 통합되었다.
+- [S06_SettingsScreen](../S06_settings/blueprint.md) — 본문 헤더 우측 설정 버튼 클릭 시 진입
+- [S07_NoteScreen](../S07_note/blueprint.md) — 본문 헤더 좌측 노트 버튼 클릭 시 진입
 
 ---
 
 ## Layout Structure
 
-```
+```text
 S02_WorkspaceScreen
-├─ Sidebar (drag resize, toggle collapse / expand)
-│  ├─ SidebarHeader
-│  │  ├─ BackButton → S01
-│  │  ├─ AISummaryToggleButton → activeWorkspacePanel = 'aiSummary'
-│  │  └─ FileCanvasToggleButton → activeWorkspacePanel = 'fileCanvas'
-│  └─ FileTree
-│     └─ FileTreeNode
-│        ├─ [코드 보기] → activeWorkspacePanel = 'code'
-│        └─ [심볼 그래프] → activeWorkspacePanel = 'symbolGraph'
+├─ Sidebar (drag resize, collapse / reopen)
+│  ├─ WorkspaceHeading
+│  └─ SidebarSectionGroup
+│     ├─ FilterSection
+│     │  └─ CommitFilterPanel (embedded)
+│     ├─ CommitListSection
+│     │  └─ CommitList
+│     └─ FileTreeSection
+│        └─ FileTree
 ├─ SidebarResizeHandle
 └─ Main
-   ├─ WorkspaceHeading
-   │  ├─ NoteIcon → S07
-   │  └─ SettingsIcon (⚙) → S06
+   ├─ MainHeader
+   │  ├─ AISummaryToggleButton
+   │  ├─ FileCanvasToggleButton
+   │  ├─ NoteToggleButton
+   │  ├─ SettingsToggleButton
+   │  └─ SymbolCodePanelToggleButton (symbolGraph일 때만)
    └─ ContentPanel
-      ├─ code → CodeDiffPanel(useFileDiff) → DiffViewer
-      ├─ aiSummary → AISummaryPanel(useAISummary) → AISummaryViewer + QAInputArea
-      ├─ fileCanvas → DependencyCanvasPanel(useDependencyCanvas) → DependencyGraph
-      └─ symbolGraph → SymbolGraphPanel(data: useSymbolGraph 결과) → SymbolGraph + SymbolCodePanel
+      ├─ code → CodeDiffPanel
+      ├─ aiSummary → AISummaryPanel
+      ├─ fileCanvas → DependencyCanvasPanel
+      └─ symbolGraph → SymbolGraphPanel
 ```
 
-각 Feature 전용 데이터(로딩 effect, 재시도, 파생 상태)는 화면 컴포넌트가 아니라 위 괄호 안 훅에 캡슐화되어 있다(`docs/project/coding_standards.md`의 "God 컴포넌트 방지 기준" 참고). `symbolGraph`만 `useSymbolGraph`를 `S02_WorkspaceScreen`에서 1회 호출해 헤더의 코드패널 토글 버튼과 `SymbolGraphPanel`이 결과 객체를 공유한다 — 나머지는 패널 컴포넌트가 훅을 자체 호출한다.
+사이드바 안의 세 섹션은 각각 독립적으로 접고 펼칠 수 있으며, 펼쳐진 섹션이 2개 이상일 때는 `ResizableSplitPane`의 세로 분할로 높이를 드래그 조정한다. 이 펼침 상태와 마지막 높이는 Webview State에 저장된다.
 
 ---
 
@@ -69,23 +73,18 @@ S02_WorkspaceScreen
 
 | 컴포넌트 | 정의 | 구현 파일 |
 |---------|------|-----------|
-| `BackButton` | [global_components](../../core/global_components.md#backbutton) | `src/webview/shared/components/BackButton.tsx` |
+| `WorkspaceHeading` | 이 문서 | `src/webview/features/F02/WorkspaceHeading.tsx` |
+| `SidebarSection` | 이 문서 | `src/webview/shared/components/SidebarSection.tsx` |
+| `CommitFilterPanel` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitfilterpanel) | `src/webview/features/F01/CommitFilterPanel.tsx` |
+| `CommitList` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitlist) | `src/webview/features/F01/CommitList.tsx` |
+| `FileTree` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filetree) | `src/webview/features/F02/FileTree.tsx` |
 | `AISummaryToggleButton` | 이 문서 | `src/webview/features/F02/AISummaryToggleButton.tsx` |
 | `FileCanvasToggleButton` | 이 문서 | `src/webview/features/F02/FileCanvasToggleButton.tsx` |
-| `FileTree` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filetree) | `src/webview/features/F02/FileTree.tsx` |
-| `useChangedFileTree` | 이 문서 (F02 소속 훅, 변경 파일 로딩/재시도) | `src/webview/features/F02/useChangedFileTree.ts` |
-| `WorkspaceHeading` | 이 문서 | `src/webview/features/F02/WorkspaceHeading.tsx` |
-| `CodeDiffPanel` | 이 문서 (F03 소속, `useFileDiff` 자체 호출 후 `DiffViewer` 렌더) | `src/webview/features/F03/CodeDiffPanel.tsx` |
-| `DiffViewer` | [F03 blueprint](../../features/F03_code_viewer/blueprint.md) | `src/webview/features/F03/DiffViewer.tsx` |
-| `AISummaryPanel` | 이 문서 (F05b 소속, `useAISummary` 자체 호출 후 `AISummaryViewer`+`TokenLimitWarning`+`OverwriteConfirmDialog` 렌더) | `src/webview/features/F05b/AISummaryPanel.tsx` |
-| `AISummaryViewer` | [F05b blueprint](../../features/F05b_ai_summary_commit/blueprint.md) | `src/webview/features/F05b/AISummaryViewer.tsx` |
-| `DependencyCanvasPanel` | 이 문서 (F04 소속, `useDependencyCanvas` 자체 호출 후 `DependencyGraph` 렌더) | `src/webview/features/F04/DependencyCanvasPanel.tsx` |
-| `DependencyGraph` | [F04 blueprint](../../features/F04_dependency_canvas/blueprint.md#component-dependencygraph) | `src/webview/features/F04/DependencyGraph.tsx` |
-| `useSymbolGraph` | 이 문서 (F10 소속 훅, `S02_WorkspaceScreen`에서 1회 호출해 헤더 토글 버튼과 공유) | `src/webview/features/F10/useSymbolGraph.ts` |
-| `SymbolGraphPanel` | 이 문서 (F10 소속, `useSymbolGraph` 결과 객체를 받아 `SymbolGraph`+`SymbolCodePanel` 렌더) | `src/webview/features/F10/SymbolGraphPanel.tsx` |
-| `SymbolCodePanelToggleButton` | 이 문서 (F10 소속, 헤더 코드패널 토글) | `src/webview/features/F10/SymbolCodePanelToggleButton.tsx` |
-| `SymbolGraph` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolgraph) | `src/webview/features/F10/SymbolGraph.tsx` |
-| `SymbolCodePanel` | [F10 blueprint](../../features/F10_intra_file_symbol_dependency_canvas/blueprint.md#component-symbolcodepanel) | `src/webview/features/F10/SymbolCodePanel.tsx` |
+| `NoteToggleButton` | 이 문서 | `src/webview/features/F02/NoteToggleButton.tsx` |
+| `SettingsToggleButton` | 이 문서 | `src/webview/features/F02/SettingsToggleButton.tsx` |
+| `ResizableSplitPane` | [global_components](../../core/global_components.md#resizablesplitpane) | `src/webview/shared/components/ResizableSplitPane.tsx` |
+| `useChangedFileTree` | 이 문서 (F02 소속 훅) | `src/webview/features/F02/useChangedFileTree.ts` |
+| `useSymbolGraph` | 이 문서 (F10 소속 훅) | `src/webview/features/F10/useSymbolGraph.ts` |
 
 ---
 
@@ -93,19 +92,20 @@ S02_WorkspaceScreen
 
 | 상태 | 조건 | UI |
 |------|------|----|
-| `idle` | `activeWorkspacePanel === "none"` | 본문 비어 있음 |
-| `code` | `activeWorkspacePanel === "code"` | DiffViewer |
-| `aiSummary` | `activeWorkspacePanel === "aiSummary"` | AISummaryViewer + QA |
-| `fileCanvas` | `activeWorkspacePanel === "fileCanvas"` | DependencyGraph |
-| `symbolGraph` | `activeWorkspacePanel === "symbolGraph"` | SymbolGraph + SymbolCodePanel |
+| `idle` | `selectedCommit === null`, `activeWorkspacePanel === "none"` | 사이드바 헤더/파일트리에 placeholder, 본문 빈 상태 |
+| `commitSelected` | `selectedCommit !== null`, `activeWorkspacePanel === "none"` | 커밋 컨텍스트만 갱신, 본문은 패널 미선택 상태 |
+| `code` | `activeWorkspacePanel === "code"` | `CodeDiffPanel` |
+| `aiSummary` | `activeWorkspacePanel === "aiSummary"` | `AISummaryPanel` |
+| `fileCanvas` | `activeWorkspacePanel === "fileCanvas"` | `DependencyCanvasPanel` |
+| `symbolGraph` | `activeWorkspacePanel === "symbolGraph"` | `SymbolGraphPanel` |
 
 ---
 
 ## Navigation Rules
 
-- 사이드바 `BackButton`은 언제나 S01로 이동한다.
-- `SidebarResizeHandle` 드래그로 사이드바 폭을 조절할 수 있고, 끝까지 밀면 완전히 접힌다.
-- 접힌 상태에서도 `SidebarResizeHandle`은 얇은 타겟으로 남아 있으며, 이를 오른쪽으로 드래그해 다시 펼칠 수 있다.
-- 본문 `WorkspaceHeading`의 설정 아이콘은 S06으로 이동하고, S06 뒤로가기는 다시 S02로 복귀한다.
-- 본문 `WorkspaceHeading`의 노트 아이콘은 S07로 이동하고, S07 뒤로가기는 다시 S02로 복귀한다.
-- 다른 커밋을 다시 선택하면 `activeWorkspacePanel`은 항상 `'none'`으로 초기화된다.
+- 앱은 항상 S02에서 시작한다.
+- 사이드바 커밋 목록에서 다른 커밋을 선택하면 `selectedCommit`과 커밋 종속 상태만 갱신되고, 화면은 그대로 S02에 머문다.
+- 사이드바 전체 폭은 별도 리사이즈 핸들로 조정하며, 폭을 0까지 줄이면 사이드바 전체가 접힌다.
+- 본문 헤더의 설정 버튼은 S06으로 이동하고, S06 뒤로가기는 다시 S02로 복귀한다.
+- 본문 헤더의 노트 버튼은 S07로 이동하고, S07 뒤로가기는 다시 S02로 복귀한다.
+- `activeWorkspacePanel`은 커밋 재선택 시 항상 `'none'`으로 초기화된다.

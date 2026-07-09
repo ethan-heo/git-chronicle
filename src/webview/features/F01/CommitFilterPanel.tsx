@@ -10,6 +10,7 @@ interface CommitFilterPanelProps extends FilterState {
   authorList: string[];
   onFilterChange: (filter: Partial<FilterState>) => void;
   onClearFilters: () => void;
+  variant?: 'standalone' | 'embedded';
 }
 
 export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
@@ -22,6 +23,7 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
   authorList,
   onFilterChange,
   onClearFilters,
+  variant = 'standalone',
 }) => {
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -41,6 +43,64 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
     (keyword: string) => onFilterChange({ filterExcludeKeyword: keyword }),
     [onFilterChange],
   );
+
+  if (variant === 'embedded') {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5 py-2.5" role="search">
+        <div className="flex items-center justify-between gap-2">
+          <SortOrderToggle
+            sortOrder={sortOrder}
+            onSortOrderChange={(nextSortOrder) => onFilterChange({ sortOrder: nextSortOrder })}
+          />
+          <div className="inline-flex items-center gap-1.5 text-[11px] text-link">
+            {isActive ? (
+              <span className="rounded-full bg-accent px-[7px] py-px text-xs font-medium text-on-accent">
+                {t('commit.filter_applied', { count: activeFilterCount })}
+              </span>
+            ) : (
+              <span>{t('commit.filter_none')}</span>
+            )}
+            <button
+              className="bg-transparent px-1 py-0.5 text-[11px] text-link hover:underline"
+              type="button"
+              onClick={onClearFilters}
+            >
+              {t('commit.clear_filters')}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-2.5 pt-3">
+          <DateRangeFilter
+            startDate={filterDateStart}
+            endDate={filterDateEnd}
+            onStartDateChange={(date) => onFilterChange({ filterDateStart: date })}
+            onEndDateChange={(date) => onFilterChange({ filterDateEnd: date })}
+          />
+          <AuthorDropdown
+            authorList={authorList}
+            selectedAuthor={filterAuthor}
+            onAuthorChange={(author) => onFilterChange({ filterAuthor: author })}
+          />
+          <KeywordSearchInput
+            id="commit-keyword-filter"
+            label={t('commit.filter_include_label')}
+            keyword={filterKeyword}
+            onKeywordChange={handleKeywordChange}
+            ariaLabel={t('commit.filter_include_aria')}
+            placeholder={t('commit.filter_include_placeholder')}
+          />
+          <KeywordSearchInput
+            id="commit-exclude-keyword-filter"
+            label={t('commit.filter_exclude_label')}
+            keyword={filterExcludeKeyword}
+            onKeywordChange={handleExcludeKeywordChange}
+            ariaLabel={t('commit.filter_exclude_aria')}
+            placeholder={t('commit.filter_exclude_placeholder')}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section

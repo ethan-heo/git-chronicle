@@ -24,8 +24,8 @@
 
 - `commitList`: 로드된 커밋 목록 (전역 상태 업데이트)
 - `authorList`: 드롭다운용 작성자 목록 (전역 상태 업데이트)
-- `selectedCommit`: 클릭 시 선택된 커밋 (전역 상태 업데이트 → S-02 진입 트리거)
-- `commitListScrollTop`: S-01 재진입 시 복원할 마지막 스크롤 위치
+- `selectedCommit`: 클릭 시 선택된 커밋 (전역 상태 업데이트 → S-02 컨텍스트 갱신)
+- `commitListScrollTop`: Webview 재생성 시 복원할 마지막 스크롤 위치
 
 ---
 
@@ -82,7 +82,7 @@ interface CommitFilterPanelProps {
 - 각 입력 요소에 `aria-label` 명시
 
 #### Reusability
-F01_CommitLog 전용. S01_CommitListScreen에서만 사용.
+F01_CommitLog 전용. S02_WorkspaceScreen 사이드바 필터 섹션에서 사용한다.
 
 ---
 
@@ -201,6 +201,7 @@ F01_CommitLog 전용. CommitFilterPanel 내에서만 사용.
 ```typescript
 interface CommitListProps {
   commitList: Commit[];
+  selectedCommitHash: string | null;
   isLoadingCommits: boolean;
   hasMoreCommits: boolean;
   isGitRepoDetected: boolean;
@@ -213,7 +214,7 @@ interface CommitListProps {
 
 #### Interaction
 - 스크롤 하단 도달 시 `InfiniteScrollTrigger` 발동 → 다음 200개 로드
-- S-01 재진입 시 이미 로드된 목록이 있으면 목록을 유지하고 마지막 스크롤 위치를 복원한다.
+- 워크스페이스 안에서는 커밋 목록 섹션이 유지되므로 현재 스크롤 위치를 그대로 보존한다.
 - 필터 변경 시에는 목록을 첫 페이지부터 다시 로드하고 스크롤 위치를 0으로 초기화한다.
 
 #### States
@@ -226,7 +227,7 @@ interface CommitListProps {
 - `role="list"`
 
 #### Reusability
-F01_CommitLog 전용. S01_CommitListScreen에서만 사용.
+F01_CommitLog 전용. S02_WorkspaceScreen 사이드바 커밋 목록 섹션에서 사용한다.
 
 ---
 
@@ -242,16 +243,18 @@ F01_CommitLog 전용. S01_CommitListScreen에서만 사용.
 ```typescript
 interface CommitListItemProps {
   commit: Commit;
+  isSelected: boolean;
   onClick: (commit: Commit) => void;
 }
 ```
 
 #### Interaction
 - 호버: 배경색 변경
-- 클릭: `selectedCommit` 업데이트 → S-02 화면 전환
+- 클릭: `selectedCommit` 업데이트 → S-02 안에서 변경 파일/본문 컨텍스트 갱신
+- 선택됨: 현재 `selectedCommit`과 같은 항목은 강조 배경과 좌측 accent bar를 유지한다
 
 #### States
-- `default`, `hover`
+- `default`, `hover`, `selected`
 
 #### Accessibility
 - `role="listitem"`, `aria-label="{커밋메시지} by {작성자} on {날짜}"`, `tabIndex={0}`
@@ -292,6 +295,7 @@ interface InfiniteScrollTriggerProps {
 ### CommitListItem
 - `default`: 기본 행 표시
 - `hover`: 배경색 `color.surface.hover` 적용
+- `selected`: 강조 배경 + 좌측 accent bar + 메타데이터 대비 강화
 
 ### CommitList
 - `loading`: `LoadingState` 렌더링
@@ -321,7 +325,7 @@ interface InfiniteScrollTriggerProps {
 |---------|--------|------|
 | 필터 변경 | 날짜 입력, 드롭다운 선택, 키워드 입력 | 커밋 목록 재로드 |
 | 키워드 입력 | 텍스트 입력 | 300ms 디바운스 후 필터 실행 |
-| 커밋 클릭 | `CommitListItem` 클릭 | S-02 화면 전환 |
+| 커밋 클릭 | `CommitListItem` 클릭 | `selectedCommit` 갱신 + 해당 항목 하이라이트 유지 |
 | 스크롤 하단 도달 | `InfiniteScrollTrigger` | 다음 200개 추가 로드 |
 | S-01 재진입 | 이미 로드된 목록 존재 | 목록 재로드 없이 스크롤 위치 복원 |
 
@@ -377,4 +381,3 @@ interface InfiniteScrollTriggerProps {
 - [`LoadingState`](../../core/global_components.md#loadingstate)
 - [`ErrorState`](../../core/global_components.md#errorstate)
 - [`TopHeader`](../../core/global_components.md#topheader)
-

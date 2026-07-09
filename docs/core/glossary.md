@@ -36,7 +36,7 @@
 
 | 용어 | 정의 | 관련 코드 식별자 | 등장 Feature |
 |---|---|---|---|
-| Screen (S##) | 최상위 화면 단위. 현재 S01/S02/S06/S07만 독립 화면으로 존재 | `ScreenID`, `currentScreen` (`src/webview/types/commit.ts`, `src/webview/store/appStore.ts`) | 전체 |
+| Screen (S##) | 최상위 화면 단위. 현재 S02/S06/S07만 독립 화면으로 존재 | `ScreenID`, `currentScreen` (`src/webview/types/commit.ts`, `src/webview/store/appStore.ts`) | 전체 |
 | Workspace Panel | S02 화면 본문에서 전환되는 콘텐츠 패널(`code`/`aiSummary`/`fileCanvas`/`symbolGraph`/`none`) | `activeWorkspacePanel` (`src/webview/store/appStore.ts`) | F02, F03, F04, F05b, F09, F10 |
 | Route Slot | 화면 전환 애니메이션 동안 이전 화면이 잠시 함께 mount되는 슬롯. `useRouteSlotActive()`로 비활성 슬롯의 데이터 로딩/구독을 막는다 | `RouteSlotContext.tsx` (`src/webview/shared/route/`) | 전체 화면 |
 

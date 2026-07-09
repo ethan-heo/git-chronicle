@@ -144,6 +144,7 @@
     "commit_ai_aria": "Summarize the entire commit with AI",
     "batch_ai_aria": "Summarize all files with AI",
     "canvas_aria": "Open dependency canvas",
+    "note_aria": "Open note",
     "sidebar_toggle_aria": "Collapse or expand the sidebar",
     "batch_cancel_aria": "Cancel batch AI summary generation",
     "batch_cancel_title": "Stop after the current file",
@@ -188,6 +189,12 @@
     "save_path_demo": "/Users/example/git-author-summaries",
     "settings_toast": "Status message",
     "open_install_page": "Open {{name}} installation page"
+  },
+  "workspace": {
+    "commit_placeholder_title": "Select a commit",
+    "commit_placeholder_context": "Choose a commit from the left list to explore changed files and workspace panels",
+    "commit_placeholder_body": "Choose a commit from the left list to inspect changed files, AI summaries, and graphs in this workspace",
+    "sidebar_all_collapsed": "All sidebar sections are collapsed"
   },
   "shared": {
     "loading_state": "Loading",

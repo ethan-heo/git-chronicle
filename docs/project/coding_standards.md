@@ -19,11 +19,11 @@
 
 ```typescript
 // 올바른 예
-type ScreenID = 'S01' | 'S02' | 'S06' | 'S07';
+type ScreenID = 'S02' | 'S06' | 'S07';
 type FileStatus = 'A' | 'M' | 'D' | 'R';
 
 // 금지
-enum ScreenID { S01 = 'S01', ... }
+enum ScreenID { S02 = 'S02', ... }
 ```
 
 ---
