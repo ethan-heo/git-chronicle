@@ -75,7 +75,7 @@ stateDiagram-v2
 | 상태 | 설명 |
 |------|------|
 | `currentScreen` | 현재 active 화면 |
-| `previousScreen` | 현재는 S06에서 뒤로가기 대상 화면을 기억하는 용도로만 사용한다. |
+| `previousScreen` | 현재는 S07에서 뒤로가기 대상 화면을 기억하는 용도로만 사용한다. |
 | `transitionDirection` | 라우트 전환 애니메이션 방향. `'forward'` 또는 `'back'` |
 | `activeWorkspacePanel` | S02 워크스페이스 본문 패널 상태. `'none' | 'code' | 'aiSummary' | 'fileCanvas' | 'symbolGraph'` |
 
@@ -119,7 +119,7 @@ stateDiagram-v2
     code --> symbolGraph : goToSymbolGraphView(file)
 ```
 
-- `goToSettingsView()`는 위 다이어그램과 별개로 S01/S02에서 S06으로 진입 가능하며, 진입 시점의 `currentScreen`을 `previousScreen`에 저장한다.
+- S02의 설정 진입은 `currentScreen` 전환이 아니라 `S02_WorkspaceScreen` 로컬 `sidebarView = 'settings'`로 처리하며, 본문 패널 상태는 유지된다.
 - `selectFileForCode`와 `goToCommitAISummary`는 이전 화면의 잔여 AI 요약 상태가 섞이지 않도록 `currentSummaryContent`, `isLoadingSummary`, `isGeneratingSummary`, `summaryError`, `summarySavedPath`, `hasCurrentSavedSummary`, `isSummaryTokenLimitExceeded`를 함께 초기화한다.
 - Diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 S02 내부의 `useFileDiff()` 로컬 상태로 관리한다.
 - 의존성 캔버스는 전역 상태의 `dependencyEdges`, `isLoadingDependencies`, `dependenciesError`를 사용하며, S02의 `activeWorkspacePanel === "fileCanvas"`일 때만 로드를 트리거한다.
@@ -164,7 +164,7 @@ F06 구현은 `REGISTER_AI_PROVIDER`로 CLI 버전 확인과 등록을 요청하
 
 모델 드롭다운 변경은 `SET_AI_MODEL` 메시지로 전달되며, Host는 `AI_MODEL_UPDATED` 응답으로 현재 활성 프로바이더의 `summaryModel`, `qaModel`을 다시 내려준다.
 
-F07 저장 경로 설정은 S06에서 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시지로 Extension Host에 요청한다. 경로 선택은 `vscode.window.showOpenDialog({ canSelectFolders: true })`로 처리하며, 선택/삭제 결과는 `SAVE_PATH_SET` / `SAVE_PATH_CLEARED` 응답으로 Webview에 전달된다.
+F07 저장 경로 설정은 S02 사이드바 설정 뷰에서 `SET_SAVE_PATH` / `CLEAR_SAVE_PATH` 메시지로 Extension Host에 요청한다. 경로 선택은 `vscode.window.showOpenDialog({ canSelectFolders: true })`로 처리하며, 선택/삭제 결과는 `SAVE_PATH_SET` / `SAVE_PATH_CLEARED` 응답으로 Webview에 전달된다.
 
 브라우저 dev fallback에서는 VSCode API가 없으므로 실제 파일 다이얼로그를 열지 않고 데모 저장 경로를 설정한다. 실제 경로 선택 다이얼로그는 Extension Host 런타임에서만 동작한다.
 

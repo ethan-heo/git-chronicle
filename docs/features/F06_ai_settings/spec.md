@@ -81,7 +81,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 ## Related Screens
 
-- [S06_SettingsScreen](../../screens/S06_settings/blueprint.md)
+- [S02_WorkspaceScreen](../../screens/S02_history_view/blueprint.md) — 사이드바 `settings` 로컬 뷰
 
 ---
 
@@ -117,4 +117,3 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | `activeAIProvider` 워크스페이스별 상태 업데이트 | 활성화 토글 | 단 하나만 활성화 — 나머지 자동 `inactive` |
 | `summaryModel` / `qaModel` 워크스페이스별 상태 업데이트 | 모델 변경 | 활성 프로바이더에 대한 선택 모델 변경 |
 | VSCode ExtensionContext 영속 저장 | 설정 변경 시 | `registeredProviders`는 `context.globalState.update`, 나머지 AI 설정은 `context.workspaceState.update` |
-

@@ -26,7 +26,7 @@
 ### RouteTransition
 
 - **트리거:** `currentScreen` 변경
-- **적용 대상:** S01, S02, S06, S07 전체 화면 전환
+- **적용 대상:** S01, S02, S07 전체 화면 전환
 - **결과:** incoming 화면과 outgoing 화면을 200ms 동안 동시에 렌더링하고, `transitionDirection`에 따라 슬라이드 애니메이션 적용
 - **규칙:** forward 전환은 새 화면이 오른쪽에서 들어오고 이전 화면이 왼쪽으로 나간다. back 전환은 새 화면이 왼쪽에서 들어오고 이전 화면이 오른쪽으로 나간다.
 - **접근성:** `prefers-reduced-motion: reduce` 환경에서는 전환 animation을 제거한다.

@@ -13,7 +13,6 @@
 | Screen ID | 이름 |
 |-----------|------|
 | S02 | S02_WorkspaceScreen |
-| S06 | S06_SettingsScreen |
 | S07 | S07_NoteScreen |
 
 > S01, S03, S04, S05, S08은 현재 독립 화면으로 사용하지 않는다. S01은 S02_WorkspaceScreen 사이드바 섹션으로, S03/S04/S05/S08 콘텐츠는 S02_WorkspaceScreen 본문 패널로 통합되었다.

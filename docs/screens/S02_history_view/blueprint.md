@@ -32,7 +32,6 @@
 
 ## Child Screens
 
-- [S06_SettingsScreen](../S06_settings/blueprint.md) — 본문 헤더 우측 설정 버튼 클릭 시 진입
 - [S07_NoteScreen](../S07_note/blueprint.md) — 본문 헤더 좌측 노트 버튼 클릭 시 진입
 
 ---
@@ -42,21 +41,27 @@
 ```text
 S02_WorkspaceScreen
 ├─ Sidebar (drag resize, collapse / reopen)
-│  ├─ WorkspaceHeading
-│  └─ SidebarSectionGroup
-│     ├─ FilterSection
-│     │  └─ CommitFilterPanel (embedded)
-│     ├─ CommitListSection
-│     │  └─ CommitList
-│     └─ FileTreeSection
-│        └─ FileTree
+│  └─ SidebarContent
+│     ├─ default → DefaultSidebarView
+│     │  ├─ WorkspaceHeading
+│     │  │  └─ SettingsToggleButton
+│     │  └─ SidebarSectionGroup
+│     │     ├─ FilterSection
+│     │     │  └─ CommitFilterPanel (embedded)
+│     │     ├─ CommitListSection
+│     │     │  └─ CommitList
+│     │     └─ FileTreeSection
+│     │        └─ FileTree
+│     └─ settings → SidebarSettingsPanel
+│        ├─ SidebarSettingsHeader
+│        ├─ AIProviderSection
+│        └─ SavePathSection
 ├─ SidebarResizeHandle
 └─ Main
    ├─ MainHeader
    │  ├─ AISummaryToggleButton
    │  ├─ FileCanvasToggleButton
    │  ├─ NoteToggleButton
-   │  ├─ SettingsToggleButton
    │  └─ SymbolCodePanelToggleButton (symbolGraph일 때만)
    └─ ContentPanel
       ├─ code → CodeDiffPanel
@@ -82,6 +87,7 @@ S02_WorkspaceScreen
 | `FileCanvasToggleButton` | 이 문서 | `src/webview/features/F02/FileCanvasToggleButton.tsx` |
 | `NoteToggleButton` | 이 문서 | `src/webview/features/F02/NoteToggleButton.tsx` |
 | `SettingsToggleButton` | 이 문서 | `src/webview/features/F02/SettingsToggleButton.tsx` |
+| `SidebarSettingsPanel` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-sidebarsettingspanel) | `src/webview/features/F06/SidebarSettingsPanel.tsx` |
 | `ResizableSplitPane` | [global_components](../../core/global_components.md#resizablesplitpane) | `src/webview/shared/components/ResizableSplitPane.tsx` |
 | `useChangedFileTree` | 이 문서 (F02 소속 훅) | `src/webview/features/F02/useChangedFileTree.ts` |
 | `useSymbolGraph` | 이 문서 (F10 소속 훅) | `src/webview/features/F10/useSymbolGraph.ts` |
@@ -106,6 +112,7 @@ S02_WorkspaceScreen
 - 앱은 항상 S02에서 시작한다.
 - 사이드바 커밋 목록에서 다른 커밋을 선택하면 `selectedCommit`과 커밋 종속 상태만 갱신되고, 화면은 그대로 S02에 머문다.
 - 사이드바 전체 폭은 별도 리사이즈 핸들로 조정하며, 폭을 0까지 줄이면 사이드바 전체가 접힌다.
-- 본문 헤더의 설정 버튼은 S06으로 이동하고, S06 뒤로가기는 다시 S02로 복귀한다.
+- 사이드바 헤더의 설정 버튼은 헤더를 포함한 사이드바 뷰 전체를 `settings` 로컬 뷰로 전환하며, 본문 패널과 사이드바 리사이즈/섹션 펼침 상태는 유지된다.
+- AI 요약 패널의 "설정으로 이동" CTA도 동일한 사이드바 `settings` 로컬 뷰를 연다.
 - 본문 헤더의 노트 버튼은 S07로 이동하고, S07 뒤로가기는 다시 S02로 복귀한다.
 - `activeWorkspacePanel`은 커밋 재선택 시 항상 `'none'`으로 초기화된다.

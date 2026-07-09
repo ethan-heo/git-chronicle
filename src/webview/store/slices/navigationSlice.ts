@@ -161,11 +161,7 @@ export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSli
   },
 
   goToSettingsView: () => {
-    set((state) => ({
-      currentScreen: 'S06',
-      previousScreen: state.currentScreen === 'S06' ? state.previousScreen : state.currentScreen,
-      transitionDirection: 'forward',
-    }));
+    set({});
   },
 
   goToNoteView: () => {

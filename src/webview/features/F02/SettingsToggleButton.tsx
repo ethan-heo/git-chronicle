@@ -2,17 +2,22 @@ import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface SettingsToggleButtonProps {
+  isActive?: boolean;
   onClick: () => void;
 }
 
-export const SettingsToggleButton: FC<SettingsToggleButtonProps> = ({ onClick }) => {
+export const SettingsToggleButton: FC<SettingsToggleButtonProps> = ({ isActive = false, onClick }) => {
   const { t } = useTranslation();
 
   return (
     <button
-      className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+      className={[
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-panel transition-colors duration-100 ease-in-out',
+        isActive ? 'bg-hover text-text' : 'text-muted hover:bg-hover hover:text-text',
+      ].join(' ')}
       type="button"
       aria-label={t('settings.open_aria')}
+      aria-pressed={isActive}
       title={t('settings.open_aria')}
       onClick={onClick}
     >

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FC, type ReactElement } from 'react';
 import { S02WorkspaceScreen } from './features/F02';
-import { S06SettingsScreen } from './features/F06';
 import { S07NoteScreen } from './features/F11';
 import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
@@ -118,10 +117,6 @@ export const App: FC = () => {
 function renderScreen(currentScreen: ScreenID): ReactElement {
   if (currentScreen === 'S02') {
     return <S02WorkspaceScreen />;
-  }
-
-  if (currentScreen === 'S06') {
-    return <S06SettingsScreen />;
   }
 
   if (currentScreen === 'S07') {

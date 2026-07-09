@@ -63,7 +63,7 @@ interface SavePathSectionProps {
 - `role="group"`, `aria-label="저장 경로 설정"`
 
 #### Reusability
-F07_SavePathSettings 전용. S06_SettingsScreen에서만 사용.
+F07_SavePathSettings 전용. `SidebarSettingsPanel` 내부에서 사용.
 
 ---
 
@@ -189,5 +189,3 @@ F07_SavePathSettings 전용. SavePathSection 내에서만 사용.
 ## Reusable Components
 
 - [`Toast`](../../core/global_components.md#toast)
-- [`TopHeader`](../../core/global_components.md#topheader)
-- [`BackButton`](../../core/global_components.md#backbutton)

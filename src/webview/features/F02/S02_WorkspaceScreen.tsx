@@ -9,6 +9,7 @@ import { CommitFilterPanel, CommitList, useCommitList } from '../F01';
 import { CodeDiffPanel } from '../F03';
 import { DependencyCanvasPanel } from '../F04';
 import { AISummaryPanel } from '../F05b';
+import { SidebarSettingsPanel } from '../F06';
 import { SymbolCodePanelToggleButton, SymbolGraphPanel, useSymbolGraph } from '../F10';
 import { AISummaryToggleButton } from './AISummaryToggleButton';
 import { FileCanvasToggleButton } from './FileCanvasToggleButton';
@@ -27,6 +28,7 @@ const SECTION_MIN_HEIGHT = 120;
 const DEFAULT_FILTER_SECTION_HEIGHT = 220;
 const DEFAULT_COMMIT_LIST_SECTION_HEIGHT = 280;
 const DEFAULT_FILE_TREE_SECTION_HEIGHT = 280;
+const SIDEBAR_VIEW_TRANSITION_DURATION_MS = 200;
 
 const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
   isFilterSectionExpanded: true,
@@ -40,6 +42,7 @@ const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
 };
 
 type SectionKey = 'filter' | 'commit' | 'file';
+type SidebarView = 'default' | 'settings';
 
 export const S02WorkspaceScreen: FC = () => {
   const { t } = useTranslation();
@@ -51,7 +54,6 @@ export const S02WorkspaceScreen: FC = () => {
   const goToCommitAISummary = useAppStore((state) => state.goToCommitAISummary);
   const goToCanvasView = useAppStore((state) => state.goToCanvasView);
   const goToSymbolGraphView = useAppStore((state) => state.goToSymbolGraphView);
-  const goToSettingsView = useAppStore((state) => state.goToSettingsView);
   const goToNoteView = useAppStore((state) => state.goToNoteView);
   const authorList = useAppStore((state) => state.authorList);
   const filterDateStart = useAppStore((state) => state.filterDateStart);
@@ -98,6 +100,9 @@ export const S02WorkspaceScreen: FC = () => {
   const [commitListSectionHeight, setCommitListSectionHeight] = useState(persistedSidebarState.commitListSectionHeight);
   const [fileTreeSectionHeight, setFileTreeSectionHeight] = useState(persistedSidebarState.fileTreeSectionHeight);
   const [prevSelectedCommitHash, setPrevSelectedCommitHash] = useState(selectedCommit?.hash);
+  const [sidebarView, setSidebarView] = useState<SidebarView>('default');
+  const [renderedSidebarView, setRenderedSidebarView] = useState<SidebarView>('default');
+  const [exitingSidebarView, setExitingSidebarView] = useState<SidebarView | null>(null);
   const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   if (prevSelectedCommitHash !== selectedCommit?.hash) {
@@ -207,9 +212,32 @@ export const S02WorkspaceScreen: FC = () => {
     };
   }, [isSidebarDragging, lastSidebarWidth]);
 
+  useEffect(() => {
+    if (renderedSidebarView === sidebarView) {
+      return;
+    }
+
+    setExitingSidebarView(renderedSidebarView);
+    setRenderedSidebarView(sidebarView);
+
+    const timer = window.setTimeout(() => {
+      setExitingSidebarView(null);
+    }, SIDEBAR_VIEW_TRANSITION_DURATION_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [renderedSidebarView, sidebarView]);
+
   const commitContext = selectedCommit
     ? `${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`
     : t('workspace.commit_placeholder_context');
+
+  const openSidebarSettings = useCallback(() => {
+    setSidebarView('settings');
+  }, []);
+
+  const closeSidebarSettings = useCallback(() => {
+    setSidebarView('default');
+  }, []);
 
   const renderFilterSection = (): ReactElement => (
     <SidebarSection
@@ -513,6 +541,41 @@ export const S02WorkspaceScreen: FC = () => {
     return renderExpandedGroup(['filter', 'commit', 'file']);
   };
 
+  const renderSidebarView = (view: SidebarView, state: 'entering' | 'exiting' | null): ReactElement => {
+    const className = getSidebarViewClassName(view, state);
+
+    if (view === 'settings') {
+      return (
+        <div className={className} aria-hidden={state === 'exiting'}>
+          <SidebarSettingsPanel
+            isActive={isRouteSlotActive && sidebarView === 'settings' && state !== 'exiting'}
+            onBackClick={closeSidebarSettings}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className={className} aria-hidden={state === 'exiting'}>
+        <WorkspaceHeading
+          commit={selectedCommit}
+          title={selectedCommit?.message ?? t('workspace.commit_placeholder_title')}
+          context={commitContext}
+          compact
+          endSlot={(
+            <SettingsToggleButton
+              isActive={sidebarView === 'settings'}
+              onClick={sidebarView === 'settings' ? closeSidebarSettings : openSidebarSettings}
+            />
+          )}
+        />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface">
+          {renderExpandedSections()}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <main className="app-shell flex h-screen min-h-0 overflow-hidden bg-surface">
       {!isSidebarCollapsed ? (
@@ -520,14 +583,9 @@ export const S02WorkspaceScreen: FC = () => {
           className="flex shrink-0 flex-col overflow-hidden border-r border-line bg-panel"
           style={{ width: `${sidebarWidth}px` }}
         >
-          <WorkspaceHeading
-            commit={selectedCommit}
-            title={selectedCommit?.message ?? t('workspace.commit_placeholder_title')}
-            context={commitContext}
-            compact
-          />
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface">
-            {renderExpandedSections()}
+          <div className="relative min-h-0 flex-1 overflow-hidden bg-surface">
+            {exitingSidebarView ? renderSidebarView(exitingSidebarView, 'exiting') : null}
+            {renderSidebarView(renderedSidebarView, exitingSidebarView ? 'entering' : null)}
           </div>
         </aside>
       ) : null}
@@ -571,7 +629,6 @@ export const S02WorkspaceScreen: FC = () => {
             <NoteToggleButton onClick={goToNoteView} />
           </div>
           <div className="flex items-center gap-2">
-            <SettingsToggleButton onClick={goToSettingsView} />
             {activeWorkspacePanel === 'symbolGraph' ? (
               <SymbolCodePanelToggleButton
                 isOpen={symbolGraph.isCodePanelOpen}
@@ -601,7 +658,7 @@ export const S02WorkspaceScreen: FC = () => {
             <AISummaryPanel
               isActive={isRouteSlotActive && activeWorkspacePanel === 'aiSummary'}
               targetFile={activeAIFile}
-              onGoToSettings={goToSettingsView}
+              onGoToSettings={openSidebarSettings}
             />
           ) : null}
 
@@ -620,6 +677,23 @@ export const S02WorkspaceScreen: FC = () => {
     </main>
   );
 };
+
+function getSidebarViewClassName(
+  view: SidebarView,
+  state: 'entering' | 'exiting' | null,
+): string {
+  const baseClassName = 'absolute inset-0 flex min-h-0 flex-col overflow-hidden bg-surface';
+
+  if (state === 'entering') {
+    return `${baseClassName} ${view === 'settings' ? 'motion-safe:animate-[sidebar-settings-in_200ms_var(--gae-motion-easing-default)]' : 'motion-safe:animate-[sidebar-default-in_200ms_var(--gae-motion-easing-default)]'}`;
+  }
+
+  if (state === 'exiting') {
+    return `${baseClassName} pointer-events-none ${view === 'settings' ? 'motion-safe:animate-[sidebar-settings-out_200ms_var(--gae-motion-easing-default)]' : 'motion-safe:animate-[sidebar-default-out_200ms_var(--gae-motion-easing-default)]'}`;
+  }
+
+  return baseClassName;
+}
 
 function formatDate(date: string): string {
   const parsedDate = new Date(date);

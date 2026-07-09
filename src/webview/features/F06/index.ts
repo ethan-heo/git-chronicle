@@ -1,2 +1,2 @@
-export { S06SettingsScreen } from './S06_SettingsScreen';
+export { SidebarSettingsPanel } from './SidebarSettingsPanel';
 export { SavePathSection } from './SavePathSection';

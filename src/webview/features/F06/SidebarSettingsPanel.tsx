@@ -1,8 +1,6 @@
 import { useEffect, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
-import { TopHeader } from '../../shared/components';
-import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import type { AIModelUsage, AIProviderName } from '../../types/commit';
 import { AIProviderSection } from './AIProviderSection';
@@ -21,32 +19,33 @@ interface AISettingsPayload {
   message?: string;
 }
 
-export const S06SettingsScreen: FC = () => {
+interface SidebarSettingsPanelProps {
+  isActive: boolean;
+  onBackClick: () => void;
+}
+
+export const SidebarSettingsPanel: FC<SidebarSettingsPanelProps> = ({ isActive, onBackClick }) => {
   const { t } = useTranslation();
   const savePath = useAppStore((state) => state.savePath);
   const registeredProviders = useAppStore((state) => state.registeredProviders);
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
   const summaryModel = useAppStore((state) => state.summaryModel);
   const qaModel = useAppStore((state) => state.qaModel);
-  const goBackFromDetail = useAppStore((state) => state.goBackFromDetail);
   const setAISummarySettings = useAppStore((state) => state.setAISummarySettings);
-  const isRouteSlotActive = useRouteSlotActive();
   const [registeringProvider, setRegisteringProvider] = useState<AIProviderName | null>(null);
   const [providerErrors, setProviderErrors] = useState<ProviderErrors>({});
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isRouteSlotActive) {
+    if (!isActive || !isVSCodeRuntime()) {
       return;
     }
 
-    if (isVSCodeRuntime()) {
-      postMessage('FETCH_AI_SUMMARY_SETTINGS');
-    }
-  }, [isRouteSlotActive]);
+    postMessage('FETCH_AI_SUMMARY_SETTINGS');
+  }, [isActive]);
 
   useEffect(() => {
-    if (!isRouteSlotActive) {
+    if (!isActive) {
       return;
     }
 
@@ -92,7 +91,7 @@ export const S06SettingsScreen: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [isRouteSlotActive, setAISummarySettings]);
+  }, [isActive, setAISummarySettings, t]);
 
   const handleProviderClick = (providerName: AIProviderName): void => {
     if (registeringProvider) {
@@ -192,8 +191,24 @@ export const S06SettingsScreen: FC = () => {
   };
 
   return (
-    <main className="app-shell relative flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
-      <TopHeader title={t('settings.title')} context={t('settings.context')} showBackButton onBackClick={goBackFromDetail} />
+    <section className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface">
+      <header className="flex items-center gap-2 border-b border-line bg-panel px-3 py-3">
+        <button
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+          type="button"
+          aria-label={t('common.back')}
+          title={t('common.back')}
+          onClick={onBackClick}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+            <path d="M9.75 3.5 5.25 8l4.5 4.5" />
+          </svg>
+        </button>
+        <div className="min-w-0">
+          <h2 className="m-0 text-sm font-bold text-text">{t('settings.title')}</h2>
+          <p className="mt-1 mb-0 text-[11.5px] text-muted">{t('settings.context')}</p>
+        </div>
+      </header>
       <div className="min-h-0 flex-1 overflow-auto bg-surface">
         <AIProviderSection
           registeredProviders={registeredProviders}
@@ -211,13 +226,13 @@ export const S06SettingsScreen: FC = () => {
       </div>
       {statusMessage ? (
         <div
-          className="absolute bottom-3 left-1/2 z-30 max-w-[88%] -translate-x-1/2 overflow-hidden rounded-sm border border-line border-l-[3px] border-l-accent bg-elevated px-[13px] py-2 text-sm text-text shadow-[0_3px_12px_rgba(0,0,0,0.45)] text-ellipsis whitespace-nowrap"
+          className="pointer-events-none absolute right-3 bottom-3 left-3 z-20 overflow-hidden rounded-sm border border-line border-l-[3px] border-l-accent bg-elevated px-[13px] py-2 text-sm text-text shadow-[0_3px_12px_rgba(0,0,0,0.45)] text-ellipsis whitespace-nowrap"
           role="status"
         >
           {statusMessage}
         </div>
       ) : null}
-    </main>
+    </section>
   );
 };
 

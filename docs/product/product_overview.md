@@ -70,7 +70,7 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
        ├─ 파일 [심볼 그래프]         → 본문 symbolGraph 패널
        └─ [노트]                    → [S-07: 노트] ──(뒤로가기)──→ 복귀
 
-  [⚙ 아이콘 (어디서든)] → [S-06: 설정]
+  [⚙ 아이콘] → [S-02 사이드바 설정 뷰]
 ```
 
 ---
@@ -84,8 +84,8 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | [F03_CodeViewer](../features/F03_code_viewer/spec.md) | 코드 변경이력 | 파일 단위 unified diff 뷰어. Shiki 신텍스 하이라이팅 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F04_DependencyCanvas](../features/F04_dependency_canvas/spec.md) | 의존 관계 캔버스 | 변경 파일 간 의존 관계를 노드-엣지 그래프로 시각화. React Flow 기반 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F05b_AISummaryCommit](../features/F05b_ai_summary_commit/spec.md) | AI 정리 (커밋 단위) | 커밋 전체 변경을 AI가 종합 요약하는 유일한 AI 정리 진입점. 스트리밍 표시, 로컬 저장, 재사용 | [S02](../screens/S02_history_view/blueprint.md) |
-| [F06_AISettings](../features/F06_ai_settings/spec.md) | AI 설정 | Claude/Gemini/Codex CLI 등록·활성화·비활성화 | [S06](../screens/S06_settings/blueprint.md) |
-| [F07_SavePathSettings](../features/F07_save_path_settings/spec.md) | 저장 경로 설정 | AI 정리 결과물 저장 경로 지정·삭제 | [S06](../screens/S06_settings/blueprint.md) |
+| [F06_AISettings](../features/F06_ai_settings/spec.md) | AI 설정 | Claude/Gemini/Codex CLI 등록·활성화·비활성화 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F07_SavePathSettings](../features/F07_save_path_settings/spec.md) | 저장 경로 설정 | AI 정리 결과물 저장 경로 지정·삭제 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문/답변으로 개별 파일까지 파고들며 분석. 커밋 전체 diff를 근거로 답변하며, 답변을 기존 요약 문서 하단에 append | [S02](../screens/S02_history_view/blueprint.md) |
 | [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F11_NoteEditor](../features/F11_note_editor/spec.md) | 노트 에디터 | 커밋 컨텍스트를 유지한 채 마크다운 노트를 작성하고 디바운스 자동저장 | [S07](../screens/S07_note/blueprint.md) |
@@ -96,7 +96,6 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 
 - [S-01: 커밋 목록](#s-01) → [screens/S01_commit_list/blueprint.md](../screens/S01_commit_list/blueprint.md)
 - [S-02: 워크스페이스](#s-02) → [screens/S02_history_view/blueprint.md](../screens/S02_history_view/blueprint.md) (코드 뷰어·AI 정리 뷰어·캔버스·심볼 캔버스는 모두 이 화면의 본문 패널로 통합됨)
-- [S-06: 설정](#s-06) → [screens/S06_settings/blueprint.md](../screens/S06_settings/blueprint.md)
 - [S-07: 노트](#s-07) → [screens/S07_note/blueprint.md](../screens/S07_note/blueprint.md)
 - [F-01: 커밋 로그 조회](#f-01) → [features/F01_commit_log/spec.md](../features/F01_commit_log/spec.md)
 - [F-02: 변경 파일 트리](#f-02) → [features/F02_changed_file_tree/spec.md](../features/F02_changed_file_tree/spec.md)

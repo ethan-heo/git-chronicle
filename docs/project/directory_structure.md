@@ -152,7 +152,7 @@ src/webview/
 │   │   ├── OverwriteConfirmDialog.tsx # 저장본 덮어쓰기 확인 모달
 │   │   └── index.ts                  # F05b barrel export
 │   ├── F06/
-│   │   ├── S06_SettingsScreen.tsx    # S06 설정 화면 조합, 설정 메시지 구독
+│   │   ├── SidebarSettingsPanel.tsx  # S02 사이드바 설정 퍼널 조합, 설정 메시지 구독
 │   │   ├── AIProviderSection.tsx     # Claude/Gemini/Codex 등록·활성화 영역
 │   │   ├── AIProviderButton.tsx      # AI CLI 등록·활성화 버튼
 │   │   ├── ModelSelectorGroup.tsx    # 요약용/Q&A용 모델 드롭다운 그룹
@@ -209,7 +209,7 @@ src/webview/
 
 - `product/`, `project/`, `core/`: 프로젝트 전반의 고정 규칙 문서.
 - `features/F##_*/`: 기능별 `spec.md`(요구사항) + `blueprint.md`(UI/컴포넌트 계약) 2개 파일만 유지한다. AI 생성용 프롬프트나 구현 상세는 영구 문서로 두지 않고, 작업 시 계획서(Plan)로 생성 후 완료 시 spec/blueprint에 반영하고 폐기한다.
-- `screens/S##_*/blueprint.md`: 화면 단위 진입 조건·상태·내비게이션 흐름. 여러 Feature를 조합하는 화면(S02, S06)만 별도로 조합 관계를 문서화하고, 단일 Feature 화면은 해당 Feature `blueprint.md`와 함께 참고한다.
+- `screens/S##_*/blueprint.md`: 화면 단위 진입 조건·상태·내비게이션 흐름. 여러 Feature를 조합하는 화면은 S02만 별도로 조합 관계를 문서화하고, 단일 Feature 화면은 해당 Feature `blueprint.md`와 함께 참고한다.
 - Feature 전용 컴포넌트는 별도 `components/*.md`를 두지 않고 해당 `blueprint.md`의 Component Definitions 섹션이 유일한 문서다. 여러 Feature가 공유하는 컴포넌트만 [core/global_components.md](../core/global_components.md)에 문서화한다.
 
 ---

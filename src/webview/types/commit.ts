@@ -84,6 +84,6 @@ export interface AIProvider {
 
 export type AIModelUsage = 'summary' | 'qa';
 
-export type ScreenID = 'S02' | 'S06' | 'S07';
+export type ScreenID = 'S02' | 'S07';
 
 export type RouteTransitionDirection = 'forward' | 'back';
