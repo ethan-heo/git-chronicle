@@ -15,7 +15,7 @@ export const SortOrderToggle: FC<SortOrderToggleProps> = ({ sortOrder, onSortOrd
 
   return (
     <button
-      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-elevated px-2.5 py-1 text-[11px] text-text transition-colors duration-100 ease-in-out hover:border-muted hover:bg-hover"
+      className="inline-flex h-7 items-center gap-1 whitespace-nowrap rounded-full border border-line bg-elevated px-2 text-[10px] leading-none text-text transition-colors duration-100 ease-in-out hover:border-muted hover:bg-hover"
       type="button"
       onClick={() => onSortOrderChange(nextSortOrder)}
       aria-label={t('commit.sort_aria', { order: orderLabel })}
