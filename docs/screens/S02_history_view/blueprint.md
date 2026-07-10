@@ -84,8 +84,8 @@ S02_WorkspaceScreen
       │     ├─ aiSummary → AISummaryPanel
       │     ├─ fileCanvas → DependencyCanvasPanel
       │     ├─ note → NoteEditorPanel
-      │     ├─ pr → PRDetailPanel (ReviewSummaryList, CommentThread)
-      │     └─ issue → IssueDetailPanel (CommentThread)
+      │     ├─ pr → PRDetailPanel (GithubMarkdown, RelatedCommitsList)
+      │     └─ issue → IssueDetailPanel (GithubMarkdown, RelatedCommitsList)
       └─ split → ResizableSplitPane (재귀)
 ```
 

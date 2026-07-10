@@ -1,5 +1,3 @@
-export { CommentItem } from './CommentItem';
-export { CommentThread } from './CommentThread';
 export { GithubMarkdown } from './GithubMarkdown';
 export { IssueDetailPanel } from './IssueDetailPanel';
 export { IssueList } from './IssueList';
@@ -11,7 +9,7 @@ export { PRList } from './PRList';
 export { PRListItem } from './PRListItem';
 export { PRsSection } from './PRsSection';
 export { PRStatusBadge } from './PRStatusBadge';
-export { ReviewItem } from './ReviewItem';
-export { ReviewSummaryList } from './ReviewSummaryList';
+export { RelatedCommitItem } from './RelatedCommitItem';
+export { RelatedCommitsList } from './RelatedCommitsList';
 export { useGithubAuth } from './useGithubAuth';
 export * from './types';

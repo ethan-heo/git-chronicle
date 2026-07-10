@@ -34,7 +34,7 @@ GitChronicle의 상태는 두 레이어에 분리하여 관리한다.
 | `noteSlice.ts` | Note(F11) | |
 | `toastSlice.ts` | Toast | cross-slice 의존 없음 |
 | `workspaceTabsSlice.ts` | WorkspaceTabs(F02/F12) | `paneTree`/`focusedPaneId`와 탭 열기·닫기·활성화·분할 액션 소유. `pr`/`issue` 탭은 `commit`이 없어 `selectedCommit` 동기화 시 마지막 값을 유지하는 예외가 있다 |
-| `githubSlice.ts` | GitHub PR/Issue(F12) | 인증 상태(`githubAuthStatus`), PR/Issue 목록(무한 스크롤), 번호별 상세(`prDetailsByNumber`/`issueDetailsByNumber`) 캐시 |
+| `githubSlice.ts` | GitHub PR/Issue(F12) | 인증 상태(`githubAuthStatus`), PR/Issue 목록(무한 스크롤), 번호별 상세(`prDetailsByNumber`/`issueDetailsByNumber`), 번호별 연관 커밋 페이지 캐시(`prRelatedCommitsByNumber`/`issueRelatedCommitsByNumber`) |
 
 각 slice의 정확한 상태/액션 목록, cross-slice 참조 지점은 `ttsc_graph`로 조회하거나 해당 slice 파일을 직접 연다 — 이 표는 "어느 파일을 열어야 하는가"까지만 안내한다.
 

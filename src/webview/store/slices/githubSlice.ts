@@ -7,12 +7,22 @@ import type {
   PullRequestDetail,
   PullRequestSummary,
 } from '../../features/F12/types';
+import type { Commit } from '../../types/commit';
 import type { AppState } from '../appStore';
 
 const DEMO_DELAY_MS = 220;
 
 export interface GithubDetailEntry<TDetail> {
   detail: TDetail | null;
+  isLoading: boolean;
+  error: string | null;
+  hasLoaded: boolean;
+}
+
+export interface GithubRelatedCommitsEntry {
+  commits: Commit[];
+  page: number;
+  hasMore: boolean;
   isLoading: boolean;
   error: string | null;
   hasLoaded: boolean;
@@ -27,6 +37,15 @@ export const EMPTY_PR_DETAIL_STATE: GithubDetailEntry<PullRequestDetail> = {
 
 export const EMPTY_ISSUE_DETAIL_STATE: GithubDetailEntry<IssueDetail> = {
   detail: null,
+  isLoading: false,
+  error: null,
+  hasLoaded: false,
+};
+
+export const EMPTY_RELATED_COMMITS_STATE: GithubRelatedCommitsEntry = {
+  commits: [],
+  page: 0,
+  hasMore: true,
   isLoading: false,
   error: null,
   hasLoaded: false,
@@ -52,6 +71,8 @@ export interface GithubSlice {
 
   prDetailsByNumber: Record<number, GithubDetailEntry<PullRequestDetail>>;
   issueDetailsByNumber: Record<number, GithubDetailEntry<IssueDetail>>;
+  prRelatedCommitsByNumber: Record<number, GithubRelatedCommitsEntry>;
+  issueRelatedCommitsByNumber: Record<number, GithubRelatedCommitsEntry>;
 
   fetchGithubAuthState: () => void;
   connectGithub: () => void;
@@ -72,6 +93,14 @@ export interface GithubSlice {
   loadIssueDetail: (number: number) => void;
   handleIssueDetailLoaded: (detail: IssueDetail) => void;
   handleIssueDetailLoadFailed: (payload: { number?: number; message?: string }) => void;
+
+  loadPRRelatedCommits: (number: number, reset?: boolean) => void;
+  handlePRRelatedCommitsLoaded: (payload: { number: number; items: Commit[]; hasMore: boolean; page: number }) => void;
+  handlePRRelatedCommitsLoadFailed: (payload: { number?: number; message?: string }) => void;
+
+  loadIssueRelatedCommits: (number: number, reset?: boolean) => void;
+  handleIssueRelatedCommitsLoaded: (payload: { number: number; items: Commit[]; hasMore: boolean; page: number }) => void;
+  handleIssueRelatedCommitsLoadFailed: (payload: { number?: number; message?: string }) => void;
 }
 
 const demoPullRequests: PullRequestSummary[] = [
@@ -93,12 +122,6 @@ function getDemoPRDetail(number: number): PullRequestDetail {
     ...summary,
     number,
     bodyMarkdown: '이 PR은 데모 데이터입니다.\n\n- 항목 1\n- 항목 2',
-    comments: [
-      { author: 'reviewer-a', bodyMarkdown: '질문이 있습니다. 이 부분 의도가 맞나요?', createdAt: '2026-07-08T10:00:00+09:00' },
-    ],
-    reviews: [
-      { author: 'reviewer-b', state: 'APPROVED', bodyMarkdown: 'LGTM', submittedAt: '2026-07-08T11:00:00+09:00' },
-    ],
   };
 }
 
@@ -109,9 +132,6 @@ function getDemoIssueDetail(number: number): IssueDetail {
     ...summary,
     number,
     bodyMarkdown: '이 Issue는 데모 데이터입니다.',
-    comments: [
-      { author: 'ethan-heo', bodyMarkdown: '재현 방법을 확인했습니다.', createdAt: '2026-07-09T09:00:00+09:00' },
-    ],
   };
 }
 
@@ -121,6 +141,28 @@ function getPRDetailEntry(state: AppState, number: number): GithubDetailEntry<Pu
 
 function getIssueDetailEntry(state: AppState, number: number): GithubDetailEntry<IssueDetail> {
   return state.issueDetailsByNumber[number] ?? EMPTY_ISSUE_DETAIL_STATE;
+}
+
+function getRelatedCommitsEntry(entries: Record<number, GithubRelatedCommitsEntry>, number: number): GithubRelatedCommitsEntry {
+  return entries[number] ?? EMPTY_RELATED_COMMITS_STATE;
+}
+
+function mergeRelatedCommits(existing: Commit[], incoming: Commit[]): Commit[] {
+  if (existing.length === 0) {
+    return incoming;
+  }
+
+  const merged = [...existing];
+  const seen = new Set(existing.map((commit) => commit.hash));
+
+  for (const commit of incoming) {
+    if (!seen.has(commit.hash)) {
+      seen.add(commit.hash);
+      merged.push(commit);
+    }
+  }
+
+  return merged;
 }
 
 export const createGithubSlice: StateCreator<AppState, [], [], GithubSlice> = (set, get) => ({
@@ -143,6 +185,8 @@ export const createGithubSlice: StateCreator<AppState, [], [], GithubSlice> = (s
 
   prDetailsByNumber: {},
   issueDetailsByNumber: {},
+  prRelatedCommitsByNumber: {},
+  issueRelatedCommitsByNumber: {},
 
   fetchGithubAuthState: () => {
     if (!isVSCodeRuntime()) {
@@ -356,5 +400,147 @@ export const createGithubSlice: StateCreator<AppState, [], [], GithubSlice> = (s
         [number]: { detail: null, isLoading: false, error: message, hasLoaded: true },
       },
     }));
+  },
+
+  loadPRRelatedCommits: (number, reset = false) => {
+    const state = get();
+    const entry = getRelatedCommitsEntry(state.prRelatedCommitsByNumber, number);
+
+    if (entry.isLoading || (!reset && entry.hasLoaded && !entry.hasMore)) {
+      return;
+    }
+
+    const page = reset ? 1 : entry.page + 1;
+
+    set((current) => ({
+      prRelatedCommitsByNumber: {
+        ...current.prRelatedCommitsByNumber,
+        [number]: {
+          ...(reset ? EMPTY_RELATED_COMMITS_STATE : getRelatedCommitsEntry(current.prRelatedCommitsByNumber, number)),
+          isLoading: true,
+          error: null,
+        },
+      },
+    }));
+
+    if (!isVSCodeRuntime()) {
+      window.setTimeout(() => {
+        get().handlePRRelatedCommitsLoaded({ number, items: [], hasMore: false, page });
+      }, DEMO_DELAY_MS);
+      return;
+    }
+
+    postMessage('FETCH_PR_RELATED_COMMITS', { number, page });
+  },
+
+  handlePRRelatedCommitsLoaded: ({ number, items, hasMore, page }) => {
+    set((current) => {
+      const entry = getRelatedCommitsEntry(current.prRelatedCommitsByNumber, number);
+      return {
+        prRelatedCommitsByNumber: {
+          ...current.prRelatedCommitsByNumber,
+          [number]: {
+            commits: page <= 1 ? items : mergeRelatedCommits(entry.commits, items),
+            page,
+            hasMore,
+            isLoading: false,
+            error: null,
+            hasLoaded: true,
+          },
+        },
+      };
+    });
+  },
+
+  handlePRRelatedCommitsLoadFailed: ({ number, message = 'Failed to load related commits' }) => {
+    if (number == null) {
+      return;
+    }
+
+    set((current) => {
+      const entry = getRelatedCommitsEntry(current.prRelatedCommitsByNumber, number);
+      return {
+        prRelatedCommitsByNumber: {
+          ...current.prRelatedCommitsByNumber,
+          [number]: {
+            ...entry,
+            isLoading: false,
+            error: message,
+            hasLoaded: entry.hasLoaded || entry.commits.length > 0,
+          },
+        },
+      };
+    });
+  },
+
+  loadIssueRelatedCommits: (number, reset = false) => {
+    const state = get();
+    const entry = getRelatedCommitsEntry(state.issueRelatedCommitsByNumber, number);
+
+    if (entry.isLoading || (!reset && entry.hasLoaded && !entry.hasMore)) {
+      return;
+    }
+
+    const page = reset ? 1 : entry.page + 1;
+
+    set((current) => ({
+      issueRelatedCommitsByNumber: {
+        ...current.issueRelatedCommitsByNumber,
+        [number]: {
+          ...(reset ? EMPTY_RELATED_COMMITS_STATE : getRelatedCommitsEntry(current.issueRelatedCommitsByNumber, number)),
+          isLoading: true,
+          error: null,
+        },
+      },
+    }));
+
+    if (!isVSCodeRuntime()) {
+      window.setTimeout(() => {
+        get().handleIssueRelatedCommitsLoaded({ number, items: [], hasMore: false, page });
+      }, DEMO_DELAY_MS);
+      return;
+    }
+
+    postMessage('FETCH_ISSUE_RELATED_COMMITS', { number, page });
+  },
+
+  handleIssueRelatedCommitsLoaded: ({ number, items, hasMore, page }) => {
+    set((current) => {
+      const entry = getRelatedCommitsEntry(current.issueRelatedCommitsByNumber, number);
+      return {
+        issueRelatedCommitsByNumber: {
+          ...current.issueRelatedCommitsByNumber,
+          [number]: {
+            commits: page <= 1 ? items : mergeRelatedCommits(entry.commits, items),
+            page,
+            hasMore,
+            isLoading: false,
+            error: null,
+            hasLoaded: true,
+          },
+        },
+      };
+    });
+  },
+
+  handleIssueRelatedCommitsLoadFailed: ({ number, message = 'Failed to load related commits' }) => {
+    if (number == null) {
+      return;
+    }
+
+    set((current) => {
+      const entry = getRelatedCommitsEntry(current.issueRelatedCommitsByNumber, number);
+      return {
+        issueRelatedCommitsByNumber: {
+          ...current.issueRelatedCommitsByNumber,
+          [number]: {
+            ...entry,
+            isLoading: false,
+            error: message,
+            hasLoaded: entry.hasLoaded || entry.commits.length > 0,
+          },
+        },
+      };
+    });
   },
 });

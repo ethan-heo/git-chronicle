@@ -113,7 +113,9 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_PULL_REQUESTS'; payload: { page?: number } }
   | { type: 'FETCH_ISSUES'; payload: { page?: number } }
   | { type: 'FETCH_PR_DETAIL'; payload: { number?: number } }
-  | { type: 'FETCH_ISSUE_DETAIL'; payload: { number?: number } };
+  | { type: 'FETCH_ISSUE_DETAIL'; payload: { number?: number } }
+  | { type: 'FETCH_PR_RELATED_COMMITS'; payload: { number?: number; page?: number } }
+  | { type: 'FETCH_ISSUE_RELATED_COMMITS'; payload: { number?: number; page?: number } };
 
 // Extension → Webview (응답/이벤트)
 type ExtensionToWebviewMessage =
@@ -159,7 +161,11 @@ type ExtensionToWebviewMessage =
   | { type: 'PR_DETAIL_LOADED'; payload: { detail: PullRequestDetail } }
   | { type: 'PR_DETAIL_LOAD_FAILED'; payload: { number?: number; message: string } }
   | { type: 'ISSUE_DETAIL_LOADED'; payload: { detail: IssueDetail } }
-  | { type: 'ISSUE_DETAIL_LOAD_FAILED'; payload: { number?: number; message: string } };
+  | { type: 'ISSUE_DETAIL_LOAD_FAILED'; payload: { number?: number; message: string } }
+  | { type: 'PR_RELATED_COMMITS_LOADED'; payload: { number: number; items: Commit[]; hasMore: boolean; page: number } }
+  | { type: 'PR_RELATED_COMMITS_LOAD_FAILED'; payload: { number?: number; message: string } }
+  | { type: 'ISSUE_RELATED_COMMITS_LOADED'; payload: { number: number; items: Commit[]; hasMore: boolean; page: number } }
+  | { type: 'ISSUE_RELATED_COMMITS_LOAD_FAILED'; payload: { number?: number; message: string } };
 
 // AISettingsState (src/extension/aiProviderService.ts)
 interface AISettingsState {

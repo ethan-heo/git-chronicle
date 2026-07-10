@@ -293,12 +293,8 @@
     "issues_empty_no_remote": "No GitHub remote found",
     "detail_loading": "Loading...",
     "detail_error": "Failed to load",
-    "reviews_title": "Reviews",
-    "comments_title": "Comments",
-    "comments_empty": "No comments",
-    "review_state_approved": "Approved",
-    "review_state_changes_requested": "Changes requested",
-    "review_state_commented": "Commented"
+    "related_commits_title": "Related commits",
+    "related_commits_loading": "Loading related commits..."
   },
   "toast": {
     "file_node_mermaid_copied": "Copied file node Mermaid",

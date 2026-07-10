@@ -1,6 +1,6 @@
 import { useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
+import { EmptyState, LoadingState } from '../../shared/components';
 import type { ChangedFile } from '../../types/commit';
 import { DirectoryNode } from './DirectoryNode';
 import { FileTreeNode } from './FileTreeNode';
@@ -38,9 +38,25 @@ export const FileTree: FC<FileTreeProps> = ({
   }
 
   if (error) {
+    const { message, commitHash } = parseFileTreeError(error);
+
     return (
       <section className="flex h-full min-h-0 flex-1 items-center justify-center p-8 text-center">
-        <ErrorState message={t('file_tree.error')} onRetry={onRetry} />
+        <div className="flex max-w-[320px] flex-col items-center justify-center gap-3 text-center" role="alert">
+          <p className="text-sm text-error">{message || t('file_tree.error')}</p>
+          {commitHash ? (
+            <code className="rounded-md border border-line bg-secondary px-2.5 py-1 font-mono text-xs text-muted">
+              {commitHash}
+            </code>
+          ) : null}
+          <button
+            className="inline-flex items-center justify-center rounded-sm border border-line bg-secondary px-2.5 py-1 text-[11.5px] text-text transition-colors duration-100 ease-in-out hover:bg-secondary-hi"
+            type="button"
+            onClick={onRetry}
+          >
+            {t('common.retry')}
+          </button>
+        </div>
       </section>
     );
   }
@@ -101,4 +117,17 @@ function getFileStats(files: ChangedFile[]): Record<ChangedFile['status'], numbe
     }),
     { A: 0, M: 0, D: 0, R: 0 },
   );
+}
+
+function parseFileTreeError(error: string): { message: string; commitHash: string | null } {
+  const commitNotFoundPrefix = 'This commit does not exist in the local repository: ';
+
+  if (!error.startsWith(commitNotFoundPrefix)) {
+    return { message: error, commitHash: null };
+  }
+
+  return {
+    message: '로컬 저장소에서 이 커밋을 찾을 수 없습니다.',
+    commitHash: error.slice(commitNotFoundPrefix.length).trim() || null,
+  };
 }

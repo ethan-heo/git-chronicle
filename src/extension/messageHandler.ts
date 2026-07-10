@@ -23,13 +23,16 @@ import {
   handleConnectGithub,
   handleFetchGithubAuthState,
   handleFetchIssueDetail,
+  handleFetchIssueRelatedCommits,
   handleFetchIssues,
   handleFetchPRDetail,
+  handleFetchPRRelatedCommits,
   handleFetchPullRequests,
   type FetchIssueDetailPayload,
   type FetchIssuesPayload,
   type FetchPRDetailPayload,
   type FetchPullRequestsPayload,
+  type FetchRelatedCommitsPayload,
 } from './messageHandler/githubHandlers';
 import { handleFetchNote, handleSaveNote, type NotePayload } from './messageHandler/noteHandlers';
 import { l10n } from './messageHandler/shared';
@@ -51,7 +54,8 @@ interface WebviewMessage {
     | FetchPullRequestsPayload
     | FetchIssuesPayload
     | FetchPRDetailPayload
-    | FetchIssueDetailPayload;
+    | FetchIssueDetailPayload
+    | FetchRelatedCommitsPayload;
 }
 
 export function registerMessageHandler(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): void {
@@ -134,6 +138,12 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'FETCH_ISSUE_DETAIL':
         await handleFetchIssueDetail(panel, message.payload as FetchIssueDetailPayload);
+        break;
+      case 'FETCH_PR_RELATED_COMMITS':
+        await handleFetchPRRelatedCommits(panel, message.payload as FetchRelatedCommitsPayload);
+        break;
+      case 'FETCH_ISSUE_RELATED_COMMITS':
+        await handleFetchIssueRelatedCommits(panel, message.payload as FetchRelatedCommitsPayload);
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');

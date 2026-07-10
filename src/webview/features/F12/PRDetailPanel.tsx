@@ -2,10 +2,10 @@ import { useEffect, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorState, LoadingState } from '../../shared/components';
 import { useAppStore } from '../../store/appStore';
-import { CommentThread } from './CommentThread';
+import type { Commit } from '../../types/commit';
 import { GithubMarkdown } from './GithubMarkdown';
 import { PRStatusBadge } from './PRStatusBadge';
-import { ReviewSummaryList } from './ReviewSummaryList';
+import { RelatedCommitsList } from './RelatedCommitsList';
 import type { PullRequestDetail } from './types';
 
 interface PRDetailPanelProps {
@@ -19,6 +19,12 @@ export const PRDetailPanel: FC<PRDetailPanelProps> = ({ prNumber, isActive }) =>
   const loadPRDetail = useAppStore((state) => state.loadPRDetail);
   const handlePRDetailLoaded = useAppStore((state) => state.handlePRDetailLoaded);
   const handlePRDetailLoadFailed = useAppStore((state) => state.handlePRDetailLoadFailed);
+  const relatedCommitsEntry = useAppStore((state) => state.prRelatedCommitsByNumber[prNumber] ?? null);
+  const loadPRRelatedCommits = useAppStore((state) => state.loadPRRelatedCommits);
+  const handlePRRelatedCommitsLoaded = useAppStore((state) => state.handlePRRelatedCommitsLoaded);
+  const handlePRRelatedCommitsLoadFailed = useAppStore((state) => state.handlePRRelatedCommitsLoadFailed);
+  const selectedCommitHash = useAppStore((state) => state.selectedCommit?.hash ?? null);
+  const selectCommit = useAppStore((state) => state.selectCommit);
 
   useEffect(() => {
     if (!isActive) {
@@ -26,7 +32,8 @@ export const PRDetailPanel: FC<PRDetailPanelProps> = ({ prNumber, isActive }) =>
     }
 
     loadPRDetail(prNumber);
-  }, [isActive, loadPRDetail, prNumber]);
+    loadPRRelatedCommits(prNumber, true);
+  }, [isActive, loadPRDetail, loadPRRelatedCommits, prNumber]);
 
   useEffect(() => {
     if (!isActive) {
@@ -34,7 +41,10 @@ export const PRDetailPanel: FC<PRDetailPanelProps> = ({ prNumber, isActive }) =>
     }
 
     const handler = (
-      event: MessageEvent<{ type: string; payload?: { detail?: PullRequestDetail; number?: number; message?: string } }>,
+      event: MessageEvent<{
+        type: string;
+        payload?: { detail?: PullRequestDetail; number?: number; message?: string; items?: Commit[]; hasMore?: boolean; page?: number };
+      }>,
     ): void => {
       if (event.data.type === 'PR_DETAIL_LOADED' && event.data.payload?.detail) {
         if (event.data.payload.detail.number !== prNumber) {
@@ -49,12 +59,27 @@ export const PRDetailPanel: FC<PRDetailPanelProps> = ({ prNumber, isActive }) =>
           return;
         }
         handlePRDetailLoadFailed({ number: prNumber, message: event.data.payload?.message });
+        return;
+      }
+
+      if (event.data.type === 'PR_RELATED_COMMITS_LOADED' && event.data.payload?.number === prNumber && event.data.payload.items) {
+        handlePRRelatedCommitsLoaded({
+          number: prNumber,
+          items: event.data.payload.items,
+          hasMore: event.data.payload.hasMore ?? false,
+          page: event.data.payload.page ?? 1,
+        });
+        return;
+      }
+
+      if (event.data.type === 'PR_RELATED_COMMITS_LOAD_FAILED' && event.data.payload?.number === prNumber) {
+        handlePRRelatedCommitsLoadFailed({ number: prNumber, message: event.data.payload.message });
       }
     };
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [handlePRDetailLoadFailed, handlePRDetailLoaded, isActive, prNumber]);
+  }, [handlePRDetailLoadFailed, handlePRDetailLoaded, handlePRRelatedCommitsLoadFailed, handlePRRelatedCommitsLoaded, isActive, prNumber]);
 
   if (!entry || entry.isLoading) {
     return (
@@ -96,8 +121,17 @@ export const PRDetailPanel: FC<PRDetailPanelProps> = ({ prNumber, isActive }) =>
           <GithubMarkdown content={detail.bodyMarkdown} />
         </div>
       ) : null}
-      <ReviewSummaryList reviews={detail.reviews} />
-      <CommentThread comments={detail.comments} />
+      <RelatedCommitsList
+        commits={relatedCommitsEntry?.commits ?? []}
+        isLoading={relatedCommitsEntry?.isLoading ?? false}
+        hasMore={relatedCommitsEntry?.hasMore ?? true}
+        hasLoaded={relatedCommitsEntry?.hasLoaded ?? false}
+        error={relatedCommitsEntry?.error ?? null}
+        selectedHash={selectedCommitHash}
+        onSelectCommit={selectCommit}
+        onLoadMore={() => loadPRRelatedCommits(prNumber)}
+        onRetry={() => loadPRRelatedCommits(prNumber, true)}
+      />
     </div>
   );
 };

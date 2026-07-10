@@ -2,8 +2,10 @@ import * as vscode from 'vscode';
 import {
   connectToGithub,
   fetchIssueDetail,
+  fetchIssueRelatedCommits,
   fetchIssues,
   fetchPullRequestDetail,
+  fetchPullRequestCommits,
   fetchPullRequests,
   getGithubAuthStatus,
 } from '../githubService';
@@ -22,6 +24,11 @@ export interface FetchPRDetailPayload {
 
 export interface FetchIssueDetailPayload {
   number?: number;
+}
+
+export interface FetchRelatedCommitsPayload {
+  number?: number;
+  page?: number;
 }
 
 function getRepoPath(): string | undefined {
@@ -146,6 +153,58 @@ export async function handleFetchIssueDetail(panel: vscode.WebviewPanel, payload
     await panel.webview.postMessage({
       type: 'ISSUE_DETAIL_LOAD_FAILED',
       payload: { number: payload.number, message: error instanceof Error ? error.message : 'Failed to load issue' },
+    });
+  }
+}
+
+export async function handleFetchPRRelatedCommits(panel: vscode.WebviewPanel, payload: FetchRelatedCommitsPayload = {}): Promise<void> {
+  const repoPath = getRepoPath();
+
+  if (!repoPath || !payload.number) {
+    await panel.webview.postMessage({
+      type: 'PR_RELATED_COMMITS_LOAD_FAILED',
+      payload: { number: payload.number, message: 'No pull request selected' },
+    });
+    return;
+  }
+
+  try {
+    const page = payload.page ?? 1;
+    const result = await fetchPullRequestCommits(repoPath, payload.number, page);
+    await panel.webview.postMessage({
+      type: 'PR_RELATED_COMMITS_LOADED',
+      payload: { number: payload.number, items: result.items, hasMore: result.hasMore, page },
+    });
+  } catch (error) {
+    await panel.webview.postMessage({
+      type: 'PR_RELATED_COMMITS_LOAD_FAILED',
+      payload: { number: payload.number, message: error instanceof Error ? error.message : 'Failed to load related commits' },
+    });
+  }
+}
+
+export async function handleFetchIssueRelatedCommits(panel: vscode.WebviewPanel, payload: FetchRelatedCommitsPayload = {}): Promise<void> {
+  const repoPath = getRepoPath();
+
+  if (!repoPath || !payload.number) {
+    await panel.webview.postMessage({
+      type: 'ISSUE_RELATED_COMMITS_LOAD_FAILED',
+      payload: { number: payload.number, message: 'No issue selected' },
+    });
+    return;
+  }
+
+  try {
+    const page = payload.page ?? 1;
+    const result = await fetchIssueRelatedCommits(repoPath, payload.number, page);
+    await panel.webview.postMessage({
+      type: 'ISSUE_RELATED_COMMITS_LOADED',
+      payload: { number: payload.number, items: result.items, hasMore: result.hasMore, page },
+    });
+  } catch (error) {
+    await panel.webview.postMessage({
+      type: 'ISSUE_RELATED_COMMITS_LOAD_FAILED',
+      payload: { number: payload.number, message: error instanceof Error ? error.message : 'Failed to load related commits' },
     });
   }
 }

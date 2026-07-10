@@ -293,12 +293,8 @@
     "issues_empty_no_remote": "GitHub 원격 저장소가 없습니다",
     "detail_loading": "불러오는 중...",
     "detail_error": "불러오지 못했습니다",
-    "reviews_title": "리뷰",
-    "comments_title": "댓글",
-    "comments_empty": "댓글이 없습니다",
-    "review_state_approved": "승인",
-    "review_state_changes_requested": "변경 요청",
-    "review_state_commented": "코멘트"
+    "related_commits_title": "연관된 커밋",
+    "related_commits_loading": "연관된 커밋을 불러오는 중..."
   },
   "toast": {
     "file_node_mermaid_copied": "파일 노드 Mermaid를 복사했습니다",

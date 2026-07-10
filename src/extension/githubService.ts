@@ -1,19 +1,17 @@
 import simpleGit from 'simple-git';
 import * as vscode from 'vscode';
 import type {
-  CommentSummary,
   FetchListResult,
   GithubAuthStatus,
   IssueDetail,
   IssueSummary,
   PullRequestDetail,
   PullRequestSummary,
-  ReviewSummary,
 } from './githubTypes';
+import type { Commit } from './gitService';
 
 const GITHUB_SCOPES = ['repo'];
 const LIST_PER_PAGE = 30;
-const DETAIL_PER_PAGE = 100;
 const GITHUB_API_BASE_URL = 'https://api.github.com';
 
 export class GithubNoRemoteError extends Error {
@@ -67,17 +65,31 @@ interface RawIssue {
   pull_request?: unknown;
 }
 
-interface RawComment {
-  user: RawUser | null;
-  body: string | null;
-  created_at: string;
+interface RawPullRequestCommit {
+  sha: string;
+  commit: {
+    message: string;
+    author: {
+      name: string | null;
+      date: string | null;
+    } | null;
+  };
 }
 
-interface RawReview {
-  user: RawUser | null;
-  state: string;
-  body: string | null;
-  submitted_at: string | null;
+interface RawTimelineEvent {
+  event: string;
+  commit_id?: string | null;
+}
+
+interface RawCommitDetail {
+  sha: string;
+  commit: {
+    message: string;
+    author: {
+      name: string | null;
+      date: string | null;
+    } | null;
+  };
 }
 
 export async function resolveGithubRepo(repoPath: string): Promise<{ owner: string; repo: string } | null> {
@@ -179,24 +191,13 @@ function toIssueSummary(raw: RawIssue): IssueSummary {
   };
 }
 
-function toCommentSummary(raw: RawComment): CommentSummary {
+function toCommit(raw: RawPullRequestCommit | RawCommitDetail): Commit {
   return {
-    author: raw.user?.login ?? 'unknown',
-    bodyMarkdown: raw.body ?? '',
-    createdAt: raw.created_at,
-  };
-}
-
-function toReviewSummary(raw: RawReview): ReviewSummary | null {
-  if (raw.state !== 'APPROVED' && raw.state !== 'CHANGES_REQUESTED' && raw.state !== 'COMMENTED') {
-    return null;
-  }
-
-  return {
-    author: raw.user?.login ?? 'unknown',
-    state: raw.state,
-    bodyMarkdown: raw.body ?? '',
-    submittedAt: raw.submitted_at ?? '',
+    hash: raw.sha,
+    shortHash: raw.sha.slice(0, 7),
+    message: raw.commit.message.split('\n')[0] ?? '',
+    author: raw.commit.author?.name ?? 'unknown',
+    date: raw.commit.author?.date ?? '',
   };
 }
 
@@ -246,17 +247,11 @@ export async function fetchPullRequestDetail(repoPath: string, number: number): 
   }
 
   const token = await requireAccessToken();
-  const [pr, comments, reviews] = await Promise.all([
-    githubApiRequest<RawPullRequest>(token, `/repos/${repoRef.owner}/${repoRef.repo}/pulls/${number}`),
-    githubApiRequest<RawComment[]>(token, `/repos/${repoRef.owner}/${repoRef.repo}/issues/${number}/comments?per_page=${DETAIL_PER_PAGE}`),
-    githubApiRequest<RawReview[]>(token, `/repos/${repoRef.owner}/${repoRef.repo}/pulls/${number}/reviews?per_page=${DETAIL_PER_PAGE}`),
-  ]);
+  const pr = await githubApiRequest<RawPullRequest>(token, `/repos/${repoRef.owner}/${repoRef.repo}/pulls/${number}`);
 
   return {
     ...toPullRequestSummary(pr),
     bodyMarkdown: pr.body ?? '',
-    comments: comments.map(toCommentSummary),
-    reviews: reviews.map(toReviewSummary).filter((review): review is ReviewSummary => review !== null),
   };
 }
 
@@ -268,14 +263,60 @@ export async function fetchIssueDetail(repoPath: string, number: number): Promis
   }
 
   const token = await requireAccessToken();
-  const [issue, comments] = await Promise.all([
-    githubApiRequest<RawIssue>(token, `/repos/${repoRef.owner}/${repoRef.repo}/issues/${number}`),
-    githubApiRequest<RawComment[]>(token, `/repos/${repoRef.owner}/${repoRef.repo}/issues/${number}/comments?per_page=${DETAIL_PER_PAGE}`),
-  ]);
+  const issue = await githubApiRequest<RawIssue>(token, `/repos/${repoRef.owner}/${repoRef.repo}/issues/${number}`);
 
   return {
     ...toIssueSummary(issue),
     bodyMarkdown: issue.body ?? '',
-    comments: comments.map(toCommentSummary),
+  };
+}
+
+export async function fetchPullRequestCommits(repoPath: string, number: number, page = 1): Promise<FetchListResult<Commit>> {
+  const repoRef = await resolveGithubRepo(repoPath);
+
+  if (!repoRef) {
+    throw new GithubNoRemoteError();
+  }
+
+  const token = await requireAccessToken();
+  const raw = await githubApiRequest<RawPullRequestCommit[]>(
+    token,
+    `/repos/${repoRef.owner}/${repoRef.repo}/pulls/${number}/commits?per_page=${LIST_PER_PAGE}&page=${page}`,
+  );
+
+  return {
+    items: raw.map(toCommit),
+    hasMore: raw.length >= LIST_PER_PAGE,
+  };
+}
+
+export async function fetchIssueRelatedCommits(repoPath: string, number: number, page = 1): Promise<FetchListResult<Commit>> {
+  const repoRef = await resolveGithubRepo(repoPath);
+
+  if (!repoRef) {
+    throw new GithubNoRemoteError();
+  }
+
+  const token = await requireAccessToken();
+  const rawTimeline = await githubApiRequest<RawTimelineEvent[]>(
+    token,
+    `/repos/${repoRef.owner}/${repoRef.repo}/issues/${number}/timeline?per_page=${LIST_PER_PAGE}&page=${page}`,
+  );
+
+  const commitIds = Array.from(
+    new Set(
+      rawTimeline
+        .filter((event) => (event.event === 'closed' || event.event === 'referenced') && Boolean(event.commit_id))
+        .map((event) => event.commit_id as string),
+    ),
+  );
+
+  const commitDetails = await Promise.all(
+    commitIds.map((sha) => githubApiRequest<RawCommitDetail>(token, `/repos/${repoRef.owner}/${repoRef.repo}/commits/${sha}`)),
+  );
+
+  return {
+    items: commitDetails.map(toCommit),
+    hasMore: rawTimeline.length >= LIST_PER_PAGE,
   };
 }

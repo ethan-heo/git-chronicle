@@ -1,4 +1,4 @@
-import simpleGit from 'simple-git';
+import simpleGit, { type SimpleGit } from 'simple-git';
 import { loadCommitSummary } from './summaryFileService';
 
 export interface Commit {
@@ -56,6 +56,13 @@ export class GitRepositoryNotFoundError extends Error {
   constructor(repoPath: string) {
     super(`Git repository was not found at ${repoPath}`);
     this.name = 'GitRepositoryNotFoundError';
+  }
+}
+
+export class GitCommitNotFoundError extends Error {
+  constructor(commitHash: string) {
+    super(`This commit does not exist in the local repository: ${commitHash}`);
+    this.name = 'GitCommitNotFoundError';
   }
 }
 
@@ -181,6 +188,8 @@ export async function fetchChangedFiles(repoPath: string, commitHash: string, sa
     throw new GitRepositoryNotFoundError(repoPath);
   }
 
+  await ensureCommitExistsLocallyOrFetch(git, commitHash);
+
   const output = await git.raw(['diff-tree', '--no-commit-id', '--name-status', '-r', '--root', commitHash]);
 
   return {
@@ -190,6 +199,34 @@ export async function fetchChangedFiles(repoPath: string, commitHash: string, sa
       .filter((file): file is ChangedFile => Boolean(file)),
     hasSavedCommitSummary: Boolean(savePath && loadCommitSummary(savePath, commitHash, commitMessage)),
   };
+}
+
+async function ensureCommitExistsLocallyOrFetch(git: SimpleGit, commitHash: string): Promise<void> {
+  try {
+    await ensureCommitExists(git, commitHash);
+  } catch {
+    await fetchLatestRemoteRefs(git);
+    await ensureCommitExists(git, commitHash);
+  }
+}
+
+async function ensureCommitExists(git: SimpleGit, commitHash: string): Promise<void> {
+  try {
+    await git.revparse([`${commitHash}^{commit}`]);
+  } catch {
+    throw new GitCommitNotFoundError(commitHash);
+  }
+}
+
+async function fetchLatestRemoteRefs(git: SimpleGit): Promise<void> {
+  const remotes = await git.getRemotes(true);
+  const primaryRemote = remotes.find((remote) => remote.name === 'origin') ?? remotes[0];
+
+  if (!primaryRemote?.name) {
+    return;
+  }
+
+  await git.fetch(primaryRemote.name);
 }
 
 export async function fetchFileDiff(repoPath: string, commitHash: string, filePath: string): Promise<FileDiffResult> {
