@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mergePersistedWebviewState, readPersistedWebviewState, type PersistedWorkspaceSidebarState } from '../../bridge/persistedWebviewState';
-import { EmptyState, ResizableSplitPane, SidebarSection } from '../../shared/components';
+import { EmptyState, Popover, ResizableSplitPane, SidebarSection } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { computeWorkspaceTabId, findLeafPane, getActiveTab, type PaneLeafNode, type WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
 import type { ChangedFile } from '../../types/commit';
-import { CommitFilterPanel, CommitList, useCommitList } from '../F01';
+import { CommitFilterPanel, CommitList, FilterToggleButton, SortOrderToggle, useCommitList } from '../F01';
 import { DependencyCanvasPanel } from '../F04';
 import { AISummaryPanel } from '../F05b';
 import { SidebarSettingsPanel } from '../F06';
@@ -27,22 +27,19 @@ const SIDEBAR_MAX_WIDTH = 560;
 const SIDEBAR_RESIZE_HANDLE_WIDTH = 6;
 const SIDEBAR_COLLAPSE_WIDTH = 0;
 const SECTION_MIN_HEIGHT = 120;
-const DEFAULT_FILTER_SECTION_HEIGHT = 220;
 const DEFAULT_COMMIT_LIST_SECTION_HEIGHT = 280;
 const DEFAULT_FILE_TREE_SECTION_HEIGHT = 280;
 const SIDEBAR_VIEW_TRANSITION_DURATION_MS = 200;
 
 const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
-  isFilterSectionExpanded: true,
   isCommitListSectionExpanded: true,
   isFileTreeSectionExpanded: true,
-  filterSectionHeight: DEFAULT_FILTER_SECTION_HEIGHT,
   commitListSectionHeight: DEFAULT_COMMIT_LIST_SECTION_HEIGHT,
   fileTreeSectionHeight: DEFAULT_FILE_TREE_SECTION_HEIGHT,
   sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
   lastSidebarWidth: SIDEBAR_DEFAULT_WIDTH,
 };
-type SectionKey = 'filter' | 'commit' | 'file';
+type SectionKey = 'commit' | 'file';
 type SidebarView = 'default' | 'settings';
 
 export const S02WorkspaceScreen: FC = () => {
@@ -99,17 +96,17 @@ export const S02WorkspaceScreen: FC = () => {
     persistedSidebarState.sidebarWidth <= SIDEBAR_COLLAPSE_WIDTH,
   );
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
-  const [isFilterSectionExpanded, setIsFilterSectionExpanded] = useState(persistedSidebarState.isFilterSectionExpanded);
   const [isCommitListSectionExpanded, setIsCommitListSectionExpanded] = useState(persistedSidebarState.isCommitListSectionExpanded);
   const [isFileTreeSectionExpanded, setIsFileTreeSectionExpanded] = useState(persistedSidebarState.isFileTreeSectionExpanded);
-  const [filterSectionHeight, setFilterSectionHeight] = useState(persistedSidebarState.filterSectionHeight);
   const [commitListSectionHeight, setCommitListSectionHeight] = useState(persistedSidebarState.commitListSectionHeight);
   const [fileTreeSectionHeight, setFileTreeSectionHeight] = useState(persistedSidebarState.fileTreeSectionHeight);
   const [prevSelectedCommitHash, setPrevSelectedCommitHash] = useState(selectedCommit?.hash);
   const [sidebarView, setSidebarView] = useState<SidebarView>('default');
   const [renderedSidebarView, setRenderedSidebarView] = useState<SidebarView>('default');
   const [exitingSidebarView, setExitingSidebarView] = useState<SidebarView | null>(null);
+  const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
+  const filterToggleButtonRef = useRef<HTMLButtonElement | null>(null);
 
   if (prevSelectedCommitHash !== selectedCommit?.hash) {
     setPrevSelectedCommitHash(selectedCommit?.hash);
@@ -165,10 +162,8 @@ export const S02WorkspaceScreen: FC = () => {
   useEffect(() => {
     mergePersistedWebviewState({
       workspaceSidebar: {
-        isFilterSectionExpanded,
         isCommitListSectionExpanded,
         isFileTreeSectionExpanded,
-        filterSectionHeight,
         commitListSectionHeight,
         fileTreeSectionHeight,
         sidebarWidth: isSidebarCollapsed ? 0 : sidebarWidth,
@@ -178,10 +173,8 @@ export const S02WorkspaceScreen: FC = () => {
   }, [
     commitListSectionHeight,
     fileTreeSectionHeight,
-    filterSectionHeight,
     isCommitListSectionExpanded,
     isFileTreeSectionExpanded,
-    isFilterSectionExpanded,
     isSidebarCollapsed,
     lastSidebarWidth,
     sidebarWidth,
@@ -261,32 +254,6 @@ export const S02WorkspaceScreen: FC = () => {
     setSidebarView('default');
   }, []);
 
-  const renderFilterSection = (): ReactElement => (
-    <SidebarSection
-      title={t('commit.filter_title')}
-      isExpanded={isFilterSectionExpanded}
-      onToggle={() => setIsFilterSectionExpanded((current) => !current)}
-      badge={isFilterActive ? (
-        <span className="rounded-full bg-accent px-[7px] py-px text-xs font-medium text-on-accent">
-          {activeFilterCount}
-        </span>
-      ) : undefined}
-    >
-      <CommitFilterPanel
-        variant="embedded"
-        filterDateStart={filterDateStart}
-        filterDateEnd={filterDateEnd}
-        filterAuthor={filterAuthor}
-        filterKeyword={filterKeyword}
-        filterExcludeKeyword={filterExcludeKeyword}
-        sortOrder={sortOrder}
-        authorList={authorList}
-        onFilterChange={setFilter}
-        onClearFilters={clearFilters}
-      />
-    </SidebarSection>
-  );
-
   const renderCommitListSection = (): ReactElement => (
     <SidebarSection
       title={t('commit.list_title')}
@@ -296,6 +263,63 @@ export const S02WorkspaceScreen: FC = () => {
         <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">
           {commitList.length}
         </strong>
+      )}
+      actions={(
+        <>
+          <SortOrderToggle
+            sortOrder={sortOrder}
+            onSortOrderChange={(nextSortOrder) => setFilter({ sortOrder: nextSortOrder })}
+          />
+          <div className="relative">
+            <FilterToggleButton
+              isOpen={isFilterPopoverOpen}
+              activeFilterCount={activeFilterCount}
+              onClick={() => setIsFilterPopoverOpen((current) => !current)}
+              ref={filterToggleButtonRef}
+            />
+            <Popover
+              isOpen={isFilterPopoverOpen}
+              onClose={() => {
+                setIsFilterPopoverOpen(false);
+                filterToggleButtonRef.current?.focus();
+              }}
+              anchorRef={filterToggleButtonRef}
+              className="w-[min(24rem,calc(100vw-2rem))]"
+              labelledBy="commit-filter-popover-title"
+            >
+              <div className="border-b border-line px-3 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <strong id="commit-filter-popover-title" className="text-xs font-semibold text-text">
+                    {t('commit.filter_title')}
+                  </strong>
+                  <button
+                    className="inline-flex size-7 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+                    type="button"
+                    onClick={() => {
+                      setIsFilterPopoverOpen(false);
+                      filterToggleButtonRef.current?.focus();
+                    }}
+                    aria-label={t('commit.filter_popover_close_aria')}
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+              </div>
+              <CommitFilterPanel
+                variant="embedded"
+                filterDateStart={filterDateStart}
+                filterDateEnd={filterDateEnd}
+                filterAuthor={filterAuthor}
+                filterKeyword={filterKeyword}
+                filterExcludeKeyword={filterExcludeKeyword}
+                sortOrder={sortOrder}
+                authorList={authorList}
+                onFilterChange={setFilter}
+                onClearFilters={clearFilters}
+              />
+            </Popover>
+          </div>
+        </>
       )}
     >
       <CommitList
@@ -357,10 +381,6 @@ export const S02WorkspaceScreen: FC = () => {
   );
 
   const getSectionNode = (section: SectionKey): ReactElement => {
-    if (section === 'filter') {
-      return renderFilterSection();
-    }
-
     if (section === 'commit') {
       return renderCommitListSection();
     }
@@ -369,10 +389,6 @@ export const S02WorkspaceScreen: FC = () => {
   };
 
   const getSectionHeight = (section: SectionKey): number => {
-    if (section === 'filter') {
-      return filterSectionHeight;
-    }
-
     if (section === 'commit') {
       return commitListSectionHeight;
     }
@@ -381,11 +397,6 @@ export const S02WorkspaceScreen: FC = () => {
   };
 
   const setSectionHeight = (section: SectionKey, nextHeight: number): void => {
-    if (section === 'filter') {
-      setFilterSectionHeight(nextHeight);
-      return;
-    }
-
     if (section === 'commit') {
       setCommitListSectionHeight(nextHeight);
       return;
@@ -430,52 +441,26 @@ export const S02WorkspaceScreen: FC = () => {
     }
 
     return (
-      <ResizableSplitPane
-        isOpen
-        orientation="vertical"
-        minLeftPx={SECTION_MIN_HEIGHT}
-        minRightPx={SECTION_MIN_HEIGHT * 2}
-        controlledLeftPx={filterSectionHeight}
-        onLeftPxChange={(leftPx) => {
-          setFilterSectionHeight(leftPx);
-        }}
-        className="h-full min-h-0"
-        left={renderFilterSection()}
-        right={(
-          <ResizableSplitPane
-            isOpen
-            orientation="vertical"
-            minLeftPx={SECTION_MIN_HEIGHT}
-            minRightPx={SECTION_MIN_HEIGHT}
-            controlledLeftPx={commitListSectionHeight}
-            onLeftPxChange={(leftPx, rightPx) => {
-              setCommitListSectionHeight(leftPx);
-              setFileTreeSectionHeight(rightPx);
-            }}
-            className="h-full min-h-0"
-            left={renderCommitListSection()}
-            right={renderFileTreeSection()}
-          />
-        )}
-      />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {renderCollapsedSection('commit')}
+        {renderCollapsedSection('file')}
+      </div>
     );
   };
 
   const renderExpandedSections = (): ReactElement => {
-    if (!isFilterSectionExpanded && !isCommitListSectionExpanded && !isFileTreeSectionExpanded) {
+    if (!isCommitListSectionExpanded && !isFileTreeSectionExpanded) {
       return (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {renderCollapsedSection('filter')}
           {renderCollapsedSection('commit')}
           {renderCollapsedSection('file')}
         </div>
       );
     }
 
-    if (!isFilterSectionExpanded && isCommitListSectionExpanded && isFileTreeSectionExpanded) {
+    if (isCommitListSectionExpanded && isFileTreeSectionExpanded) {
       return (
         <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          {renderCollapsedSection('filter')}
           <div className="min-h-0 flex-1 overflow-hidden">
             {renderExpandedGroup(['commit', 'file'])}
           </div>
@@ -483,59 +468,9 @@ export const S02WorkspaceScreen: FC = () => {
       );
     }
 
-    if (isFilterSectionExpanded && !isCommitListSectionExpanded && isFileTreeSectionExpanded) {
-      return (
-        <ResizableSplitPane
-          isOpen
-          orientation="vertical"
-          minLeftPx={SECTION_MIN_HEIGHT}
-          minRightPx={SECTION_MIN_HEIGHT}
-          controlledLeftPx={filterSectionHeight}
-          onLeftPxChange={(leftPx, rightPx) => {
-            setFilterSectionHeight(leftPx);
-            setFileTreeSectionHeight(rightPx);
-          }}
-          className="h-full min-h-0"
-          left={renderFilterSection()}
-          right={(
-            <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-              {renderCollapsedSection('commit')}
-              <div className="min-h-0 flex-1 overflow-hidden">
-                {renderExpandedGroup(['file'])}
-              </div>
-            </div>
-          )}
-        />
-      );
-    }
-
-    if (isFilterSectionExpanded && isCommitListSectionExpanded && !isFileTreeSectionExpanded) {
+    if (isCommitListSectionExpanded) {
       return (
         <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-hidden">
-            {renderExpandedGroup(['filter', 'commit'])}
-          </div>
-          {renderCollapsedSection('file')}
-        </div>
-      );
-    }
-
-    if (isFilterSectionExpanded && !isCommitListSectionExpanded && !isFileTreeSectionExpanded) {
-      return (
-        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-hidden">
-            {renderExpandedGroup(['filter'])}
-          </div>
-          {renderCollapsedSection('commit')}
-          {renderCollapsedSection('file')}
-        </div>
-      );
-    }
-
-    if (!isFilterSectionExpanded && isCommitListSectionExpanded && !isFileTreeSectionExpanded) {
-      return (
-        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          {renderCollapsedSection('filter')}
           <div className="min-h-0 flex-1 overflow-hidden">
             {renderExpandedGroup(['commit'])}
           </div>
@@ -544,19 +479,14 @@ export const S02WorkspaceScreen: FC = () => {
       );
     }
 
-    if (!isFilterSectionExpanded && !isCommitListSectionExpanded && isFileTreeSectionExpanded) {
-      return (
-        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          {renderCollapsedSection('filter')}
-          {renderCollapsedSection('commit')}
-          <div className="min-h-0 flex-1 overflow-hidden">
-            {renderExpandedGroup(['file'])}
-          </div>
+    return (
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+        {renderCollapsedSection('commit')}
+        <div className="min-h-0 flex-1 overflow-hidden">
+          {renderExpandedGroup(['file'])}
         </div>
-      );
-    }
-
-    return renderExpandedGroup(['filter', 'commit', 'file']);
+      </div>
+    );
   };
 
   const renderSidebarView = (view: SidebarView, state: 'entering' | 'exiting' | null): ReactElement => {

@@ -32,6 +32,7 @@
 ## Components
 
 - `CommitFilterPanel`
+- `FilterToggleButton`
 - `DateRangeFilter`
 - `AuthorDropdown`
 - `KeywordSearchInput`
@@ -82,7 +83,42 @@ interface CommitFilterPanelProps {
 - 각 입력 요소에 `aria-label` 명시
 
 #### Reusability
-F01_CommitLog 전용. S02_WorkspaceScreen 사이드바 필터 섹션에서 사용한다.
+F01_CommitLog 전용. `standalone` variant는 독립 필터 영역에서, `embedded` variant는 S02 사이드바의 필터 팝오버 콘텐츠에서 사용한다.
+
+---
+
+### Component: FilterToggleButton
+
+#### Purpose
+사이드바 커밋 목록 헤더에서 필터 팝오버를 열고 닫는 아이콘 버튼이다. 활성 필터 개수를 배지로 함께 보여준다.
+
+#### Data
+- `isOpen: boolean`
+- `activeFilterCount: number`
+
+#### Props
+```typescript
+interface FilterToggleButtonProps {
+  isOpen: boolean;
+  activeFilterCount: number;
+  onClick: () => void;
+}
+```
+
+#### Interaction
+- 클릭 시 필터 팝오버를 연다/닫는다.
+- 날짜, 작성자, 포함/제외 키워드 중 적용된 조건 수를 즉시 배지에 반영한다.
+
+#### States
+- `default`
+- `active` (필터 적용 중이거나 팝오버가 열려 있음)
+
+#### Accessibility
+- `aria-label`로 필터 열기/닫기 상태를 제공한다.
+- `aria-expanded`로 팝오버 열림 상태를 노출한다.
+
+#### Reusability
+F01_CommitLog 전용. S02_WorkspaceScreen 사이드바 커밋 목록 섹션 헤더에서만 사용한다.
 
 ---
 

@@ -4,6 +4,7 @@ export { ErrorState } from './ErrorState';
 export { FileActionButtons } from './FileActionButtons';
 export { FileStatusBadge, type FileStatus } from './FileStatusBadge';
 export { LoadingState } from './LoadingState';
+export { Popover } from './Popover';
 export { PrimaryButton } from './PrimaryButton';
 export { ResizableSplitPane } from './ResizableSplitPane';
 export { SidebarSection } from './SidebarSection';

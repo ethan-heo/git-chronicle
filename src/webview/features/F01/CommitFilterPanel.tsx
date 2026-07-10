@@ -46,30 +46,8 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
 
   if (variant === 'embedded') {
     return (
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5 py-2.5" role="search">
-        <div className="flex items-center justify-between gap-2">
-          <SortOrderToggle
-            sortOrder={sortOrder}
-            onSortOrderChange={(nextSortOrder) => onFilterChange({ sortOrder: nextSortOrder })}
-          />
-          <div className="inline-flex items-center gap-1.5 text-[11px] text-link">
-            {isActive ? (
-              <span className="rounded-full bg-accent px-[7px] py-px text-xs font-medium text-on-accent">
-                {t('commit.filter_applied', { count: activeFilterCount })}
-              </span>
-            ) : (
-              <span>{t('commit.filter_none')}</span>
-            )}
-            <button
-              className="bg-transparent px-1 py-0.5 text-[11px] text-link hover:underline"
-              type="button"
-              onClick={onClearFilters}
-            >
-              {t('commit.clear_filters')}
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-2.5 pt-3">
+      <div className="flex min-h-0 flex-1 flex-col px-3 py-3" role="search">
+        <div className="grid grid-cols-1 gap-2.5">
           <DateRangeFilter
             startDate={filterDateStart}
             endDate={filterDateEnd}
@@ -97,6 +75,15 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
             ariaLabel={t('commit.filter_exclude_aria')}
             placeholder={t('commit.filter_exclude_placeholder')}
           />
+        </div>
+        <div className="flex justify-end pt-3">
+          <button
+            className="bg-transparent px-1 py-0.5 text-[11px] text-link hover:underline"
+            type="button"
+            onClick={onClearFilters}
+          >
+            {t('commit.clear_filters')}
+          </button>
         </div>
       </div>
     );

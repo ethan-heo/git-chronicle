@@ -14,7 +14,7 @@
 
 ## Purpose
 
-하나의 지속형 워크스페이스 안에서 필터, 커밋 목록, 변경 파일 탐색, 본문 탭 전환을 모두 처리한다. S01은 별도 화면이 아니라 S02 사이드바 섹션으로 통합되었다.
+하나의 지속형 워크스페이스 안에서 커밋 목록, 오버레이 필터, 변경 파일 탐색, 본문 탭 전환을 모두 처리한다. S01은 별도 화면이 아니라 S02 사이드바 섹션으로 통합되었다.
 
 ---
 
@@ -46,9 +46,10 @@ S02_WorkspaceScreen
 │     │  ├─ WorkspaceHeading
 │     │  │  └─ SettingsToggleButton
 │     │  └─ SidebarSectionGroup
-│     │     ├─ FilterSection
-│     │     │  └─ CommitFilterPanel (embedded)
-│     │     ├─ CommitListSection
+│     │     ├─ CommitsSection
+│     │     │  ├─ header actions → SortOrderToggle, FilterToggleButton
+│     │     │  ├─ Popover
+│     │     │  │  └─ CommitFilterPanel (embedded)
 │     │     │  └─ CommitList
 │     │     └─ FileTreeSection
 │     │        └─ FileTree
@@ -80,7 +81,7 @@ S02_WorkspaceScreen
       └─ split → ResizableSplitPane (재귀)
 ```
 
-사이드바 안의 세 섹션은 각각 독립적으로 접고 펼칠 수 있으며, 펼쳐진 섹션이 2개 이상일 때는 `ResizableSplitPane`의 세로 분할로 높이를 드래그 조정한다. 이 펼침 상태와 마지막 높이는 Webview State에 저장된다.
+사이드바 안의 두 섹션은 각각 독립적으로 접고 펼칠 수 있으며, 둘 다 펼쳐져 있을 때는 `ResizableSplitPane`의 세로 분할로 높이를 드래그 조정한다. 이 펼침 상태와 마지막 높이는 Webview State에 저장된다. 필터 입력은 커밋 목록 섹션 헤더의 토글 버튼이 여는 팝오버 오버레이로 제공되며, 목록 레이아웃 높이에는 영향을 주지 않는다.
 
 ---
 
@@ -90,7 +91,9 @@ S02_WorkspaceScreen
 |---------|------|-----------|
 | `WorkspaceHeading` | 이 문서 | `src/webview/features/F02/WorkspaceHeading.tsx` |
 | `SidebarSection` | 이 문서 | `src/webview/shared/components/SidebarSection.tsx` |
+| `Popover` | [global_components](../../core/global_components.md#popover) | `src/webview/shared/components/Popover.tsx` |
 | `CommitFilterPanel` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitfilterpanel) | `src/webview/features/F01/CommitFilterPanel.tsx` |
+| `FilterToggleButton` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-filtertogglebutton) | `src/webview/features/F01/FilterToggleButton.tsx` |
 | `CommitList` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitlist) | `src/webview/features/F01/CommitList.tsx` |
 | `FileTree` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filetree) | `src/webview/features/F02/FileTree.tsx` |
 | `AISummaryToggleButton` | 이 문서 | `src/webview/features/F02/AISummaryToggleButton.tsx` |

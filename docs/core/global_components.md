@@ -212,6 +212,24 @@
 
 ---
 
+## Popover
+
+**용도:** 트리거 요소 아래에 비모달 오버레이 패널을 띄운다. 현재는 S02 커밋 목록 헤더의 필터 팝오버에서 사용한다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `isOpen` | `boolean` | 팝오버 렌더링 여부 |
+| `onClose` | `() => void` | 외부 클릭 또는 `Esc` 입력 시 닫기 핸들러 |
+| `labelledBy` | `string \| undefined` | 팝오버 제목 요소 id |
+| `className` | `string \| undefined` | 추가 클래스 |
+| `children` | `React.ReactNode` | 오버레이 내부 콘텐츠 |
+
+**동작:** 열릴 때 내부 첫 포커스 가능 요소로 포커스를 이동하고, 외부 클릭 또는 `Esc`로 닫힌다. 닫힌 뒤 트리거로 포커스를 복귀시키는 책임은 호출 측이 가진다.
+
+**구현 파일:** `src/webview/shared/components/Popover.tsx`
+
+---
+
 ## Export Rule
 
 전역 컴포넌트는 `src/webview/shared/components/index.ts`에서 재-export한다.
