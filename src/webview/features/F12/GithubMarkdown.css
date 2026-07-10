@@ -16,21 +16,38 @@
 .github-markdown h4,
 .github-markdown h5,
 .github-markdown h6 {
-  margin: 1.5em 0 0.55em;
+  margin: 1.8em 0 0.65em;
   color: var(--gae-color-text-primary);
   font-weight: var(--gae-font-weight-bold);
   line-height: 1.3;
 }
 
+.github-markdown h1:first-child,
+.github-markdown h2:first-child,
+.github-markdown h3:first-child,
+.github-markdown h4:first-child,
+.github-markdown h5:first-child,
+.github-markdown h6:first-child {
+  margin-top: 0;
+}
+
 .github-markdown h1 {
+  border-bottom: 1px solid var(--gae-border-color-default);
+  padding-bottom: 0.45em;
   font-size: 24px;
 }
 
 .github-markdown h2 {
+  border-bottom: 1px solid color-mix(in srgb, var(--gae-color-text-link) 24%, var(--gae-border-color-default));
+  padding-bottom: 0.42em;
   font-size: 20px;
 }
 
 .github-markdown h3 {
+  border-left: 3px solid var(--gae-color-text-link);
+  background: color-mix(in srgb, var(--gae-color-text-link) 7%, transparent);
+  padding: 0.3em 0.7em;
+  border-radius: var(--gae-border-radius-sm);
   font-size: 17px;
 }
 
@@ -38,6 +55,17 @@
 .github-markdown h5,
 .github-markdown h6 {
   font-size: 14px;
+}
+
+.github-markdown h4 {
+  letter-spacing: 0.02em;
+}
+
+.github-markdown h2 + h3,
+.github-markdown h3 + h4,
+.github-markdown h4 + h5,
+.github-markdown h5 + h6 {
+  margin-top: 1em;
 }
 
 .github-markdown p,
@@ -63,6 +91,14 @@
 .github-markdown ul,
 .github-markdown ol {
   padding-left: 22px;
+}
+
+.github-markdown ul ul,
+.github-markdown ul ol,
+.github-markdown ol ul,
+.github-markdown ol ol {
+  margin-top: 8px;
+  margin-bottom: 0;
 }
 
 .github-markdown ul {
@@ -91,6 +127,10 @@
 
 .github-markdown li + li {
   margin-top: 6px;
+}
+
+.github-markdown li > p {
+  margin-bottom: 8px;
 }
 
 .github-markdown a {
