@@ -1,8 +1,0 @@
-.symbol-code-line-highlighted::before {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: color-mix(in srgb, var(--gae-color-symbol-highlight) 18%, transparent);
-  border-radius: 0;
-  content: '';
-}

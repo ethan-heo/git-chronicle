@@ -120,6 +120,9 @@ src/webview/
 │   │   ├── WorkspaceHeading.tsx      # 본문 상단 헤더 (노트/설정 아이콘)
 │   │   ├── AISummaryToggleButton.tsx # 사이드바 헤더 [커밋 AI 정리] 토글
 │   │   ├── FileCanvasToggleButton.tsx # 사이드바 헤더 [캔버스 보기] 토글
+│   │   ├── CodeTabSplitArea.tsx      # code 탭 내부 2~3분할 조립 + 오버레이 토글
+│   │   ├── FileAISummaryToggleButton.tsx
+│   │   ├── SymbolGraphToggleButton.tsx
 │   │   ├── FileTree.tsx              # 변경 파일 트리 컨테이너
 │   │   ├── DirectoryNode.tsx         # 디렉토리 노드 (재귀 렌더링)
 │   │   ├── FileTreeNode.tsx          # 파일 노드 (상태 뱃지/액션)
@@ -162,12 +165,10 @@ src/webview/
 │   │   └── index.ts                  # F06 barrel export
 │   ├── F09/                          # AI 요약 Q&A (S02 본문 aiSummary 패널 하단)
 │   │   └── QAInputArea.tsx           # 요약 완료 후 질문 입력 영역
-│   ├── F10/                          # 파일 내부 심볼 의존성 캔버스 (S02 본문 symbolGraph 패널)
+│   ├── F10/                          # 파일 내부 심볼 의존성 캔버스 (S02 code 탭 내부 패널)
 │   │   ├── SymbolGraph.tsx           # React Flow 캔버스 컨테이너
 │   │   ├── SymbolNode.tsx / SymbolEdge.tsx / SymbolKindBadge.tsx
 │   │   ├── SymbolLegendPanel.tsx
-│   │   ├── SymbolCodePanel.tsx       # 우측 슬라이드 인 코드 패널
-│   │   ├── SymbolFileCodeViewer.tsx  # Shiki 기반 코드 뷰어
 │   │   ├── symbolGraphUtils.ts       # Dagre/kind 그룹 레이아웃 계산
 │   │   └── index.ts
 │   └── F11/                          # 노트 에디터 (S07)

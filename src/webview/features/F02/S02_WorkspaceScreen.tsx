@@ -7,13 +7,12 @@ import { useAppStore } from '../../store/appStore';
 import { computeWorkspaceTabId, findLeafPane, getActiveTab, type PaneLeafNode, type WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
 import type { ChangedFile } from '../../types/commit';
 import { CommitFilterPanel, CommitList, useCommitList } from '../F01';
-import { CodeDiffPanel } from '../F03';
 import { DependencyCanvasPanel } from '../F04';
 import { AISummaryPanel } from '../F05b';
 import { SidebarSettingsPanel } from '../F06';
 import { NoteEditorPanel } from '../F11';
-import { SymbolGraphPanel, useSymbolGraph } from '../F10';
 import { AISummaryToggleButton } from './AISummaryToggleButton';
+import { CodeTabSplitArea } from './CodeTabSplitArea';
 import { FileCanvasToggleButton } from './FileCanvasToggleButton';
 import { FileTree } from './FileTree';
 import { NoteToggleButton } from './NoteToggleButton';
@@ -54,6 +53,7 @@ export const S02WorkspaceScreen: FC = () => {
   const openWorkspaceTab = useAppStore((state) => state.openWorkspaceTab);
   const closeWorkspaceTab = useAppStore((state) => state.closeWorkspaceTab);
   const activateWorkspaceTab = useAppStore((state) => state.activateWorkspaceTab);
+  const toggleCodeInnerPanel = useAppStore((state) => state.toggleCodeInnerPanel);
   const focusPane = useAppStore((state) => state.focusPane);
   const splitWorkspacePaneWithTab = useAppStore((state) => state.splitWorkspacePaneWithTab);
   const setPaneSplitSize = useAppStore((state) => state.setPaneSplitSize);
@@ -158,16 +158,8 @@ export const S02WorkspaceScreen: FC = () => {
     openTab('aiSummary');
   }, [openTab]);
 
-  const openCommitAISummaryFromFile = useCallback((file: ChangedFile) => {
-    openTab('aiSummary', file);
-  }, [openTab]);
-
   const openCodeTab = useCallback((file: ChangedFile) => {
     openTab('code', file);
-  }, [openTab]);
-
-  const openSymbolGraphTab = useCallback((file: ChangedFile) => {
-    openTab('symbolGraph', file);
   }, [openTab]);
 
   useEffect(() => {
@@ -353,11 +345,7 @@ export const S02WorkspaceScreen: FC = () => {
           error={changedFileTree.error}
           onRetry={changedFileTree.retryTree}
           onFileCodeView={openCodeTab}
-          onFileAIView={openCommitAISummaryFromFile}
-          onFileSymbolGraph={openSymbolGraphTab}
-          activeAIFilePath={isActiveTabCommitSelected && activeTab?.panelType === 'aiSummary' ? activeTab.filePath : null}
           activeCodeFilePath={isActiveTabCommitSelected && activeTab?.panelType === 'code' ? activeTab.filePath : null}
-          activeSymbolGraphFilePath={isActiveTabCommitSelected && activeTab?.panelType === 'symbolGraph' ? activeTab.filePath : null}
           showHeader={false}
         />
       ) : (
@@ -664,12 +652,13 @@ export const S02WorkspaceScreen: FC = () => {
             openTab,
           })}
           renderPanel={(paneId, paneActiveTab) => renderWorkspacePanel({
-            paneId,
-            activeTab: paneActiveTab,
-            isRouteSlotActive,
-            openCodeTab,
-            openSidebarSettings,
-          })}
+          paneId,
+          activeTab: paneActiveTab,
+          isRouteSlotActive,
+          openCodeTab,
+          openSidebarSettings,
+          toggleCodeInnerPanel,
+        })}
         />
       </section>
     </main>
@@ -709,8 +698,9 @@ function renderWorkspacePanel(options: {
   isRouteSlotActive: boolean;
   openCodeTab: (file: ChangedFile) => void;
   openSidebarSettings: () => void;
+  toggleCodeInnerPanel: (paneId: string, tabId: string, panel: 'aiSummary' | 'symbolGraph') => void;
 }): ReactNode {
-  const { paneId, activeTab, isRouteSlotActive, openCodeTab, openSidebarSettings } = options;
+  const { paneId, activeTab, isRouteSlotActive, openCodeTab, openSidebarSettings, toggleCodeInnerPanel } = options;
 
   if (!activeTab) {
     return (
@@ -727,6 +717,7 @@ function renderWorkspacePanel(options: {
       isRouteSlotActive={isRouteSlotActive}
       openCodeTab={openCodeTab}
       openSidebarSettings={openSidebarSettings}
+      toggleCodeInnerPanel={toggleCodeInnerPanel}
     />
   );
 }
@@ -737,31 +728,24 @@ const WorkspacePaneContent: FC<{
   isRouteSlotActive: boolean;
   openCodeTab: (file: ChangedFile) => void;
   openSidebarSettings: () => void;
-}> = ({ paneId, activeTab, isRouteSlotActive, openCodeTab, openSidebarSettings }) => {
+  toggleCodeInnerPanel: (paneId: string, tabId: string, panel: 'aiSummary' | 'symbolGraph') => void;
+}> = ({ paneId, activeTab, isRouteSlotActive, openCodeTab, openSidebarSettings, toggleCodeInnerPanel }) => {
   const changedFileTree = useChangedFileTree({
     isActive: isRouteSlotActive,
     commit: activeTab.commit,
   });
-  const symbolFile = activeTab.panelType === 'symbolGraph' && activeTab.filePath
-    ? changedFileTree.changedFiles.find((file) => file.path === activeTab.filePath) ?? null
-    : null;
-  const symbolGraph = useSymbolGraph({
-    isActive: isRouteSlotActive && activeTab.panelType === 'symbolGraph',
-    paneId,
-    selectedFile: symbolFile,
-    commitHash: activeTab.commit.hash,
-  });
-  const activeAIFile = activeTab.panelType === 'aiSummary' && activeTab.filePath
+  const codeFile = activeTab.panelType === 'code' && activeTab.filePath
     ? changedFileTree.changedFiles.find((file) => file.path === activeTab.filePath) ?? null
     : null;
 
   if (activeTab.panelType === 'code' && activeTab.filePath) {
     return (
-      <CodeDiffPanel
+      <CodeTabSplitArea
+        tab={activeTab}
         isActive={isRouteSlotActive}
-        commitHash={activeTab.commit.hash}
-        filePath={activeTab.filePath}
-        isDeletedFile={Boolean(changedFileTree.changedFiles.find((file) => file.path === activeTab.filePath)?.status === 'D')}
+        selectedFile={codeFile}
+        onToggleInnerPanel={(panel) => toggleCodeInnerPanel(paneId, activeTab.id, panel)}
+        onGoToSettings={openSidebarSettings}
       />
     );
   }
@@ -770,7 +754,7 @@ const WorkspacePaneContent: FC<{
     return (
       <AISummaryPanel
         isActive={isRouteSlotActive}
-        targetFile={activeAIFile}
+        targetFile={null}
         commit={activeTab.commit}
         onGoToSettings={openSidebarSettings}
       />
@@ -779,10 +763,6 @@ const WorkspacePaneContent: FC<{
 
   if (activeTab.panelType === 'fileCanvas') {
     return <DependencyCanvasPanel isActive={isRouteSlotActive} paneId={paneId} commit={activeTab.commit} onFileCodeView={openCodeTab} />;
-  }
-
-  if (activeTab.panelType === 'symbolGraph') {
-    return <SymbolGraphPanel data={symbolGraph} />;
   }
 
   return <NoteEditorPanel paneId={paneId} commit={activeTab.commit} isActive={isRouteSlotActive} />;

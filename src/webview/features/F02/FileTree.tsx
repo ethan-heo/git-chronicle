@@ -12,11 +12,7 @@ interface FileTreeProps {
   error: string | null;
   onRetry: () => void;
   onFileCodeView: (file: ChangedFile) => void;
-  onFileAIView: (file: ChangedFile) => void;
-  onFileSymbolGraph: (file: ChangedFile) => void;
-  activeAIFilePath?: string | null;
   activeCodeFilePath?: string | null;
-  activeSymbolGraphFilePath?: string | null;
   showHeader?: boolean;
 }
 
@@ -26,11 +22,7 @@ export const FileTree: FC<FileTreeProps> = ({
   error,
   onRetry,
   onFileCodeView,
-  onFileAIView,
-  onFileSymbolGraph,
-  activeAIFilePath = null,
   activeCodeFilePath = null,
-  activeSymbolGraphFilePath = null,
   showHeader = true,
 }) => {
   const { t } = useTranslation();
@@ -83,11 +75,7 @@ export const FileTree: FC<FileTreeProps> = ({
               node={child}
               depth={0}
               onCodeView={onFileCodeView}
-              onAIView={onFileAIView}
-              onSymbolGraph={onFileSymbolGraph}
-              activeAIFilePath={activeAIFilePath}
               activeCodeFilePath={activeCodeFilePath}
-              activeSymbolGraphFilePath={activeSymbolGraphFilePath}
             />
           ) : (
             <FileTreeNode
@@ -96,11 +84,7 @@ export const FileTree: FC<FileTreeProps> = ({
               name={child.name}
               depth={0}
               onCodeView={onFileCodeView}
-              onAIView={onFileAIView}
-              onSymbolGraph={onFileSymbolGraph}
               isCodeViewActive={activeCodeFilePath === child.file.path}
-              isAIViewActive={activeAIFilePath === child.file.path}
-              isSymbolGraphActive={activeSymbolGraphFilePath === child.file.path}
             />
           ),
         )}

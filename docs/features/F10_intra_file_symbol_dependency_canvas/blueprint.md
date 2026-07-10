@@ -18,10 +18,8 @@
 - `selectedCommit: Commit` — 헤더 표시 및 파일 내용 복원 컨텍스트
 - `symbolNodes: SymbolNode[]` — 전역 상태
 - `symbolEdges: SymbolEdge[]` — 전역 상태
-- `symbolFileContent: string` — 전역 상태. 코드 패널 렌더링용 파일 본문
 - `isLoadingSymbolGraph: boolean` — 전역 상태
 - `symbolGraphError: string | null` — 전역 상태
-- `isCodePanelOpen: boolean` — 전역 상태. 우측 코드 패널 표시 여부
 - `activeSymbolNodeId: string | null` — 전역 상태. 클릭 노드 ID
 - `hoveredSymbolNodeId: string | null` — 전역 상태. 호버 노드 ID
 
@@ -29,7 +27,7 @@
 
 ## Outputs
 
-- 없음 (S02 워크스페이스의 `symbolGraph` 패널은 탐색 전용이다.)
+- 없음. 그래프 자체는 탐색 전용이며, 클릭/호버 결과는 S02의 같은 `code` 탭 안에 항상 떠 있는 메인 `CodeDiffPanel`로 전달된다.
 
 ---
 
@@ -40,8 +38,6 @@
 - `SymbolEdge` (React Flow 커스텀 엣지)
 - `SymbolKindBadge`
 - `SymbolLegendPanel`
-- `SymbolCodePanel`
-- `SymbolFileCodeViewer`
 - `CanvasControls` (F04에서 재사용)
 
 ---
@@ -77,7 +73,7 @@ interface SymbolGraphProps {
 - 패닝: 빈 영역 드래그
 - 노드 드래그: 노드 위치 직접 조정
 - 노드 호버: 연결 엣지 강조 + 비연결 엣지 감쇠, hover 콜백 전달
-- 노드 클릭: 활성 노드 변경 및 코드 패널 스크롤 타겟 설정
+- 노드 클릭: 활성 노드 변경 및 같은 코드 탭의 메인 `CodeDiffPanel` 스크롤 타겟 설정
 - 빈 영역 클릭: hover/활성 노드 선택 해제 및 엣지 강조 원복
 - 노드 드래그 후: 현재 위치 기준 엣지 연결 면 재계산
 - 캔버스 리사이즈: `fitView()` 재적용
@@ -93,7 +89,7 @@ interface SymbolGraphProps {
 - `LoadingState`, `EmptyState`, 코드 패널, 범례 패널, 코드 뷰어의 접근성 라벨은 `symbol_graph.*` 번역 키를 사용한다
 
 #### Reusability
-F10 전용. S02_WorkspaceScreen의 `symbolGraph` 패널에서만 사용.
+F10 전용. S02_WorkspaceScreen의 `code` 탭 내부 `SymbolGraphPanel`에서만 사용.
 
 ---
 

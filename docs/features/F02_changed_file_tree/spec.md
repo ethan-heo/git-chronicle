@@ -28,7 +28,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 ## User Goal
 
-특정 커밋에서 어떤 파일이 어떻게 변경되었는지 트리 형태로 확인하고, 관심 있는 파일의 diff나 파일 단위 AI 정리를 바로 연다. 필요하면 별도로 커밋 전체 AI 정리도 연다.
+특정 커밋에서 어떤 파일이 어떻게 변경되었는지 트리 형태로 확인하고, 관심 있는 파일의 diff를 바로 연다. 파일 단위 AI 정리와 심볼 캔버스는 코드 탭 내부 토글로 이어서 연다. 필요하면 별도로 커밋 전체 AI 정리도 연다.
 
 ---
 
@@ -109,3 +109,4 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | S02 `code` 탭 활성화 | `selectedFile` 설정 + [코드 보기] | `openWorkspaceTab({ panelType: "code" })` |
 | S02 `aiSummary` 탭 활성화 | [커밋 AI 정리] 클릭 | `openWorkspaceTab({ panelType: "aiSummary" })` |
 | S02 `fileCanvas` 탭 활성화 | [캔버스 보기] 클릭 | `openWorkspaceTab({ panelType: "fileCanvas" })` |
+| 코드 탭 내부 파일 AI 요약 / 심볼 캔버스 토글 | 열린 `code` 탭 내부 버튼 클릭 | `WorkspaceTab.codeInnerPanels` 반전으로 중첩 패널 on/off |

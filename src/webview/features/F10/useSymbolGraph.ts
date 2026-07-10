@@ -7,13 +7,8 @@ export interface UseSymbolGraphResult {
   selectedFile: ChangedFile | null;
   symbolNodes: SymbolNode[];
   symbolEdges: SymbolEdge[];
-  symbolFileContent: string | null;
   isLoading: boolean;
   error: string | null;
-  isCodePanelOpen: boolean;
-  canToggleCodePanel: boolean;
-  toggleCodePanel: () => void;
-  closeCodePanel: () => void;
   activeSymbolNodeId: string | null;
   hoveredSymbolNodeId: string | null;
   highlightedRange: SymbolNode | null;
@@ -25,50 +20,47 @@ export interface UseSymbolGraphResult {
   handlePaneClick: () => void;
 }
 
-export function useSymbolGraph(options: { isActive: boolean; paneId: string; selectedFile: ChangedFile | null; commitHash: string | null }): UseSymbolGraphResult {
-  const { isActive, paneId, selectedFile, commitHash } = options;
-  const symbolState = useAppStore((state) => state.symbolGraphsByPane[paneId] ?? EMPTY_SYMBOL_GRAPH_STATE);
-  const prepareSymbolGraphPane = useAppStore((state) => state.prepareSymbolGraphPane);
+export function useSymbolGraph(options: { isActive: boolean; tabId: string; selectedFile: ChangedFile | null; commitHash: string | null }): UseSymbolGraphResult {
+  const { isActive, tabId, selectedFile, commitHash } = options;
+  const symbolState = useAppStore((state) => state.symbolGraphsByTab[tabId] ?? EMPTY_SYMBOL_GRAPH_STATE);
+  const prepareSymbolGraphTab = useAppStore((state) => state.prepareSymbolGraphTab);
   const loadSymbolGraph = useAppStore((state) => state.loadSymbolGraph);
-  const closeCodePanel = useAppStore((state) => state.closeCodePanel);
-  const toggleCodePanel = useAppStore((state) => state.toggleCodePanel);
   const setActiveSymbolNode = useAppStore((state) => state.setActiveSymbolNode);
   const setHoveredSymbolNode = useAppStore((state) => state.setHoveredSymbolNode);
 
   const [scrollRequestId, setScrollRequestId] = useState(0);
 
   useEffect(() => {
-    prepareSymbolGraphPane({ paneId, selectedFile });
-  }, [paneId, prepareSymbolGraphPane, selectedFile]);
+    prepareSymbolGraphTab({ tabId, selectedFile });
+  }, [prepareSymbolGraphTab, selectedFile, tabId]);
 
   useEffect(() => {
     if (isActive && selectedFile && commitHash && !symbolState.hasLoaded && !symbolState.error) {
-      loadSymbolGraph({ paneId, selectedFile, commitHash });
+      loadSymbolGraph({ tabId, selectedFile, commitHash });
     }
-  }, [commitHash, isActive, loadSymbolGraph, paneId, selectedFile, symbolState.error, symbolState.hasLoaded]);
+  }, [commitHash, isActive, loadSymbolGraph, selectedFile, symbolState.error, symbolState.hasLoaded, tabId]);
 
   useEffect(() => {
     if (!isActive) {
       return;
     }
 
-    const handler = (event: MessageEvent<{ type: string; payload?: { paneId?: string; nodes?: SymbolNode[]; edges?: SymbolEdge[]; fileContent?: string; message?: string } }>): void => {
-      if (event.data.payload?.paneId !== paneId) {
+    const handler = (event: MessageEvent<{ type: string; payload?: { tabId?: string; nodes?: SymbolNode[]; edges?: SymbolEdge[]; message?: string } }>): void => {
+      if (event.data.payload?.tabId !== tabId) {
         return;
       }
 
       if (event.data.type === 'SYMBOL_GRAPH_LOADED') {
         useAppStore.getState().handleSymbolGraphLoaded({
-          paneId,
+          tabId,
           nodes: event.data.payload?.nodes ?? [],
           edges: event.data.payload?.edges ?? [],
-          fileContent: event.data.payload?.fileContent ?? '',
         });
       }
 
       if (event.data.type === 'SYMBOL_GRAPH_LOAD_FAILED') {
         useAppStore.getState().handleSymbolGraphLoadFailed({
-          paneId,
+          tabId,
           message: event.data.payload?.message,
         });
       }
@@ -76,13 +68,13 @@ export function useSymbolGraph(options: { isActive: boolean; paneId: string; sel
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [isActive, paneId]);
+  }, [isActive, tabId]);
 
   const retrySymbolGraph = useCallback(() => {
     if (selectedFile && commitHash) {
-      loadSymbolGraph({ paneId, selectedFile, commitHash });
+      loadSymbolGraph({ tabId, selectedFile, commitHash });
     }
-  }, [commitHash, loadSymbolGraph, paneId, selectedFile]);
+  }, [commitHash, loadSymbolGraph, selectedFile, tabId]);
 
   const hoveredNode = useMemo(
     () => symbolState.symbolNodes.find((node) => node.id === symbolState.hoveredSymbolNodeId) ?? null,
@@ -93,8 +85,8 @@ export function useSymbolGraph(options: { isActive: boolean; paneId: string; sel
     [symbolState.activeSymbolNodeId, symbolState.symbolNodes],
   );
   const highlightedRange = useMemo(
-    () => (symbolState.isCodePanelOpen ? activeNode ?? hoveredNode : null),
-    [activeNode, hoveredNode, symbolState.isCodePanelOpen],
+    () => activeNode ?? hoveredNode,
+    [activeNode, hoveredNode],
   );
   const scrollToRange = useMemo(
     () => (activeNode ? { start: activeNode.lineStart, end: activeNode.lineEnd } : null),
@@ -102,30 +94,25 @@ export function useSymbolGraph(options: { isActive: boolean; paneId: string; sel
   );
 
   const handleNodeClick = useCallback((nodeId: string) => {
-    setActiveSymbolNode(paneId, nodeId);
+    setActiveSymbolNode(tabId, nodeId);
     setScrollRequestId((current) => current + 1);
-  }, [paneId, setActiveSymbolNode]);
+  }, [setActiveSymbolNode, tabId]);
 
   const handleNodeHover = useCallback((nodeId: string | null) => {
-    setHoveredSymbolNode(paneId, nodeId);
-  }, [paneId, setHoveredSymbolNode]);
+    setHoveredSymbolNode(tabId, nodeId);
+  }, [setHoveredSymbolNode, tabId]);
 
   const handlePaneClick = useCallback(() => {
-    setActiveSymbolNode(paneId, null);
-    setHoveredSymbolNode(paneId, null);
-  }, [paneId, setActiveSymbolNode, setHoveredSymbolNode]);
+    setActiveSymbolNode(tabId, null);
+    setHoveredSymbolNode(tabId, null);
+  }, [setActiveSymbolNode, setHoveredSymbolNode, tabId]);
 
   return {
     selectedFile: symbolState.selectedFile,
     symbolNodes: symbolState.symbolNodes,
     symbolEdges: symbolState.symbolEdges,
-    symbolFileContent: symbolState.symbolFileContent,
     isLoading: symbolState.isLoading,
     error: symbolState.error,
-    isCodePanelOpen: symbolState.isCodePanelOpen,
-    canToggleCodePanel: symbolState.symbolNodes.length > 0 && !symbolState.error && !symbolState.isLoading,
-    toggleCodePanel: () => toggleCodePanel(paneId),
-    closeCodePanel: () => closeCodePanel(paneId),
     activeSymbolNodeId: symbolState.activeSymbolNodeId,
     hoveredSymbolNodeId: symbolState.hoveredSymbolNodeId,
     highlightedRange,

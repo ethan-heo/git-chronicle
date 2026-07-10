@@ -1,6 +1,10 @@
 import type { HighlightToken } from '../../shared/highlighter';
 
 export type { HighlightToken };
+export interface LineRange {
+  start: number;
+  end: number;
+}
 
 export type DiffLineType = 'added' | 'removed' | 'context';
 

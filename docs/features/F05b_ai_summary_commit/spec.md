@@ -11,7 +11,7 @@
 
 ## Purpose
 
-커밋 전체 변경(모든 파일의 diff 합산)을 AI CLI에 전달하고, 커밋 단위 종합 요약을 마크다운으로 생성·표시·저장한다. 파일 트리의 파일 AI 액션과는 별도로, 이 기능은 커밋 전체 맥락을 요약하는 전용 진입점이다.
+커밋 전체 변경(모든 파일의 diff 합산)을 AI CLI에 전달하고, 커밋 단위 종합 요약을 마크다운으로 생성·표시·저장한다. 파일 단위 AI 요약은 코드 탭 내부 토글로 열리며, 이 기능은 커밋 전체 맥락을 요약하는 전용 진입점이다.
 
 ---
 
@@ -115,7 +115,7 @@ Commit message: {commitMessage}
 
 ## 기본 프롬프트 (파일 단위)
 
-파일 트리의 파일 AI 액션([F02_ChangedFileTree](../F02_changed_file_tree/spec.md), [design_principles.md](../../core/design_principles.md))이 호출하는 프롬프트다. `useAISummary`가 commit/file 스코프를 함께 다루므로 이 문서에 함께 둔다. 실제 템플릿은 [prompts.ts의 `buildFileSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다.
+S02 `code` 탭 내부의 파일 AI 요약 토글([F02_ChangedFileTree](../F02_changed_file_tree/spec.md), [design_principles.md](../../core/design_principles.md))이 호출하는 프롬프트다. `useAISummary`가 commit/file 스코프를 함께 다루므로 이 문서에 함께 둔다. 실제 템플릿은 [prompts.ts의 `buildFileSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다.
 
 ```
 Here is the diff for a file changed in a Git commit.

@@ -4,6 +4,7 @@ import type { DiffLineData, DiffLineType } from './types';
 interface DiffLineProps {
   line: DiffLineData;
   isSelected?: boolean;
+  isSymbolHighlighted?: boolean;
 }
 
 const LINE_PREFIX: Record<DiffLineType, string> = {
@@ -12,7 +13,7 @@ const LINE_PREFIX: Record<DiffLineType, string> = {
   context: ' ',
 };
 
-export const DiffLine: FC<DiffLineProps> = ({ line, isSelected = false }) => {
+export const DiffLine: FC<DiffLineProps> = ({ line, isSelected = false, isSymbolHighlighted = false }) => {
   const prefixColorClassName =
     line.type === 'added' ? 'text-added' : line.type === 'removed' ? 'text-deleted' : 'text-muted';
   const backgroundClassName =
@@ -26,10 +27,11 @@ export const DiffLine: FC<DiffLineProps> = ({ line, isSelected = false }) => {
     <div
       className={`grid min-h-5 grid-cols-[48px_48px_18px_minmax(0,1fr)] whitespace-pre max-[320px]:grid-cols-[18px_minmax(0,1fr)] ${backgroundClassName} ${isSelected ? 'shadow-[inset_3px_0_0_var(--gae-color-focus)]' : ''}`}
       style={
-        isSelected
+        isSelected || isSymbolHighlighted
           ? {
-              backgroundImage:
-                'linear-gradient(color-mix(in srgb, var(--gae-color-text-secondary) 18%, transparent), color-mix(in srgb, var(--gae-color-text-secondary) 18%, transparent))',
+              backgroundImage: isSelected
+                ? 'linear-gradient(color-mix(in srgb, var(--gae-color-text-secondary) 18%, transparent), color-mix(in srgb, var(--gae-color-text-secondary) 18%, transparent))'
+                : 'linear-gradient(color-mix(in srgb, var(--gae-color-accent-primary) 16%, transparent), color-mix(in srgb, var(--gae-color-accent-primary) 16%, transparent))',
             }
           : undefined
       }

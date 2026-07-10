@@ -68,10 +68,14 @@ S02_WorkspaceScreen
       │  │     └─ NoteToggleButton
       │  ├─ DropZoneOverlay (drag 중 left/right/top/bottom)
       │  └─ ActiveTabPanel
-      │     ├─ code → CodeDiffPanel
+      │     ├─ code → CodeTabSplitArea
+      │     │  ├─ CodeDiffPanel
+      │     │  ├─ FileAISummaryToggleButton (CodeDiffPanel 우측 상단 오버레이)
+      │     │  ├─ SymbolGraphToggleButton (CodeDiffPanel 우측 상단 오버레이)
+      │     │  ├─ AISummaryPanel (파일 스코프, 토글 시)
+      │     │  └─ SymbolGraphPanel (토글 시)
       │     ├─ aiSummary → AISummaryPanel
       │     ├─ fileCanvas → DependencyCanvasPanel
-      │     ├─ symbolGraph → SymbolGraphPanel (+ 내부 우측 상단 `SymbolCodePanelToggleButton`)
       │     └─ note → NoteEditorPanel
       └─ split → ResizableSplitPane (재귀)
 ```
@@ -108,10 +112,9 @@ S02_WorkspaceScreen
 | `idle` | `selectedCommit === null`, 모든 leaf pane의 `activeTabId === null` | 사이드바 헤더/파일트리에 placeholder, 각 pane 본문 빈 상태 |
 | `commitSelected` | `selectedCommit !== null`, 포커스 pane의 `activeTabId === null` | 커밋 컨텍스트만 갱신, 포커스 pane은 탭 미선택 상태 |
 | `split` | `paneTree.kind === "split"` | `ResizableSplitPane`로 재귀 분할된 다중 pane |
-| `code` | leaf pane의 `activeTab.panelType === "code"` | `CodeDiffPanel` |
-| `aiSummary` | leaf pane의 `activeTab.panelType === "aiSummary"` | `AISummaryPanel` |
+| `code` | leaf pane의 `activeTab.panelType === "code"` | `CodeTabSplitArea` 내부에서 코드 뷰어 + 파일 AI 요약 + 심볼 캔버스를 중첩 분할 |
+| `aiSummary` | leaf pane의 `activeTab.panelType === "aiSummary"` | 커밋 단위 `AISummaryPanel` |
 | `fileCanvas` | leaf pane의 `activeTab.panelType === "fileCanvas"` | `DependencyCanvasPanel` |
-| `symbolGraph` | leaf pane의 `activeTab.panelType === "symbolGraph"` | `SymbolGraphPanel` |
 | `note` | leaf pane의 `activeTab.panelType === "note"` | `NoteEditorPanel` |
 
 ---
@@ -126,8 +129,10 @@ S02_WorkspaceScreen
 - `PaneTree`는 leaf pane 또는 split pane으로 이루어진 재귀 트리다. split pane은 `ResizableSplitPane`을 재사용해 좌우/상하 분할을 렌더링한다.
 - `WorkspaceTabBar`의 좌측 탭 목록은 가로 스크롤되고, 스크롤바가 탭 내용을 덮지 않도록 `scrollbar-gutter`와 하단 여백을 둔다.
 - 같은 대상(`panelType + commitHash + filePath`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.
+- 최상위 워크스페이스 탭은 `code` / `aiSummary` / `fileCanvas` / `note` 네 종류만 연다. 파일 단위 AI 요약과 심볼 캔버스는 독립 탭이 아니라 `code` 탭 내부 토글로만 연다.
 - 탭을 드래그해 다른 leaf pane의 상/하/좌/우 가장자리로 드롭하면 해당 방향으로 pane이 분할된다. 중앙 합류 드롭은 지원하지 않는다.
 - 탭을 닫으면 같은 pane 안에서 오른쪽 우선 fallback 탭을 활성화하고, leaf pane의 마지막 탭을 닫으면 그 pane은 트리에서 제거되며 sibling pane이 공간을 승계한다.
 - 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환되며, 사이드바의 커밋/파일 컨텍스트는 `focusedPaneId`가 가리키는 leaf pane을 따른다.
 - 분할 레이아웃은 Webview State에 저장하지 않는다. 웹뷰 재생성 후에는 단일 pane으로 초기화된다.
 - 노트는 더 이상 S07 화면으로 이동하지 않고 S02 내부 `note` 탭으로 열리며, 탭 이탈 시 저장되지 않은 초안은 즉시 플러시 저장된다.
+- `code` 탭 내부의 `codeInnerPanels`(파일 AI 요약 / 심볼 캔버스) 상태도 최상위 pane 분할과 마찬가지로 영속화하지 않는다.

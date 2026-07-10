@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { FileActionButtons, FileStatusBadge } from '../../shared/components';
 import { useAppStore } from '../../store/appStore';
 import type { ChangedFile } from '../../types/commit';
-import { ANALYZABLE_FILE_PATTERN } from '../F04/graph';
 import { changedFileToMarkdown } from '../F11';
 
 interface FileTreeNodeProps {
@@ -11,11 +10,7 @@ interface FileTreeNodeProps {
   name: string;
   depth: number;
   onCodeView: (file: ChangedFile) => void;
-  onAIView: (file: ChangedFile) => void;
-  onSymbolGraph: (file: ChangedFile) => void;
   isCodeViewActive?: boolean;
-  isAIViewActive?: boolean;
-  isSymbolGraphActive?: boolean;
 }
 
 export const FileTreeNode: FC<FileTreeNodeProps> = ({
@@ -23,17 +18,12 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
   name,
   depth,
   onCodeView,
-  onAIView,
-  onSymbolGraph,
   isCodeViewActive = false,
-  isAIViewActive = false,
-  isSymbolGraphActive = false,
 }) => {
   const { t } = useTranslation();
   const pushToast = useAppStore((state) => state.pushToast);
-  const isSymbolGraphSupported = ANALYZABLE_FILE_PATTERN.test(file.path);
-  const isRowActive = isCodeViewActive || isAIViewActive || isSymbolGraphActive;
-  const shouldShowActions = isCodeViewActive || isAIViewActive || isSymbolGraphActive;
+  const isRowActive = isCodeViewActive;
+  const shouldShowActions = false;
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Enter') {
@@ -80,12 +70,7 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
           void handleCopy();
         }}
         onCodeView={() => onCodeView(file)}
-        onAIView={() => onAIView(file)}
-        onSymbolGraph={() => onSymbolGraph(file)}
-        isSymbolGraphDisabled={!isSymbolGraphSupported}
         isCodeViewActive={isCodeViewActive}
-        isAIViewActive={isAIViewActive}
-        isSymbolGraphActive={isSymbolGraphActive}
       />
     </div>
   );

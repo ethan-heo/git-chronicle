@@ -96,12 +96,12 @@ const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, is
 );
 
 function getTabLabel(tab: WorkspaceTab): string {
-  if (tab.panelType === 'code' || tab.panelType === 'symbolGraph') {
+  if (tab.panelType === 'code') {
     return tab.filePath?.split('/').at(-1) ?? tab.filePath ?? tab.panelType;
   }
 
   if (tab.panelType === 'aiSummary') {
-    return tab.filePath ? `AI 요약 · ${tab.filePath.split('/').at(-1)}` : 'AI 요약';
+    return 'AI 요약';
   }
 
   if (tab.panelType === 'fileCanvas') {

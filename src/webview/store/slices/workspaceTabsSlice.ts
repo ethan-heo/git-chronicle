@@ -2,15 +2,22 @@ import type { StateCreator } from 'zustand';
 import type { Commit } from '../../types/commit';
 import type { AppState } from '../appStore';
 
-export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'symbolGraph' | 'note';
+export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'note';
 export type PaneSplitOrientation = 'horizontal' | 'vertical';
 export type DropZone = 'left' | 'right' | 'top' | 'bottom';
+export type CodeInnerPanelType = 'aiSummary' | 'symbolGraph';
+
+export interface CodeInnerPanelsState {
+  aiSummary: boolean;
+  symbolGraph: boolean;
+}
 
 export interface WorkspaceTab {
   id: string;
   panelType: WorkspaceTabPanelType;
   commit: Commit;
   filePath: string | null;
+  codeInnerPanels?: CodeInnerPanelsState;
 }
 
 export interface PaneLeafNode {
@@ -36,6 +43,7 @@ export interface WorkspaceTabsSlice {
   openWorkspaceTab: (input: { panelType: WorkspaceTabPanelType; commit: Commit; filePath?: string | null; paneId?: string }) => void;
   closeWorkspaceTab: (paneId: string, tabId: string) => void;
   activateWorkspaceTab: (paneId: string, tabId: string) => void;
+  toggleCodeInnerPanel: (paneId: string, tabId: string, panel: CodeInnerPanelType) => void;
   focusPane: (paneId: string) => void;
   splitWorkspacePaneWithTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
   setPaneSplitSize: (paneId: string, sizePercent: number) => void;
@@ -51,6 +59,9 @@ export function createWorkspaceTab(input: { panelType: WorkspaceTabPanelType; co
     panelType: input.panelType,
     commit: input.commit,
     filePath: input.filePath ?? null,
+    codeInnerPanels: input.panelType === 'code'
+      ? { aiSummary: false, symbolGraph: false }
+      : undefined,
   };
 }
 
@@ -249,6 +260,34 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           : currentPane),
         focusedPaneId: paneId,
         selectedCommit: tab.commit,
+      }));
+    },
+
+    toggleCodeInnerPanel: (paneId, tabId, panel) => {
+      set((current) => ({
+        paneTree: replacePaneNode(current.paneTree, paneId, (currentPane) => {
+          if (currentPane.kind !== 'leaf') {
+            return currentPane;
+          }
+
+          return {
+            ...currentPane,
+            tabs: currentPane.tabs.map((tab) => {
+              if (tab.id !== tabId || tab.panelType !== 'code') {
+                return tab;
+              }
+
+              const currentPanels = tab.codeInnerPanels ?? { aiSummary: false, symbolGraph: false };
+              return {
+                ...tab,
+                codeInnerPanels: {
+                  ...currentPanels,
+                  [panel]: !currentPanels[panel],
+                },
+              };
+            }),
+          };
+        }),
       }));
     },
 

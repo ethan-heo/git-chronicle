@@ -3,7 +3,7 @@ import { analyzeSymbolGraph } from '../intraFileDependencyService';
 import { l10n } from './shared';
 
 export interface AnalyzeSymbolGraphPayload {
-  paneId?: string;
+  tabId?: string;
   filePath?: string;
   commitHash?: string;
 }
@@ -14,7 +14,7 @@ export async function handleAnalyzeSymbolGraph(panel: vscode.WebviewPanel, conte
   if (!repoPath || !payload.filePath) {
     await panel.webview.postMessage({
       type: 'SYMBOL_GRAPH_LOAD_FAILED',
-      payload: { message: l10n('Failed to analyze symbol graph'), paneId: payload.paneId },
+      payload: { message: l10n('Failed to analyze symbol graph'), tabId: payload.tabId },
     });
     return;
   }
@@ -26,13 +26,13 @@ export async function handleAnalyzeSymbolGraph(panel: vscode.WebviewPanel, conte
       type: 'SYMBOL_GRAPH_LOADED',
       payload: {
         ...result,
-        paneId: payload.paneId,
+        tabId: payload.tabId,
       },
     });
   } catch (error) {
     await panel.webview.postMessage({
       type: 'SYMBOL_GRAPH_LOAD_FAILED',
-      payload: { message: error instanceof Error ? error.message : l10n('Failed to analyze symbol graph'), paneId: payload.paneId },
+      payload: { message: error instanceof Error ? error.message : l10n('Failed to analyze symbol graph'), tabId: payload.tabId },
     });
   }
   void context;

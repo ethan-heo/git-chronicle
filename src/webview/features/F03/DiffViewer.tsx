@@ -7,7 +7,7 @@ import { CopyMarkdownButton, diffRangeToMarkdown } from '../F11';
 import { DiffFoldRow } from './DiffFoldRow';
 import { DiffLine } from './DiffLine';
 import { buildDisplayItems, computeFoldGroups, CONTEXT_LINE_COUNT } from './foldDiffLines';
-import type { DiffDisplayItem, DiffLineData, DiffFoldGroup } from './types';
+import type { DiffDisplayItem, DiffLineData, DiffFoldGroup, LineRange } from './types';
 
 interface DiffViewerProps {
   diffLines: DiffLineData[];
@@ -16,6 +16,9 @@ interface DiffViewerProps {
   error: string | null;
   isBinaryFile: boolean;
   isDeletedFile: boolean;
+  highlightRange?: LineRange | null;
+  scrollToRange?: LineRange | null;
+  scrollRequestId?: number;
   onRetry: () => void;
 }
 
@@ -26,6 +29,9 @@ export const DiffViewer: FC<DiffViewerProps> = ({
   error,
   isBinaryFile,
   isDeletedFile,
+  highlightRange = null,
+  scrollToRange = null,
+  scrollRequestId = 0,
   onRetry,
 }) => {
   const { t } = useTranslation();
@@ -44,6 +50,7 @@ export const DiffViewer: FC<DiffViewerProps> = ({
     () => buildDisplayItems(diffLines, foldGroups, expandedFoldIds),
     [diffLines, expandedFoldIds, foldGroups],
   );
+  const lineElementsRef = useRef(new Map<number, HTMLDivElement>());
 
   const selectedRange = useMemo(() => {
     if (selectionStart === null || selectionEnd === null) {
@@ -89,8 +96,58 @@ export const DiffViewer: FC<DiffViewerProps> = ({
     firstChange?.scrollIntoView({ block: 'center' });
   }, [diffLines, error, isBinaryFile, isLoading]);
 
+  useEffect(() => {
+    if (!scrollToRange || scrollRequestId === 0) {
+      return;
+    }
+
+    const matchingLineIndex = diffLines.findIndex((line) => {
+      const lineNumber = line.newLineNumber;
+      return lineNumber !== null && lineNumber >= scrollToRange.start && lineNumber <= scrollToRange.end;
+    });
+
+    if (matchingLineIndex < 0) {
+      return;
+    }
+
+    const foldGroup = foldGroups.find((group) => matchingLineIndex >= group.startIndex && matchingLineIndex <= group.endIndex);
+    if (foldGroup && !expandedFoldIds.has(foldGroup.id)) {
+      setExpandedFoldIds((current) => {
+        if (current.has(foldGroup.id)) {
+          return current;
+        }
+
+        const next = new Set(current);
+        next.add(foldGroup.id);
+        return next;
+      });
+      return;
+    }
+
+    const targetLineNumber = diffLines[matchingLineIndex]?.newLineNumber;
+    if (targetLineNumber === null || targetLineNumber === undefined) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      lineElementsRef.current.get(targetLineNumber)?.scrollIntoView({ block: 'center' });
+    });
+  }, [diffLines, expandedFoldIds, foldGroups, scrollRequestId, scrollToRange]);
+
   const renderDiffLine = (line: DiffLineData, index: number): ReactElement => (
     <div
+      ref={(element) => {
+        if (line.newLineNumber === null) {
+          return;
+        }
+
+        if (element) {
+          lineElementsRef.current.set(line.newLineNumber, element);
+          return;
+        }
+
+        lineElementsRef.current.delete(line.newLineNumber);
+      }}
       key={`${index}-${line.type}-${line.oldLineNumber ?? 'x'}-${line.newLineNumber ?? 'x'}`}
       onMouseDown={(event) => {
         event.preventDefault();
@@ -152,6 +209,12 @@ export const DiffViewer: FC<DiffViewerProps> = ({
       <DiffLine
         line={line}
         isSelected={Boolean(selectedRange && index >= selectedRange.start && index <= selectedRange.end)}
+        isSymbolHighlighted={Boolean(
+          highlightRange
+          && line.newLineNumber !== null
+          && line.newLineNumber >= highlightRange.start
+          && line.newLineNumber <= highlightRange.end,
+        )}
       />
     </div>
   );

@@ -49,10 +49,16 @@ unified diff 형식의 전체 코드 변경 내역을 스크롤 가능한 영역
 #### Props
 ```typescript
 interface DiffViewerProps {
-  diffContent: DiffLine[];
-  language: string;
-  isBinary: boolean;
-  isDeleted: boolean;
+  diffLines: DiffLineData[];
+  filePath: string;
+  isLoading: boolean;
+  error: string | null;
+  isBinaryFile: boolean;
+  isDeletedFile: boolean;
+  highlightRange?: { start: number; end: number } | null;
+  scrollToRange?: { start: number; end: number } | null;
+  scrollRequestId?: number;
+  onRetry: () => void;
 }
 ```
 
@@ -63,6 +69,8 @@ interface DiffViewerProps {
 - 드래그 종료 지점 근처에 [복사] 아이콘 오버레이 표시, 클릭 시 선택 범위를 마크다운으로 복사
 - 변경 없는 긴 컨텍스트 구간은 기본 접힘 상태로 시작하고, 접힘 행 클릭으로 개별 구간을 펼칠 수 있음
 - 활성 화면에서는 메시지 리스너 등록 후 diff 요청을 전송해야 한다
+- 심볼 캔버스 노드 호버 시 해당 `newLineNumber` 범위를 배경 하이라이트한다
+- 심볼 캔버스 노드 클릭 시 대상 라인이 접혀 있으면 해당 fold를 먼저 펼친 뒤 중앙으로 스크롤한다
 
 #### States
 - `loading`: diff 로드 중
@@ -196,9 +204,10 @@ F03_CodeViewer 전용. DiffViewer 내에서만 사용.
 
 | 인터랙션 | 트리거 | 결과 |
 |---------|--------|------|
-| 뒤로가기 | `BackButton` 클릭 | S-02 복귀 |
 | 스크롤 | 스크롤 | diff 내용 탐색 |
 | 폴드 펼치기 | `DiffFoldRow` 행 클릭 | 해당 변경 없는 컨텍스트 구간을 펼쳐 실제 라인을 표시 |
+| 심볼 하이라이트 | F10 노드 호버 | 해당 라인 범위 배경 강조, 스크롤 없음 |
+| 심볼 이동 | F10 노드 클릭 | 해당 라인 범위 강조 + 필요 시 fold 자동 펼침 + 중앙 스크롤 |
 
 ---
 
