@@ -242,7 +242,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
       set({
         paneTree: collapsedTree,
         focusedPaneId: nextFocusedPane.paneId,
-        selectedCommit: nextActiveTab?.commit ?? (state.focusedPaneId === paneId ? null : state.selectedCommit),
+        selectedCommit: nextActiveTab?.commit ?? state.selectedCommit,
       });
     },
 
