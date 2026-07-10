@@ -1,4 +1,23 @@
 
+## [1.3.0](https://github.com/ethan-heo/git-chronicle/compare/v1.2.0...v1.3.0) (2026-07-10)
+
+### Features
+
+* **extension:** add new window command and refresh AI models ([c1031d5](https://github.com/ethan-heo/git-chronicle/commit/c1031d5364252bee88650f170c87d5570c5fc003))
+* **workspace:** localize summary save names and pane actions ([6805b26](https://github.com/ethan-heo/git-chronicle/commit/6805b26e77d10bf3ae6ef6642678f6f2a7b6225a))
+* **workspace:** merge sidebar filters into commit section ([4284a54](https://github.com/ethan-heo/git-chronicle/commit/4284a545bc4ed14a2fde452368faa3a6ef56023b))
+* **workspace:** move file ai and symbol panels into code tabs ([dbcb631](https://github.com/ethan-heo/git-chronicle/commit/dbcb63134776a356e3fcd18af6457b77b0451d56))
+* **workspace:** add S02 split view panes ([994090f](https://github.com/ethan-heo/git-chronicle/commit/994090fbe9f31609bcfdfc5f3d7a87341d5cfa5f))
+* **workspace:** add tabbed workspace shell ([1bb0641](https://github.com/ethan-heo/git-chronicle/commit/1bb0641c139ea60e826d768d7c97291ce926b416))
+* **s02:** move settings into sidebar funnel ([a62ee21](https://github.com/ethan-heo/git-chronicle/commit/a62ee2155a31c6dfcae477fa9feb7016ecce9e02))
+* **workspace:** merge commit flow into sidebar workspace ([2215a5a](https://github.com/ethan-heo/git-chronicle/commit/2215a5a14c2cf52302df3875092672bad2dc4e05))
+
+### Bug Fixes
+
+* **workspace-tabs:** preserve selected commit after closing last tab ([8ad9c27](https://github.com/ethan-heo/git-chronicle/commit/8ad9c27a744a0560429fbc00edfb13fce7ed781f))
+* **workspace:** preserve selected commit state ([59cc670](https://github.com/ethan-heo/git-chronicle/commit/59cc670fd65f7d0f3864c803a8ded84cb8cd0479))
+* **sidebar:** expand section header toggle hit area ([142c8ec](https://github.com/ethan-heo/git-chronicle/commit/142c8ec73fa3c203c110dbe6aa87d3727051e33e))
+
 ## [1.2.0](https://github.com/ethan-heo/git-chronicle/compare/v1.1.2...v1.2.0) (2026-07-08)
 
 ### Features
