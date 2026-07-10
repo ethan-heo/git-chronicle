@@ -1,0 +1,217 @@
+.github-markdown {
+  color: var(--gae-color-text-primary);
+}
+
+.github-markdown > :first-child {
+  margin-top: 0;
+}
+
+.github-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.github-markdown h1,
+.github-markdown h2,
+.github-markdown h3,
+.github-markdown h4,
+.github-markdown h5,
+.github-markdown h6 {
+  margin: 1.5em 0 0.55em;
+  color: var(--gae-color-text-primary);
+  font-weight: var(--gae-font-weight-bold);
+  line-height: 1.3;
+}
+
+.github-markdown h1 {
+  font-size: 24px;
+}
+
+.github-markdown h2 {
+  font-size: 20px;
+}
+
+.github-markdown h3 {
+  font-size: 17px;
+}
+
+.github-markdown h4,
+.github-markdown h5,
+.github-markdown h6 {
+  font-size: 14px;
+}
+
+.github-markdown p,
+.github-markdown li,
+.github-markdown blockquote,
+.github-markdown summary {
+  color: color-mix(in srgb, var(--gae-color-text-primary) 94%, var(--gae-color-text-secondary));
+  font-size: var(--gae-font-size-base);
+  line-height: 1.7;
+}
+
+.github-markdown p,
+.github-markdown ul,
+.github-markdown ol,
+.github-markdown pre,
+.github-markdown blockquote,
+.github-markdown table,
+.github-markdown hr,
+.github-markdown details {
+  margin: 0 0 14px;
+}
+
+.github-markdown ul,
+.github-markdown ol {
+  padding-left: 22px;
+}
+
+.github-markdown ul {
+  list-style: disc;
+}
+
+.github-markdown ol {
+  list-style: decimal;
+}
+
+.github-markdown ul ul {
+  list-style: circle;
+}
+
+.github-markdown ul ul ul {
+  list-style: square;
+}
+
+.github-markdown ol ol {
+  list-style: lower-alpha;
+}
+
+.github-markdown ol ol ol {
+  list-style: lower-roman;
+}
+
+.github-markdown li + li {
+  margin-top: 6px;
+}
+
+.github-markdown a {
+  color: var(--gae-color-text-link);
+}
+
+.github-markdown blockquote {
+  border-left: 3px solid var(--gae-color-text-link);
+  background: color-mix(in srgb, var(--gae-color-surface-elevated) 82%, transparent);
+  padding: 10px 14px;
+}
+
+.github-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--gae-border-color-default);
+}
+
+.github-markdown th,
+.github-markdown td {
+  border: 1px solid var(--gae-border-color-default);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.github-markdown th {
+  background: var(--gae-color-surface-secondary);
+  color: var(--gae-color-text-primary);
+  font-size: var(--gae-font-size-sm);
+  font-weight: var(--gae-font-weight-bold);
+}
+
+.github-markdown td {
+  color: color-mix(in srgb, var(--gae-color-text-primary) 94%, var(--gae-color-text-secondary));
+  font-size: var(--gae-font-size-sm);
+}
+
+.github-markdown code {
+  border-radius: var(--gae-border-radius-sm);
+  background: color-mix(in srgb, var(--gae-color-text-primary) 8%, transparent);
+  padding: 1px 5px;
+  color: var(--gae-color-text-primary);
+  font-family: var(--gae-font-family-mono);
+  font-size: var(--gae-font-size-sm);
+}
+
+.github-markdown pre {
+  overflow-x: auto;
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-md);
+  background: var(--gae-color-surface-secondary);
+  padding: 12px 14px;
+}
+
+.github-markdown pre code {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--gae-color-text-primary);
+  font-size: var(--gae-font-size-sm);
+  line-height: 1.6;
+}
+
+.github-markdown hr {
+  border: 0;
+  border-top: 1px solid var(--gae-border-color-default);
+}
+
+.github-markdown img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.github-markdown details {
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-md);
+  background: color-mix(in srgb, var(--gae-color-surface-elevated) 70%, transparent);
+  padding: 10px 14px;
+}
+
+.github-markdown summary {
+  cursor: pointer;
+  font-weight: var(--gae-font-weight-bold);
+}
+
+.github-markdown .note-preview-mermaid,
+.github-markdown .note-preview-mermaid-loading,
+.github-markdown .note-preview-mermaid-error {
+  margin: 0 0 14px;
+}
+
+.github-markdown .note-preview-mermaid {
+  overflow-x: auto;
+  padding: 0;
+}
+
+.github-markdown .note-preview-mermaid svg {
+  display: block;
+  min-width: max-content;
+  max-width: none;
+}
+
+.github-markdown .note-preview-mermaid-loading,
+.github-markdown .note-preview-mermaid-error {
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-md);
+  background: var(--gae-color-surface-secondary);
+  padding: 12px 14px;
+}
+
+.github-markdown .note-preview-mermaid-loading {
+  color: var(--gae-color-text-secondary);
+  font-size: var(--gae-font-size-sm);
+}
+
+.github-markdown .note-preview-mermaid-error-title {
+  margin: 0 0 8px;
+  color: var(--gae-color-semantic-error);
+  font-size: var(--gae-font-size-sm);
+  font-weight: var(--gae-font-weight-bold);
+}

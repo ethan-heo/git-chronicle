@@ -196,7 +196,7 @@ F12 전용. `PRDetailPanel`, `IssueDetailPanel` 둘 다 사용.
 ### Component: GithubMarkdown
 
 #### Purpose
-PR/Issue 본문·리뷰 총평·댓글 본문의 마크다운을 렌더링하는 공용 내부 컴포넌트. F11 `NoteEditorPanel`의 `ReactMarkdown` + `HighlightedCode` 패턴을 재사용하되, Mermaid 다이어그램 렌더링은 포함하지 않는다(범위 밖).
+PR/Issue 본문·리뷰 총평·댓글 본문의 마크다운을 렌더링하는 공용 내부 컴포넌트. F11 `NoteEditorPanel`의 `ReactMarkdown` + `HighlightedCode`/`MermaidBlock` 패턴을 재사용하되, GitHub 본문에 섞인 원본 HTML도 `rehype-raw` + `rehype-sanitize`로 함께 렌더링한다.
 
 #### Props
 ```typescript
