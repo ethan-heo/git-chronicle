@@ -55,6 +55,10 @@ export const createChangedFilesSlice: StateCreator<AppState, [], [], ChangedFile
       return;
     }
 
+    if (entry.hasLoaded && !entry.error) {
+      return;
+    }
+
     set((current) => ({
       changedFilesByCommit: {
         ...current.changedFilesByCommit,

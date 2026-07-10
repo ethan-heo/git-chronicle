@@ -297,10 +297,11 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
         return;
       }
 
-      set({
+      const activeTab = getActiveTab(pane);
+      set((state) => ({
         focusedPaneId: paneId,
-        selectedCommit: getActiveTab(pane)?.commit ?? null,
-      });
+        selectedCommit: activeTab ? activeTab.commit : state.selectedCommit,
+      }));
     },
 
     splitWorkspacePaneWithTab: ({ sourcePaneId, tabId, targetPaneId, zone }) => {
