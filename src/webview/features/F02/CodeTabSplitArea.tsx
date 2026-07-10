@@ -28,10 +28,11 @@ export const CodeTabSplitArea: FC<CodeTabSplitAreaProps> = ({
     isActive: isActive && codeInnerPanels.symbolGraph,
     tabId: tab.id,
     selectedFile,
-    commitHash: tab.commit.hash,
+    // 'code' 탭은 항상 commit을 가진다는 것이 WorkspaceTab의 불변식이다.
+    commitHash: tab.commit?.hash ?? '',
   });
 
-  if (!tab.filePath) {
+  if (!tab.filePath || !tab.commit) {
     return null;
   }
   const showRightPane = codeInnerPanels.aiSummary || codeInnerPanels.symbolGraph;

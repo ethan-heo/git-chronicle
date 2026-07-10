@@ -9,6 +9,7 @@
 - [F05b_AISummaryCommit](../../features/F05b_ai_summary_commit/spec.md)
 - [F09_AISummaryQA](../../features/F09_ai_summary_qa/spec.md)
 - [F10_IntraFileSymbolDependencyCanvas](../../features/F10_intra_file_symbol_dependency_canvas/spec.md)
+- [F12_GitHubActivity](../../features/F12_github_activity/spec.md)
 
 ---
 
@@ -51,8 +52,12 @@ S02_WorkspaceScreen
 │     │     │  ├─ Popover
 │     │     │  │  └─ CommitFilterPanel (embedded)
 │     │     │  └─ CommitList
-│     │     └─ FileTreeSection
-│     │        └─ FileTree
+│     │     ├─ FileTreeSection
+│     │     │  └─ FileTree
+│     │     ├─ PRsSection (기본 접힘, 독립 토글)
+│     │     │  └─ PRList → PRListItem[] (PRStatusBadge)
+│     │     └─ IssuesSection (기본 접힘, 독립 토글)
+│     │        └─ IssueList → IssueListItem[] (IssueStatusBadge)
 │     └─ settings → SidebarSettingsPanel
 │        ├─ SidebarSettingsHeader
 │        ├─ AIProviderSection
@@ -78,11 +83,15 @@ S02_WorkspaceScreen
       │     │  └─ SymbolGraphPanel (토글 시)
       │     ├─ aiSummary → AISummaryPanel
       │     ├─ fileCanvas → DependencyCanvasPanel
-      │     └─ note → NoteEditorPanel
+      │     ├─ note → NoteEditorPanel
+      │     ├─ pr → PRDetailPanel (ReviewSummaryList, CommentThread)
+      │     └─ issue → IssueDetailPanel (CommentThread)
       └─ split → ResizableSplitPane (재귀)
 ```
 
-사이드바 안의 두 섹션은 각각 독립적으로 접고 펼칠 수 있으며, 둘 다 펼쳐져 있을 때는 `ResizableSplitPane`의 세로 분할로 높이를 드래그 조정한다. 이 펼침 상태와 마지막 높이는 Webview State에 저장된다. 필터 입력은 커밋 목록 섹션 헤더의 토글 버튼이 여는 팝오버 오버레이로 제공되며, 목록 레이아웃 높이에는 영향을 주지 않는다.
+사이드바 안의 `CommitsSection`/`FileTreeSection`/`PRsSection`/`IssuesSection` 4개 섹션은 [`SidebarSectionGroup`](../../core/global_components.md#sidebarsectiongroup)이 동등한 형제로 묶어 배치한다. 각 섹션은 독립적으로 접고 펼칠 수 있고, 펼침 상태와 마지막 높이를 모두 Webview State에 저장한다(4섹션 모두 동일한 규칙 — F01/F02와 F12 사이의 차이는 없다). 필터 입력은 커밋 목록 섹션 헤더의 토글 버튼이 여는 팝오버 오버레이로 제공되며, 목록 레이아웃 높이에는 영향을 주지 않는다.
+
+연속으로 펼쳐진 섹션들은 서로 `ResizableSplitPane` 세로 분할로 드래그 리사이즈할 수 있다 — 클러스터의 마지막 섹션이 `flex-1`로 남은 공간을 흡수하고, 그 앞 섹션들은 각각 최소 높이(120px)를 지키는 선에서 고정 높이를 가진다. 컨테이너가 좁아져 모든 펼친 섹션이 자기 최소 높이조차 못 받으면, 각 섹션이 정확히 최소 높이를 받고 사이드바 본문 컨테이너 자체가 세로 스크롤된다(어느 섹션도 0으로 사라지지 않는다). 접힌 섹션으로 서로 떨어진 펼침 섹션들(예: Commit만 펼치고 File은 접고 PR을 펼친 경우)은 독립된 그룹으로 남은 공간을 비례 분배한다. 자세한 동작은 [global_components](../../core/global_components.md#sidebarsectiongroup)를 참고한다.
 
 ---
 
@@ -92,6 +101,7 @@ S02_WorkspaceScreen
 |---------|------|-----------|
 | `WorkspaceHeading` | 이 문서 | `src/webview/features/F02/WorkspaceHeading.tsx` |
 | `SidebarSection` | 이 문서 | `src/webview/shared/components/SidebarSection.tsx` |
+| `SidebarSectionGroup` | [global_components](../../core/global_components.md#sidebarsectiongroup) | `src/webview/shared/components/SidebarSectionGroup.tsx` |
 | `Popover` | [global_components](../../core/global_components.md#popover) | `src/webview/shared/components/Popover.tsx` |
 | `CommitFilterPanel` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitfilterpanel) | `src/webview/features/F01/CommitFilterPanel.tsx` |
 | `FilterToggleButton` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-filtertogglebutton) | `src/webview/features/F01/FilterToggleButton.tsx` |
@@ -104,6 +114,10 @@ S02_WorkspaceScreen
 | `SettingsToggleButton` | 이 문서 | `src/webview/features/F02/SettingsToggleButton.tsx` |
 | `SidebarSettingsPanel` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-sidebarsettingspanel) | `src/webview/features/F06/SidebarSettingsPanel.tsx` |
 | `ResizableSplitPane` | [global_components](../../core/global_components.md#resizablesplitpane) | `src/webview/shared/components/ResizableSplitPane.tsx` |
+| `PRsSection` | [F12 blueprint](../../features/F12_github_activity/blueprint.md#component-prssection--issuessection) | `src/webview/features/F12/PRsSection.tsx` |
+| `IssuesSection` | [F12 blueprint](../../features/F12_github_activity/blueprint.md#component-prssection--issuessection) | `src/webview/features/F12/IssuesSection.tsx` |
+| `PRDetailPanel` | [F12 blueprint](../../features/F12_github_activity/blueprint.md#component-prdetailpanel--issuedetailpanel) | `src/webview/features/F12/PRDetailPanel.tsx` |
+| `IssueDetailPanel` | [F12 blueprint](../../features/F12_github_activity/blueprint.md#component-prdetailpanel--issuedetailpanel) | `src/webview/features/F12/IssueDetailPanel.tsx` |
 | `PaneTree` | 이 문서 | `src/webview/features/F02/PaneTree.tsx` |
 | `useChangedFileTree` | 이 문서 (F02 소속 훅) | `src/webview/features/F02/useChangedFileTree.ts` |
 | `useSymbolGraph` | 이 문서 (F10 소속 훅) | `src/webview/features/F10/useSymbolGraph.ts` |
@@ -121,6 +135,8 @@ S02_WorkspaceScreen
 | `aiSummary` | leaf pane의 `activeTab.panelType === "aiSummary"` | 커밋 단위 `AISummaryPanel` |
 | `fileCanvas` | leaf pane의 `activeTab.panelType === "fileCanvas"` | `DependencyCanvasPanel` |
 | `note` | leaf pane의 `activeTab.panelType === "note"` | `NoteEditorPanel` |
+| `pr` | leaf pane의 `activeTab.panelType === "pr"` | `PRDetailPanel` |
+| `issue` | leaf pane의 `activeTab.panelType === "issue"` | `IssueDetailPanel` |
 
 ---
 
@@ -136,7 +152,8 @@ S02_WorkspaceScreen
 - `WorkspaceTabBar` 우측의 `AISummaryToggleButton` / `FileCanvasToggleButton` / `NoteToggleButton`은 `PaneActionsGroup`으로 묶여 기본 접힘 상태이며, 그룹 토글 버튼을 눌러야 펼쳐진다. 이 펼침 상태는 leaf pane별로 독립이며 Webview State에 저장되지 않는다.
 - leaf pane은 클릭해도 포커스 강조 아웃라인을 표시하지 않는다. `focusedPaneId`는 사이드바 커밋/파일 컨텍스트가 어느 pane을 따를지 결정하는 내부 상태로만 쓰인다.
 - 같은 대상(`panelType + commitHash + filePath`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.
-- 최상위 워크스페이스 탭은 `code` / `aiSummary` / `fileCanvas` / `note` 네 종류만 연다. 파일 단위 AI 요약과 심볼 캔버스는 독립 탭이 아니라 `code` 탭 내부 토글로만 연다.
+- 최상위 워크스페이스 탭은 `code` / `aiSummary` / `fileCanvas` / `note` / `pr` / `issue` 여섯 종류를 연다. 파일 단위 AI 요약과 심볼 캔버스는 독립 탭이 아니라 `code` 탭 내부 토글로만 연다.
+- `pr`/`issue` 탭은 사이드바 `PRsSection`/`IssuesSection` 목록 클릭으로 연다. 커밋과 무관하므로 탭 식별은 `panelType + prNumber`/`panelType + issueNumber`를 쓰고(F02 나머지 탭의 `panelType + commitHash + filePath`와 별도 규칙), 이 탭이 포커스돼도 사이드바의 `selectedCommit` 기반 커밋 컨텍스트(파일 트리 등)는 갱신되지 않고 마지막 값을 그대로 유지한다.
 - 탭을 드래그해 다른 leaf pane의 상/하/좌/우 가장자리로 드롭하면 해당 방향으로 pane이 분할된다. 중앙 합류 드롭은 지원하지 않는다.
 - 탭을 닫으면 같은 pane 안에서 오른쪽 우선 fallback 탭을 활성화하고, leaf pane의 마지막 탭을 닫으면 그 pane은 트리에서 제거되며 sibling pane이 공간을 승계한다.
 - 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환되며, 사이드바의 커밋/파일 컨텍스트는 `focusedPaneId`가 가리키는 leaf pane을 따른다.

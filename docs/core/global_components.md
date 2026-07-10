@@ -171,6 +171,19 @@
 
 ---
 
+## InfiniteScrollTrigger
+
+**용도:** 스크롤 하단 감지 시 추가 데이터 로드를 트리거하는 `IntersectionObserver` 기반 컴포넌트. F01 커밋 목록과 F12 PR/Issue 목록의 무한 스크롤에서 공통으로 사용한다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `isEnabled` | `boolean` | 관찰 활성화 여부 (예: `!isLoading && hasMore`) |
+| `onTrigger` | `() => void` | 뷰포트에 진입했을 때 호출되는 콜백 |
+
+**구현 파일:** `src/webview/shared/components/InfiniteScrollTrigger.tsx`
+
+---
+
 ## TopHeader
 
 **용도:** 공용 상단 헤더. 현재는 S-01 계열 상세 화면이 제거된 뒤 S-06 설정 화면에서만 사용하며, 제목·보조 문맥·뒤로가기·설정 아이콘 슬롯을 제공한다.
@@ -193,7 +206,7 @@
 
 ## ResizableSplitPane
 
-**용도:** 두 패널 사이에 드래그 가능한 Divider를 제공하는 공용 레이아웃 컨테이너. F10 파일 내부 심볼 캔버스의 좌우 분할과 S02 사이드바 섹션의 상하 분할에 공통으로 사용한다.
+**용도:** 두 패널 사이에 드래그 가능한 Divider를 제공하는 공용 레이아웃 컨테이너. F10 파일 내부 심볼 캔버스의 좌우 분할, F02 코드 탭의 AI 요약/심볼 그래프 분할에서 직접 사용하며, S02 사이드바 섹션의 상하 분할은 [`SidebarSectionGroup`](#sidebarsectiongroup)이 내부적으로 재귀 조합해 사용한다.
 
 | 속성 | 타입 | 설명 |
 |------|------|------|
@@ -206,9 +219,52 @@
 | `left` / `right` | `React.ReactNode` | 좌/우 패널 콘텐츠 |
 | `className` | `string \| undefined` | 추가 클래스 |
 
-**동작:** Divider 드래그는 `mousemove`/`mouseup` 이벤트로 처리하며, 드래그 중에는 텍스트 선택을 막고 분할 방향에 맞는 resize 커서로 바꾼다.
+**동작:** Divider 드래그는 `mousemove`/`mouseup` 이벤트로 처리하며, 드래그 중에는 텍스트 선택을 막고 분할 방향에 맞는 resize 커서로 바꾼다. `controlledLeftPx`를 사용하는 경우 `ResizeObserver`로 컨테이너의 실제 크기를 관찰해, 좌측 패널에 적용되는 값을 `containerSize - minRightPx - divider폭` 이하로 자동 clamp한다 — 컨테이너가 좁아져도 우측 패널이 0으로 밀려 사라지지 않고 항상 `minRightPx` 이상을 확보한다.
 
 **구현 파일:** `src/webview/shared/components/ResizableSplitPane.tsx`, `ResizableSplitPane.css`
+
+---
+
+## SidebarSection
+
+**용도:** 사이드바 안에서 접고 펼 수 있는 섹션 컨테이너. 제목·배지·헤더 액션 슬롯을 제공한다. F02의 `CommitsSection`/`FileTreeSection`, F12의 `PRsSection`/`IssuesSection`에서 사용한다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `title` | `string` | 섹션 제목 |
+| `isExpanded` | `boolean` | 펼침 상태 |
+| `onToggle` | `() => void` | 헤더 클릭 시 펼침/접힘 토글 |
+| `badge` | `ReactNode \| undefined` | 제목 옆 배지(주로 항목 개수) |
+| `actions` | `ReactNode \| undefined` | 헤더 우측 액션 슬롯 |
+| `children` | `ReactNode \| undefined` | 펼쳐졌을 때만 렌더링되는 본문 |
+
+**구현 파일:** `src/webview/shared/components/SidebarSection.tsx`
+
+---
+
+## SidebarSectionGroup
+
+**용도:** `SidebarSection`으로 감싼 N개 섹션을 하나의 세로 스택으로 배치하고, 펼쳐진 섹션끼리는 서로 리사이즈 가능하게, 접힌 섹션은 헤더만 차지하게 만드는 공용 레이아웃 컨테이너. S02 사이드바의 `CommitsSection`/`FileTreeSection`/`PRsSection`/`IssuesSection` 4개를 동등한 형제로 묶는 데 사용한다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `sections` | `SidebarSectionGroupItem[]` | 순서대로 렌더링할 섹션 목록 |
+| `className` | `string \| undefined` | 추가 클래스 |
+
+`SidebarSectionGroupItem`:
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `key` | `string` | React key |
+| `minHeightPx` | `number` | 이 섹션이 펼쳐졌을 때의 최소 높이 |
+| `heightPx` | `number` | 이 섹션이 펼쳐졌을 때의 (마지막 섹션이 아닌 경우) 고정 높이 |
+| `isExpanded` | `boolean` | 펼침 상태 |
+| `onHeightChange` | `(heightPx: number) => void` | 드래그로 높이가 바뀔 때 호출 |
+| `node` | `ReactNode` | 이미 완성된 `SidebarSection` 엘리먼트(헤더+본문 포함) |
+
+**동작:** 연속으로 펼쳐진 섹션들을 하나의 "클러스터"로 묶어 [`ResizableSplitPane`](#resizablesplitpane)을 재귀 중첩한다 — 클러스터의 마지막 섹션은 항상 남은 공간을 `flex-1`로 흡수하고, 그 앞의 섹션들은 각각 `heightPx` 고정 높이 + 드래그 가능한 divider를 가진다. 각 분할은 자신 뒤에 남은 모든 섹션의 `minHeightPx` 합을 `minRightPx`로 전달해 컨테이너가 좁아져도 뒤쪽 섹션이 0으로 사라지지 않게 한다. 접힌 섹션 사이에서 서로 떨어진 여러 클러스터가 생기면(예: 첫째 섹션만 펼침, 셋째 섹션만 펼침) 각 클러스터는 독립적인 `flex-1`로 취급되어 네이티브 flexbox가 남은 공간을 클러스터별 `minHeightPx`를 존중하며 비례 분배한다. 컨테이너 자체가 모든 섹션의 최소 높이 합보다도 좁으면(각 섹션이 정확히 최소 높이를 받고도 넘치면) 감싸는 부모의 세로 스크롤에 맡긴다(이 컴포넌트 자체는 `overflow`를 설정하지 않는다).
+
+**구현 파일:** `src/webview/shared/components/SidebarSectionGroup.tsx`
 
 ---
 

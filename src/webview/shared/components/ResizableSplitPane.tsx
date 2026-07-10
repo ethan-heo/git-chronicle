@@ -15,7 +15,7 @@ interface ResizableSplitPaneProps {
   className?: string;
 }
 
-const DIVIDER_WIDTH_PX = 6;
+export const DIVIDER_WIDTH_PX = 6;
 
 export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
   isOpen,
@@ -32,6 +32,25 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftWidthPercent, setLeftWidthPercent] = useState(defaultLeftPercent);
   const [isDragging, setIsDragging] = useState(false);
+  const [containerMainSizePx, setContainerMainSizePx] = useState<number | null>(null);
+  const hasControlledLeftPx = typeof controlledLeftPx === 'number';
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !hasControlledLeftPx) return;
+
+    const updateSize = (): void => {
+      const rect = container.getBoundingClientRect();
+      setContainerMainSizePx(orientation === 'horizontal' ? rect.width : rect.height);
+    };
+
+    updateSize();
+
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, [hasControlledLeftPx, orientation]);
 
   useEffect(() => {
     if (isOpen) {
@@ -85,12 +104,22 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
     };
   }, [controlledLeftPx, isDragging, minLeftPx, minRightPx, onLeftPxChange, orientation]);
 
+  const effectiveLeftPx = (() => {
+    if (typeof controlledLeftPx !== 'number' || containerMainSizePx === null) return controlledLeftPx;
+
+    // Reserve space for the right pane and divider first; only give the rest to the left pane.
+    // This keeps the right pane (e.g. Changed Files) from being squeezed to 0 when the
+    // container shrinks below the left pane's configured fixed size.
+    const maxLeftPx = Math.max(0, containerMainSizePx - minRightPx - DIVIDER_WIDTH_PX);
+    return Math.min(controlledLeftPx, maxLeftPx);
+  })();
+
   const leftStyle: CSSProperties = !isOpen
     ? { flex: '1 1 auto', width: '100%', height: '100%' }
-    : typeof controlledLeftPx === 'number'
+    : typeof effectiveLeftPx === 'number'
       ? orientation === 'horizontal'
-        ? { flex: `0 0 ${controlledLeftPx}px`, width: `${controlledLeftPx}px` }
-        : { flex: `0 0 ${controlledLeftPx}px`, height: `${controlledLeftPx}px` }
+        ? { flex: `0 0 ${effectiveLeftPx}px`, width: `${effectiveLeftPx}px` }
+        : { flex: `0 0 ${effectiveLeftPx}px`, height: `${effectiveLeftPx}px` }
       : orientation === 'horizontal'
         ? { flex: `0 0 ${leftWidthPercent}%`, width: `${leftWidthPercent}%` }
         : { flex: `0 0 ${leftWidthPercent}%`, height: `${leftWidthPercent}%` };

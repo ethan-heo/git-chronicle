@@ -68,6 +68,8 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
        ├─ [커밋 AI 정리]             → 본문 aiSummary 패널
        ├─ [캔버스 보기]              → 본문 fileCanvas 패널
        ├─ 파일 [심볼 그래프]         → 본문 symbolGraph 패널
+       ├─ 사이드바 [PR 클릭]         → 본문 pr 패널
+       ├─ 사이드바 [Issue 클릭]      → 본문 issue 패널
        └─ [노트]                    → [S-07: 노트] ──(뒤로가기)──→ 복귀
 
   [⚙ 아이콘] → [S-02 사이드바 설정 뷰]
@@ -89,6 +91,7 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문/답변으로 개별 파일까지 파고들며 분석. 커밋 전체 diff를 근거로 답변하며, 답변을 기존 요약 문서 하단에 append | [S02](../screens/S02_history_view/blueprint.md) |
 | [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F11_NoteEditor](../features/F11_note_editor/spec.md) | 노트 에디터 | 커밋 컨텍스트를 유지한 채 S02 내부 노트 탭에서 마크다운 노트를 작성하고 디바운스 자동저장 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F12_GitHubActivity](../features/F12_github_activity/spec.md) | GitHub PR/Issue | 사이드바에서 현재 저장소의 GitHub PR/Issue 목록을 조회하고, 클릭 시 본문 탭에서 제목·상태·라벨·본문·리뷰·댓글을 확인 | [S02](../screens/S02_history_view/blueprint.md) |
 
 ---
 
@@ -107,3 +110,4 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 - [F-09: AI 요약 Q&A](#f-09) → [features/F09_ai_summary_qa/spec.md](../features/F09_ai_summary_qa/spec.md)
 - [F-10: 파일 내부 심볼 의존성 캔버스](#f-10) → [features/F10_intra_file_symbol_dependency_canvas/spec.md](../features/F10_intra_file_symbol_dependency_canvas/spec.md)
 - [F-11: 노트 에디터](#f-11) → [features/F11_note_editor/spec.md](../features/F11_note_editor/spec.md)
+- [F-12: GitHub PR/Issue](#f-12) → [features/F12_github_activity/spec.md](../features/F12_github_activity/spec.md)

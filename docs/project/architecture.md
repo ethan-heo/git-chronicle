@@ -107,7 +107,13 @@ type WebviewToExtensionMessage =
   | { type: 'SET_SAVE_PATH' }
   | { type: 'CLEAR_SAVE_PATH' }
   | { type: 'FETCH_NOTE'; payload: { commitHash: string; commitMessage?: string; savePath?: string | null } }
-  | { type: 'SAVE_NOTE'; payload: { commitHash: string; commitMessage?: string; savePath?: string | null; content: string } };
+  | { type: 'SAVE_NOTE'; payload: { commitHash: string; commitMessage?: string; savePath?: string | null; content: string } }
+  | { type: 'FETCH_GITHUB_AUTH_STATE' }
+  | { type: 'CONNECT_GITHUB' }
+  | { type: 'FETCH_PULL_REQUESTS'; payload: { page?: number } }
+  | { type: 'FETCH_ISSUES'; payload: { page?: number } }
+  | { type: 'FETCH_PR_DETAIL'; payload: { number?: number } }
+  | { type: 'FETCH_ISSUE_DETAIL'; payload: { number?: number } };
 
 // Extension → Webview (응답/이벤트)
 type ExtensionToWebviewMessage =
@@ -144,7 +150,16 @@ type ExtensionToWebviewMessage =
   | { type: 'NOTE_LOADED'; payload: { content: string; savedPath: string | null } }
   | { type: 'NOTE_LOAD_FAILED'; payload: { message: string } }
   | { type: 'NOTE_SAVED'; payload: { savedPath: string } }
-  | { type: 'NOTE_SAVE_FAILED'; payload: { message: string } };
+  | { type: 'NOTE_SAVE_FAILED'; payload: { message: string } }
+  | { type: 'GITHUB_AUTH_STATE'; payload: { status: GithubAuthStatus; login?: string } }
+  | { type: 'PULL_REQUESTS_LOADED'; payload: { items: PullRequestSummary[]; hasMore: boolean; page: number } }
+  | { type: 'PULL_REQUESTS_LOAD_FAILED'; payload: { message: string } }
+  | { type: 'ISSUES_LOADED'; payload: { items: IssueSummary[]; hasMore: boolean; page: number } }
+  | { type: 'ISSUES_LOAD_FAILED'; payload: { message: string } }
+  | { type: 'PR_DETAIL_LOADED'; payload: { detail: PullRequestDetail } }
+  | { type: 'PR_DETAIL_LOAD_FAILED'; payload: { number?: number; message: string } }
+  | { type: 'ISSUE_DETAIL_LOADED'; payload: { detail: IssueDetail } }
+  | { type: 'ISSUE_DETAIL_LOAD_FAILED'; payload: { number?: number; message: string } };
 
 // AISettingsState (src/extension/aiProviderService.ts)
 interface AISettingsState {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mergePersistedWebviewState, readPersistedWebviewState, type PersistedWorkspaceSidebarState } from '../../bridge/persistedWebviewState';
-import { EmptyState, Popover, ResizableSplitPane, SidebarSection } from '../../shared/components';
+import { EmptyState, Popover, SidebarSection, SidebarSectionGroup, type SidebarSectionGroupItem } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
 import { computeWorkspaceTabId, findLeafPane, getActiveTab, type PaneLeafNode, type WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
@@ -11,6 +11,8 @@ import { DependencyCanvasPanel } from '../F04';
 import { AISummaryPanel } from '../F05b';
 import { SidebarSettingsPanel } from '../F06';
 import { NoteEditorPanel } from '../F11';
+import { IssueDetailPanel, IssuesSection, PRDetailPanel, PRsSection, useGithubAuth } from '../F12';
+import type { IssueSummary, PullRequestSummary } from '../F12';
 import { AISummaryToggleButton } from './AISummaryToggleButton';
 import { CodeTabSplitArea } from './CodeTabSplitArea';
 import { FileCanvasToggleButton } from './FileCanvasToggleButton';
@@ -30,6 +32,8 @@ const SIDEBAR_COLLAPSE_WIDTH = 0;
 const SECTION_MIN_HEIGHT = 120;
 const DEFAULT_COMMIT_LIST_SECTION_HEIGHT = 280;
 const DEFAULT_FILE_TREE_SECTION_HEIGHT = 280;
+const DEFAULT_PRS_SECTION_HEIGHT = 200;
+const DEFAULT_ISSUES_SECTION_HEIGHT = 200;
 const SIDEBAR_VIEW_TRANSITION_DURATION_MS = 200;
 
 const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
@@ -37,10 +41,13 @@ const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
   isFileTreeSectionExpanded: true,
   commitListSectionHeight: DEFAULT_COMMIT_LIST_SECTION_HEIGHT,
   fileTreeSectionHeight: DEFAULT_FILE_TREE_SECTION_HEIGHT,
+  isPRsSectionExpanded: false,
+  prsSectionHeight: DEFAULT_PRS_SECTION_HEIGHT,
+  isIssuesSectionExpanded: false,
+  issuesSectionHeight: DEFAULT_ISSUES_SECTION_HEIGHT,
   sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
   lastSidebarWidth: SIDEBAR_DEFAULT_WIDTH,
 };
-type SectionKey = 'commit' | 'file';
 type SidebarView = 'default' | 'settings';
 
 export const S02WorkspaceScreen: FC = () => {
@@ -72,6 +79,7 @@ export const S02WorkspaceScreen: FC = () => {
   const changedFileTree = useChangedFileTree({ isActive: isRouteSlotActive, commit: selectedCommit });
   const focusedPane = findLeafPane(paneTree, focusedPaneId) ?? findFirstPane(paneTree);
   const activeTab = focusedPane ? getActiveTab(focusedPane) : null;
+  useGithubAuth({ isActive: isRouteSlotActive });
   const {
     commitList,
     hasMoreCommits,
@@ -101,6 +109,18 @@ export const S02WorkspaceScreen: FC = () => {
   const [isFileTreeSectionExpanded, setIsFileTreeSectionExpanded] = useState(persistedSidebarState.isFileTreeSectionExpanded);
   const [commitListSectionHeight, setCommitListSectionHeight] = useState(persistedSidebarState.commitListSectionHeight);
   const [fileTreeSectionHeight, setFileTreeSectionHeight] = useState(persistedSidebarState.fileTreeSectionHeight);
+  const [isPRsSectionExpanded, setIsPRsSectionExpanded] = useState(
+    persistedSidebarState.isPRsSectionExpanded ?? DEFAULT_SIDEBAR_STATE.isPRsSectionExpanded,
+  );
+  const [prsSectionHeight, setPRsSectionHeight] = useState(
+    persistedSidebarState.prsSectionHeight ?? DEFAULT_SIDEBAR_STATE.prsSectionHeight,
+  );
+  const [isIssuesSectionExpanded, setIsIssuesSectionExpanded] = useState(
+    persistedSidebarState.isIssuesSectionExpanded ?? DEFAULT_SIDEBAR_STATE.isIssuesSectionExpanded,
+  );
+  const [issuesSectionHeight, setIssuesSectionHeight] = useState(
+    persistedSidebarState.issuesSectionHeight ?? DEFAULT_SIDEBAR_STATE.issuesSectionHeight,
+  );
   const [prevSelectedCommitHash, setPrevSelectedCommitHash] = useState(selectedCommit?.hash);
   const [sidebarView, setSidebarView] = useState<SidebarView>('default');
   const [renderedSidebarView, setRenderedSidebarView] = useState<SidebarView>('default');
@@ -113,7 +133,7 @@ export const S02WorkspaceScreen: FC = () => {
     setPrevSelectedCommitHash(selectedCommit?.hash);
   }
 
-  const isActiveTabCommitSelected = Boolean(activeTab && selectedCommit && activeTab.commit.hash === selectedCommit.hash);
+  const isActiveTabCommitSelected = Boolean(activeTab && activeTab.commit && selectedCommit && activeTab.commit.hash === selectedCommit.hash);
   const isFilterActive = Boolean(
     filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim(),
   );
@@ -135,7 +155,7 @@ export const S02WorkspaceScreen: FC = () => {
     );
   }, [changedFileTree.changedFiles]);
 
-  const openTab = useCallback((panelType: WorkspaceTab['panelType'], file?: ChangedFile | null) => {
+  const openTab = useCallback((panelType: 'code' | 'aiSummary' | 'fileCanvas' | 'note', file?: ChangedFile | null) => {
     if (!selectedCommit) {
       return;
     }
@@ -160,6 +180,17 @@ export const S02WorkspaceScreen: FC = () => {
     openTab('code', file);
   }, [openTab]);
 
+  const openPRTab = useCallback((pullRequest: PullRequestSummary) => {
+    openWorkspaceTab({ panelType: 'pr', prNumber: pullRequest.number, title: pullRequest.title });
+  }, [openWorkspaceTab]);
+
+  const openIssueTab = useCallback((issue: IssueSummary) => {
+    openWorkspaceTab({ panelType: 'issue', issueNumber: issue.number, title: issue.title });
+  }, [openWorkspaceTab]);
+
+  const activePRNumber = activeTab?.panelType === 'pr' ? activeTab.prNumber ?? null : null;
+  const activeIssueNumber = activeTab?.panelType === 'issue' ? activeTab.issueNumber ?? null : null;
+
   useEffect(() => {
     mergePersistedWebviewState({
       workspaceSidebar: {
@@ -167,6 +198,10 @@ export const S02WorkspaceScreen: FC = () => {
         isFileTreeSectionExpanded,
         commitListSectionHeight,
         fileTreeSectionHeight,
+        isPRsSectionExpanded,
+        prsSectionHeight,
+        isIssuesSectionExpanded,
+        issuesSectionHeight,
         sidebarWidth: isSidebarCollapsed ? 0 : sidebarWidth,
         lastSidebarWidth,
       },
@@ -176,8 +211,12 @@ export const S02WorkspaceScreen: FC = () => {
     fileTreeSectionHeight,
     isCommitListSectionExpanded,
     isFileTreeSectionExpanded,
+    isIssuesSectionExpanded,
+    isPRsSectionExpanded,
     isSidebarCollapsed,
+    issuesSectionHeight,
     lastSidebarWidth,
+    prsSectionHeight,
     sidebarWidth,
   ]);
 
@@ -381,114 +420,56 @@ export const S02WorkspaceScreen: FC = () => {
     </SidebarSection>
   );
 
-  const getSectionNode = (section: SectionKey): ReactElement => {
-    if (section === 'commit') {
-      return renderCommitListSection();
-    }
-
-    return renderFileTreeSection();
-  };
-
-  const getSectionHeight = (section: SectionKey): number => {
-    if (section === 'commit') {
-      return commitListSectionHeight;
-    }
-
-    return fileTreeSectionHeight;
-  };
-
-  const setSectionHeight = (section: SectionKey, nextHeight: number): void => {
-    if (section === 'commit') {
-      setCommitListSectionHeight(nextHeight);
-      return;
-    }
-
-    setFileTreeSectionHeight(nextHeight);
-  };
-
-  const renderCollapsedSection = (section: SectionKey): ReactElement => (
-    <div className="shrink-0">
-      {getSectionNode(section)}
-    </div>
-  );
-
-  const renderExpandedGroup = (sections: SectionKey[]): ReactElement => {
-    if (sections.length === 1) {
-      return (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {getSectionNode(sections[0])}
-        </div>
-      );
-    }
-
-    if (sections.length === 2) {
-      const [first, second] = sections;
-      return (
-        <ResizableSplitPane
-          isOpen
-          orientation="vertical"
-          minLeftPx={SECTION_MIN_HEIGHT}
-          minRightPx={SECTION_MIN_HEIGHT}
-          controlledLeftPx={getSectionHeight(first)}
-          onLeftPxChange={(leftPx, rightPx) => {
-            setSectionHeight(first, leftPx);
-            setSectionHeight(second, rightPx);
-          }}
-          className="h-full min-h-0"
-          left={getSectionNode(first)}
-          right={getSectionNode(second)}
+  const sidebarSections: SidebarSectionGroupItem[] = [
+    {
+      key: 'commit',
+      minHeightPx: SECTION_MIN_HEIGHT,
+      heightPx: commitListSectionHeight,
+      isExpanded: isCommitListSectionExpanded,
+      onHeightChange: setCommitListSectionHeight,
+      node: renderCommitListSection(),
+    },
+    {
+      key: 'file',
+      minHeightPx: SECTION_MIN_HEIGHT,
+      heightPx: fileTreeSectionHeight,
+      isExpanded: isFileTreeSectionExpanded,
+      onHeightChange: setFileTreeSectionHeight,
+      node: renderFileTreeSection(),
+    },
+    {
+      key: 'pr',
+      minHeightPx: SECTION_MIN_HEIGHT,
+      heightPx: prsSectionHeight,
+      isExpanded: isPRsSectionExpanded,
+      onHeightChange: setPRsSectionHeight,
+      node: (
+        <PRsSection
+          isActive={isRouteSlotActive}
+          activePRNumber={activePRNumber}
+          isExpanded={isPRsSectionExpanded}
+          onToggleExpanded={() => setIsPRsSectionExpanded((current) => !current)}
+          onSelectPullRequest={openPRTab}
         />
-      );
-    }
-
-    return (
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {renderCollapsedSection('commit')}
-        {renderCollapsedSection('file')}
-      </div>
-    );
-  };
-
-  const renderExpandedSections = (): ReactElement => {
-    if (!isCommitListSectionExpanded && !isFileTreeSectionExpanded) {
-      return (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {renderCollapsedSection('commit')}
-          {renderCollapsedSection('file')}
-        </div>
-      );
-    }
-
-    if (isCommitListSectionExpanded && isFileTreeSectionExpanded) {
-      return (
-        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-hidden">
-            {renderExpandedGroup(['commit', 'file'])}
-          </div>
-        </div>
-      );
-    }
-
-    if (isCommitListSectionExpanded) {
-      return (
-        <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-hidden">
-            {renderExpandedGroup(['commit'])}
-          </div>
-          {renderCollapsedSection('file')}
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-        {renderCollapsedSection('commit')}
-        <div className="min-h-0 flex-1 overflow-hidden">
-          {renderExpandedGroup(['file'])}
-        </div>
-      </div>
-    );
-  };
+      ),
+    },
+    {
+      key: 'issue',
+      minHeightPx: SECTION_MIN_HEIGHT,
+      heightPx: issuesSectionHeight,
+      isExpanded: isIssuesSectionExpanded,
+      onHeightChange: setIssuesSectionHeight,
+      node: (
+        <IssuesSection
+          isActive={isRouteSlotActive}
+          activeIssueNumber={activeIssueNumber}
+          isExpanded={isIssuesSectionExpanded}
+          onToggleExpanded={() => setIsIssuesSectionExpanded((current) => !current)}
+          onSelectIssue={openIssueTab}
+        />
+      ),
+    },
+  ];
 
   const renderSidebarView = (view: SidebarView, state: 'entering' | 'exiting' | null): ReactElement => {
     const className = getSidebarViewClassName(view, state);
@@ -518,8 +499,8 @@ export const S02WorkspaceScreen: FC = () => {
             />
           )}
         />
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface">
-          {renderExpandedSections()}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-surface">
+          <SidebarSectionGroup sections={sidebarSections} />
         </div>
       </div>
     );
@@ -601,7 +582,7 @@ function renderPaneActions(options: {
   activeTab: WorkspaceTab | null;
   selectedCommit: ReturnType<typeof useAppStore.getState>['selectedCommit'];
   openCommitAISummaryFromSidebar: () => void;
-  openTab: (panelType: WorkspaceTab['panelType']) => void;
+  openTab: (panelType: 'code' | 'aiSummary' | 'fileCanvas' | 'note') => void;
 }): ReactNode {
   const { activeTab, selectedCommit, openCommitAISummaryFromSidebar, openTab } = options;
 
@@ -669,6 +650,18 @@ const WorkspacePaneContent: FC<{
   const codeFile = activeTab.panelType === 'code' && activeTab.filePath
     ? changedFileTree.changedFiles.find((file) => file.path === activeTab.filePath) ?? null
     : null;
+
+  if (activeTab.panelType === 'pr' && activeTab.prNumber != null) {
+    return <PRDetailPanel prNumber={activeTab.prNumber} isActive={isRouteSlotActive} />;
+  }
+
+  if (activeTab.panelType === 'issue' && activeTab.issueNumber != null) {
+    return <IssueDetailPanel issueNumber={activeTab.issueNumber} isActive={isRouteSlotActive} />;
+  }
+
+  if (!activeTab.commit) {
+    return null;
+  }
 
   if (activeTab.panelType === 'code' && activeTab.filePath) {
     return (

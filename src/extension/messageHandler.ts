@@ -19,6 +19,18 @@ import {
   type StartAIQAPayload,
 } from './messageHandler/aiHandlers';
 import { handleFetchChangedFiles, handleFetchCommits, handleFetchFileDiff, type FetchChangedFilesPayload, type FetchCommitsPayload, type FetchFileDiffPayload } from './messageHandler/gitHandlers';
+import {
+  handleConnectGithub,
+  handleFetchGithubAuthState,
+  handleFetchIssueDetail,
+  handleFetchIssues,
+  handleFetchPRDetail,
+  handleFetchPullRequests,
+  type FetchIssueDetailPayload,
+  type FetchIssuesPayload,
+  type FetchPRDetailPayload,
+  type FetchPullRequestsPayload,
+} from './messageHandler/githubHandlers';
 import { handleFetchNote, handleSaveNote, type NotePayload } from './messageHandler/noteHandlers';
 import { l10n } from './messageHandler/shared';
 
@@ -35,7 +47,11 @@ interface WebviewMessage {
     | StartAIQAPayload
     | AIProviderPayload
     | OpenExternalUrlPayload
-    | NotePayload;
+    | NotePayload
+    | FetchPullRequestsPayload
+    | FetchIssuesPayload
+    | FetchPRDetailPayload
+    | FetchIssueDetailPayload;
 }
 
 export function registerMessageHandler(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): void {
@@ -100,6 +116,24 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'SAVE_NOTE':
         await handleSaveNote(panel, message.payload as NotePayload);
+        break;
+      case 'FETCH_GITHUB_AUTH_STATE':
+        await handleFetchGithubAuthState(panel);
+        break;
+      case 'CONNECT_GITHUB':
+        await handleConnectGithub(panel);
+        break;
+      case 'FETCH_PULL_REQUESTS':
+        await handleFetchPullRequests(panel, message.payload as FetchPullRequestsPayload);
+        break;
+      case 'FETCH_ISSUES':
+        await handleFetchIssues(panel, message.payload as FetchIssuesPayload);
+        break;
+      case 'FETCH_PR_DETAIL':
+        await handleFetchPRDetail(panel, message.payload as FetchPRDetailPayload);
+        break;
+      case 'FETCH_ISSUE_DETAIL':
+        await handleFetchIssueDetail(panel, message.payload as FetchIssueDetailPayload);
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');

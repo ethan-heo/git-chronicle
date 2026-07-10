@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { Commit } from '../../types/commit';
 import type { AppState } from '../appStore';
 
-export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'note';
+export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'note' | 'pr' | 'issue';
 export type PaneSplitOrientation = 'horizontal' | 'vertical';
 export type DropZone = 'left' | 'right' | 'top' | 'bottom';
 export type CodeInnerPanelType = 'aiSummary' | 'symbolGraph';
@@ -15,10 +15,20 @@ export interface CodeInnerPanelsState {
 export interface WorkspaceTab {
   id: string;
   panelType: WorkspaceTabPanelType;
-  commit: Commit;
+  // 'pr'/'issue' 탭은 커밋과 무관하므로 commit이 없다. 나머지 panelType은 항상 non-null이다.
+  commit: Commit | null;
   filePath: string | null;
   codeInnerPanels?: CodeInnerPanelsState;
+  prNumber?: number | null;
+  issueNumber?: number | null;
+  // pr/issue 탭 전용 라벨. 상세 데이터 로드 전에도 탭바에 제목을 즉시 보여주기 위해 목록 클릭 시점에 캐시한다.
+  title?: string | null;
 }
+
+export type OpenWorkspaceTabInput =
+  | { panelType: 'code' | 'aiSummary' | 'fileCanvas' | 'note'; commit: Commit; filePath?: string | null; paneId?: string }
+  | { panelType: 'pr'; prNumber: number; title?: string | null; paneId?: string }
+  | { panelType: 'issue'; issueNumber: number; title?: string | null; paneId?: string };
 
 export interface PaneLeafNode {
   paneId: string;
@@ -40,7 +50,7 @@ export type PaneNode = PaneLeafNode | PaneSplitNode;
 export interface WorkspaceTabsSlice {
   paneTree: PaneNode;
   focusedPaneId: string;
-  openWorkspaceTab: (input: { panelType: WorkspaceTabPanelType; commit: Commit; filePath?: string | null; paneId?: string }) => void;
+  openWorkspaceTab: (input: OpenWorkspaceTabInput) => void;
   closeWorkspaceTab: (paneId: string, tabId: string) => void;
   activateWorkspaceTab: (paneId: string, tabId: string) => void;
   toggleCodeInnerPanel: (paneId: string, tabId: string, panel: CodeInnerPanelType) => void;
@@ -53,7 +63,35 @@ export function computeWorkspaceTabId(panelType: WorkspaceTabPanelType, commitHa
   return `${panelType}:${commitHash}:${filePath ?? '_'}`;
 }
 
-export function createWorkspaceTab(input: { panelType: WorkspaceTabPanelType; commit: Commit; filePath?: string | null }): WorkspaceTab {
+export function computeGithubWorkspaceTabId(panelType: 'pr' | 'issue', number: number): string {
+  return `${panelType}:${number}`;
+}
+
+export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
+  if (input.panelType === 'pr') {
+    return {
+      id: computeGithubWorkspaceTabId('pr', input.prNumber),
+      panelType: 'pr',
+      commit: null,
+      filePath: null,
+      prNumber: input.prNumber,
+      issueNumber: null,
+      title: input.title ?? null,
+    };
+  }
+
+  if (input.panelType === 'issue') {
+    return {
+      id: computeGithubWorkspaceTabId('issue', input.issueNumber),
+      panelType: 'issue',
+      commit: null,
+      filePath: null,
+      prNumber: null,
+      issueNumber: input.issueNumber,
+      title: input.title ?? null,
+    };
+  }
+
   return {
     id: computeWorkspaceTabId(input.panelType, input.commit.hash, input.filePath),
     panelType: input.panelType,
@@ -62,6 +100,9 @@ export function createWorkspaceTab(input: { panelType: WorkspaceTabPanelType; co
     codeInnerPanels: input.panelType === 'code'
       ? { aiSummary: false, symbolGraph: false }
       : undefined,
+    prNumber: null,
+    issueNumber: null,
+    title: null,
   };
 }
 
@@ -184,10 +225,10 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
     paneTree: rootPane,
     focusedPaneId: rootPane.paneId,
 
-    openWorkspaceTab: ({ panelType, commit, filePath = null, paneId }) => {
-      const nextTab = createWorkspaceTab({ panelType, commit, filePath });
+    openWorkspaceTab: (input) => {
+      const nextTab = createWorkspaceTab(input);
       const state = get();
-      const targetPaneId = paneId ?? state.focusedPaneId;
+      const targetPaneId = input.paneId ?? state.focusedPaneId;
       const targetPane = findLeafPane(state.paneTree, targetPaneId);
 
       if (!targetPane) {
@@ -213,7 +254,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           };
         }),
         focusedPaneId: targetPaneId,
-        selectedCommit: commit,
+        // pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
+        selectedCommit: nextTab.commit ?? current.selectedCommit,
       }));
     },
 
@@ -259,7 +301,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           ? { ...currentPane, activeTabId: tabId }
           : currentPane),
         focusedPaneId: paneId,
-        selectedCommit: tab.commit,
+        // pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
+        selectedCommit: tab.commit ?? current.selectedCommit,
       }));
     },
 
@@ -300,7 +343,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
       const activeTab = getActiveTab(pane);
       set((state) => ({
         focusedPaneId: paneId,
-        selectedCommit: activeTab ? activeTab.commit : state.selectedCommit,
+        // pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
+        selectedCommit: activeTab?.commit ?? state.selectedCommit,
       }));
     },
 

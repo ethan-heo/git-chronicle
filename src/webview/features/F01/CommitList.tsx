@@ -1,9 +1,8 @@
 import { useLayoutEffect, useRef, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
+import { EmptyState, ErrorState, InfiniteScrollTrigger, LoadingState } from '../../shared/components';
 import type { Commit } from '../../types/commit';
 import { CommitListItem } from './CommitListItem';
-import { InfiniteScrollTrigger } from './InfiniteScrollTrigger';
 
 interface CommitListProps {
   commitList: Commit[];

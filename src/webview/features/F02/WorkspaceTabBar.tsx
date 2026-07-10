@@ -36,7 +36,7 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
               key={tab.id}
               tab={tab}
               isActive={tab.id === activeTabId}
-              isGenerating={isGeneratingSummary && tab.panelType === 'aiSummary' && tab.commit.hash === activeSummaryCommitHash}
+              isGenerating={isGeneratingSummary && tab.panelType === 'aiSummary' && tab.commit?.hash === activeSummaryCommitHash}
               onActivate={() => onActivateTab(tab.id)}
               onClose={() => onCloseTab(tab.id)}
               onDragStart={() => onDragTabStart?.(tab.id)}
@@ -83,7 +83,7 @@ const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, is
     >
       <button type="button" className="flex items-center gap-2" onClick={onActivate}>
         <span className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text">
-          {tab.commit.shortHash}
+          {getTabBadge(tab)}
         </span>
         <span className="max-w-[180px] truncate">{tabLabel}</span>
         {isGenerating ? <span className="size-2 rounded-full bg-accent" aria-label={t('ai_summary.generating_badge_aria')} /> : null}
@@ -114,5 +114,17 @@ function getTabLabel(tab: WorkspaceTab, t: (key: string) => string): string {
     return t('workspace.tab_label_file_canvas');
   }
 
+  if (tab.panelType === 'pr' || tab.panelType === 'issue') {
+    return tab.title ?? `#${tab.prNumber ?? tab.issueNumber}`;
+  }
+
   return t('workspace.tab_label_note');
+}
+
+function getTabBadge(tab: WorkspaceTab): string {
+  if (tab.panelType === 'pr' || tab.panelType === 'issue') {
+    return `#${tab.prNumber ?? tab.issueNumber}`;
+  }
+
+  return tab.commit?.shortHash ?? '';
 }

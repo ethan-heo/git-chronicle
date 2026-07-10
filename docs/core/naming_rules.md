@@ -39,6 +39,7 @@
 | F09 | F09_AISummaryQA |
 | F10 | F10_IntraFileSymbolDependencyCanvas |
 | F11 | F11_NoteEditor |
+| F12 | F12_GitHubActivity |
 
 - 번호는 2자리 zero-padding (`F01`, `F02`, ...).
 - 알파벳 suffix는 소문자로 붙인다 (`F05b`).

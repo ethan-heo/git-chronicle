@@ -91,7 +91,7 @@ AI 디자인/구현 생성용 프롬프트는 영구 문서로 두지 않는다.
 
 ## 컴포넌트 문서화 규칙
 
-여러 Feature가 공유하는 컴포넌트(Props·States·구현 파일)는 [core/global_components.md](../core/global_components.md) 하나에만 문서화한다: `PrimaryButton`, `BackButton`, `EmptyState`, `LoadingState`, `ErrorState`, `Toast`, `FileActionButtons`, `FileStatusBadge`, `TopHeader`, `ResizableSplitPane`.
+여러 Feature가 공유하는 컴포넌트(Props·States·구현 파일)는 [core/global_components.md](../core/global_components.md) 하나에만 문서화한다: `PrimaryButton`, `BackButton`, `EmptyState`, `LoadingState`, `ErrorState`, `Toast`, `FileActionButtons`, `FileStatusBadge`, `TopHeader`, `ResizableSplitPane`, `Popover`, `SidebarSection`, `SidebarSectionGroup`, `InfiniteScrollTrigger`.
 
 Feature 전용 컴포넌트(예: `CommitListItem`, `DiffViewer`, `DependencyGraph`, `SymbolGraph` 등)는 별도 문서를 두지 않고 해당 기능 `blueprint.md`의 **Component Definitions** 섹션이 유일한 문서다.
 
