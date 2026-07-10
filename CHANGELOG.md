@@ -1,4 +1,17 @@
 
+## [1.4.0](https://github.com/ethan-heo/git-chronicle/compare/v1.3.0...v1.4.0) (2026-07-10)
+
+### Features
+
+* add related commits to GitHub detail tabs ([38daa97](https://github.com/ethan-heo/git-chronicle/commit/38daa97c4b1ab2154838c83f32e838aca0ea74eb))
+* **github:** improve PR and issue markdown readability ([225151c](https://github.com/ethan-heo/git-chronicle/commit/225151c838153fb07f1d495112b5edcf6d75c901))
+* **f12:** improve github markdown rendering ([48d3ac6](https://github.com/ethan-heo/git-chronicle/commit/48d3ac62ee611d916f1c3f9da5877faf9c5c648e))
+* **github:** add PR and issue workspace panels ([79a7744](https://github.com/ethan-heo/git-chronicle/commit/79a77444672eadb0e187267e9f5072e81c48625d))
+
+### Bug Fixes
+
+* hide initial related commits loading state ([9d7591e](https://github.com/ethan-heo/git-chronicle/commit/9d7591ed9dd612470d2c62102f06d938b5348d23))
+
 ## [1.3.0](https://github.com/ethan-heo/git-chronicle/compare/v1.2.0...v1.3.0) (2026-07-10)
 
 ### Features
