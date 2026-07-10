@@ -40,6 +40,11 @@ export class GitChroniclePanel {
     GitChroniclePanel.currentPanel = new GitChroniclePanel(panel, context);
   }
 
+  public static async createOrShowInNewWindow(context: vscode.ExtensionContext): Promise<void> {
+    GitChroniclePanel.createOrShow(context);
+    await vscode.commands.executeCommand('workbench.action.moveEditorToNewWindow');
+  }
+
   public static disposeCurrent(): void {
     GitChroniclePanel.currentPanel?.dispose();
   }

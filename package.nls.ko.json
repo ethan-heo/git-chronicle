@@ -2,6 +2,7 @@
   "extension.displayName": "GitChronicle",
   "extension.description": "Git 기록을 되짚어보세요 - 커밋, 변경 파일, 의존성 그래프, AI 요약을 VSCode에서 탐색합니다.",
   "command.open.title": "GitChronicle: 열기",
+  "command.openInNewWindow.title": "GitChronicle: 새 창으로 열기",
   "configuration.title": "GitChronicle",
   "configuration.savePath.description": "AI 요약이 저장될 기본 경로입니다.",
   "configuration.activeAIProvider.description": "요약에 사용할 활성 AI CLI 제공자입니다."

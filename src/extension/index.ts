@@ -6,7 +6,11 @@ export function activate(context: vscode.ExtensionContext): void {
     GitChroniclePanel.createOrShow(context);
   });
 
-  context.subscriptions.push(openCommand);
+  const openInNewWindowCommand = vscode.commands.registerCommand('gitChronicle.openInNewWindow', () => {
+    GitChroniclePanel.createOrShowInNewWindow(context);
+  });
+
+  context.subscriptions.push(openCommand, openInNewWindowCommand);
 }
 
 export function deactivate(): void {

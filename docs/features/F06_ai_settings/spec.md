@@ -52,7 +52,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 다중 등록 | 복수 등록 가능. 단 하나만 활성화 가능. 하나가 활성화되면 나머지는 자동으로 비활성화 |
 | 모델 선택 | 활성 프로바이더에 한해 `summaryModel`, `qaModel` 드롭다운 노출 |
 | 기본 모델 | Claude: `claude-haiku-4-5`, Gemini: `gemini-2.5-flash`, Codex: `gpt-5.4-mini` |
-| 선택 가능 모델 | Claude: `claude-haiku-4-5`, `claude-sonnet-4-6`, `claude-opus-4-8` / Gemini: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.1-flash`, `gemini-3.1-pro` / Codex: `gpt-5.4-mini`, `gpt-5.4`, `gpt-5.5` |
+| 선택 가능 모델 | Claude: `claude-haiku-4-5`, `claude-sonnet-5`, `claude-opus-4-8` / Gemini: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.5-flash`, `gemini-3.1-pro-preview` / Codex: `gpt-5.4-mini`, `gpt-5.4`, `gpt-5.5` |
 | 모델 영속화 | 프로바이더별 마지막 선택값을 현재 워크스페이스 기준 `ExtensionContext.workspaceState`에 저장 |
 | 프로젝트별 분리 | `activeAIProvider`, `summaryModel`, `qaModel`은 프로젝트마다 독립 유지 |
 | 전역 유지 항목 | CLI 등록 정보(`registeredProviders`)만 `ExtensionContext.globalState`에 저장 |

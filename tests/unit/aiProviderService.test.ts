@@ -77,7 +77,7 @@ describe('aiProviderService per-project settings', () => {
         'gitChronicle.activeAIProvider': 'codex',
         'gitChronicle.savePath': '/workspace/path',
         'gitRewind.summaryModelPerProvider': {
-          claude: 'claude-sonnet-4-6',
+          claude: 'claude-sonnet-5',
         },
         'gitRewind.qaModelPerProvider': {
           codex: 'gpt-4o-mini',
@@ -90,7 +90,7 @@ describe('aiProviderService per-project settings', () => {
     expect(state.registeredProviders).toEqual(['claude']);
     expect(state.activeAIProvider).toBe('codex');
     expect(state.savePath).toBe('/workspace/path');
-    expect(state.summaryModelPerProvider.claude).toBe('claude-sonnet-4-6');
+    expect(state.summaryModelPerProvider.claude).toBe('claude-sonnet-5');
     expect(state.qaModelPerProvider.codex).toBe('gpt-5.4-mini');
   });
 

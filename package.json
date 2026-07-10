@@ -24,6 +24,10 @@
       {
         "command": "gitChronicle.open",
         "title": "%command.open.title%"
+      },
+      {
+        "command": "gitChronicle.openInNewWindow",
+        "title": "%command.openInNewWindow.title%"
       }
     ],
     "configuration": {

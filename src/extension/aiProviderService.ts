@@ -12,8 +12,8 @@ const SUMMARY_MODEL_KEY = 'gitRewind.summaryModelPerProvider';
 const QA_MODEL_KEY = 'gitRewind.qaModelPerProvider';
 
 export const AI_PROVIDER_MODELS: Record<AIProviderName, readonly string[]> = {
-  claude: ['claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-8'],
-  gemini: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.1-flash', 'gemini-3.1-pro'],
+  claude: ['claude-haiku-4-5', 'claude-sonnet-5', 'claude-opus-4-8'],
+  gemini: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.5-flash', 'gemini-3.1-pro-preview'],
   codex: ['gpt-5.4-mini', 'gpt-5.4', 'gpt-5.5'],
 };
 
