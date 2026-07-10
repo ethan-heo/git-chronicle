@@ -29,6 +29,10 @@ export const RelatedCommitsList: FC<RelatedCommitsListProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  if (isLoading && commits.length === 0 && !error) {
+    return null;
+  }
+
   if (hasLoaded && commits.length === 0 && !hasMore) {
     return null;
   }
@@ -42,12 +46,6 @@ export const RelatedCommitsList: FC<RelatedCommitsListProps> = ({
       {error && commits.length === 0 ? (
         <div className="rounded-xl border border-line bg-surface px-4 py-5">
           <ErrorState message={error} onRetry={onRetry} />
-        </div>
-      ) : null}
-
-      {isLoading && commits.length === 0 ? (
-        <div className="rounded-xl border border-line bg-surface px-4 py-5">
-          <LoadingState label={t('github.related_commits_loading')} size="lg" />
         </div>
       ) : null}
 
