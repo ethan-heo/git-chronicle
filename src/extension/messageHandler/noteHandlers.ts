@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { loadNote, saveNote, SummarySaveError } from '../summaryFileService';
-import { l10n } from './shared';
+import { getCurrentSummaryLanguage, l10n } from './shared';
 
 export interface NotePayload {
   paneId?: string;
@@ -57,7 +57,7 @@ export async function handleSaveNote(panel: vscode.WebviewPanel, payload: NotePa
   }
 
   try {
-    const savedPath = saveNote(payload.savePath, payload.commitHash, payload.content ?? '', payload.commitMessage);
+    const savedPath = saveNote(payload.savePath, payload.commitHash, payload.content ?? '', payload.commitMessage, getCurrentSummaryLanguage());
     await panel.webview.postMessage({
       type: 'NOTE_SAVED',
       payload: {

@@ -56,7 +56,8 @@
     "binary": "Binary file - diff not available",
     "deleted_file": "Deleted file",
     "panel_close_aria": "Close diff panel",
-    "region_aria": "{{filePath}} code changes"
+    "region_aria": "{{filePath}} code changes",
+    "fold_hidden_lines": "⋯ {{count}} lines hidden (lines {{start}}-{{end}})"
   },
   "dependency": {
     "loading": "Analyzing dependencies...",
@@ -81,6 +82,7 @@
   "symbol_graph": {
     "loading": "Analyzing symbols...",
     "empty": "No analyzable symbols",
+    "analysis_failed": "Failed to analyze symbols",
     "open_aria": "Open symbol graph",
     "graph_aria": "Intra-file symbol dependency graph",
     "code_panel_title": "Code view",
@@ -142,18 +144,23 @@
     "qa_label": "Ask about this summary",
     "qa_placeholder": "Ask a question about the summary...",
     "qa_submit": "Ask",
-    "qa_loading": "Generating answer..."
+    "qa_loading": "Generating answer...",
+    "thinking": "Thinking",
+    "commit_full_summary": "Full commit summary",
+    "generating_badge_aria": "Generating AI summary"
   },
   "action_bar": {
     "commit_ai_aria": "Summarize the entire commit with AI",
     "batch_ai_aria": "Summarize all files with AI",
     "canvas_aria": "Open dependency canvas",
     "note_aria": "Open note",
+    "actions_group_aria": "Expand or collapse the AI summary, file canvas, and note button group",
     "sidebar_toggle_aria": "Collapse or expand the sidebar",
     "batch_cancel_aria": "Cancel batch AI summary generation",
     "batch_cancel_title": "Stop after the current file",
     "code_view_aria": "View code",
-    "code_view_title": "View code"
+    "code_view_title": "View code",
+    "file_ai_toggle_aria": "Toggle file AI summary"
   },
   "settings": {
     "title": "Settings",
@@ -174,7 +181,8 @@
     "save_path_selected_aria": "Save path: {{path}}. Click to change",
     "save_path_current_aria": "Current save path: {{path}}",
     "change": "Change",
-    "commit_summary_file": "Commit summaries are saved as 전체_파일_정리.md.",
+    "commit_summary_file": "Commit summaries are saved as {{filename}}.",
+    "commit_summary_filename": "full_file_summary.md",
     "save_path_prompt": "Choose a path",
     "unset": "Unset",
     "save_path_helper": "Choose a folder and AI summary files will be saved here automatically.",
@@ -198,7 +206,14 @@
     "commit_placeholder_title": "Select a commit",
     "commit_placeholder_context": "Choose a commit from the left list to explore changed files and workspace panels",
     "commit_placeholder_body": "Choose a commit from the left list to inspect changed files, AI summaries, and graphs in this workspace",
-    "sidebar_all_collapsed": "All sidebar sections are collapsed"
+    "sidebar_all_collapsed": "All sidebar sections are collapsed",
+    "no_open_tab": "No tabs open.",
+    "ai_summary_busy_toast": "AI summary is being generated in another tab.",
+    "tab_label_ai_summary": "AI Summary",
+    "tab_label_file_canvas": "Dependency canvas",
+    "tab_label_note": "Note",
+    "tab_close_aria": "Close {{label}}",
+    "tab_close_title": "Close tab"
   },
   "shared": {
     "loading_state": "Loading",
@@ -243,5 +258,30 @@
     "in_progress": "AI summary generation in progress",
     "canceling_detail": "Cancelling - stops after the current file",
     "completed": "{{completed}} of {{total}} completed"
+  },
+  "note": {
+    "saving": "Saving...",
+    "saved": "Saved",
+    "autosave_pending": "Waiting to autosave",
+    "mode_edit": "Edit",
+    "mode_split": "Split",
+    "mode_preview": "Preview",
+    "loading": "Loading note...",
+    "placeholder": "Write your notes in Markdown.",
+    "preview_placeholder": "Your note preview will appear here.",
+    "mermaid_render_failed": "Failed to render Mermaid diagram.",
+    "mermaid_rendering": "Rendering Mermaid diagram...",
+    "load_failed": "Failed to load the note",
+    "save_failed": "Failed to save the note"
+  },
+  "toast": {
+    "file_node_mermaid_copied": "Copied file node Mermaid",
+    "graph_mermaid_copied": "Copied Mermaid graph",
+    "symbol_node_mermaid_copied": "Copied symbol node Mermaid",
+    "diff_copied": "Copied the selected diff",
+    "file_markdown_copied": "Copied file Markdown",
+    "code_block_markdown_copied": "Copied code block Markdown",
+    "mermaid_markdown_copied": "Copied Mermaid Markdown",
+    "commit_markdown_copied": "Copied commit Markdown"
   }
 }

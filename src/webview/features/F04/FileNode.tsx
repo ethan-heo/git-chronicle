@@ -14,7 +14,7 @@ const handlePositions = [
 
 const FileNodeComponent: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
   const { t } = useTranslation();
-  const title = data.canAnalyze ? `${data.directory}${data.label}` : 'JS/TS 외 파일은 노드로만 표시됩니다.';
+  const title = data.canAnalyze ? `${data.directory}${data.label}` : t('dependency.unanalyzable_notice');
 
   return (
     <div
@@ -58,7 +58,7 @@ const FileNodeComponent: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
           </div>
         </div>
         <div className="mt-1.5 flex min-h-[18px] items-center gap-[5px]">
-          {!data.canAnalyze ? <span className="rounded-full bg-[color-mix(in_srgb,var(--gae-color-text-secondary)_16%,transparent)] px-[7px] py-[2px] text-[10px] text-muted">분석 불가</span> : null}
+          {!data.canAnalyze ? <span className="rounded-full bg-[color-mix(in_srgb,var(--gae-color-text-secondary)_16%,transparent)] px-[7px] py-[2px] text-[10px] text-muted">{t('dependency.analysis_unavailable')}</span> : null}
         </div>
         {handlePositions.map(({ face, position }) => (
           <Handle

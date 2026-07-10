@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
+import { translate } from '../../i18n/runtime';
 import type { ChangedFile, SymbolEdge, SymbolNode } from '../../types/commit';
 import type { AppState } from '../appStore';
 
@@ -144,7 +145,7 @@ export const createSymbolGraphSlice: StateCreator<AppState, [], [], SymbolGraphS
           symbolEdges: [],
           isLoading: false,
           hasLoaded: true,
-          error: message ?? '심볼을 분석하지 못했습니다',
+          error: message ?? translate('symbol_graph.analysis_failed'),
         },
       },
     }));

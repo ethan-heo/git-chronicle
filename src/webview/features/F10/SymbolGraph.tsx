@@ -68,16 +68,17 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
   const [isLegendMinimized, setIsLegendMinimized] = useState(true);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const nodesInitialized = useNodesInitialized();
+  const symbolNodeMermaidCopiedToast = t('toast.symbol_node_mermaid_copied');
   const { nodes: graphNodes, edges: graphEdges } = useMemo(
     () =>
       buildSymbolGraphData(symbolNodes, symbolEdges, {
         onCopy: (symbolNode) => {
           const selection = collectConnectedSelection(symbolNode.id, symbolNodes, symbolEdges);
           void navigator.clipboard.writeText(symbolSelectionToMermaid(selection.nodes, selection.edges));
-          pushToast('심볼 노드 Mermaid를 복사했습니다', 'success');
+          pushToast(symbolNodeMermaidCopiedToast, 'success');
         },
       }),
-    [pushToast, symbolEdges, symbolNodes],
+    [pushToast, symbolEdges, symbolNodeMermaidCopiedToast, symbolNodes],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
@@ -119,7 +120,7 @@ const SymbolGraphCanvas: FC<Pick<Props, 'symbolNodes' | 'symbolEdges' | 'activeN
             className="opacity-100"
             onClick={() => {
               void navigator.clipboard.writeText(symbolSelectionToMermaid([], selectedEdgesForCopy));
-              pushToast('Mermaid 그래프를 복사했습니다', 'success');
+              pushToast(t('toast.graph_mermaid_copied'), 'success');
             }}
           />
         </div>

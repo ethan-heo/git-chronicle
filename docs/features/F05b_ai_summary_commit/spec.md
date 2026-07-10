@@ -37,7 +37,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 1. [커밋 AI 정리] 클릭 시 S02 본문 `aiSummary` 패널 활성화. 헤더에 `{커밋 메시지} > 커밋 전체 요약` 표시.
 2. **기존 저장본이 있는 경우**: 저장된 마크다운 파일을 즉시 불러와 표시. 재생성 아이콘 버튼 제공.
 3. **저장본이 없는 경우**: 클릭 즉시 커밋 내 전체 파일 diff를 컨텍스트로 AI가 마크다운 형식으로 정리.
-   - 정리된 내용은 설정 경로에 `전체_파일_정리.md` 파일명으로 자동 저장.
+   - 정리된 내용은 설정 경로에 언어별 커밋 정리 파일명으로 자동 저장 ([F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming) 참고).
    - 저장 경로가 설정되어 있지 않으면 "저장 경로를 먼저 설정해주세요" 안내 + 설정 이동 CTA.
 4. AI가 설정되어 있지 않으면 "AI가 설정되지 않았습니다" 안내 + 설정(⚙) 이동 CTA.
 5. 재생성 아이콘 버튼: 덮어쓰기 확인 다이얼로그 → 확인 시 동일 입력으로 재처리.
@@ -52,8 +52,8 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 처리 | 설정된 AI CLI에 커밋 단위 프롬프트 + 전체 diff 전달 (`child_process.spawn` 스트리밍) |
 | CLI 실행 옵션 | Claude는 `-p`, Gemini는 `--skip-trust --prompt`, Codex는 `exec --skip-git-repo-check` 조합으로 비대화형 실행 |
 | 출력 | 마크다운 형식의 커밋 종합 요약 (스트리밍 타이핑 효과로 실시간 표시) |
-| 저장 | `{설정경로}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md` 로컬 저장. 상세 디렉토리 생성 규칙은 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming)을 따른다 |
-| 기존 저장본 | 신규 경로를 먼저 확인하고, 없으면 신규 폴더의 `_commit_summary.md`, 기존 `{설정경로}/{커밋해시}/_commit_summary.md` 순서로 폴백하여 즉시 표시 |
+| 저장 | `{설정경로}/{shortHash}_{sanitizedCommitMessage}/{커밋 정리 파일명}` 로컬 저장. 파일명 언어 분기와 디렉토리 생성 규칙은 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming)을 따른다 |
+| 기존 저장본 | [F07 하위 호환성](../F07_save_path_settings/spec.md#하위-호환성)의 커밋 단위 AI 정리 폴백 순서(한국어 파일명 → 영어 파일명 → 구 파일명 → 구 경로)를 따라 즉시 표시 |
 | 재생성 | 재생성 아이콘 클릭 → 덮어쓰기 확인 다이얼로그 → 확인 시 동일 입력으로 재처리 |
 | 복사 | 완료된 요약 본문 일부를 드래그해 복사하면 렌더링된 plain text가 아니라 해당 범위의 원본 마크다운 문자열 조각이 클립보드에 기록된다 |
 | Code block copy | fenced code block 위에 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 클립보드에 기록하고 성공 토스트를 표시한다 |
@@ -197,7 +197,7 @@ Commit message: {commitMessage}
 | `activeAIProvider` | `AIProviderName \| null` | 전역 상태. 사용할 AI CLI 결정 |
 | `savePath` | `string \| null` | 전역 상태. 저장본 파일 위치 결정 |
 | simple-git diff (전체) | `string` | Extension Host에서 커밋 내 전체 파일 diff 합산 추출 |
-| 로컬 저장본 | `string` | `{savePath}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md` 파일 존재 시 즉시 읽어 표시. 구 형식도 폴백으로 읽음 |
+| 로컬 저장본 | `string` | `{savePath}/{shortHash}_{sanitizedCommitMessage}/{커밋 정리 파일명}` 파일 존재 시 즉시 읽어 표시. [F07 하위 호환성](../F07_save_path_settings/spec.md#하위-호환성)의 폴백 순서를 따름 |
 
 ---
 
@@ -206,7 +206,7 @@ Commit message: {commitMessage}
 | 출력 | 타입 | 설명 |
 |------|------|------|
 | `currentSummaryContent` | `string` | 전역 상태. AI 스트리밍 텍스트 누적 |
-| 저장 파일 | `.md` | `{savePath}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md` 로컬 파일 생성 |
+| 저장 파일 | `.md` | `{savePath}/{shortHash}_{sanitizedCommitMessage}/{커밋 정리 파일명}` 로컬 파일 생성 (파일명은 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming)의 언어 분기를 따름) |
 
 ---
 
@@ -218,5 +218,5 @@ Commit message: {commitMessage}
 | `isGeneratingSummary = true` | AI 호출 시작 | 로딩 상태 전환 |
 | `isGeneratingSummary = false` | AI 완료 / 실패 / 타임아웃 | 로딩 상태 해제 |
 | `currentSummaryContent` 스트리밍 업데이트 | `child_process.spawn` stdout | 청크 단위로 전역 상태 누적 업데이트 |
-| 로컬 파일 쓰기 | AI 생성 완료 | `fs.writeFileSync`로 `전체_파일_정리.md` 저장 (경로 없으면 `fs.mkdirSync` 선행) |
+| 로컬 파일 쓰기 | AI 생성 완료 | `fs.writeFileSync`로 언어별 커밋 정리 파일명에 저장 (경로 없으면 `fs.mkdirSync` 선행) |
 | `summaryError` 업데이트 | 타임아웃 / CLI 실패 | 오류 메시지 전역 상태 설정 |

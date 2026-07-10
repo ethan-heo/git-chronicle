@@ -5,7 +5,7 @@ import type { AIModelUsage, AIProviderName } from '../aiTypes';
 import { fetchCommitFullDiff, fetchFileDiff } from '../gitService';
 import { buildCommitSummaryPrompt, buildFileSummaryPrompt, buildSummaryQAPrompt } from '../prompts';
 import { appendSummaryQA, loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from '../summaryFileService';
-import { l10n } from './shared';
+import { getCurrentSummaryLanguage, l10n } from './shared';
 
 const COMMIT_TOKEN_LIMIT_CHARS = 20_000;
 
@@ -245,7 +245,7 @@ export async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, con
       },
       onComplete: () => {
         try {
-          const savedPath = saveCommitSummary(savePath, payload.commitHash ?? '', content, payload.commitMessage);
+          const savedPath = saveCommitSummary(savePath, payload.commitHash ?? '', content, payload.commitMessage, getCurrentSummaryLanguage());
           void panel.webview.postMessage({
             type: 'AI_SUMMARY_DONE',
             payload: {

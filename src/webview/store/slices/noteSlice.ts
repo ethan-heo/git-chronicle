@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { translate } from '../../i18n/runtime';
 import type { AppState } from '../appStore';
 
 export interface NoteStateEntry {
@@ -94,7 +95,7 @@ export const createNoteSlice: StateCreator<AppState, [], [], NoteSlice> = (set) 
     }));
   },
 
-  handleNoteLoadFailed: ({ paneId, message = '노트를 불러오지 못했습니다' }) => {
+  handleNoteLoadFailed: ({ paneId, message = translate('note.load_failed') }) => {
     set((state) => ({
       notesByPane: {
         ...state.notesByPane,
@@ -124,7 +125,7 @@ export const createNoteSlice: StateCreator<AppState, [], [], NoteSlice> = (set) 
     }));
   },
 
-  handleNoteSaveFailed: ({ paneId, message = '노트를 저장하지 못했습니다' }) => {
+  handleNoteSaveFailed: ({ paneId, message = translate('note.save_failed') }) => {
     set((state) => ({
       notesByPane: {
         ...state.notesByPane,

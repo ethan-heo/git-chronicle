@@ -152,11 +152,11 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isAc
   }, [commit.hash, commit.message, draftContent, handleNoteSaved, hasInitializedLoad, isActive, noteState.hasSavedNote, noteState.noteSavedPath, paneId, savePath, startNoteSaving]);
 
   const statusLabel = useMemo(() => {
-    if (noteState.isSaving) return '저장 중...';
+    if (noteState.isSaving) return t('note.saving');
     if (noteState.error) return noteState.error;
-    if (noteState.hasSavedNote) return '저장됨';
-    return '자동 저장 대기 중';
-  }, [noteState.error, noteState.hasSavedNote, noteState.isSaving]);
+    if (noteState.hasSavedNote) return t('note.saved');
+    return t('note.autosave_pending');
+  }, [noteState.error, noteState.hasSavedNote, noteState.isSaving, t]);
 
   let mermaidBlockIndex = 0;
   let highlightedCodeBlockIndex = 0;
@@ -164,9 +164,9 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isAc
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface">
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-md border border-line bg-panel/90 p-1 backdrop-blur">
-        <ModeButton active={mode === 'edit'} onClick={() => setMode('edit')} label="편집" />
-        <ModeButton active={mode === 'split'} onClick={() => setMode('split')} label="분할" />
-        <ModeButton active={mode === 'preview'} onClick={() => setMode('preview')} label="미리보기" />
+        <ModeButton active={mode === 'edit'} onClick={() => setMode('edit')} label={t('note.mode_edit')} />
+        <ModeButton active={mode === 'split'} onClick={() => setMode('split')} label={t('note.mode_split')} />
+        <ModeButton active={mode === 'preview'} onClick={() => setMode('preview')} label={t('note.mode_preview')} />
       </div>
       {!savePath ? (
         <div className="flex min-h-0 flex-1 items-center justify-center p-8">
@@ -174,7 +174,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isAc
         </div>
       ) : noteState.isLoading ? (
         <div className="flex min-h-0 flex-1 items-center justify-center p-8">
-          <LoadingState label="노트를 불러오는 중..." size="lg" />
+          <LoadingState label={t('note.loading')} size="lg" />
         </div>
       ) : noteState.error && !noteState.noteContent ? (
         <div className="flex min-h-0 flex-1 items-center justify-center p-8">
@@ -191,7 +191,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isAc
                 setDraftContent(nextValue);
                 setNoteContent(paneId, nextValue);
               }}
-              placeholder="마크다운으로 메모를 남겨보세요."
+              placeholder={t('note.placeholder')}
               spellCheck={false}
             />
           ) : null}
@@ -239,7 +239,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isAc
                     },
                   }}
                 >
-                  {draftContent || '노트 미리보기가 여기에 표시됩니다.'}
+                  {draftContent || t('note.preview_placeholder')}
                 </ReactMarkdown>
               </div>
             </section>

@@ -48,7 +48,7 @@ export const SavePathSection: FC<SavePathSectionProps> = ({ savePath, onPathSele
           <p className="mt-[-1px] mr-[11px] mb-2.5 ml-[37px] flex w-full items-center gap-[5px] text-[11px] leading-[1.5] text-muted">
             <CheckIcon className="shrink-0 text-renamed" />
             <span>
-              {t('settings.commit_summary_file')}
+              {t('settings.commit_summary_file', { filename: t('settings.commit_summary_filename') })}
             </span>
           </p>
         </div>

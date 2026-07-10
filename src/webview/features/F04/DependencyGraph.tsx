@@ -100,6 +100,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([]);
   const [isLegendMinimized, setIsLegendMinimized] = useState(true);
+  const fileNodeMermaidCopiedToast = t('toast.file_node_mermaid_copied');
   const { nodes: graphNodes, edges: graphEdges } = useMemo(
     () =>
       buildGraphData(files, dependencyEdges, {
@@ -107,10 +108,10 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
         onCopy: (file) => {
           const selection = collectConnectedSelection(file, files, dependencyEdges);
           void navigator.clipboard.writeText(dependencySelectionToMermaid(selection.files, selection.edges));
-          pushToast('파일 노드 Mermaid를 복사했습니다', 'success');
+          pushToast(fileNodeMermaidCopiedToast, 'success');
         },
       }),
-    [dependencyEdges, files, onFileCodeView, pushToast],
+    [dependencyEdges, files, fileNodeMermaidCopiedToast, onFileCodeView, pushToast],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState(graphNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphEdges);
@@ -187,7 +188,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
     <section className="dependency-graph relative h-full min-h-0 flex-1 overflow-hidden bg-surface" aria-label={t('dependency.graph_aria')} ref={graphRef}>
       {hasOnlyUnanalyzableFiles ? (
         <div className="absolute top-3 left-3 z-[5] rounded-sm border border-line border-l-[3px] border-l-warning bg-elevated px-[11px] py-[7px] text-[11px] text-muted">
-          JS/TS 외 파일은 노드로만 표시됩니다.
+          {t('dependency.unanalyzable_notice')}
         </div>
       ) : null}
       {selectedEdgesForCopy.length > 0 ? (
@@ -196,7 +197,7 @@ const DependencyGraphCanvas: FC<Omit<DependencyGraphProps, 'isLoading' | 'error'
             className="opacity-100"
             onClick={() => {
               void navigator.clipboard.writeText(dependencySelectionToMermaid([], selectedEdgesForCopy));
-              pushToast('Mermaid 그래프를 복사했습니다', 'success');
+              pushToast(t('toast.graph_mermaid_copied'), 'success');
             }}
           />
         </div>

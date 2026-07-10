@@ -1,4 +1,5 @@
 import { memo, type KeyboardEvent, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Commit } from '../../types/commit';
 import { useAppStore } from '../../store/appStore';
 import { CopyMarkdownButton } from '../F11';
@@ -11,6 +12,7 @@ interface CommitListItemProps {
 }
 
 const CommitListItemComponent: FC<CommitListItemProps> = ({ commit, isSelected, onClick }) => {
+  const { t, i18n } = useTranslation();
   const pushToast = useAppStore((state) => state.pushToast);
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -21,7 +23,7 @@ const CommitListItemComponent: FC<CommitListItemProps> = ({ commit, isSelected, 
 
   const handleCopy = async (): Promise<void> => {
     await navigator.clipboard.writeText(commitToMarkdown(commit));
-    pushToast('커밋 마크다운을 복사했습니다', 'success');
+    pushToast(t('toast.commit_markdown_copied'), 'success');
   };
 
   return (
@@ -36,7 +38,7 @@ const CommitListItemComponent: FC<CommitListItemProps> = ({ commit, isSelected, 
       role="listitem"
       tabIndex={0}
       aria-current={isSelected ? 'true' : undefined}
-      aria-label={`${commit.message} by ${commit.author} on ${formatDate(commit.date)}`}
+      aria-label={`${commit.message} by ${commit.author} on ${formatDate(commit.date, i18n.language)}`}
       onClick={() => onClick(commit)}
       onKeyDown={handleKeyDown}
     >
@@ -52,7 +54,7 @@ const CommitListItemComponent: FC<CommitListItemProps> = ({ commit, isSelected, 
         <span className={['font-mono text-[11px]', isSelected ? 'text-accent' : 'text-link'].join(' ')}>{commit.shortHash}</span>
         <span>{commit.author}</span>
         <span aria-hidden="true">·</span>
-        <time dateTime={commit.date}>{formatDate(commit.date)}</time>
+        <time dateTime={commit.date}>{formatDate(commit.date, i18n.language)}</time>
       </span>
     </div>
   );
@@ -60,18 +62,26 @@ const CommitListItemComponent: FC<CommitListItemProps> = ({ commit, isSelected, 
 
 export const CommitListItem = memo(CommitListItemComponent);
 
-function formatDate(date: string): string {
+function formatDate(date: string, language: string): string {
   const parsedDate = new Date(date);
 
   if (Number.isNaN(parsedDate.getTime())) {
     return date;
   }
 
-  return new Intl.DateTimeFormat('ko-KR', {
+  if (language.startsWith('ko')) {
+    return new Intl.DateTimeFormat('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+      .format(parsedDate)
+      .replaceAll(' ', '');
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  })
-    .format(parsedDate)
-    .replaceAll(' ', '');
+  }).format(parsedDate);
 }

@@ -1,5 +1,6 @@
 import { useEffect, useId, useState, type FC } from 'react';
 import mermaid from 'mermaid';
+import { useTranslation } from 'react-i18next';
 
 mermaid.initialize({
   startOnLoad: false,
@@ -40,6 +41,7 @@ const renderedDiagramCache = new Map<string, string>();
 let renderQueue: Promise<void> = Promise.resolve();
 
 export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
+  const { t } = useTranslation();
   const [svgMarkup, setSvgMarkup] = useState<string | null>(() => renderedDiagramCache.get(cacheKey) ?? null);
   const [error, setError] = useState<string | null>(null);
   const diagramId = useId().replace(/:/g, '-');
@@ -81,7 +83,7 @@ export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
   if (error) {
     return (
       <div className="note-preview-mermaid-error" role="alert">
-        <p className="note-preview-mermaid-error-title">Mermaid 렌더링에 실패했습니다.</p>
+        <p className="note-preview-mermaid-error-title">{t('note.mermaid_render_failed')}</p>
         <pre>
           <code>{code}</code>
         </pre>
@@ -92,7 +94,7 @@ export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
   if (!svgMarkup) {
     return (
       <div className="note-preview-mermaid-loading" role="status" aria-live="polite">
-        Mermaid 다이어그램을 렌더링하는 중...
+        {t('note.mermaid_rendering')}
       </div>
     );
   }

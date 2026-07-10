@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { parseDiff } from './parseDiff';
 import type { DiffLineData, FileDiffPayload } from './types';
@@ -29,14 +30,15 @@ export function useFileDiff(options: {
   loadFileDiff: () => void;
 } {
   const { isActive, commitHash, filePath, isDeletedFile } = options;
+  const { t } = useTranslation();
   const [diffState, setDiffState] = useState<FileDiffState>(initialDiffState);
 
   const failFileDiff = useCallback((message?: string): void => {
     setDiffState({
       ...initialDiffState,
-      error: message ?? 'diff를 불러오지 못했습니다',
+      error: message ?? t('diff.error'),
     });
-  }, []);
+  }, [t]);
 
   const applyLoadedDiff = useCallback(async (payload: FileDiffPayload, loadedFilePath: string): Promise<void> => {
     if (payload.isBinary) {

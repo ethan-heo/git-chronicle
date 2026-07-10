@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DiffFoldRowProps {
   hiddenCount: number;
@@ -13,6 +14,8 @@ export const DiffFoldRow: FC<DiffFoldRowProps> = ({
   endLineLabel,
   onExpand,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <button
       type="button"
@@ -26,7 +29,7 @@ export const DiffFoldRow: FC<DiffFoldRowProps> = ({
         ⋯
       </span>
       <span className="truncate px-[4px] py-1 pr-[14px] max-[320px]:pr-[8px]">
-        {`⋯ ${hiddenCount}줄 숨김 (라인 ${startLineLabel}-${endLineLabel})`}
+        {t('diff.fold_hidden_lines', { count: hiddenCount, start: startLineLabel, end: endLineLabel })}
       </span>
     </button>
   );

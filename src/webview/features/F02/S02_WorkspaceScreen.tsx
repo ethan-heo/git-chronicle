@@ -16,6 +16,7 @@ import { CodeTabSplitArea } from './CodeTabSplitArea';
 import { FileCanvasToggleButton } from './FileCanvasToggleButton';
 import { FileTree } from './FileTree';
 import { NoteToggleButton } from './NoteToggleButton';
+import { PaneActionsGroup } from './PaneActionsGroup';
 import { PaneTree } from './PaneTree';
 import { SettingsToggleButton } from './SettingsToggleButton';
 import { useChangedFileTree } from './useChangedFileTree';
@@ -43,7 +44,7 @@ type SectionKey = 'commit' | 'file';
 type SidebarView = 'default' | 'settings';
 
 export const S02WorkspaceScreen: FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const paneTree = useAppStore((state) => state.paneTree);
   const focusedPaneId = useAppStore((state) => state.focusedPaneId);
@@ -140,7 +141,7 @@ export const S02WorkspaceScreen: FC = () => {
     }
 
     if (panelType === 'aiSummary' && isGeneratingSummary && activeSummaryCommitHash && activeSummaryCommitHash !== selectedCommit.hash) {
-      pushToast('다른 탭에서 AI 요약 생성 중입니다.', 'warning');
+      pushToast(t('workspace.ai_summary_busy_toast'), 'warning');
       return;
     }
 
@@ -149,7 +150,7 @@ export const S02WorkspaceScreen: FC = () => {
       commit: selectedCommit,
       filePath: file?.path ?? null,
     });
-  }, [activeSummaryCommitHash, isGeneratingSummary, openWorkspaceTab, pushToast, selectedCommit]);
+  }, [activeSummaryCommitHash, isGeneratingSummary, openWorkspaceTab, pushToast, selectedCommit, t]);
 
   const openCommitAISummaryFromSidebar = useCallback(() => {
     openTab('aiSummary');
@@ -243,7 +244,7 @@ export const S02WorkspaceScreen: FC = () => {
   }, [renderedSidebarView, sidebarView]);
 
   const commitContext = selectedCommit
-    ? `${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date)}`
+    ? `${selectedCommit.shortHash} · ${selectedCommit.author} · ${formatDate(selectedCommit.date, i18n.language)}`
     : t('workspace.commit_placeholder_context');
 
   const openSidebarSettings = useCallback(() => {
@@ -566,7 +567,6 @@ export const S02WorkspaceScreen: FC = () => {
       <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <PaneTree
           paneTree={paneTree}
-          focusedPaneId={focusedPaneId}
           activeSummaryCommitHash={activeSummaryCommitHash}
           isGeneratingSummary={isGeneratingSummary}
           onActivateTab={(paneId, tabId) => activateWorkspaceTab(paneId, tabId)}
@@ -588,6 +588,7 @@ export const S02WorkspaceScreen: FC = () => {
           openCodeTab,
           openSidebarSettings,
           toggleCodeInnerPanel,
+          noOpenTabMessage: t('workspace.no_open_tab'),
         })}
         />
       </section>
@@ -605,7 +606,7 @@ function renderPaneActions(options: {
   const { activeTab, selectedCommit, openCommitAISummaryFromSidebar, openTab } = options;
 
   return (
-    <>
+    <PaneActionsGroup>
       <AISummaryToggleButton
         isActive={Boolean(selectedCommit && activeTab?.id === computeWorkspaceTabId('aiSummary', selectedCommit.hash))}
         onClick={openCommitAISummaryFromSidebar}
@@ -618,7 +619,7 @@ function renderPaneActions(options: {
         isActive={Boolean(selectedCommit && activeTab?.id === computeWorkspaceTabId('note', selectedCommit.hash))}
         onClick={() => openTab('note')}
       />
-    </>
+    </PaneActionsGroup>
   );
 }
 
@@ -629,13 +630,14 @@ function renderWorkspacePanel(options: {
   openCodeTab: (file: ChangedFile) => void;
   openSidebarSettings: () => void;
   toggleCodeInnerPanel: (paneId: string, tabId: string, panel: 'aiSummary' | 'symbolGraph') => void;
+  noOpenTabMessage: string;
 }): ReactNode {
-  const { paneId, activeTab, isRouteSlotActive, openCodeTab, openSidebarSettings, toggleCodeInnerPanel } = options;
+  const { paneId, activeTab, isRouteSlotActive, openCodeTab, openSidebarSettings, toggleCodeInnerPanel, noOpenTabMessage } = options;
 
   if (!activeTab) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <EmptyState message="열린 탭이 없습니다." />
+        <EmptyState message={noOpenTabMessage} />
       </div>
     );
   }
@@ -719,11 +721,19 @@ function getSidebarViewClassName(
   return baseClassName;
 }
 
-function formatDate(date: string): string {
+function formatDate(date: string, language: string): string {
   const parsedDate = new Date(date);
 
   if (Number.isNaN(parsedDate.getTime())) {
     return date;
+  }
+
+  if (!language.startsWith('ko')) {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(parsedDate);
   }
 
   return new Intl.DateTimeFormat('ko-KR', {

@@ -1,11 +1,11 @@
 import { createContext, useContext, useMemo, useState, type FC, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EmptyState, ResizableSplitPane } from '../../shared/components';
 import { findLeafPane, getActiveTab, type DropZone, type PaneLeafNode, type PaneNode, type WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
 import { WorkspaceTabBar } from './WorkspaceTabBar';
 
 interface PaneTreeProps {
   paneTree: PaneNode;
-  focusedPaneId: string;
   activeSummaryCommitHash: string | null;
   isGeneratingSummary: boolean;
   onActivateTab: (paneId: string, tabId: string) => void;
@@ -41,7 +41,6 @@ export const PaneTree: FC<PaneTreeProps> = (props) => {
 const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
   node,
   paneTree,
-  focusedPaneId,
   activeSummaryCommitHash,
   isGeneratingSummary,
   onActivateTab,
@@ -63,7 +62,6 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
           <PaneNodeRenderer
             node={node.children[0]}
             paneTree={paneTree}
-            focusedPaneId={focusedPaneId}
             activeSummaryCommitHash={activeSummaryCommitHash}
             isGeneratingSummary={isGeneratingSummary}
             onActivateTab={onActivateTab}
@@ -79,7 +77,6 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
           <PaneNodeRenderer
             node={node.children[1]}
             paneTree={paneTree}
-            focusedPaneId={focusedPaneId}
             activeSummaryCommitHash={activeSummaryCommitHash}
             isGeneratingSummary={isGeneratingSummary}
             onActivateTab={onActivateTab}
@@ -104,7 +101,6 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
   return (
     <WorkspacePane
       pane={node}
-      isFocused={focusedPaneId === node.paneId}
       activeSummaryCommitHash={activeSummaryCommitHash}
       isGeneratingSummary={isGeneratingSummary}
       onActivateTab={onActivateTab}
@@ -119,7 +115,6 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
 
 const WorkspacePane: FC<{
   pane: PaneLeafNode;
-  isFocused: boolean;
   activeSummaryCommitHash: string | null;
   isGeneratingSummary: boolean;
   onActivateTab: (paneId: string, tabId: string) => void;
@@ -130,7 +125,6 @@ const WorkspacePane: FC<{
   renderPanel: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
 }> = ({
   pane,
-  isFocused,
   activeSummaryCommitHash,
   isGeneratingSummary,
   onActivateTab,
@@ -140,6 +134,7 @@ const WorkspacePane: FC<{
   renderFixedActions,
   renderPanel,
 }) => {
+  const { t } = useTranslation();
   const dragContext = useContext(PaneDragContext);
   const activeTab = getActiveTab(pane);
   const [dropZone, setDropZone] = useState<DropZone | null>(null);
@@ -147,10 +142,7 @@ const WorkspacePane: FC<{
 
   return (
     <div
-      className={[
-        'relative flex h-full min-h-0 flex-col overflow-hidden bg-surface',
-        isFocused ? 'ring-1 ring-inset ring-accent/50' : '',
-      ].join(' ')}
+      className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface"
       onMouseDown={() => onFocusPane(pane.paneId)}
       onDragOver={(event) => {
         if (!isDropEnabled) {
@@ -213,7 +205,7 @@ const WorkspacePane: FC<{
       <div className="min-h-0 flex-1 overflow-hidden">
         {activeTab ? renderPanel(pane.paneId, activeTab) : (
           <div className="flex h-full items-center justify-center p-8">
-            <EmptyState message="열린 탭이 없습니다." />
+            <EmptyState message={t('workspace.no_open_tab')} />
           </div>
         )}
       </div>

@@ -50,7 +50,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 항목 | 내용 |
 |------|------|
 | 파일 상태 표시 | 파일명 앞 뱃지 레터로 구분: `A` 추가 / `M` 수정 / `D` 삭제 / `R` 이름 변경 |
-| 커밋 단위 저장 여부 표시 조건 | 저장 경로가 설정되어 있고, `{savePath}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md` 저장본이 존재하면 `hasSavedCommitSummary`가 `true`로 설정되어 `aiSummary` 패널 진입 시 `AISummaryViewer`가 저장본을 즉시 표시한다. 구 형식 `{savePath}/{commitHash}/_commit_summary.md`도 폴백으로 인정한다 |
+| 커밋 단위 저장 여부 표시 조건 | 저장 경로가 설정되어 있고, `{savePath}/{shortHash}_{sanitizedCommitMessage}/{커밋 정리 파일명}` 저장본이 존재하면 `hasSavedCommitSummary`가 `true`로 설정되어 `aiSummary` 패널 진입 시 `AISummaryViewer`가 저장본을 즉시 표시한다. 파일명 언어 분기와 구 형식 폴백은 [F07 하위 호환성](../F07_save_path_settings/spec.md#하위-호환성)을 따른다 |
 | 대용량 커밋 처리 | 변경 파일 수 무관하게 전체 렌더링. 성능 문제 발생 시 추후 가상 리스트(react-window) 적용 검토 |
 | 트리 구조 | 디렉토리 경로 기준으로 계층 분리. 디렉토리 노드는 토글 가능 |
 

@@ -64,9 +64,10 @@ S02_WorkspaceScreen
       │  ├─ WorkspaceTabBar
       │  │  ├─ WorkspaceTabItem[] (가로 스크롤, draggable)
       │  │  └─ FixedActions
-      │  │     ├─ AISummaryToggleButton
-      │  │     ├─ FileCanvasToggleButton
-      │  │     └─ NoteToggleButton
+      │  │     └─ PaneActionsGroup (기본 접힘, 토글 버튼으로 펼침/접힘)
+      │  │        ├─ AISummaryToggleButton
+      │  │        ├─ FileCanvasToggleButton
+      │  │        └─ NoteToggleButton
       │  ├─ DropZoneOverlay (drag 중 left/right/top/bottom)
       │  └─ ActiveTabPanel
       │     ├─ code → CodeTabSplitArea
@@ -96,6 +97,7 @@ S02_WorkspaceScreen
 | `FilterToggleButton` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-filtertogglebutton) | `src/webview/features/F01/FilterToggleButton.tsx` |
 | `CommitList` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitlist) | `src/webview/features/F01/CommitList.tsx` |
 | `FileTree` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filetree) | `src/webview/features/F02/FileTree.tsx` |
+| `PaneActionsGroup` | 이 문서 | `src/webview/features/F02/PaneActionsGroup.tsx` |
 | `AISummaryToggleButton` | 이 문서 | `src/webview/features/F02/AISummaryToggleButton.tsx` |
 | `FileCanvasToggleButton` | 이 문서 | `src/webview/features/F02/FileCanvasToggleButton.tsx` |
 | `NoteToggleButton` | 이 문서 | `src/webview/features/F02/NoteToggleButton.tsx` |
@@ -131,6 +133,8 @@ S02_WorkspaceScreen
 - AI 요약 패널의 "설정으로 이동" CTA도 동일한 사이드바 `settings` 로컬 뷰를 연다.
 - `PaneTree`는 leaf pane 또는 split pane으로 이루어진 재귀 트리다. split pane은 `ResizableSplitPane`을 재사용해 좌우/상하 분할을 렌더링한다.
 - `WorkspaceTabBar`의 좌측 탭 목록은 가로 스크롤되고, 스크롤바가 탭 내용을 덮지 않도록 `scrollbar-gutter`와 하단 여백을 둔다.
+- `WorkspaceTabBar` 우측의 `AISummaryToggleButton` / `FileCanvasToggleButton` / `NoteToggleButton`은 `PaneActionsGroup`으로 묶여 기본 접힘 상태이며, 그룹 토글 버튼을 눌러야 펼쳐진다. 이 펼침 상태는 leaf pane별로 독립이며 Webview State에 저장되지 않는다.
+- leaf pane은 클릭해도 포커스 강조 아웃라인을 표시하지 않는다. `focusedPaneId`는 사이드바 커밋/파일 컨텍스트가 어느 pane을 따를지 결정하는 내부 상태로만 쓰인다.
 - 같은 대상(`panelType + commitHash + filePath`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.
 - 최상위 워크스페이스 탭은 `code` / `aiSummary` / `fileCanvas` / `note` 네 종류만 연다. 파일 단위 AI 요약과 심볼 캔버스는 독립 탭이 아니라 `code` 탭 내부 토글로만 연다.
 - 탭을 드래그해 다른 leaf pane의 상/하/좌/우 가장자리로 드롭하면 해당 방향으로 pane이 분할된다. 중앙 합류 드롭은 지원하지 않는다.

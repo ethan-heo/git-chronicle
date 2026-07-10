@@ -16,9 +16,21 @@ export class SummarySaveError extends Error {
   }
 }
 
-const COMMIT_SUMMARY_FILENAME = '전체_파일_정리.md';
+export type SummaryLanguage = 'ko' | 'en';
+
+const COMMIT_SUMMARY_FILENAME_KO = '전체_파일_정리.md';
+const COMMIT_SUMMARY_FILENAME_EN = 'full_file_summary.md';
 const COMMIT_SUMMARY_FILENAME_LEGACY = '_commit_summary.md';
-const COMMIT_NOTE_FILENAME = '노트.md';
+const COMMIT_NOTE_FILENAME_KO = '노트.md';
+const COMMIT_NOTE_FILENAME_EN = 'note.md';
+
+function getCommitSummaryFilename(language: SummaryLanguage): string {
+  return language === 'en' ? COMMIT_SUMMARY_FILENAME_EN : COMMIT_SUMMARY_FILENAME_KO;
+}
+
+function getCommitNoteFilename(language: SummaryLanguage): string {
+  return language === 'en' ? COMMIT_NOTE_FILENAME_EN : COMMIT_NOTE_FILENAME_KO;
+}
 
 export function toCommitDirName(shortHash: string, commitMessage: string): string {
   const sanitized = commitMessage
@@ -35,12 +47,12 @@ export function getSummaryFilePath(savePath: string, commitHash: string, filePat
   return path.join(savePath, getCommitDirName(commitHash, commitMessage), `${toSummaryFileName(filePath)}.md`);
 }
 
-export function getCommitSummaryFilePath(savePath: string, commitHash: string, commitMessage?: string): string {
-  return path.join(savePath, getCommitDirName(commitHash, commitMessage), commitMessage ? COMMIT_SUMMARY_FILENAME : COMMIT_SUMMARY_FILENAME_LEGACY);
+export function getCommitSummaryFilePath(savePath: string, commitHash: string, commitMessage?: string, language: SummaryLanguage = 'ko'): string {
+  return path.join(savePath, getCommitDirName(commitHash, commitMessage), commitMessage ? getCommitSummaryFilename(language) : COMMIT_SUMMARY_FILENAME_LEGACY);
 }
 
-export function getCommitNoteFilePath(savePath: string, commitHash: string, commitMessage?: string): string {
-  return path.join(savePath, getCommitDirName(commitHash, commitMessage), COMMIT_NOTE_FILENAME);
+export function getCommitNoteFilePath(savePath: string, commitHash: string, commitMessage?: string, language: SummaryLanguage = 'ko'): string {
+  return path.join(savePath, getCommitDirName(commitHash, commitMessage), getCommitNoteFilename(language));
 }
 
 export function loadSummary(savePath: string, commitHash: string, filePath: string, commitMessage?: string): SummaryFileResult | null {
@@ -75,16 +87,16 @@ export function loadCommitSummary(savePath: string, commitHash: string, commitMe
   };
 }
 
-export function saveCommitSummary(savePath: string, commitHash: string, content: string, commitMessage?: string): string {
-  const savedPath = getCommitSummaryFilePath(savePath, commitHash, commitMessage);
+export function saveCommitSummary(savePath: string, commitHash: string, content: string, commitMessage?: string, language: SummaryLanguage = 'ko'): string {
+  const savedPath = getCommitSummaryFilePath(savePath, commitHash, commitMessage, language);
   writeSummaryFile(savedPath, content);
   return savedPath;
 }
 
 export function loadNote(savePath: string, commitHash: string, commitMessage?: string): SummaryFileResult | null {
-  const savedPath = getCommitNoteFilePath(savePath, commitHash, commitMessage);
+  const savedPath = findExistingPath(getCommitNoteFilePathCandidates(savePath, commitHash, commitMessage));
 
-  if (!fs.existsSync(savedPath)) {
+  if (!savedPath) {
     return null;
   }
 
@@ -94,8 +106,8 @@ export function loadNote(savePath: string, commitHash: string, commitMessage?: s
   };
 }
 
-export function saveNote(savePath: string, commitHash: string, content: string, commitMessage?: string): string {
-  const savedPath = getCommitNoteFilePath(savePath, commitHash, commitMessage);
+export function saveNote(savePath: string, commitHash: string, content: string, commitMessage?: string, language: SummaryLanguage = 'ko'): string {
+  const savedPath = getCommitNoteFilePath(savePath, commitHash, commitMessage, language);
   writeSummaryFile(savedPath, content);
   return savedPath;
 }
@@ -144,9 +156,19 @@ function getCommitSummaryFilePathCandidates(savePath: string, commitHash: string
   const nextDir = getCommitDirName(commitHash, commitMessage);
 
   return [
-    path.join(savePath, nextDir, COMMIT_SUMMARY_FILENAME),
+    path.join(savePath, nextDir, COMMIT_SUMMARY_FILENAME_KO),
+    path.join(savePath, nextDir, COMMIT_SUMMARY_FILENAME_EN),
     path.join(savePath, nextDir, COMMIT_SUMMARY_FILENAME_LEGACY),
     getCommitSummaryFilePath(savePath, commitHash),
+  ];
+}
+
+function getCommitNoteFilePathCandidates(savePath: string, commitHash: string, commitMessage?: string): string[] {
+  const dir = getCommitDirName(commitHash, commitMessage);
+
+  return [
+    path.join(savePath, dir, COMMIT_NOTE_FILENAME_KO),
+    path.join(savePath, dir, COMMIT_NOTE_FILENAME_EN),
   ];
 }
 

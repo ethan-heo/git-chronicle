@@ -37,6 +37,7 @@ interface StreamDemoSummaryOptions {
   commitMessage: string;
   filePath?: string | null;
   scope: 'commit' | 'file';
+  commitSummaryFilename: string;
   appendChunk: (chunk: string) => void;
   complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
 }
@@ -136,7 +137,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   const headerContext = useMemo(() => {
     if (!commit) return t('shared.loading');
     return [
-      targetFile ? targetFile.path : '커밋 전체 요약',
+      targetFile ? targetFile.path : t('ai_summary.commit_full_summary'),
       t('ai_summary.ai_result'),
       activeAIProvider,
       hasCurrentSavedSummary ? t('shared.saved') : null,
@@ -158,6 +159,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
           commitMessage: commit.message,
           filePath: targetFile?.path ?? null,
           scope: summaryScope,
+          commitSummaryFilename: t('settings.commit_summary_filename'),
           appendChunk: appendAISummaryChunk,
           complete: (payload) => completeAISummary({ ...payload, scope: summaryScope, commitHash: commit.hash, targetKey: summaryTargetKey }),
         });
@@ -360,7 +362,7 @@ function streamDemoSummary(options: StreamDemoSummaryOptions): void {
         savedPath:
           options.scope === 'file' && options.filePath
             ? `.git-author/${commitDirName}/${options.filePath.replace(/[\\/]/g, '__')}.md`
-            : `.git-author/${commitDirName}/전체_파일_정리.md`,
+            : `.git-author/${commitDirName}/${options.commitSummaryFilename}`,
         provider: 'claude',
       });
     }

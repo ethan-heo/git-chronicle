@@ -15,7 +15,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 ## Business Rules
 
 - 노트는 S02 워크스페이스 상단 `WorkspaceTabBar`의 노트 버튼 또는 기존 노트 탭 포커스로 진입한다.
-- 저장 파일은 `{savePath}/{shortHash}_{sanitizedCommitMessage}/노트.md`다.
+- 저장 파일은 `{savePath}/{shortHash}_{sanitizedCommitMessage}/{노트 파일명}`다. 파일명은 `vscode.env.language`에 따라 분기한다 (한국어는 `노트.md`, 그 외는 `note.md`). 언어 분기와 하위 호환 폴백 순서는 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming)을 따른다.
 - 저장 방식은 명시적 버튼 없이 디바운스 자동저장이다.
 - 탭 전환 또는 닫기로 `NoteEditorPanel`이 언마운트될 때 저장되지 않은 초안이 있으면 디바운스를 기다리지 않고 즉시 저장한다.
 - 저장 경로가 없으면 F05b와 동일한 "저장 경로를 먼저 설정해주세요" 안내를 사용한다.
@@ -31,5 +31,5 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 ## Outputs
 
-- `노트.md`
+- `노트.md` / `note.md` (언어별)
 - `FETCH_NOTE` / `SAVE_NOTE`

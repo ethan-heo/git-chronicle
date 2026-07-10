@@ -88,7 +88,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
                 className="ai-summary-copy-button absolute top-2 right-2 z-[1]"
                 onClick={() => {
                   void navigator.clipboard.writeText(rawMarkdown).then(() => {
-                    useAppStore.getState().pushToast('코드 블록 마크다운을 복사했습니다', 'success');
+                    useAppStore.getState().pushToast(t('toast.code_block_markdown_copied'), 'success');
                   });
                 }}
               />
@@ -126,7 +126,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
                 className="ai-summary-copy-button absolute top-2 right-2 z-[1]"
                 onClick={() => {
                   void navigator.clipboard.writeText(rawMarkdown).then(() => {
-                    useAppStore.getState().pushToast('Mermaid 마크다운을 복사했습니다', 'success');
+                    useAppStore.getState().pushToast(t('toast.mermaid_markdown_copied'), 'success');
                   });
                 }}
               />
@@ -151,7 +151,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
         );
       },
     };
-  }, [content]);
+  }, [content, t]);
 
   useEffect(() => {
     if (qaCompletionCount > 0) {

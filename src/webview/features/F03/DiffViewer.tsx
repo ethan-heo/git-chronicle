@@ -301,7 +301,7 @@ export const DiffViewer: FC<DiffViewerProps> = ({
         >
           <CopyMarkdownButton className="opacity-100" onClick={() => {
             void navigator.clipboard.writeText(diffRangeToMarkdown(filePath, diffLines, selectedRange.start, selectedRange.end));
-            pushToast('선택한 diff를 복사했습니다', 'success');
+            pushToast(t('toast.diff_copied'), 'success');
           }}
           />
         </div>

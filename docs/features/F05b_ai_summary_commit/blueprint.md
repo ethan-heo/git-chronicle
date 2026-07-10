@@ -23,7 +23,7 @@
 ## Outputs
 
 - `currentSummaryContent: string` — 스트리밍 누적 텍스트 (전역 상태)
-- 저장 파일: `{savePath}/{shortHash}_{sanitizedCommitMessage}/전체_파일_정리.md`
+- 저장 파일: `{savePath}/{shortHash}_{sanitizedCommitMessage}/{커밋 정리 파일명}` (파일명 언어 분기는 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming) 참고)
 
 ---
 

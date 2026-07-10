@@ -33,7 +33,7 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
 
   const handleCopy = async (): Promise<void> => {
     await navigator.clipboard.writeText(changedFileToMarkdown(file));
-    pushToast('파일 마크다운을 복사했습니다', 'success');
+    pushToast(t('toast.file_markdown_copied'), 'success');
   };
 
   return (

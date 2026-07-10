@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import './StreamingTextRenderer.css';
 
 interface StreamingTextRendererProps {
@@ -7,11 +8,13 @@ interface StreamingTextRendererProps {
 }
 
 export const StreamingTextRenderer: FC<StreamingTextRendererProps> = ({ content, isStreaming }) => {
+  const { t } = useTranslation();
+
   if (!content && isStreaming) {
     return (
       <div className="flex min-h-[180px] items-center gap-[3px]">
-        <div className="inline-flex items-center gap-2 text-[13px] leading-[1.4] text-[color-mix(in_srgb,var(--color-text)_82%,var(--color-muted))]" aria-label="생각중">
-          <span className="streaming-thinking-label">생각중</span>
+        <div className="inline-flex items-center gap-2 text-[13px] leading-[1.4] text-[color-mix(in_srgb,var(--color-text)_82%,var(--color-muted))]" aria-label={t('ai_summary.thinking')}>
+          <span className="streaming-thinking-label">{t('ai_summary.thinking')}</span>
           <span className="streaming-thinking-dots inline-flex items-center gap-1" aria-hidden="true">
             <span className="size-[5px] rounded-full bg-current opacity-[0.22]" />
             <span className="size-[5px] rounded-full bg-current opacity-[0.22]" />

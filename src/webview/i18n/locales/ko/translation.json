@@ -56,7 +56,8 @@
     "binary": "Binary file - diff를 표시할 수 없습니다",
     "deleted_file": "삭제된 파일입니다",
     "panel_close_aria": "diff 패널 닫기",
-    "region_aria": "{{filePath}} 코드 변경 내역"
+    "region_aria": "{{filePath}} 코드 변경 내역",
+    "fold_hidden_lines": "⋯ {{count}}줄 숨김 (라인 {{start}}-{{end}})"
   },
   "dependency": {
     "loading": "의존 관계를 분석하는 중...",
@@ -81,6 +82,7 @@
   "symbol_graph": {
     "loading": "심볼을 분석하는 중...",
     "empty": "분석 가능한 심볼이 없습니다",
+    "analysis_failed": "심볼을 분석하지 못했습니다",
     "open_aria": "심볼 그래프 보기",
     "graph_aria": "파일 내부 심볼 의존성 그래프",
     "code_panel_title": "코드 보기",
@@ -142,18 +144,23 @@
     "qa_label": "요약에 대해 질문하기",
     "qa_placeholder": "요약 내용에 대해 질문하세요...",
     "qa_submit": "질문하기",
-    "qa_loading": "답변 생성 중..."
+    "qa_loading": "답변 생성 중...",
+    "thinking": "생각중",
+    "commit_full_summary": "커밋 전체 요약",
+    "generating_badge_aria": "AI 생성 중"
   },
   "action_bar": {
     "commit_ai_aria": "커밋 전체 AI 정리",
     "batch_ai_aria": "전체 파일 AI 정리",
     "canvas_aria": "의존성 캔버스 보기",
     "note_aria": "노트 열기",
+    "actions_group_aria": "AI 요약, 파일 캔버스, 노트 버튼 그룹 펼치기 또는 접기",
     "sidebar_toggle_aria": "사이드바 접기 또는 펼치기",
     "batch_cancel_aria": "AI 정리 일괄 생성 취소",
     "batch_cancel_title": "현재 파일 완료 후 중단",
     "code_view_aria": "코드 보기",
-    "code_view_title": "코드 보기"
+    "code_view_title": "코드 보기",
+    "file_ai_toggle_aria": "파일 AI 요약 토글"
   },
   "settings": {
     "title": "설정",
@@ -174,7 +181,8 @@
     "save_path_selected_aria": "저장 경로: {{path}}. 클릭하여 변경",
     "save_path_current_aria": "현재 저장 경로: {{path}}",
     "change": "변경",
-    "commit_summary_file": "커밋 단위 정리는 전체_파일_정리.md로 저장됩니다.",
+    "commit_summary_file": "커밋 단위 정리는 {{filename}}로 저장됩니다.",
+    "commit_summary_filename": "전체_파일_정리.md",
     "save_path_prompt": "경로를 선택하세요",
     "unset": "미설정",
     "save_path_helper": "폴더를 지정하면 AI 정리 시 결과 파일이 이 위치에 자동 저장됩니다.",
@@ -198,7 +206,14 @@
     "commit_placeholder_title": "커밋을 선택하세요",
     "commit_placeholder_context": "왼쪽 커밋 목록에서 항목을 선택하면 변경 파일과 워크스페이스 패널을 탐색할 수 있습니다",
     "commit_placeholder_body": "왼쪽 커밋 목록에서 항목을 선택하면 변경 파일, AI 정리, 그래프를 이 워크스페이스에서 바로 확인할 수 있습니다",
-    "sidebar_all_collapsed": "사이드바 섹션이 모두 접혀 있습니다"
+    "sidebar_all_collapsed": "사이드바 섹션이 모두 접혀 있습니다",
+    "no_open_tab": "열린 탭이 없습니다.",
+    "ai_summary_busy_toast": "다른 탭에서 AI 요약 생성 중입니다.",
+    "tab_label_ai_summary": "AI 요약",
+    "tab_label_file_canvas": "의존성 캔버스",
+    "tab_label_note": "노트",
+    "tab_close_aria": "{{label}} 닫기",
+    "tab_close_title": "탭 닫기"
   },
   "shared": {
     "loading_state": "로딩 중",
@@ -243,5 +258,30 @@
     "in_progress": "전체 파일 AI 정리 생성 중",
     "canceling_detail": "취소하는 중 - 현재 파일 완료 후 중단됩니다",
     "completed": "{{completed}}개 완료, 전체 {{total}}개"
+  },
+  "note": {
+    "saving": "저장 중...",
+    "saved": "저장됨",
+    "autosave_pending": "자동 저장 대기 중",
+    "mode_edit": "편집",
+    "mode_split": "분할",
+    "mode_preview": "미리보기",
+    "loading": "노트를 불러오는 중...",
+    "placeholder": "마크다운으로 메모를 남겨보세요.",
+    "preview_placeholder": "노트 미리보기가 여기에 표시됩니다.",
+    "mermaid_render_failed": "Mermaid 렌더링에 실패했습니다.",
+    "mermaid_rendering": "Mermaid 다이어그램을 렌더링하는 중...",
+    "load_failed": "노트를 불러오지 못했습니다",
+    "save_failed": "노트를 저장하지 못했습니다"
+  },
+  "toast": {
+    "file_node_mermaid_copied": "파일 노드 Mermaid를 복사했습니다",
+    "graph_mermaid_copied": "Mermaid 그래프를 복사했습니다",
+    "symbol_node_mermaid_copied": "심볼 노드 Mermaid를 복사했습니다",
+    "diff_copied": "선택한 diff를 복사했습니다",
+    "file_markdown_copied": "파일 마크다운을 복사했습니다",
+    "code_block_markdown_copied": "코드 블록 마크다운을 복사했습니다",
+    "mermaid_markdown_copied": "Mermaid 마크다운을 복사했습니다",
+    "commit_markdown_copied": "커밋 마크다운을 복사했습니다"
   }
 }

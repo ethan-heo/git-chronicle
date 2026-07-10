@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface SymbolGraphToggleButtonProps {
   isActive: boolean;
@@ -6,23 +7,27 @@ interface SymbolGraphToggleButtonProps {
   onClick: () => void;
 }
 
-export const SymbolGraphToggleButton: FC<SymbolGraphToggleButtonProps> = ({ isActive, disabled, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    className={[
-      'inline-flex size-8 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-45',
-      isActive
-        ? 'border-link bg-[color-mix(in_srgb,var(--color-link)_14%,var(--color-panel))] text-link'
-        : 'border-line bg-panel text-muted hover:bg-hover hover:text-text disabled:hover:bg-panel disabled:hover:text-muted',
-    ].join(' ')}
-    aria-pressed={isActive}
-    title="심볼 캔버스 토글"
-  >
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-      <path d="M3 4h3v3H3zM10 3h3v3h-3zM8 10h3v3H8z" />
-      <path d="M6 5.5h4M11.5 6v3.5M6.5 7.5l2 2" />
-    </svg>
-  </button>
-);
+export const SymbolGraphToggleButton: FC<SymbolGraphToggleButtonProps> = ({ isActive, disabled, onClick }) => {
+  const { t } = useTranslation();
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={[
+        'inline-flex size-8 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+        isActive
+          ? 'border-link bg-[color-mix(in_srgb,var(--color-link)_14%,var(--color-panel))] text-link'
+          : 'border-line bg-panel text-muted hover:bg-hover hover:text-text disabled:hover:bg-panel disabled:hover:text-muted',
+      ].join(' ')}
+      aria-pressed={isActive}
+      title={t('symbol_graph.open_aria')}
+    >
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+        <path d="M3 4h3v3H3zM10 3h3v3h-3zM8 10h3v3H8z" />
+        <path d="M6 5.5h4M11.5 6v3.5M6.5 7.5l2 2" />
+      </svg>
+    </button>
+  );
+};
