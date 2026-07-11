@@ -32,6 +32,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 ## User Scenarios
 
 1. 커밋 요약이 완료되면 하단에 질문 입력 영역이 나타난다.
+   - 아직 노트로 저장하지 않은 요약은 입력창이 비활성화된 상태로 보인다.
 2. 사용자가 질문을 입력하고 Enter 또는 [질문하기] 버튼을 누르면 답변 생성이 시작된다.
 3. 응답이 생성되는 동안 뷰어 본문 끝에 "생각중" 상태가 표시된다.
 4. 응답이 완료되면 현재 요약 하단과 저장된 `.md` 파일에 질문/답변 블록이 append된다.
@@ -46,7 +47,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 항목 | 내용 |
 |------|------|
 | 적용 범위 | F05b 커밋 단위 요약과 파일 트리의 파일 단위 AI 요약. 현재 표시 중인 요약 범위에 맞는 diff를 근거로 답변한다 |
-| 질문 가능 조건 | `isGeneratingSummary = false` 이고 `content !== ''` |
+| 질문 가능 조건 | `isGeneratingSummary = false` 이고 `content !== ''` 이며 현재 스코프에 연결된 저장 노트가 존재 |
 | 모델 선택 | 활성 프로바이더의 `qaModel` 사용 |
 | 프롬프트 입력 | 기존 요약 본문 + 원본 diff + 현재 질문 |
 | 멀티턴 여부 | 미지원. 이전 Q&A는 다음 질문 프롬프트에 포함하지 않음 |
@@ -74,7 +75,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 소스 | 타입 | 설명 |
 |------|------|------|
 | `currentSummaryContent` | `string` | 현재 화면에 표시된 요약 본문 |
-| `summarySavedPath` | `string \| null` | 저장된 요약 파일 경로 |
+| `summaryNoteRelativePath` | `string \| null` | 현재 스코프에 연결된 저장 노트 상대 경로 |
 | `qaModel` | `string \| null` | 활성 프로바이더의 Q&A용 모델 |
 | Git diff | `string` | Host가 파일/커밋 기준으로 재조회한 diff |
 
@@ -106,8 +107,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 | 메시지 | 방향 | 페이로드 |
 |--------|------|---------|
-| `START_AI_QA` | Webview → Host | `{ question, summaryContent, commitHash, commitMessage, filePath?, provider, qaModel, savePath }` |
+| `START_AI_QA` | Webview → Host | `{ question, summaryContent, commitHash, commitMessage, filePath?, provider, qaModel, savePath, noteRelativePath }` |
 | `AI_QA_CHUNK` | Host → Webview | `{ chunk: string }` |
 | `AI_QA_COMPLETE` | Host → Webview | `{ appendedContent: string }` |
 | `AI_QA_ERROR` | Host → Webview | `{ message: string }` |
-

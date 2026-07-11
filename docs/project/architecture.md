@@ -99,7 +99,7 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_AI_SUMMARY_SETTINGS' }
   | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string; commitMessage?: string; provider?: AIProviderName | null; summaryModel?: string | null; savePath?: string | null; forceRegenerate?: boolean } }
   | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; commitMessage?: string; filePath: string; provider?: AIProviderName | null; summaryModel?: string | null; savePath?: string | null; forceRegenerate?: boolean } }
-  | { type: 'START_AI_QA'; payload: { question: string; diff?: string; summaryContent: string; commitHash: string; commitMessage?: string; filePath?: string; provider?: AIProviderName | null; qaModel?: string | null; savePath?: string | null } }
+  | { type: 'START_AI_QA'; payload: { question: string; diff?: string; summaryContent: string; commitHash: string; commitMessage?: string; filePath?: string; provider?: AIProviderName | null; qaModel?: string | null; savePath?: string | null; noteRelativePath?: string | null } }
   | { type: 'REGISTER_AI_PROVIDER'; payload: { name: AIProviderName } }
   | { type: 'ACTIVATE_AI_PROVIDER' | 'SET_ACTIVE_AI_PROVIDER'; payload: { name: AIProviderName } }
   | { type: 'SET_AI_MODEL'; payload: { name: AIProviderName; usage: 'summary' | 'qa'; model: string } }
@@ -107,11 +107,11 @@ type WebviewToExtensionMessage =
   | { type: 'SET_SAVE_PATH' }
   | { type: 'CLEAR_SAVE_PATH' }
   | { type: 'FETCH_NOTE_TREE'; payload: { savePath?: string | null } }
-  | { type: 'CREATE_NOTE'; payload: { savePath?: string | null; relativePath: string } }
+  | { type: 'CREATE_NOTE'; payload: { savePath?: string | null; relativePath: string; content?: string; linkContext?: { commitHash: string; filePath?: string | null; scope: 'commit' | 'file' } } }
   | { type: 'DELETE_NOTE'; payload: { savePath?: string | null; relativePath: string } }
   | { type: 'MOVE_NOTE'; payload: { savePath?: string | null; fromRelativePath: string; toRelativePath: string } }
   | { type: 'FETCH_NOTE'; payload: { paneId?: string; relativePath: string; savePath?: string | null } }
-  | { type: 'SAVE_NOTE'; payload: { paneId?: string; relativePath: string; savePath?: string | null; content: string } }
+  | { type: 'SAVE_NOTE'; payload: { paneId?: string; relativePath: string; savePath?: string | null; content: string; linkContext?: { commitHash: string; filePath?: string | null; scope: 'commit' | 'file' } } }
   | { type: 'FETCH_GITHUB_AUTH_STATE' }
   | { type: 'CONNECT_GITHUB' }
   | { type: 'FETCH_PULL_REQUESTS'; payload: { page?: number } }
@@ -120,6 +120,9 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_ISSUE_DETAIL'; payload: { number?: number } }
   | { type: 'FETCH_PR_RELATED_COMMITS'; payload: { number?: number; page?: number } }
   | { type: 'FETCH_ISSUE_RELATED_COMMITS'; payload: { number?: number; page?: number } };
+
+// Host 내부 노트 파일 오류 코드 중 messageHandler 문맥에서 참조되는 값
+type NoteFileErrorCode = 'NOT_FOUND';
 
 // Extension → Webview (응답/이벤트)
 type ExtensionToWebviewMessage =
@@ -137,12 +140,13 @@ type ExtensionToWebviewMessage =
   | { type: 'SYMBOL_GRAPH_LOADED'; payload: { nodes: SymbolNode[]; edges: SymbolEdge[] } }
   | { type: 'SYMBOL_GRAPH_LOAD_FAILED'; payload: { message: string } }
   | { type: 'AI_SUMMARY_SETTINGS_LOADED'; payload: AISettingsState }
-  | { type: 'AI_SUMMARY_LOADED'; payload: { content: string; savedPath: string; provider: AIProviderName; fromSaved: true } }
+  | { type: 'AI_SUMMARY_LOADED'; payload: { content: string; savedPath: string; noteRelativePath: string; provider: AIProviderName; fromSaved: true } }
   | { type: 'AI_SUMMARY_STARTED'; payload: { provider: AIProviderName } }
   | { type: 'AI_SUMMARY_TOKEN_WARNING'; payload: { isOverLimit: boolean } }
   | { type: 'AI_SUMMARY_CHUNK'; payload: { chunk: string } }
-  | { type: 'AI_SUMMARY_DONE'; payload: { content: string; savedPath: string; provider: AIProviderName } }
+  | { type: 'AI_SUMMARY_DONE'; payload: { content: string; provider: AIProviderName } }
   | { type: 'AI_SUMMARY_ERROR'; payload: { message: string } }
+  | { type: 'AI_SUMMARY_NOTE_LINKED'; payload: { content: string; savedPath: string; noteRelativePath: string; linkContext: { commitHash: string; filePath?: string | null; scope: 'commit' | 'file' } } }
   | { type: 'AI_QA_CHUNK'; payload: { chunk: string } }
   | { type: 'AI_QA_COMPLETE'; payload: { appendedContent: string } }
   | { type: 'AI_QA_ERROR'; payload: { message: string } }
@@ -190,6 +194,8 @@ interface AISettingsState {
   qaModelPerProvider: Record<AIProviderName, string | undefined>;
 }
 ```
+
+노트 파일 계층에서는 별도 메시지 대신 `NoteFileErrorCode = 'INVALID_PATH' | 'ALREADY_EXISTS' | 'NOT_FOUND' | 'IO_ERROR'`를 사용해 Host 내부에서 오류를 분류한다.
 
 ### Zustand 상태 관리 (Webview 전용)
 

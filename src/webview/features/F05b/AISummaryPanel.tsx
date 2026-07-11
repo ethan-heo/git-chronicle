@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import type { ChangedFile, Commit } from '../../types/commit';
 import { AISummaryViewer } from './AISummaryViewer';
 import { OverwriteConfirmDialog } from './OverwriteConfirmDialog';
+import { SaveAsNoteDialog } from './SaveAsNoteDialog';
 import { TokenLimitWarning } from './TokenLimitWarning';
 import { useAISummary } from './useAISummary';
 
@@ -18,21 +19,30 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
     currentSummaryContent,
     hasCurrentSavedSummary,
     hasLoadedSettings,
-    isDialogOpen,
     isGeneratingQA,
     isGeneratingSummary,
     isLoadingSummary,
+    isRegenerateDialogOpen,
+    isSaveDialogOpen,
     isSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
+    noteEntries,
     onAskQuestion,
     onConfirmRegenerate,
+    onConfirmSave,
     onRegenerate,
     onRetry,
+    onSave,
     qaCompletionCount,
+    saveDraft,
     savePath,
-    setIsDialogOpen,
+    setIsRegenerateDialogOpen,
+    setIsSaveDialogOpen,
     setIsTokenWarningDismissed,
+    setSaveDraft,
+    shouldWarnBeforeOverwrite,
     summaryError,
+    summaryNoteRelativePath,
     summarySavedPath,
   } = useAISummary({ isActive, targetFile, commit });
 
@@ -51,6 +61,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
         hasSavedSummary={hasCurrentSavedSummary}
         hasAIProvider={Boolean(activeAIProvider)}
         hasSavePath={Boolean(savePath)}
+        noteRelativePath={summaryNoteRelativePath}
         savedPath={summarySavedPath}
         providerLabel={activeAIProvider}
         qaCompletionCount={qaCompletionCount}
@@ -58,11 +69,21 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
         onGoToSettings={onGoToSettings}
         onRegenerate={onRegenerate}
         onRetry={onRetry}
+        onSave={onSave}
       />
       <OverwriteConfirmDialog
-        isOpen={isDialogOpen}
-        onCancel={() => setIsDialogOpen(false)}
+        isOpen={isRegenerateDialogOpen}
+        onCancel={() => setIsRegenerateDialogOpen(false)}
         onConfirm={onConfirmRegenerate}
+      />
+      <SaveAsNoteDialog
+        entries={noteEntries}
+        initialValue={saveDraft.relativePath}
+        isOpen={isSaveDialogOpen}
+        onCancel={() => setIsSaveDialogOpen(false)}
+        onChange={(relativePath) => setSaveDraft({ ...saveDraft, relativePath })}
+        onConfirm={() => onConfirmSave(saveDraft.relativePath)}
+        shouldWarnBeforeOverwrite={shouldWarnBeforeOverwrite}
       />
     </div>
   );

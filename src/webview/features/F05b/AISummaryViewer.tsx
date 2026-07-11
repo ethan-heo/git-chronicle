@@ -23,6 +23,7 @@ interface AISummaryViewerProps {
   hasSavedSummary: boolean;
   hasAIProvider: boolean;
   hasSavePath: boolean;
+  noteRelativePath?: string | null;
   savedPath: string | null;
   providerLabel: string | null;
   qaCompletionCount: number;
@@ -30,6 +31,7 @@ interface AISummaryViewerProps {
   onGoToSettings: () => void;
   onRegenerate: () => void;
   onRetry: () => void;
+  onSave?: () => void;
 }
 
 export const AISummaryViewer: FC<AISummaryViewerProps> = ({
@@ -41,21 +43,22 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   hasSavedSummary,
   hasAIProvider,
   hasSavePath,
-  savedPath,
+  noteRelativePath = null,
   providerLabel,
   qaCompletionCount,
   onAskQuestion,
   onGoToSettings,
   onRegenerate,
   onRetry,
+  onSave = () => {},
 }) => {
   const { t } = useTranslation();
   const summaryEndRef = useRef<HTMLDivElement | null>(null);
   const markdownContainerRef = useMarkdownSourceCopy(content);
 
-  const showRegenerate = hasSavedSummary && (Boolean(content) || isGenerating);
-  const showSavedPath = hasSavedSummary && Boolean(savedPath);
-  const canAskQuestion = !isGenerating && Boolean(content);
+  const showRegenerate = Boolean(content) || isGenerating;
+  const showSavedPath = hasSavedSummary && Boolean(noteRelativePath);
+  const canAskQuestion = !isGenerating && Boolean(content) && hasSavedSummary;
   const markdownComponents = useMemo(() => {
     let mermaidBlockIndex = 0;
     let highlightedCodeBlockIndex = 0;
@@ -208,15 +211,28 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
       <div className="flex items-center justify-between gap-3 border-b border-line bg-panel px-6 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <span className="shrink-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted">
-            {formatSourceTag(t, hasSavedSummary, isGenerating, providerLabel, savedPath)}
+            {formatSourceTag(t, hasSavedSummary, isGenerating, providerLabel)}
           </span>
           {showSavedPath ? (
-            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm text-muted [direction:rtl]" title={savedPath ?? undefined}>
-              {savedPath}
+            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm text-muted" title={noteRelativePath ?? undefined}>
+              {noteRelativePath}
             </span>
           ) : null}
         </div>
-        {showRegenerate ? <RegenerateButton disabled={isGenerating} onClick={onRegenerate} /> : null}
+        <div className="flex items-center gap-2">
+          {!hasSavedSummary && content ? (
+            <button
+              type="button"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-line bg-secondary text-text transition-colors hover:bg-secondary-hi"
+              aria-label={t('ai_summary.save')}
+              title={t('ai_summary.save')}
+              onClick={onSave}
+            >
+              <span aria-hidden="true">📄</span>
+            </button>
+          ) : null}
+          {showRegenerate ? <RegenerateButton disabled={isGenerating} onClick={onRegenerate} /> : null}
+        </div>
       </div>
 
       <div className="ai-summary-content ai-summary-content-commit flex min-h-0 flex-1 flex-col">
@@ -240,7 +256,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
             <EmptyState message={t('ai_summary.empty_commit')} />
           )}
         </div>
-        {canAskQuestion ? <QAInputArea isGeneratingQA={isGeneratingQA} onAskQuestion={onAskQuestion} /> : null}
+        {content ? <QAInputArea isEnabled={canAskQuestion} isGeneratingQA={isGeneratingQA} onAskQuestion={onAskQuestion} /> : null}
       </div>
     </section>
   );
@@ -302,7 +318,6 @@ function formatSourceTag(
   hasSavedSummary: boolean,
   isGenerating: boolean,
   providerLabel: string | null,
-  savedPath: string | null,
 ): string {
   const provider = providerLabel ?? 'AI';
 
@@ -310,13 +325,9 @@ function formatSourceTag(
     return t('ai_summary.source_generating', { provider });
   }
 
-  if (hasSavedSummary && savedPath) {
-    return t('ai_summary.source_saved_loaded', { provider });
-  }
-
   if (hasSavedSummary) {
     return t('ai_summary.source_saved', { provider });
   }
 
-  return t('ai_summary.source_ready', { provider });
+  return t('ai_summary.source_generated', { provider });
 }

@@ -21,7 +21,7 @@ export class NoteFileError extends Error {
 }
 
 export function getNotesRoot(savePath: string): string {
-  return path.join(savePath, 'notes');
+  return savePath;
 }
 
 export function sanitizeRelativePath(relativePath: string): string {

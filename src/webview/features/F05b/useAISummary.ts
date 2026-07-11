@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useCallback, useEffect, useState } from 'react';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useAppStore } from '../../store/appStore';
 import type { AIProviderName, ChangedFile, Commit } from '../../types/commit';
@@ -33,11 +32,7 @@ const DEMO_FILE_SUMMARY = `### 한 줄 요약
 
 interface StreamDemoSummaryOptions {
   forceRegenerate: boolean;
-  commitHash: string;
-  commitMessage: string;
-  filePath?: string | null;
   scope: 'commit' | 'file';
-  commitSummaryFilename: string;
   appendChunk: (chunk: string) => void;
   complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
 }
@@ -48,31 +43,43 @@ export interface QAMessage {
   isStreaming?: boolean;
 }
 
+interface SaveDraft {
+  relativePath: string;
+  mode: 'create' | 'overwrite';
+}
+
 interface UseAISummaryResult {
   activeAIProvider: AIProviderName | null;
   currentSummaryContent: string;
-  headerContext: string;
   hasCurrentSavedSummary: boolean;
   hasLoadedSettings: boolean;
-  isDialogOpen: boolean;
   isGeneratingQA: boolean;
   isGeneratingSummary: boolean;
   isLoadingSummary: boolean;
+  isRegenerateDialogOpen: boolean;
+  isSaveDialogOpen: boolean;
   isSummaryTokenLimitExceeded: boolean;
   isTokenWarningDismissed: boolean;
+  noteEntries: { relativePath: string; name: string; updatedAt: string }[];
   onAskQuestion: (question: string) => void;
   onConfirmRegenerate: () => void;
+  onConfirmSave: (relativePath: string) => void;
   dismissTokenWarning: () => void;
   onRegenerate: () => void;
   onRetry: () => void;
-  savePath: string | null;
-  selectedCommit: Commit | null;
-  setIsDialogOpen: (isOpen: boolean) => void;
-  setIsTokenWarningDismissed: (isDismissed: boolean) => void;
+  onSave: () => void;
   qaError: string | null;
   qaMessages: QAMessage[];
   qaCompletionCount: number;
+  saveDraft: SaveDraft;
+  savePath: string | null;
+  setIsRegenerateDialogOpen: (isOpen: boolean) => void;
+  setIsSaveDialogOpen: (isOpen: boolean) => void;
+  setIsTokenWarningDismissed: (isDismissed: boolean) => void;
+  setSaveDraft: (draft: SaveDraft) => void;
+  shouldWarnBeforeOverwrite: boolean;
   summaryError: string | null;
+  summaryNoteRelativePath: string | null;
   summarySavedPath: string | null;
 }
 
@@ -80,8 +87,8 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   const isActive = options?.isActive ?? true;
   const targetFile = options?.targetFile ?? null;
   const commit = options?.commit ?? null;
-  const { t } = useTranslation();
   const savePath = useAppStore((state) => state.savePath);
+  const noteEntries = useAppStore((state) => state.noteTree);
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
   const summaryModel = useAppStore((state) => state.summaryModel);
   const qaModel = useAppStore((state) => state.qaModel);
@@ -94,6 +101,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   const summaryError = useAppStore((state) => state.summaryError);
   const qaError = useAppStore((state) => state.qaError);
   const summarySavedPath = useAppStore((state) => state.summarySavedPath);
+  const summaryNoteRelativePath = useAppStore((state) => state.summaryNoteRelativePath);
   const hasCurrentSavedSummary = useAppStore((state) => state.hasCurrentSavedSummary);
   const isSummaryTokenLimitExceeded = useAppStore((state) => state.isSummaryTokenLimitExceeded);
   const setAISummarySettings = useAppStore((state) => state.setAISummarySettings);
@@ -105,12 +113,16 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   const completeAIQA = useAppStore((state) => state.completeAIQA);
   const failAIQA = useAppStore((state) => state.failAIQA);
   const setSummaryTokenWarning = useAppStore((state) => state.setSummaryTokenWarning);
+  const markCurrentSummarySaved = useAppStore((state) => state.markCurrentSummarySaved);
+  const loadNoteTree = useAppStore((state) => state.loadNoteTree);
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isTokenWarningDismissed, setIsTokenWarningDismissed] = useState(false);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(!isVSCodeRuntime());
   const [qaMessages, setQAMessages] = useState<QAMessage[]>([]);
   const [qaCompletionCount, setQACompletionCount] = useState(0);
+  const [saveDraft, setSaveDraft] = useState<SaveDraft>({ relativePath: '', mode: 'create' });
   const qaResetKey = `${commit?.hash ?? ''}::${targetFile?.path ?? ''}`;
   const [prevQAResetKey, setPrevQAResetKey] = useState(qaResetKey);
 
@@ -127,119 +139,174 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   const isActiveSummaryTarget = activeSummaryTargetKey === summaryTargetKey;
   const displayedSummaryContent = isActiveSummaryTarget ? currentSummaryContent : (cachedSummary?.content ?? '');
   const displayedSavedPath = isActiveSummaryTarget ? summarySavedPath : (cachedSummary?.savedPath ?? null);
+  const displayedNoteRelativePath = isActiveSummaryTarget ? summaryNoteRelativePath : (cachedSummary?.noteRelativePath ?? null);
   const displayedHasSavedSummary = isActiveSummaryTarget ? hasCurrentSavedSummary : Boolean(cachedSummary?.hasSavedSummary);
   const displayedSummaryError = isActiveSummaryTarget ? summaryError : null;
   const displayedIsLoadingSummary = isActiveSummaryTarget ? isLoadingSummary : false;
   const displayedIsGeneratingSummary = isActiveSummaryTarget ? isGeneratingSummary : false;
   const displayedIsGeneratingQA = isActiveSummaryTarget ? isGeneratingQA : false;
   const displayedIsSummaryTokenLimitExceeded = isActiveSummaryTarget ? isSummaryTokenLimitExceeded : false;
+  const shouldWarnBeforeOverwrite = Boolean(displayedNoteRelativePath && !displayedHasSavedSummary);
 
-  const headerContext = useMemo(() => {
-    if (!commit) return t('shared.loading');
-    return [
-      targetFile ? targetFile.path : t('ai_summary.commit_full_summary'),
-      t('ai_summary.ai_result'),
-      activeAIProvider,
-      hasCurrentSavedSummary ? t('shared.saved') : null,
-    ].filter(Boolean).join(' · ');
-  }, [activeAIProvider, commit, hasCurrentSavedSummary, t, targetFile]);
+  const startSummary = useCallback((forceRegenerate = false): void => {
+    if (!commit || !activeAIProvider || !savePath) {
+      return;
+    }
 
-  const startSummary = useCallback(
-    (forceRegenerate = false): void => {
-      if (!commit || !activeAIProvider || !savePath) return;
+    setSummaryTokenWarning(false);
+    setIsTokenWarningDismissed(false);
 
-      setSummaryTokenWarning(false);
-      setIsTokenWarningDismissed(false);
-
-      if (!isVSCodeRuntime()) {
-        startAISummaryGeneration({ preserveSavedSummary: forceRegenerate, targetKey: summaryTargetKey, commitHash: commit.hash });
-        streamDemoSummary({
-          forceRegenerate,
-          commitHash: commit.shortHash,
-          commitMessage: commit.message,
-          filePath: targetFile?.path ?? null,
-          scope: summaryScope,
-          commitSummaryFilename: t('settings.commit_summary_filename'),
-          appendChunk: appendAISummaryChunk,
-          complete: (payload) => completeAISummary({ ...payload, scope: summaryScope, commitHash: commit.hash, targetKey: summaryTargetKey }),
-        });
-        return;
-      }
-
-      startAISummaryLoading({ preserveSavedSummary: forceRegenerate, commitHash: commit.hash, targetKey: summaryTargetKey });
-      if (targetFile) {
-        postMessage('START_AI_SUMMARY_FILE', {
-          commitHash: commit.hash,
-          commitMessage: commit.message,
-          filePath: targetFile.path,
-          provider: activeAIProvider,
-          summaryModel,
-          savePath,
-          forceRegenerate,
-        });
-        return;
-      }
-
-      postMessage('START_AI_SUMMARY_COMMIT', {
+    if (!isVSCodeRuntime()) {
+      startAISummaryGeneration({
+        preserveSavedSummary: forceRegenerate,
+        targetKey: summaryTargetKey,
         commitHash: commit.hash,
-        commitMessage: commit.message,
-        provider: activeAIProvider,
-        summaryModel,
-        savePath,
+      });
+      streamDemoSummary({
         forceRegenerate,
+        scope: summaryScope,
+        appendChunk: appendAISummaryChunk,
+        complete: (payload) => completeAISummary({
+          ...payload,
+          scope: summaryScope,
+          commitHash: commit.hash,
+          targetKey: summaryTargetKey,
+        }),
       });
-    },
-    [activeAIProvider, appendAISummaryChunk, commit, completeAISummary, savePath, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryModel, summaryScope, summaryTargetKey, targetFile],
-  );
+      return;
+    }
 
-  const askQuestion = useCallback(
-    (question: string): void => {
-      if (!commit || !activeAIProvider || !savePath || !displayedSummaryContent || !qaModel) {
-        return;
-      }
+    startAISummaryLoading({
+      preserveSavedSummary: forceRegenerate,
+      commitHash: commit.hash,
+      targetKey: summaryTargetKey,
+    });
 
-      setQAMessages((prev) => [
-        ...prev,
-        { role: 'user', text: question },
-        { role: 'assistant', text: '', isStreaming: true },
-      ]);
-      startAIQA();
+    const basePayload = {
+      commitHash: commit.hash,
+      commitMessage: commit.message,
+      provider: activeAIProvider,
+      summaryModel,
+      savePath,
+      forceRegenerate,
+    };
 
-      if (!isVSCodeRuntime()) {
-        window.setTimeout(() => {
-          setQAMessages((prev) => {
-            const next = [...prev];
-            const last = next.at(-1);
-            if (last?.role === 'assistant') {
-              next[next.length - 1] = {
-                ...last,
-                text: '현재 데모 환경에서는 요약 본문 기준으로만 답변하며, 이번 변경은 구조 단순화와 성능 개선을 목표로 한 수정으로 보입니다.',
-                isStreaming: false,
-              };
-            }
-            return next;
-          });
-          completeAIQA({
-            appendedContent: `\n\n---\n\n### Q. ${question}\n\n현재 데모 환경에서는 요약 본문 기준으로만 답변하며, 이번 변경은 구조 단순화와 성능 개선을 목표로 한 수정으로 보입니다.\n`,
-          });
-          setQACompletionCount((count) => count + 1);
-        }, 500);
-        return;
-      }
+    if (targetFile) {
+      postMessage('START_AI_SUMMARY_FILE', { ...basePayload, filePath: targetFile.path });
+      return;
+    }
 
-      postMessage('START_AI_QA', {
-        question,
-        summaryContent: displayedSummaryContent,
-        commitHash: commit.hash,
-        commitMessage: commit.message,
-        filePath: targetFile?.path,
+    postMessage('START_AI_SUMMARY_COMMIT', basePayload);
+  }, [activeAIProvider, appendAISummaryChunk, commit, completeAISummary, savePath, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryModel, summaryScope, summaryTargetKey, targetFile]);
+
+  const askQuestion = useCallback((question: string): void => {
+    if (!commit || !activeAIProvider || !savePath || !displayedSummaryContent || !qaModel || !displayedNoteRelativePath) {
+      return;
+    }
+
+    setQAMessages((prev) => [
+      ...prev,
+      { role: 'user', text: question },
+      { role: 'assistant', text: '', isStreaming: true },
+    ]);
+    startAIQA();
+
+    if (!isVSCodeRuntime()) {
+      window.setTimeout(() => {
+        setQAMessages((prev) => {
+          const next = [...prev];
+          const last = next.at(-1);
+          if (last?.role === 'assistant') {
+            next[next.length - 1] = {
+              ...last,
+              text: '현재 데모 환경에서는 요약 본문 기준으로만 답변합니다.',
+              isStreaming: false,
+            };
+          }
+          return next;
+        });
+        completeAIQA({
+          appendedContent: `\n\n---\n\n### Q. ${question}\n\n현재 데모 환경에서는 요약 본문 기준으로만 답변합니다.\n`,
+        });
+        setQACompletionCount((count) => count + 1);
+      }, 500);
+      return;
+    }
+
+    postMessage('START_AI_QA', {
+      question,
+      summaryContent: displayedSummaryContent,
+      commitHash: commit.hash,
+      commitMessage: commit.message,
+      filePath: targetFile?.path,
+      provider: activeAIProvider,
+      qaModel,
+      savePath,
+      noteRelativePath: displayedNoteRelativePath,
+    });
+  }, [activeAIProvider, commit, completeAIQA, displayedNoteRelativePath, displayedSummaryContent, qaModel, savePath, startAIQA, targetFile]);
+
+  const openSaveDialog = useCallback(() => {
+    if (!displayedSummaryContent) {
+      return;
+    }
+
+    const relativePath = displayedHasSavedSummary || displayedNoteRelativePath
+      ? displayedNoteRelativePath ?? ''
+      : '';
+    setSaveDraft({
+      relativePath,
+      mode: relativePath ? 'overwrite' : 'create',
+    });
+    setIsSaveDialogOpen(true);
+
+    if (isVSCodeRuntime() && savePath) {
+      loadNoteTree();
+      postMessage('FETCH_NOTE_TREE', { savePath });
+    }
+  }, [displayedHasSavedSummary, displayedNoteRelativePath, displayedSummaryContent, loadNoteTree, savePath]);
+
+  const confirmSave = useCallback((relativePath: string) => {
+    if (!commit || !savePath || !displayedSummaryContent) {
+      return;
+    }
+
+    const trimmed = relativePath.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const linkContext = {
+      commitHash: commit.hash,
+      filePath: targetFile?.path,
+      scope: summaryScope,
+    } as const;
+
+    if (!isVSCodeRuntime()) {
+      const normalized = ensureDemoNotePath(trimmed);
+      markCurrentSummarySaved({
+        content: displayedSummaryContent,
+        savedPath: `${savePath}/${normalized}`,
+        noteRelativePath: normalized,
         provider: activeAIProvider,
-        qaModel,
-        savePath,
+        commitHash: commit.hash,
+        targetKey: summaryTargetKey,
       });
-    },
-    [activeAIProvider, commit, completeAIQA, displayedSummaryContent, qaModel, savePath, startAIQA, targetFile],
-  );
+      setIsSaveDialogOpen(false);
+      return;
+    }
+
+    const normalized = ensureDemoNotePath(trimmed);
+    const noteExists = noteEntries.some((entry) => entry.relativePath === normalized);
+
+    postMessage(noteExists ? 'SAVE_NOTE' : 'CREATE_NOTE', {
+      savePath,
+      relativePath: normalized,
+      content: displayedSummaryContent,
+      linkContext,
+    });
+    setIsSaveDialogOpen(false);
+  }, [activeAIProvider, commit, displayedSummaryContent, markCurrentSummarySaved, noteEntries, savePath, summaryScope, summaryTargetKey, targetFile?.path]);
 
   useEffect(() => {
     if (isVSCodeRuntime()) {
@@ -248,7 +315,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   }, []);
 
   useEffect(() => {
-    const handler = (event: MessageEvent<{ type: string; payload?: { activeAIProvider?: AIProviderName | null; registeredProviders?: AIProviderName[]; savePath?: string | null; summaryModel?: string | null; qaModel?: string | null; isOverLimit?: boolean; chunk?: string; content?: string; savedPath?: string | null; provider?: AIProviderName | null; message?: string; appendedContent?: string } }>): void => {
+    const handler = (event: MessageEvent<{ type: string; payload?: { activeAIProvider?: AIProviderName | null; registeredProviders?: AIProviderName[]; savePath?: string | null; summaryModel?: string | null; qaModel?: string | null; isOverLimit?: boolean; chunk?: string; content?: string; savedPath?: string | null; message?: string; appendedContent?: string; noteRelativePath?: string | null; provider?: AIProviderName | null } }>): void => {
       if (event.data.type === 'AI_SUMMARY_SETTINGS_LOADED') {
         setAISummarySettings({
           savePath: event.data.payload?.savePath ?? null,
@@ -260,6 +327,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
         setHasLoadedSettings(true);
         return;
       }
+
       if (event.data.type === 'AI_QA_CHUNK') {
         const chunk = event.data.payload?.chunk ?? '';
         setQAMessages((prev) => {
@@ -272,6 +340,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
         });
         return;
       }
+
       if (event.data.type === 'AI_QA_COMPLETE') {
         setQAMessages((prev) => {
           const next = [...prev];
@@ -285,6 +354,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
         setQACompletionCount((count) => count + 1);
         return;
       }
+
       if (event.data.type === 'AI_QA_ERROR') {
         setQAMessages((prev) => {
           const next = [...prev];
@@ -305,52 +375,68 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   }, [completeAIQA, failAIQA, setAISummarySettings]);
 
   useEffect(() => {
-    if (!isActive || !hasLoadedSettings || !canStartSummary || displayedSummaryContent || displayedIsLoadingSummary || displayedIsGeneratingSummary || displayedSummaryError) return;
+    if (!isActive || !hasLoadedSettings || !canStartSummary || displayedSummaryContent || displayedIsLoadingSummary || displayedIsGeneratingSummary || displayedSummaryError) {
+      return;
+    }
     startSummary(false);
   }, [canStartSummary, displayedIsGeneratingSummary, displayedIsLoadingSummary, displayedSummaryContent, displayedSummaryError, hasLoadedSettings, isActive, startSummary]);
 
   return {
     activeAIProvider,
     currentSummaryContent: displayedSummaryContent,
-    headerContext,
     hasCurrentSavedSummary: displayedHasSavedSummary,
     hasLoadedSettings,
-    isDialogOpen,
     isGeneratingQA: displayedIsGeneratingQA,
     isGeneratingSummary: displayedIsGeneratingSummary,
     isLoadingSummary: displayedIsLoadingSummary,
+    isRegenerateDialogOpen,
+    isSaveDialogOpen,
     isSummaryTokenLimitExceeded: displayedIsSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
+    noteEntries,
     onAskQuestion: askQuestion,
     onConfirmRegenerate: () => {
-      setIsDialogOpen(false);
+      setIsRegenerateDialogOpen(false);
       startSummary(true);
     },
+    onConfirmSave: confirmSave,
     dismissTokenWarning: () => setIsTokenWarningDismissed(true),
-    onRegenerate: () => setIsDialogOpen(true),
+    onRegenerate: () => setIsRegenerateDialogOpen(true),
     onRetry: () => startSummary(true),
-    savePath,
-    selectedCommit: commit,
-    setIsDialogOpen,
-    setIsTokenWarningDismissed,
+    onSave: openSaveDialog,
     qaError,
     qaMessages,
     qaCompletionCount,
+    saveDraft,
+    savePath,
+    setIsRegenerateDialogOpen,
+    setIsSaveDialogOpen,
+    setIsTokenWarningDismissed,
+    setSaveDraft,
+    shouldWarnBeforeOverwrite,
     summaryError: displayedSummaryError,
+    summaryNoteRelativePath: displayedNoteRelativePath,
     summarySavedPath: displayedSavedPath,
   };
 }
 
-function toDemoCommitDirName(shortHash: string, commitMessage: string): string {
-  const sanitized = commitMessage.replace(/[^A-Za-z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, '').replace(/\s+/g, '-').replace(/-{2,}/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-  return `${shortHash}_${sanitized || 'commit'}`;
+function ensureDemoNotePath(relativePath: string): string {
+  const normalized = relativePath.replaceAll('\\', '/').trim().replace(/^\/+|\/+$/g, '');
+  const parts = normalized.split('/').filter(Boolean);
+  const fileName = parts.at(-1) ?? 'untitled';
+
+  if (!fileName.includes('.')) {
+    parts[parts.length - 1] = `${fileName}.md`;
+  }
+
+  return parts.join('/');
 }
 
 function streamDemoSummary(options: StreamDemoSummaryOptions): void {
   let index = 0;
   const baseContent = options.scope === 'file' ? DEMO_FILE_SUMMARY : DEMO_COMMIT_SUMMARY;
   const content = options.forceRegenerate ? `${baseContent}\n` : baseContent;
-  const commitDirName = toDemoCommitDirName(options.commitHash, options.commitMessage);
+
   const timer = window.setInterval(() => {
     const next = content.slice(index, index + 8);
     index += next.length;
@@ -359,10 +445,7 @@ function streamDemoSummary(options: StreamDemoSummaryOptions): void {
       window.clearInterval(timer);
       options.complete({
         content,
-        savedPath:
-          options.scope === 'file' && options.filePath
-            ? `.git-author/${commitDirName}/${options.filePath.replace(/[\\/]/g, '__')}.md`
-            : `.git-author/${commitDirName}/${options.commitSummaryFilename}`,
+        savedPath: null,
         provider: 'claude',
       });
     }

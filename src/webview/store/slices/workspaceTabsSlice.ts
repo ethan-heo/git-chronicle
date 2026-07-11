@@ -75,6 +75,10 @@ export function computeNoteWorkspaceTabId(relativePath: string): string {
   return `note:${relativePath}`;
 }
 
+function getNoteTabTitle(relativePath: string): string {
+  return relativePath.split('/').at(-1) ?? relativePath;
+}
+
 export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
   if (input.panelType === 'note') {
     return {
@@ -85,7 +89,7 @@ export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
       relativePath: input.relativePath,
       prNumber: null,
       issueNumber: null,
-      title: null,
+      title: getNoteTabTitle(input.relativePath),
     };
   }
 
@@ -463,6 +467,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
               ...tab,
               id: computeNoteWorkspaceTabId(toRelativePath),
               relativePath: toRelativePath,
+              title: getNoteTabTitle(toRelativePath),
             }
             : tab),
           activeTabId: pane.activeTabId === computeNoteWorkspaceTabId(fromRelativePath)

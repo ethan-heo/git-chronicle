@@ -18,6 +18,7 @@ interface WebviewEventPayload {
   chunk?: string;
   content?: string;
   savedPath?: string | null;
+  noteRelativePath?: string | null;
   provider?: AIProviderName | null;
   message?: string;
 }
@@ -35,6 +36,8 @@ export const App: FC = () => {
   const setSummaryTokenWarning = useAppStore((state) => state.setSummaryTokenWarning);
   const startAISummaryGeneration = useAppStore((state) => state.startAISummaryGeneration);
   const activeSummaryCommitHash = useAppStore((state) => state.activeSummaryCommitHash);
+  const activeSummaryTargetKey = useAppStore((state) => state.activeSummaryTargetKey);
+  const markCurrentSummarySaved = useAppStore((state) => state.markCurrentSummarySaved);
   const [outgoingScreen, setOutgoingScreen] = useState<{
     screen: ScreenID;
     direction: RouteTransitionDirection;
@@ -88,9 +91,11 @@ export const App: FC = () => {
         loadSavedAISummary({
           content: event.data.payload?.content ?? '',
           savedPath: event.data.payload?.savedPath ?? null,
+          noteRelativePath: event.data.payload?.noteRelativePath ?? null,
           provider: event.data.payload?.provider ?? null,
           scope: 'commit',
           commitHash: activeSummaryCommitHash,
+          targetKey: activeSummaryTargetKey,
         });
         return;
       }
@@ -99,9 +104,28 @@ export const App: FC = () => {
         completeAISummary({
           content: event.data.payload?.content,
           savedPath: event.data.payload?.savedPath ?? null,
+          noteRelativePath: event.data.payload?.noteRelativePath ?? null,
           provider: event.data.payload?.provider ?? null,
           scope: 'commit',
           commitHash: activeSummaryCommitHash,
+          targetKey: activeSummaryTargetKey,
+        });
+        return;
+      }
+
+      if (event.data.type === 'AI_SUMMARY_NOTE_LINKED') {
+        const noteRelativePath = event.data.payload?.noteRelativePath ?? null;
+        if (!noteRelativePath) {
+          return;
+        }
+
+        markCurrentSummarySaved({
+          content: event.data.payload?.content,
+          savedPath: event.data.payload?.savedPath ?? null,
+          noteRelativePath,
+          provider: event.data.payload?.provider ?? null,
+          commitHash: activeSummaryCommitHash,
+          targetKey: activeSummaryTargetKey,
         });
         return;
       }
@@ -116,7 +140,7 @@ export const App: FC = () => {
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [activeSummaryCommitHash, appendAISummaryChunk, completeAISummary, failAISummary, loadSavedAISummary, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration]);
+  }, [activeSummaryCommitHash, activeSummaryTargetKey, appendAISummaryChunk, completeAISummary, failAISummary, loadSavedAISummary, markCurrentSummarySaved, setAISummarySettings, setSummaryTokenWarning, startAISummaryGeneration]);
 
   useEffect(() => {
     if (previousScreenRef.current === currentScreen) {

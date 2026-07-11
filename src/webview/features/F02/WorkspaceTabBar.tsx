@@ -129,7 +129,7 @@ function getTabLabel(tab: WorkspaceTab, t: (key: string) => string): string {
     return tab.title ?? `#${tab.prNumber ?? tab.issueNumber}`;
   }
 
-  return t('workspace.tab_label_note');
+  return tab.title ?? tab.relativePath?.split('/').at(-1) ?? t('workspace.tab_label_note');
 }
 
 function getTabBadge(tab: WorkspaceTab): string {

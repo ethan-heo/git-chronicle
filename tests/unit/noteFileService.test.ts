@@ -36,6 +36,7 @@ describe('noteFileService', () => {
 
     expect(entry.relativePath).toBe('ideas/todo.md');
     expect(fs.existsSync(path.join(getNotesRoot(savePath), 'ideas', 'todo.md'))).toBe(true);
+    expect(getNotesRoot(savePath)).toBe(savePath);
   });
 
   it('moves notes, rejects overwriting, and prunes emptied source folders', () => {

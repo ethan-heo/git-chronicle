@@ -3,9 +3,11 @@ import { AI_PROVIDERS, loadAISettingsState, registerAIProvider, setAIModel, setA
 import { streamAISummary } from '../aiService';
 import type { AIModelUsage, AIProviderName } from '../aiTypes';
 import { fetchCommitFullDiff, fetchFileDiff } from '../gitService';
+import { readNote, NoteFileError } from '../noteFileService';
 import { buildCommitSummaryPrompt, buildFileSummaryPrompt, buildSummaryQAPrompt } from '../prompts';
-import { appendSummaryQA, loadCommitSummary, loadSummary, saveCommitSummary, saveSummary, SummarySaveError } from '../summaryFileService';
-import { getCurrentSummaryLanguage, l10n } from './shared';
+import { appendSummaryQA, SummarySaveError } from '../summaryFileService';
+import { getLinkedNoteRelativePath } from '../summaryNoteLinkService';
+import { l10n } from './shared';
 
 const COMMIT_TOKEN_LIMIT_CHARS = 20_000;
 
@@ -39,6 +41,7 @@ export interface StartAIQAPayload {
   provider?: AIProviderName | null;
   qaModel?: string | null;
   savePath?: string | null;
+  noteRelativePath?: string | null;
 }
 
 export interface OpenExternalUrlPayload {
@@ -195,19 +198,27 @@ export async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, con
 
   try {
     if (!payload.forceRegenerate) {
-      const savedSummary = loadCommitSummary(savePath, payload.commitHash, payload.commitMessage);
+      const linkedNoteRelativePath = getLinkedNoteRelativePath(context, { commitHash: payload.commitHash });
 
-      if (savedSummary) {
-        await panel.webview.postMessage({
-          type: 'AI_SUMMARY_LOADED',
-          payload: {
-            content: savedSummary.content,
-            savedPath: savedSummary.savedPath,
-            provider,
-            fromSaved: true,
-          },
-        });
-        return;
+      if (linkedNoteRelativePath) {
+        try {
+          const linkedNote = readNote(savePath, linkedNoteRelativePath);
+          await panel.webview.postMessage({
+            type: 'AI_SUMMARY_LOADED',
+            payload: {
+              content: linkedNote.content,
+              savedPath: linkedNote.savedPath,
+              noteRelativePath: linkedNoteRelativePath,
+              provider,
+              fromSaved: true,
+            },
+          });
+          return;
+        } catch (error) {
+          if (!(error instanceof NoteFileError) || error.code !== 'NOT_FOUND') {
+            throw error;
+          }
+        }
       }
     }
 
@@ -244,19 +255,13 @@ export async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, con
         });
       },
       onComplete: () => {
-        try {
-          const savedPath = saveCommitSummary(savePath, payload.commitHash ?? '', content, payload.commitMessage, getCurrentSummaryLanguage());
-          void panel.webview.postMessage({
-            type: 'AI_SUMMARY_DONE',
-            payload: {
-              content,
-              savedPath,
-              provider,
-            },
-          });
-        } catch (error) {
-          void postAISummaryError(panel, getSummarySaveErrorMessage(error));
-        }
+        void panel.webview.postMessage({
+          type: 'AI_SUMMARY_DONE',
+          payload: {
+            content,
+            provider,
+          },
+        });
       },
       onError: (message) => {
         void postAISummaryError(panel, message);
@@ -296,19 +301,30 @@ export async function handleStartAISummaryFile(panel: vscode.WebviewPanel, conte
 
   try {
     if (!payload.forceRegenerate) {
-      const savedSummary = loadSummary(savePath, payload.commitHash, payload.filePath, payload.commitMessage);
+      const linkedNoteRelativePath = getLinkedNoteRelativePath(context, {
+        commitHash: payload.commitHash,
+        filePath: payload.filePath,
+      });
 
-      if (savedSummary) {
-        await panel.webview.postMessage({
-          type: 'AI_SUMMARY_LOADED',
-          payload: {
-            content: savedSummary.content,
-            savedPath: savedSummary.savedPath,
-            provider,
-            fromSaved: true,
-          },
-        });
-        return;
+      if (linkedNoteRelativePath) {
+        try {
+          const linkedNote = readNote(savePath, linkedNoteRelativePath);
+          await panel.webview.postMessage({
+            type: 'AI_SUMMARY_LOADED',
+            payload: {
+              content: linkedNote.content,
+              savedPath: linkedNote.savedPath,
+              noteRelativePath: linkedNoteRelativePath,
+              provider,
+              fromSaved: true,
+            },
+          });
+          return;
+        } catch (error) {
+          if (!(error instanceof NoteFileError) || error.code !== 'NOT_FOUND') {
+            throw error;
+          }
+        }
       }
     }
 
@@ -338,19 +354,13 @@ export async function handleStartAISummaryFile(panel: vscode.WebviewPanel, conte
         });
       },
       onComplete: () => {
-        try {
-          const savedPath = saveSummary(savePath, payload.commitHash ?? '', payload.filePath ?? '', content, payload.commitMessage);
-          void panel.webview.postMessage({
-            type: 'AI_SUMMARY_DONE',
-            payload: {
-              content,
-              savedPath,
-              provider,
-            },
-          });
-        } catch (error) {
-          void postAISummaryError(panel, getSummarySaveErrorMessage(error));
-        }
+        void panel.webview.postMessage({
+          type: 'AI_SUMMARY_DONE',
+          payload: {
+            content,
+            provider,
+          },
+        });
       },
       onError: (message) => {
         void postAISummaryError(panel, message);
@@ -388,12 +398,21 @@ export async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscod
     return;
   }
 
-  const savedPath = payload.filePath
-    ? loadSummary(savePath, payload.commitHash, payload.filePath, payload.commitMessage)?.savedPath
-    : loadCommitSummary(savePath, payload.commitHash, payload.commitMessage)?.savedPath;
+  const linkedNoteRelativePath = payload.noteRelativePath ?? getLinkedNoteRelativePath(context, {
+    commitHash: payload.commitHash,
+    filePath: payload.filePath,
+  });
 
-  if (!savedPath) {
+  if (!linkedNoteRelativePath) {
     await postAIQAError(panel, 'Saved summary could not be found');
+    return;
+  }
+
+  let savedPath: string;
+  try {
+    savedPath = readNote(savePath, linkedNoteRelativePath).savedPath;
+  } catch (error) {
+    await postAIQAError(panel, getSummarySaveErrorMessage(error));
     return;
   }
 
@@ -456,7 +475,7 @@ async function postAIQAError(panel: vscode.WebviewPanel, message: string): Promi
 }
 
 function getSummarySaveErrorMessage(error: unknown): string {
-  if (error instanceof SummarySaveError) {
+  if (error instanceof SummarySaveError || error instanceof NoteFileError) {
     return error.message;
   }
 

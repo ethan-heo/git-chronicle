@@ -21,23 +21,24 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 | 용어 | 정의 | 관련 코드 식별자 |
 |---|---|---|
-| 저장본(Saved Summary) | 이미 생성되어 로컬에 저장된 AI 정리 결과. 재생성 전까지 패널 진입 시 즉시 표시된다 | `hasSavedCommitSummary`, `loadCommitSummary()` |
-| 재생성(Regenerate) | 기존 저장본을 덮어쓰기 확인 다이얼로그 통과 후 동일 입력으로 다시 생성하는 동작 | `RegenerateButton.tsx`, `forceRegenerate` |
+| 저장본(Saved Summary) | 사용자가 [저장]을 눌러 노트로 저장한 AI 정리 결과. 같은 커밋/파일 스코프로 다시 열면 연결된 노트를 즉시 불러온다 | `summaryNoteRelativePath`, `AI_SUMMARY_NOTE_LINKED` |
+| 재생성(Regenerate) | 현재 콘텐츠를 같은 입력으로 다시 생성하는 동작. 저장된 노트가 있던 경우 재저장 시 직전 노트 경로를 기본값으로 제안한다 | `RegenerateButton.tsx`, `forceRegenerate` |
 
 ---
 
 ## User Goal
 
-커밋 전체에서 무엇이 달성되었는지를 AI가 종합 요약한 마크다운으로 파악하고, 로컬에 저장하여 나중에 재활용한다.
+커밋 전체에서 무엇이 달성되었는지를 AI가 종합 요약한 마크다운으로 파악하고, 필요할 때 노트로 저장해 다시 편집·재활용한다.
 
 ---
 
 ## User Scenarios
 
 1. [커밋 AI 정리] 클릭 시 S02 본문 `aiSummary` 패널 활성화. 헤더에 `{커밋 메시지} > 커밋 전체 요약` 표시.
-2. **기존 저장본이 있는 경우**: 저장된 마크다운 파일을 즉시 불러와 표시. 재생성 아이콘 버튼 제공.
-3. **저장본이 없는 경우**: 클릭 즉시 커밋 내 전체 파일 diff를 컨텍스트로 AI가 마크다운 형식으로 정리.
-   - 정리된 내용은 설정 경로에 언어별 커밋 정리 파일명으로 자동 저장 ([F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming) 참고).
+2. **기존 저장 노트가 있는 경우**: 연결된 노트를 즉시 불러와 표시. 재생성 아이콘 버튼 제공.
+3. **저장본이 없는 경우**: 클릭 즉시 커밋 내 전체 파일 diff를 컨텍스트로 AI가 마크다운 형식으로 정리한다.
+   - 생성 직후에는 디스크에 자동 저장하지 않는다.
+   - [저장]을 누르면 노트 트리 구조를 기준으로 경로를 골라 일반 노트 파일로 저장한다.
    - 저장 경로가 설정되어 있지 않으면 "저장 경로를 먼저 설정해주세요" 안내 + 설정 이동 CTA.
 4. AI가 설정되어 있지 않으면 "AI가 설정되지 않았습니다" 안내 + 설정(⚙) 이동 CTA.
 5. 재생성 아이콘 버튼: 덮어쓰기 확인 다이얼로그 → 확인 시 동일 입력으로 재처리.
@@ -52,9 +53,9 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 처리 | 설정된 AI CLI에 커밋 단위 프롬프트 + 전체 diff 전달 (`child_process.spawn` 스트리밍) |
 | CLI 실행 옵션 | Claude는 `-p`, Gemini는 `--skip-trust --prompt`, Codex는 `exec --skip-git-repo-check` 조합으로 비대화형 실행 |
 | 출력 | 마크다운 형식의 커밋 종합 요약 (스트리밍 타이핑 효과로 실시간 표시) |
-| 저장 | `{설정경로}/{shortHash}_{sanitizedCommitMessage}/{커밋 정리 파일명}` 로컬 저장. 파일명 언어 분기와 디렉토리 생성 규칙은 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming)을 따른다 |
-| 기존 저장본 | [F07 하위 호환성](../F07_save_path_settings/spec.md#하위-호환성)의 커밋 단위 AI 정리 폴백 순서(한국어 파일명 → 영어 파일명 → 구 파일명 → 구 경로)를 따라 즉시 표시 |
-| 재생성 | 재생성 아이콘 클릭 → 덮어쓰기 확인 다이얼로그 → 확인 시 동일 입력으로 재처리 |
+| 저장 | 자동 저장하지 않는다. 사용자가 명시적으로 [저장]을 눌렀을 때만 `{savePath}` 아래 원하는 상대 경로에 노트 파일로 저장한다 |
+| 기존 저장본 | `(commitHash, filePath?) -> noteRelativePath` 매핑이 있으면 연결된 노트를 즉시 표시한다 |
+| 재생성 | 재생성 아이콘 클릭 → 확인 다이얼로그 → 확인 시 동일 입력으로 재처리. 이전에 저장한 노트가 있었다면 재저장 다이얼로그에 그 경로를 기본값으로 채운다 |
 | 복사 | 완료된 요약 본문 일부를 드래그해 복사하면 렌더링된 plain text가 아니라 해당 범위의 원본 마크다운 문자열 조각이 클립보드에 기록된다 |
 | Code block copy | fenced code block 위에 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 클립보드에 기록하고 성공 토스트를 표시한다 |
 | Code block highlighting | fenced code block에 언어 태그가 있으면 `shiki` 기반 문법 강조를 적용한다. 지원 언어는 기존 웹 중심 세트(css/html/javascript/json/jsx/markdown/mdx/tsx/typescript/yaml)에 `bash`, `python`, `sql`, `diff`를 추가한 범위를 따른다 |
@@ -195,9 +196,9 @@ Commit message: {commitMessage}
 | `selectedCommit` | `Commit` | 전역 상태. 전체 diff 추출 기준 커밋 및 헤더 표시 |
 | `changedFiles` | `ChangedFile[]` | 전역 상태. 전체 파일 diff 합산용 파일 목록 |
 | `activeAIProvider` | `AIProviderName \| null` | 전역 상태. 사용할 AI CLI 결정 |
-| `savePath` | `string \| null` | 전역 상태. 저장본 파일 위치 결정 |
+| `savePath` | `string \| null` | 전역 상태. 노트 저장 루트이자 연결된 저장 노트 조회 기준 |
 | simple-git diff (전체) | `string` | Extension Host에서 커밋 내 전체 파일 diff 합산 추출 |
-| 로컬 저장본 | `string` | `{savePath}/{shortHash}_{sanitizedCommitMessage}/{커밋 정리 파일명}` 파일 존재 시 즉시 읽어 표시. [F07 하위 호환성](../F07_save_path_settings/spec.md#하위-호환성)의 폴백 순서를 따름 |
+| 연결된 저장 노트 | `string` | `(commitHash, filePath?)` 기준으로 찾은 `noteRelativePath`가 실제로 존재하면 즉시 읽어 표시 |
 
 ---
 
@@ -206,7 +207,7 @@ Commit message: {commitMessage}
 | 출력 | 타입 | 설명 |
 |------|------|------|
 | `currentSummaryContent` | `string` | 전역 상태. AI 스트리밍 텍스트 누적 |
-| 저장 파일 | `.md` | `{savePath}/{shortHash}_{sanitizedCommitMessage}/{커밋 정리 파일명}` 로컬 파일 생성 (파일명은 [F07 저장 파일 Naming](../F07_save_path_settings/spec.md#저장-파일-naming)의 언어 분기를 따름) |
+| 저장 파일 | `.md` | 사용자가 선택한 `{savePath}` 하위 상대 경로에 일반 노트 파일로 생성 또는 갱신 |
 
 ---
 
@@ -214,9 +215,9 @@ Commit message: {commitMessage}
 
 | 효과 | 트리거 | 설명 |
 |------|--------|------|
-| `isLoadingSummary = true` | 저장본 확인 시작 | 저장본/설정 확인 로딩 상태 전환 |
+| `isLoadingSummary = true` | 연결 노트 확인 시작 | 저장본/설정 확인 로딩 상태 전환 |
 | `isGeneratingSummary = true` | AI 호출 시작 | 로딩 상태 전환 |
 | `isGeneratingSummary = false` | AI 완료 / 실패 / 타임아웃 | 로딩 상태 해제 |
 | `currentSummaryContent` 스트리밍 업데이트 | `child_process.spawn` stdout | 청크 단위로 전역 상태 누적 업데이트 |
-| 로컬 파일 쓰기 | AI 생성 완료 | `fs.writeFileSync`로 언어별 커밋 정리 파일명에 저장 (경로 없으면 `fs.mkdirSync` 선행) |
+| 로컬 파일 쓰기 | 사용자가 [저장] 실행 | `CREATE_NOTE`/`SAVE_NOTE`를 통해 노트 파일 생성 또는 갱신 |
 | `summaryError` 업데이트 | 타임아웃 / CLI 실패 | 오류 메시지 전역 상태 설정 |

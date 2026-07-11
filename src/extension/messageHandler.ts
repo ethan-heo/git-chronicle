@@ -130,16 +130,16 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         await handleFetchNoteTree(panel, message.payload as NotePayload);
         break;
       case 'CREATE_NOTE':
-        await handleCreateNote(panel, message.payload as NotePayload);
+        await handleCreateNote(panel, context, message.payload as NotePayload);
         break;
       case 'DELETE_NOTE':
-        await handleDeleteNote(panel, message.payload as NotePayload);
+        await handleDeleteNote(panel, context, message.payload as NotePayload);
         break;
       case 'MOVE_NOTE':
-        await handleMoveNote(panel, message.payload as NotePayload);
+        await handleMoveNote(panel, context, message.payload as NotePayload);
         break;
       case 'SAVE_NOTE':
-        await handleSaveNote(panel, message.payload as NotePayload);
+        await handleSaveNote(panel, context, message.payload as NotePayload);
         break;
       case 'FETCH_GITHUB_AUTH_STATE':
         await handleFetchGithubAuthState(panel);

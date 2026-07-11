@@ -30,7 +30,7 @@
 | Provider | 등록된 AI CLI 하나(Claude/Gemini/Codex). 동시에 하나만 활성화(active) 가능 | `AIProviderName` (`src/extension/aiTypes.ts`), `activeAIProvider`, `registeredProviders` | F05b, F06, F07, F09 |
 | AI Summary (AI 정리) | AI CLI로 생성한 마크다운 요약. 커밋 단위(F05b)와 파일 단위 두 스코프가 있다 | `currentSummaryContent`, `START_AI_SUMMARY_COMMIT`/`START_AI_SUMMARY_FILE` (`src/extension/messageHandler.ts`) | F02, F05b, F09, F11 |
 | savePath | AI 정리/노트 결과물이 저장되는 로컬 루트 디렉토리 | `savePath`, `SET_SAVE_PATH` | F02, F05b, F06, F07, F09, F11 |
-| Q&A (AI 요약 Q&A) | 완성된 AI 요약에 대해 단일 턴으로 추가 질문/답변을 이어붙이는 것 | `START_AI_QA`, `appendSummaryQA()` (`src/extension/summaryFileService.ts`) | F05b, F09, F11 |
+| Q&A (AI 요약 Q&A) | 노트로 저장된 AI 요약에 대해 단일 턴으로 추가 질문/답변을 이어붙이는 것 | `START_AI_QA`, `appendSummaryQA()` (`src/extension/summaryFileService.ts`) | F05b, F09, F11 |
 
 ## 화면 · 네비게이션 도메인
 

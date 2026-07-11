@@ -28,6 +28,7 @@ export const createNavigationSlice: StateCreator<AppState, [], [], NavigationSli
       summaryError: null,
       qaError: null,
       summarySavedPath: null,
+      summaryNoteRelativePath: null,
       hasCurrentSavedSummary: false,
       isSummaryTokenLimitExceeded: false,
       activeSummaryTargetKey: null,
