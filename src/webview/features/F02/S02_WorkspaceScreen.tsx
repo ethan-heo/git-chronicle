@@ -345,13 +345,14 @@ export const S02WorkspaceScreen: FC = () => {
                     {t('commit.filter_title')}
                   </strong>
                   <button
-                    className="inline-flex size-7 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+                    className="inline-flex size-7 items-center justify-center rounded-md bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
                     type="button"
                     onClick={() => {
                       setIsFilterPopoverOpen(false);
                       filterToggleButtonRef.current?.focus();
                     }}
                     aria-label={t('commit.filter_popover_close_aria')}
+                    title={t('commit.filter_popover_close_aria')}
                   >
                     <span aria-hidden="true">×</span>
                   </button>

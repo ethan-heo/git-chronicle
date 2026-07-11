@@ -153,7 +153,7 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
       actions={(
         <button
           type="button"
-          className="inline-flex size-6 items-center justify-center rounded-sm text-muted hover:bg-hover hover:text-text"
+          className="inline-flex size-7 items-center justify-center rounded-md bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
           aria-label={t('note.create')}
           title={t('note.create')}
           onClick={() => setIsCreating((current) => !current)}

@@ -92,7 +92,13 @@ const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, is
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
     >
-      <button type="button" className="flex items-center gap-2" onClick={onActivate}>
+      <button
+        type="button"
+        className="flex items-center gap-2"
+        onClick={onActivate}
+        aria-label={tabLabel}
+        title={tabLabel}
+      >
         <span className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text">
           {getTabBadge(tab)}
         </span>
@@ -104,7 +110,7 @@ const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, is
         className="rounded p-1 text-muted transition-colors hover:bg-hover hover:text-text"
         onClick={onClose}
         aria-label={t('workspace.tab_close_aria', { label: tabLabel })}
-        title={t('workspace.tab_close_title')}
+        title={t('workspace.tab_close_aria', { label: tabLabel })}
       >
         ×
       </button>

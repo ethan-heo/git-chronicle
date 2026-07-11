@@ -25,6 +25,8 @@ export const SidebarSection: FC<SidebarSectionProps> = ({
           type="button"
           onClick={onToggle}
           aria-expanded={isExpanded}
+          aria-label={`${title} ${isExpanded ? 'collapse' : 'expand'}`}
+          title={title}
         >
           <span aria-hidden="true">{isExpanded ? '▾' : '▸'}</span>
           <span className="truncate text-[10px] leading-none">{title}</span>

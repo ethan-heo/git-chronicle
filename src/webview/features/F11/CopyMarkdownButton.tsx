@@ -11,7 +11,7 @@ export const CopyMarkdownButton: FC<ButtonHTMLAttributes<HTMLButtonElement>> = (
       aria-label={props['aria-label'] ?? t('shared.copy_markdown')}
       title={props.title ?? t('shared.copy_markdown')}
       className={[
-        'inline-flex size-7 items-center justify-center rounded-sm border border-line bg-elevated p-0 text-muted opacity-0 transition hover:bg-hover hover:text-text',
+        'inline-flex size-7 items-center justify-center rounded-sm bg-elevated p-0 text-muted opacity-0 transition hover:bg-hover hover:text-text',
         className,
       ].filter(Boolean).join(' ')}
     >

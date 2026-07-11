@@ -1,4 +1,5 @@
 import { useState, type DragEvent, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { NoteTreeNode } from './noteTreeModel';
 import { isNoteDirectoryNode } from './noteTreeModel';
 import { NoteFileNode } from './NoteFileNode';
@@ -27,6 +28,7 @@ export const NoteDirectoryNode: FC<NoteDirectoryNodeProps> = ({
   onDragStateChange,
   onRootDragStateChange,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -60,6 +62,8 @@ export const NoteDirectoryNode: FC<NoteDirectoryNodeProps> = ({
         type="button"
         style={{ paddingLeft: `${10 + depth * 16}px` }}
         onClick={() => setIsExpanded((current) => !current)}
+        aria-label={t('note.section_title')}
+        title={node.name}
         onDragOver={(event) => {
           event.preventDefault();
           event.stopPropagation();

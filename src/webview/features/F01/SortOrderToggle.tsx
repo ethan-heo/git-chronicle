@@ -12,16 +12,17 @@ export const SortOrderToggle: FC<SortOrderToggleProps> = ({ sortOrder, onSortOrd
   const isDescending = sortOrder === 'desc';
   const nextSortOrder: FilterState['sortOrder'] = isDescending ? 'asc' : 'desc';
   const orderLabel = isDescending ? t('commit.sort_desc') : t('commit.sort_asc');
+  const ariaLabel = t('commit.sort_aria', { order: orderLabel });
 
   return (
     <button
-      className="inline-flex h-7 items-center gap-1 whitespace-nowrap rounded-full border border-line bg-elevated px-2 text-[10px] leading-none text-text transition-colors duration-100 ease-in-out hover:border-muted hover:bg-hover"
+      className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-elevated text-[11px] leading-none text-text transition-colors duration-100 ease-in-out hover:bg-hover"
       type="button"
       onClick={() => onSortOrderChange(nextSortOrder)}
-      aria-label={t('commit.sort_aria', { order: orderLabel })}
+      aria-label={ariaLabel}
+      title={ariaLabel}
     >
       <span aria-hidden="true">{isDescending ? '↓' : '↑'}</span>
-      <span>{orderLabel}</span>
     </button>
   );
 };

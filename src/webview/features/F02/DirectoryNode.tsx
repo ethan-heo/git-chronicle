@@ -1,4 +1,5 @@
 import { useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ChangedFile } from '../../types/commit';
 import { FileTreeNode } from './FileTreeNode';
 import type { DirectoryTreeNode } from './tree';
@@ -17,6 +18,7 @@ export const DirectoryNode: FC<DirectoryNodeProps> = ({
   onCodeView,
   activeCodeFilePath = null,
 }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
@@ -26,6 +28,8 @@ export const DirectoryNode: FC<DirectoryNodeProps> = ({
         type="button"
         style={{ paddingLeft: `${10 + depth * 16}px` }}
         onClick={() => setIsExpanded((current) => !current)}
+        aria-label={t('file_tree.panel_aria')}
+        title={node.name}
       >
         <span className="inline-flex w-3 shrink-0 justify-center text-xs text-muted" aria-hidden="true">
           {isExpanded ? '▾' : '▸'}

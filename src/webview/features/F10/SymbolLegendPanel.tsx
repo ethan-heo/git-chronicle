@@ -23,10 +23,11 @@ export const SymbolLegendPanel: FC<Props> = ({ isMinimized = false, onToggleMini
         <div className={['font-bold text-text', isMinimized ? 'text-[10px]' : 'text-[11px]'].join(' ')}>{t('symbol_graph.legend_title')}</div>
         <button
           type="button"
-          className={['inline-flex items-center justify-center rounded-full border border-line bg-[color-mix(in_srgb,var(--gae-color-surface-elevated)_88%,transparent)] text-text transition-colors hover:border-[var(--gae-color-symbol-highlight)] hover:text-[var(--gae-color-symbol-highlight)]', isMinimized ? 'h-5 w-5 text-[13px]' : 'h-[22px] w-[22px] text-[14px]'].join(' ')}
+          className={['inline-flex items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gae-color-surface-elevated)_88%,transparent)] text-text transition-colors hover:bg-hover hover:text-[var(--gae-color-symbol-highlight)]', isMinimized ? 'h-5 w-5 text-[13px]' : 'h-[22px] w-[22px] text-[14px]'].join(' ')}
           onClick={onToggleMinimized}
           aria-label={isMinimized ? t('symbol_graph.legend_toggle_expand') : t('symbol_graph.legend_toggle_collapse')}
           aria-expanded={!isMinimized}
+          title={isMinimized ? t('symbol_graph.legend_toggle_expand') : t('symbol_graph.legend_toggle_collapse')}
         >
           {isMinimized ? '+' : '−'}
         </button>

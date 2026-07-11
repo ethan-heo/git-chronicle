@@ -36,10 +36,11 @@ export const TopHeader: FC<TopHeaderProps> = ({
         {endSlot}
         {showSettingsIcon ? (
           <button
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-45"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-45"
             type="button"
             onClick={onSettingsClick}
             aria-label={t('settings.open_aria')}
+            title={t('settings.open_aria')}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
               <circle cx="8" cy="8" r="2.2" />

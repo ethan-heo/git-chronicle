@@ -81,6 +81,8 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
             className="bg-transparent px-1 py-0.5 text-[11px] text-link hover:underline"
             type="button"
             onClick={onClearFilters}
+            aria-label={t('commit.clear_filters')}
+            title={t('commit.clear_filters')}
           >
             {t('commit.clear_filters')}
           </button>
@@ -101,6 +103,10 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
             type="button"
             onClick={() => setIsCollapsed((current) => !current)}
             aria-expanded={!isCollapsed}
+            aria-label={t('commit.filter_toggle_aria', {
+              state: isCollapsed ? t('commit.filter_toggle_state_open') : t('commit.filter_toggle_state_close'),
+            })}
+            title={t('commit.filter_title')}
           >
             <span aria-hidden="true">{isCollapsed ? '▸' : '▾'}</span>
             <span>{t('commit.filter_title')}</span>
@@ -122,6 +128,8 @@ export const CommitFilterPanel: FC<CommitFilterPanelProps> = ({
             className="bg-transparent px-1 py-0.5 text-[11px] text-link hover:underline"
             type="button"
             onClick={onClearFilters}
+            aria-label={t('commit.clear_filters')}
+            title={t('commit.clear_filters')}
           >
             {t('commit.clear_filters')}
           </button>

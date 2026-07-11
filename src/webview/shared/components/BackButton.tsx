@@ -23,6 +23,7 @@ export const BackButton: FC<BackButtonProps> = ({
         .join(' ')}
       type={type}
       aria-label={resolvedAriaLabel}
+      title={buttonProps.title ?? resolvedAriaLabel}
     >
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
         <path d="M10 3 5 8l5 5" />

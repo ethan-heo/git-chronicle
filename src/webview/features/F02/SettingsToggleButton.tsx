@@ -12,7 +12,7 @@ export const SettingsToggleButton: FC<SettingsToggleButtonProps> = ({ isActive =
   return (
     <button
       className={[
-        'inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-panel transition-colors duration-100 ease-in-out',
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-panel transition-colors duration-100 ease-in-out',
         isActive ? 'bg-hover text-text' : 'text-muted hover:bg-hover hover:text-text',
       ].join(' ')}
       type="button"

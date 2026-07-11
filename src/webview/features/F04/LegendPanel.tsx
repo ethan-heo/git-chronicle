@@ -27,10 +27,11 @@ export const LegendPanel: FC<LegendPanelProps> = ({
         </div>
         <button
           type="button"
-          className={['inline-flex items-center justify-center rounded-full border border-line bg-[color-mix(in_srgb,var(--gae-color-surface-elevated)_88%,transparent)] text-text transition-colors hover:border-focus hover:text-text', isMinimized ? 'h-5 w-5 text-[13px]' : 'h-[22px] w-[22px] text-[14px]'].join(' ')}
+          className={['inline-flex items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gae-color-surface-elevated)_88%,transparent)] text-text transition-colors hover:bg-hover hover:text-text', isMinimized ? 'h-5 w-5 text-[13px]' : 'h-[22px] w-[22px] text-[14px]'].join(' ')}
           onClick={onToggleMinimized}
           aria-label={isMinimized ? t('dependency.legend_toggle_expand') : t('dependency.legend_toggle_collapse')}
           aria-expanded={!isMinimized}
+          title={isMinimized ? t('dependency.legend_toggle_expand') : t('dependency.legend_toggle_collapse')}
         >
           {isMinimized ? '+' : '−'}
         </button>

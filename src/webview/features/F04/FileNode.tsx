@@ -71,7 +71,7 @@ const FileNodeComponent: FC<NodeProps<FileNodeType>> = ({ data, selected }) => {
         ))}
       </div>
       <button
-        className="inline-flex size-[26px] items-center justify-center self-end rounded-md border border-line bg-secondary p-0 text-muted opacity-0 pointer-events-none transition-all duration-100 ease-in-out group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-secondary-hi hover:text-text"
+        className="inline-flex size-[26px] items-center justify-center self-end rounded-md bg-secondary p-0 text-muted opacity-0 pointer-events-none transition-all duration-100 ease-in-out group-hover:opacity-100 group-hover:pointer-events-auto hover:bg-secondary-hi hover:text-text"
         type="button"
         aria-label={t('shared.copy_markdown')}
         title={t('shared.copy_markdown')}

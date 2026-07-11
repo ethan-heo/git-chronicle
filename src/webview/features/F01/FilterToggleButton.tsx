@@ -18,10 +18,10 @@ export const FilterToggleButton = forwardRef<HTMLButtonElement, FilterToggleButt
     <button
       ref={ref}
       className={[
-        'relative inline-flex size-7 shrink-0 items-center justify-center rounded-md border transition-colors duration-100 ease-in-out',
+        'relative inline-flex size-7 shrink-0 items-center justify-center rounded-md transition-colors duration-100 ease-in-out',
         isOpen || hasActiveFilters
-          ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_18%,transparent)] text-accent'
-          : 'border-line bg-panel text-muted hover:bg-hover hover:text-text',
+          ? 'bg-[color-mix(in_srgb,var(--color-accent)_18%,transparent)] text-accent'
+          : 'bg-panel text-muted hover:bg-hover hover:text-text',
       ].join(' ')}
       type="button"
       aria-label={t('commit.filter_toggle_aria', {

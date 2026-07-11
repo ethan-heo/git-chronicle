@@ -223,7 +223,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
           {!hasSavedSummary && content ? (
             <button
               type="button"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-line bg-secondary text-text transition-colors hover:bg-secondary-hi"
+              className="inline-flex size-8 items-center justify-center rounded-md bg-secondary text-text transition-colors hover:bg-secondary-hi"
               aria-label={t('ai_summary.save')}
               title={t('ai_summary.save')}
               onClick={onSave}

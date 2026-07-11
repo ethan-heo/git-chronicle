@@ -71,6 +71,7 @@ export const KeywordSearchInput: FC<KeywordSearchInputProps> = ({
             type="button"
             onClick={clearKeyword}
             aria-label={t('commit.search_clear_aria')}
+            title={t('commit.search_clear_aria')}
           >
             x
           </button>

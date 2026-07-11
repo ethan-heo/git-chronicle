@@ -37,7 +37,7 @@ export const SavePathSection: FC<SavePathSectionProps> = ({ savePath, onPathSele
             <span className="shrink-0 rounded-sm border border-line px-[9px] py-[3px] text-[11.5px] text-muted">{t('settings.change')}</span>
           </button>
           <button
-            className="mr-[7px] inline-flex size-[30px] shrink-0 items-center justify-center rounded-sm border border-line bg-transparent text-muted hover:border-[color-mix(in_srgb,var(--color-error)_44%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-error)_12%,transparent)] hover:text-error"
+            className="mr-[7px] inline-flex size-[30px] shrink-0 items-center justify-center rounded-sm bg-transparent text-muted hover:bg-[color-mix(in_srgb,var(--color-error)_12%,transparent)] hover:text-error"
             type="button"
             aria-label={t('settings.save_path_delete_aria')}
             title={t('settings.save_path_delete_title')}

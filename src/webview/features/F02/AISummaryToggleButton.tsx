@@ -15,10 +15,10 @@ export const AISummaryToggleButton: FC<AISummaryToggleButtonProps> = ({
   return (
     <button
       className={[
-        'inline-flex size-9 shrink-0 items-center justify-center rounded-md border transition-colors duration-100 ease-in-out',
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors duration-100 ease-in-out',
         isActive
-          ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_18%,transparent)] text-accent'
-          : 'border-line bg-panel text-muted hover:bg-hover hover:text-text',
+          ? 'bg-[color-mix(in_srgb,var(--color-accent)_18%,transparent)] text-accent'
+          : 'bg-panel text-muted hover:bg-hover hover:text-text',
       ].join(' ')}
       type="button"
       aria-label={t('action_bar.commit_ai_aria')}

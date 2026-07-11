@@ -14,11 +14,12 @@ export const FileAISummaryToggleButton: FC<FileAISummaryToggleButtonProps> = ({ 
       type="button"
       onClick={onClick}
       className={[
-        'inline-flex size-8 items-center justify-center rounded-md border transition-colors',
+        'inline-flex size-8 items-center justify-center rounded-md transition-colors',
         isActive
-          ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_16%,var(--color-panel))] text-accent'
-          : 'border-line bg-panel text-muted hover:bg-hover hover:text-text',
+          ? 'bg-[color-mix(in_srgb,var(--color-accent)_16%,var(--color-panel))] text-accent'
+          : 'bg-panel text-muted hover:bg-hover hover:text-text',
       ].join(' ')}
+      aria-label={t('action_bar.file_ai_toggle_aria')}
       aria-pressed={isActive}
       title={t('action_bar.file_ai_toggle_aria')}
     >

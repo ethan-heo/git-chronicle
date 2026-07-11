@@ -66,7 +66,7 @@ export const NoteFileNode: FC<NoteFileNodeProps> = ({
       <button
         type="button"
         className={[
-          'inline-flex size-5 shrink-0 items-center justify-center rounded-sm opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100',
+          'inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-panel opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100',
           isConfirmingDelete ? 'bg-danger/15 text-danger' : 'text-muted hover:bg-hover hover:text-text',
         ].join(' ')}
         aria-label={isConfirmingDelete ? t('note.delete_confirm') : t('note.delete')}

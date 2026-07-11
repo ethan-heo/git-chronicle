@@ -22,6 +22,8 @@ export const DiffFoldRow: FC<DiffFoldRowProps> = ({
       className="grid min-h-5 w-full grid-cols-[48px_48px_18px_minmax(0,1fr)] items-center border-y border-[color-mix(in_srgb,var(--color-line)_58%,transparent)] bg-[color-mix(in_srgb,var(--color-panel)_84%,var(--vscode-editor-background,var(--color-surface)))] text-left text-[var(--color-text-secondary)] hover:bg-[color-mix(in_srgb,var(--color-panel)_72%,var(--vscode-editor-background,var(--color-surface)))] focus-visible:outline-1 focus-visible:outline-focus max-[320px]:grid-cols-[18px_minmax(0,1fr)]"
       onClick={onExpand}
       role="listitem"
+      aria-label={t('diff.fold_hidden_lines', { count: hiddenCount, start: startLineLabel, end: endLineLabel })}
+      title={t('diff.fold_hidden_lines', { count: hiddenCount, start: startLineLabel, end: endLineLabel })}
     >
       <span className="max-[320px]:hidden" aria-hidden="true" />
       <span className="max-[320px]:hidden" aria-hidden="true" />

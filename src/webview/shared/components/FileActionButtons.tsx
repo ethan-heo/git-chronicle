@@ -35,12 +35,11 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
     .filter(Boolean)
     .join(' ');
   const buttonClassName =
-    'inline-flex size-[22px] items-center justify-center rounded-sm border border-line bg-secondary p-0 text-muted transition-colors duration-100 ease-in-out hover:bg-secondary-hi hover:text-text';
+    'inline-flex size-7 items-center justify-center rounded-md bg-panel p-0 text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text';
   const getActiveButtonStyle = (color: string, isActive: boolean): CSSProperties | undefined =>
     isActive
       ? {
-          borderColor: color,
-          backgroundColor: `color-mix(in srgb, ${color} 16%, var(--color-elevated) 84%)`,
+          backgroundColor: `color-mix(in srgb, ${color} 16%, var(--color-panel) 84%)`,
           color,
         }
       : undefined;
@@ -95,7 +94,7 @@ export const FileActionButtons: FC<FileActionButtonsProps> = ({
         <button
           className={[
             buttonClassName,
-            'hover:text-link disabled:cursor-not-allowed disabled:hover:bg-secondary disabled:hover:text-muted disabled:opacity-45',
+            'hover:text-link disabled:cursor-not-allowed disabled:hover:bg-panel disabled:hover:text-muted disabled:opacity-45',
           ].filter(Boolean).join(' ')}
           style={getActiveButtonStyle('var(--color-link)', isSymbolGraphActive)}
           type="button"

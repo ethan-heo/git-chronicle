@@ -194,7 +194,7 @@ export const SidebarSettingsPanel: FC<SidebarSettingsPanelProps> = ({ isActive, 
     <section className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface">
       <header className="flex items-center gap-2 border-b border-line bg-panel px-3 py-3">
         <button
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
           type="button"
           aria-label={t('common.back')}
           title={t('common.back')}

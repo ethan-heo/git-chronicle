@@ -256,6 +256,8 @@ const ModeButton: FC<{ active: boolean; label: string; onClick: () => void }> = 
     type="button"
     onClick={onClick}
     className={`rounded-sm px-2 py-1 text-xs ${active ? 'bg-hover text-text' : 'text-muted hover:bg-hover hover:text-text'}`}
+    aria-label={label}
+    title={label}
   >
     {label}
   </button>

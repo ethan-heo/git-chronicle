@@ -16,11 +16,12 @@ export const SymbolGraphToggleButton: FC<SymbolGraphToggleButtonProps> = ({ isAc
       onClick={onClick}
       disabled={disabled}
       className={[
-        'inline-flex size-8 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+        'inline-flex size-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-45',
         isActive
-          ? 'border-link bg-[color-mix(in_srgb,var(--color-link)_14%,var(--color-panel))] text-link'
-          : 'border-line bg-panel text-muted hover:bg-hover hover:text-text disabled:hover:bg-panel disabled:hover:text-muted',
+          ? 'bg-[color-mix(in_srgb,var(--color-link)_14%,var(--color-panel))] text-link'
+          : 'bg-panel text-muted hover:bg-hover hover:text-text disabled:hover:bg-panel disabled:hover:text-muted',
       ].join(' ')}
+      aria-label={t('symbol_graph.open_aria')}
       aria-pressed={isActive}
       title={t('symbol_graph.open_aria')}
     >
