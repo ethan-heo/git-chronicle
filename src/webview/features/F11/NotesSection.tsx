@@ -153,10 +153,14 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
       actions={(
         <button
           type="button"
-          className="rounded-sm px-1.5 py-0.5 text-[10px] font-semibold text-muted hover:bg-hover hover:text-text"
+          className="inline-flex size-6 items-center justify-center rounded-sm text-muted hover:bg-hover hover:text-text"
+          aria-label={t('note.create')}
+          title={t('note.create')}
           onClick={() => setIsCreating((current) => !current)}
         >
-          + {t('note.create')}
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+            <path d="M8 3v10M3 8h10" />
+          </svg>
         </button>
       )}
     >

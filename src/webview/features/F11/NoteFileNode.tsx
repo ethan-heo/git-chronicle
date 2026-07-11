@@ -66,10 +66,11 @@ export const NoteFileNode: FC<NoteFileNodeProps> = ({
       <button
         type="button"
         className={[
-          'shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100',
+          'inline-flex size-5 shrink-0 items-center justify-center rounded-sm opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100',
           isConfirmingDelete ? 'bg-danger/15 text-danger' : 'text-muted hover:bg-hover hover:text-text',
         ].join(' ')}
         aria-label={isConfirmingDelete ? t('note.delete_confirm') : t('note.delete')}
+        title={isConfirmingDelete ? t('note.delete_confirm') : t('note.delete')}
         onClick={(event) => {
           event.stopPropagation();
           if (isConfirmingDelete) {
@@ -82,7 +83,15 @@ export const NoteFileNode: FC<NoteFileNodeProps> = ({
         }}
         onBlur={() => setIsConfirmingDelete(false)}
       >
-        {isConfirmingDelete ? t('note.delete_confirm_short') : t('note.delete_short')}
+        {isConfirmingDelete ? (
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path d="M3 8.4 6.3 11.5 13 4.5" />
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+            <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5 4.5l.6 8.5h4.8l.6-8.5" />
+          </svg>
+        )}
       </button>
     </div>
   );
