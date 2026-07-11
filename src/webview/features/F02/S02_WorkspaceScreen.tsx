@@ -60,7 +60,7 @@ export const S02WorkspaceScreen: FC = () => {
   const activateWorkspaceTab = useAppStore((state) => state.activateWorkspaceTab);
   const toggleCodeInnerPanel = useAppStore((state) => state.toggleCodeInnerPanel);
   const focusPane = useAppStore((state) => state.focusPane);
-  const splitWorkspacePaneWithTab = useAppStore((state) => state.splitWorkspacePaneWithTab);
+  const moveWorkspaceTab = useAppStore((state) => state.moveWorkspaceTab);
   const setPaneSplitSize = useAppStore((state) => state.setPaneSplitSize);
   const authorList = useAppStore((state) => state.authorList);
   const filterDateStart = useAppStore((state) => state.filterDateStart);
@@ -553,7 +553,7 @@ export const S02WorkspaceScreen: FC = () => {
           onActivateTab={(paneId, tabId) => activateWorkspaceTab(paneId, tabId)}
           onCloseTab={(paneId, tabId) => closeWorkspaceTab(paneId, tabId)}
           onFocusPane={focusPane}
-          onSplitTab={splitWorkspacePaneWithTab}
+          onMoveTab={moveWorkspaceTab}
           onResizeSplit={setPaneSplitSize}
           renderFixedActions={(paneId, paneActiveTab) => renderPaneActions({
             paneId,

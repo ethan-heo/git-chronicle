@@ -4,7 +4,7 @@ import type { AppState } from '../appStore';
 
 export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'note' | 'pr' | 'issue';
 export type PaneSplitOrientation = 'horizontal' | 'vertical';
-export type DropZone = 'left' | 'right' | 'top' | 'bottom';
+export type DropZone = 'left' | 'right' | 'top' | 'bottom' | 'center';
 export type CodeInnerPanelType = 'aiSummary' | 'symbolGraph';
 
 export interface CodeInnerPanelsState {
@@ -55,7 +55,7 @@ export interface WorkspaceTabsSlice {
   activateWorkspaceTab: (paneId: string, tabId: string) => void;
   toggleCodeInnerPanel: (paneId: string, tabId: string, panel: CodeInnerPanelType) => void;
   focusPane: (paneId: string) => void;
-  splitWorkspacePaneWithTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
+  moveWorkspaceTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
   setPaneSplitSize: (paneId: string, sizePercent: number) => void;
 }
 
@@ -175,7 +175,32 @@ function removeLeafPane(node: PaneNode, paneId: string): PaneNode | null {
   };
 }
 
-function moveTabBetweenLeaves(root: PaneNode, sourcePaneId: string, targetPaneId: string, tabId: string, zone: DropZone): PaneNode {
+function removeTabFromLeaf(root: PaneNode, paneId: string, tabId: string): { nextRoot: PaneNode; removedTab: WorkspaceTab | null } {
+  const pane = findLeafPane(root, paneId);
+  const removedTab = pane?.tabs.find((tab) => tab.id === tabId) ?? null;
+
+  if (!pane || !removedTab) {
+    return { nextRoot: root, removedTab: null };
+  }
+
+  const remainingTabs = pane.tabs.filter((tab) => tab.id !== tabId);
+  const paneAfterRemoval = replacePaneNode(root, paneId, () => ({
+    ...pane,
+    tabs: remainingTabs,
+    activeTabId: pane.activeTabId === tabId
+      ? remainingTabs.at(remainingTabs.length - 1)?.id ?? remainingTabs[0]?.id ?? null
+      : pane.activeTabId,
+  }));
+
+  return {
+    nextRoot: remainingTabs.length === 0
+      ? removeLeafPane(paneAfterRemoval, paneId) ?? createLeafPane()
+      : paneAfterRemoval,
+    removedTab,
+  };
+}
+
+function moveTabBetweenLeaves(root: PaneNode, sourcePaneId: string, targetPaneId: string, tabId: string, zone: Exclude<DropZone, 'center'>): PaneNode {
   const sourcePane = findLeafPane(root, sourcePaneId);
   const targetPane = findLeafPane(root, targetPaneId);
   const movingTab = sourcePane?.tabs.find((tab) => tab.id === tabId) ?? null;
@@ -184,18 +209,7 @@ function moveTabBetweenLeaves(root: PaneNode, sourcePaneId: string, targetPaneId
     return root;
   }
 
-  const sourceRemainingTabs = sourcePane.tabs.filter((tab) => tab.id !== tabId);
-  const sourceAfterRemoval = replacePaneNode(root, sourcePaneId, () => ({
-    ...sourcePane,
-    tabs: sourceRemainingTabs,
-    activeTabId: sourcePane.activeTabId === tabId
-      ? sourceRemainingTabs.at(sourceRemainingTabs.length - 1)?.id ?? sourceRemainingTabs[0]?.id ?? null
-      : sourcePane.activeTabId,
-  }));
-
-  const nextRoot = sourceRemainingTabs.length === 0
-    ? removeLeafPane(sourceAfterRemoval, sourcePaneId) ?? createLeafPane([movingTab], movingTab.id)
-    : sourceAfterRemoval;
+  const { nextRoot } = removeTabFromLeaf(root, sourcePaneId, tabId);
 
   const resolvedTargetPane = findLeafPane(nextRoot, targetPaneId);
   if (!resolvedTargetPane) {
@@ -216,6 +230,42 @@ function moveTabBetweenLeaves(root: PaneNode, sourcePaneId: string, targetPaneId
     children,
     sizePercent: 50,
   }));
+}
+
+function mergeTabIntoLeaf(root: PaneNode, sourcePaneId: string, targetPaneId: string, tabId: string): PaneNode {
+  if (sourcePaneId === targetPaneId) {
+    return root;
+  }
+
+  const { nextRoot, removedTab } = removeTabFromLeaf(root, sourcePaneId, tabId);
+  if (!removedTab) {
+    return root;
+  }
+
+  const targetPane = findLeafPane(nextRoot, targetPaneId);
+  if (!targetPane) {
+    return nextRoot;
+  }
+
+  return replacePaneNode(nextRoot, targetPaneId, (pane) => {
+    if (pane.kind !== 'leaf') {
+      return pane;
+    }
+
+    const existingTab = pane.tabs.find((tab) => tab.id === removedTab.id);
+    if (existingTab) {
+      return {
+        ...pane,
+        activeTabId: existingTab.id,
+      };
+    }
+
+    return {
+      ...pane,
+      tabs: [...pane.tabs, removedTab],
+      activeTabId: removedTab.id,
+    };
+  });
 }
 
 export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceTabsSlice> = (set, get) => {
@@ -348,10 +398,24 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
       }));
     },
 
-    splitWorkspacePaneWithTab: ({ sourcePaneId, tabId, targetPaneId, zone }) => {
-      const nextTree = moveTabBetweenLeaves(get().paneTree, sourcePaneId, targetPaneId, tabId, zone);
+    moveWorkspaceTab: ({ sourcePaneId, tabId, targetPaneId, zone }) => {
+      const state = get();
+      const movingTab = findLeafPane(state.paneTree, sourcePaneId)?.tabs.find((tab) => tab.id === tabId) ?? null;
+      const nextTree = zone === 'center'
+        ? mergeTabIntoLeaf(state.paneTree, sourcePaneId, targetPaneId, tabId)
+        : moveTabBetweenLeaves(state.paneTree, sourcePaneId, targetPaneId, tabId, zone);
+
+      if (zone === 'center') {
+        set((current) => ({
+          paneTree: nextTree,
+          focusedPaneId: targetPaneId,
+          selectedCommit: movingTab?.commit ?? current.selectedCommit,
+        }));
+        return;
+      }
+
       const nextFocusedPane = getFirstLeafPane(nextTree);
-      const focusedPane = findLeafPane(nextTree, get().focusedPaneId) ?? nextFocusedPane;
+      const focusedPane = findLeafPane(nextTree, state.focusedPaneId) ?? nextFocusedPane;
       set({
         paneTree: nextTree,
         focusedPaneId: focusedPane.paneId,

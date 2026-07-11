@@ -11,7 +11,7 @@ interface PaneTreeProps {
   onActivateTab: (paneId: string, tabId: string) => void;
   onCloseTab: (paneId: string, tabId: string) => void;
   onFocusPane: (paneId: string) => void;
-  onSplitTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
+  onMoveTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
   onResizeSplit: (paneId: string, sizePercent: number) => void;
   renderFixedActions: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
   renderPanel: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
@@ -46,7 +46,7 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
   onActivateTab,
   onCloseTab,
   onFocusPane,
-  onSplitTab,
+  onMoveTab,
   onResizeSplit,
   renderFixedActions,
   renderPanel,
@@ -67,7 +67,7 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
             onActivateTab={onActivateTab}
             onCloseTab={onCloseTab}
             onFocusPane={onFocusPane}
-            onSplitTab={onSplitTab}
+            onMoveTab={onMoveTab}
             onResizeSplit={onResizeSplit}
             renderFixedActions={renderFixedActions}
             renderPanel={renderPanel}
@@ -82,7 +82,7 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
             onActivateTab={onActivateTab}
             onCloseTab={onCloseTab}
             onFocusPane={onFocusPane}
-            onSplitTab={onSplitTab}
+            onMoveTab={onMoveTab}
             onResizeSplit={onResizeSplit}
             renderFixedActions={renderFixedActions}
             renderPanel={renderPanel}
@@ -106,7 +106,7 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
       onActivateTab={onActivateTab}
       onCloseTab={onCloseTab}
       onFocusPane={onFocusPane}
-      onSplitTab={onSplitTab}
+      onMoveTab={onMoveTab}
       renderFixedActions={renderFixedActions}
       renderPanel={renderPanel}
     />
@@ -120,7 +120,7 @@ const WorkspacePane: FC<{
   onActivateTab: (paneId: string, tabId: string) => void;
   onCloseTab: (paneId: string, tabId: string) => void;
   onFocusPane: (paneId: string) => void;
-  onSplitTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
+  onMoveTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
   renderFixedActions: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
   renderPanel: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
 }> = ({
@@ -130,7 +130,7 @@ const WorkspacePane: FC<{
   onActivateTab,
   onCloseTab,
   onFocusPane,
-  onSplitTab,
+  onMoveTab,
   renderFixedActions,
   renderPanel,
 }) => {
@@ -139,53 +139,28 @@ const WorkspacePane: FC<{
   const activeTab = getActiveTab(pane);
   const [dropZone, setDropZone] = useState<DropZone | null>(null);
   const isDropEnabled = Boolean(dragContext?.dragState && !(dragContext.dragState.sourcePaneId === pane.paneId && pane.tabs.length <= 1));
+  const isSamePaneDrag = dragContext?.dragState?.sourcePaneId === pane.paneId;
+
+  const commitDrop = (zone: DropZone) => {
+    if (!dragContext?.dragState) {
+      setDropZone(null);
+      return;
+    }
+
+    onMoveTab({
+      sourcePaneId: dragContext.dragState.sourcePaneId,
+      tabId: dragContext.dragState.tabId,
+      targetPaneId: pane.paneId,
+      zone,
+    });
+    dragContext.setDragState(null);
+    setDropZone(null);
+  };
 
   return (
     <div
       className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface"
       onMouseDown={() => onFocusPane(pane.paneId)}
-      onDragOver={(event) => {
-        if (!isDropEnabled) {
-          return;
-        }
-
-        event.preventDefault();
-        const rect = event.currentTarget.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const thresholdX = rect.width * 0.25;
-        const thresholdY = rect.height * 0.25;
-        let nextZone: DropZone | null = null;
-
-        if (x <= thresholdX) {
-          nextZone = 'left';
-        } else if (x >= rect.width - thresholdX) {
-          nextZone = 'right';
-        } else if (y <= thresholdY) {
-          nextZone = 'top';
-        } else if (y >= rect.height - thresholdY) {
-          nextZone = 'bottom';
-        }
-
-        setDropZone(nextZone);
-      }}
-      onDragLeave={() => setDropZone(null)}
-      onDrop={(event) => {
-        event.preventDefault();
-        if (!dragContext?.dragState || !dropZone) {
-          setDropZone(null);
-          return;
-        }
-
-        onSplitTab({
-          sourcePaneId: dragContext.dragState.sourcePaneId,
-          tabId: dragContext.dragState.tabId,
-          targetPaneId: pane.paneId,
-          zone: dropZone,
-        });
-        dragContext.setDragState(null);
-        setDropZone(null);
-      }}
     >
       <WorkspaceTabBar
         paneId={pane.paneId}
@@ -200,9 +175,66 @@ const WorkspacePane: FC<{
           dragContext?.setDragState(null);
           setDropZone(null);
         }}
+        onDragOver={(event) => {
+          if (!isDropEnabled) {
+            return;
+          }
+
+          event.preventDefault();
+          setDropZone(isSamePaneDrag ? null : 'center');
+        }}
+        onDragLeave={() => setDropZone(null)}
+        onDrop={(event) => {
+          event.preventDefault();
+          if (isSamePaneDrag) {
+            setDropZone(null);
+            return;
+          }
+
+          commitDrop('center');
+        }}
         fixedActions={renderFixedActions(pane.paneId, activeTab)}
       />
-      <div className="min-h-0 flex-1 overflow-hidden">
+      <div
+        className="min-h-0 flex-1 overflow-hidden"
+        onDragOver={(event) => {
+          if (!isDropEnabled) {
+            return;
+          }
+
+          event.preventDefault();
+          const rect = event.currentTarget.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const thresholdX = rect.width * 0.25;
+          const thresholdY = rect.height * 0.25;
+          let nextZone: DropZone = 'center';
+
+          if (x <= thresholdX) {
+            nextZone = 'left';
+          } else if (x >= rect.width - thresholdX) {
+            nextZone = 'right';
+          } else if (y <= thresholdY) {
+            nextZone = 'top';
+          } else if (y >= rect.height - thresholdY) {
+            nextZone = 'bottom';
+          } else if (isSamePaneDrag) {
+            nextZone = 'center';
+          }
+
+          setDropZone(isSamePaneDrag && nextZone === 'center' ? null : nextZone);
+        }}
+        onDragLeave={() => setDropZone(null)}
+        onDrop={(event) => {
+          event.preventDefault();
+          if (!dropZone || (isSamePaneDrag && dropZone === 'center')) {
+            setDropZone(null);
+            return;
+          }
+
+          commitDrop(dropZone);
+        }}
+      >
         {activeTab ? renderPanel(pane.paneId, activeTab) : (
           <div className="flex h-full items-center justify-center p-8">
             <EmptyState message={t('workspace.no_open_tab')} />
@@ -219,6 +251,7 @@ const DropZoneOverlay: FC<{ zone: DropZone }> = ({ zone }) => (
     <div
       className={[
         'absolute rounded-md bg-accent/20 ring-2 ring-accent',
+        zone === 'center' ? 'inset-3' : '',
         zone === 'left' ? 'inset-y-3 left-3 w-[28%]' : '',
         zone === 'right' ? 'inset-y-3 right-3 w-[28%]' : '',
         zone === 'top' ? 'inset-x-3 top-3 h-[28%]' : '',

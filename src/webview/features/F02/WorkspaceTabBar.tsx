@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from 'react';
+import type { DragEventHandler, FC, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
 
@@ -12,6 +12,9 @@ interface WorkspaceTabBarProps {
   onCloseTab: (tabId: string) => void;
   onDragTabStart?: (tabId: string) => void;
   onDragTabEnd?: () => void;
+  onDragOver?: DragEventHandler<HTMLDivElement>;
+  onDragLeave?: DragEventHandler<HTMLDivElement>;
+  onDrop?: DragEventHandler<HTMLDivElement>;
   fixedActions: ReactNode;
 }
 
@@ -25,10 +28,18 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
   onCloseTab,
   onDragTabStart,
   onDragTabEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
   fixedActions,
 }) => {
   return (
-    <div className="flex items-stretch gap-3 border-b border-line bg-panel px-4 py-2">
+    <div
+      className="flex items-stretch gap-3 border-b border-line bg-panel px-4 py-2"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <div className="workspace-tab-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 [scrollbar-gutter:stable]">
         <div className="flex min-w-max items-center gap-2 pr-1">
           {tabs.map((tab) => (
