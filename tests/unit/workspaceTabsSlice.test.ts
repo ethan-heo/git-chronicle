@@ -142,6 +142,55 @@ describe('workspaceTabsSlice pr/issue tabs (F12)', () => {
   });
 });
 
+describe('workspaceTabsSlice note tabs (F11)', () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+    Reflect.deleteProperty(window, 'acquireVsCodeApi');
+  });
+
+  it('opens note tabs by relative path without changing the selected commit', async () => {
+    const { useAppStore } = await import('../../src/webview/store/appStore');
+    const state = useAppStore.getState();
+
+    state.selectCommit(commitA);
+    state.openWorkspaceTab({ panelType: 'note', relativePath: 'ideas/todo.md' });
+
+    const nextState = useAppStore.getState();
+    expect(nextState.selectedCommit).toEqual(commitA);
+    if (nextState.paneTree.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane');
+    }
+
+    const noteTab = nextState.paneTree.tabs.find((tab) => tab.id === 'note:ideas/todo.md');
+    expect(noteTab?.commit).toBeNull();
+    expect(noteTab?.relativePath).toBe('ideas/todo.md');
+  });
+
+  it('renames and closes note tabs by relative path', async () => {
+    const { useAppStore } = await import('../../src/webview/store/appStore');
+    const state = useAppStore.getState();
+
+    state.openWorkspaceTab({ panelType: 'note', relativePath: 'ideas/todo.md' });
+    state.renameNoteTabs('ideas/todo.md', 'archive/todo.md');
+
+    let nextState = useAppStore.getState();
+    if (nextState.paneTree.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane');
+    }
+    expect(nextState.paneTree.tabs.find((tab) => tab.id === 'note:archive/todo.md')?.relativePath).toBe('archive/todo.md');
+    expect(nextState.paneTree.activeTabId).toBe('note:archive/todo.md');
+
+    state.closeNoteTabs('archive/todo.md');
+    nextState = useAppStore.getState();
+    if (nextState.paneTree.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane');
+    }
+    expect(nextState.paneTree.tabs).toHaveLength(0);
+    expect(nextState.paneTree.activeTabId).toBeNull();
+  });
+});
+
 describe('workspaceTabsSlice moveWorkspaceTab', () => {
   afterEach(() => {
     vi.resetModules();

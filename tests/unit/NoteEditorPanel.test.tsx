@@ -2,10 +2,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import mermaid from 'mermaid';
 import type { RenderResult } from 'mermaid';
+import { NoteEditorPanel } from '../../src/webview/features/F11';
 import { initI18n } from '../../src/webview/i18n';
 import { RouteSlotProvider } from '../../src/webview/shared/route/RouteSlotContext';
 import { useAppStore } from '../../src/webview/store/appStore';
-import { S07NoteScreen } from '../../src/webview/features/F11';
 
 vi.mock('mermaid', () => ({
   default: {
@@ -16,21 +16,14 @@ vi.mock('mermaid', () => ({
   },
 }));
 
-describe('S07NoteScreen', () => {
+describe('NoteEditorPanel', () => {
   beforeEach(() => {
     initI18n('ko');
     useAppStore.setState({
       currentScreen: 'S02',
-      selectedCommit: {
-        hash: 'abc123456789',
-        shortHash: 'abc1234',
-        message: 'feat: note editor',
-        author: 'tester',
-        date: '2026-07-06T12:00:00+09:00',
-      },
       savePath: '.git-author',
       notesByPane: {
-        'legacy-note-screen': {
+        'test-pane': {
           noteContent: '',
           noteSavedPath: null,
           isLoading: false,
@@ -45,7 +38,7 @@ describe('S07NoteScreen', () => {
   it('keeps typed content in the textarea in browser-dev fallback', async () => {
     render(
       <RouteSlotProvider isActive>
-        <S07NoteScreen />
+        <NoteEditorPanel paneId="test-pane" relativePath="ideas/todo.md" isActive />
       </RouteSlotProvider>,
     );
 
@@ -60,7 +53,7 @@ describe('S07NoteScreen', () => {
   it('renders mermaid code fences as diagrams in preview', async () => {
     render(
       <RouteSlotProvider isActive>
-        <S07NoteScreen />
+        <NoteEditorPanel paneId="test-pane" relativePath="ideas/todo.md" isActive />
       </RouteSlotProvider>,
     );
 
@@ -89,7 +82,7 @@ describe('S07NoteScreen', () => {
 
     render(
       <RouteSlotProvider isActive>
-        <S07NoteScreen />
+        <NoteEditorPanel paneId="test-pane" relativePath="ideas/todo.md" isActive />
       </RouteSlotProvider>,
     );
 

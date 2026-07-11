@@ -4,15 +4,12 @@ import * as path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   appendSummaryQA,
-  getCommitNoteFilePath,
   getCommitSummaryFilePath,
   getSummaryFilePath,
   hasSavedSummary,
   loadCommitSummary,
-  loadNote,
   loadSummary,
   saveCommitSummary,
-  saveNote,
   saveSummary,
   SummarySaveError,
   toCommitDirName,
@@ -52,15 +49,9 @@ describe('summaryFileService', () => {
     expect(getCommitSummaryFilePath('/tmp/gae', 'abc123')).toBe(path.join('/tmp/gae', 'abc123', '_commit_summary.md'));
   });
 
-  it('언어가 en이면 커밋/노트 단위 저장 파일명을 영문으로 사용한다', () => {
+  it('언어가 en이면 커밋 단위 저장 파일명을 영문으로 사용한다', () => {
     expect(getCommitSummaryFilePath('/tmp/gae', 'abc123456789', 'feat: add batch AI summary', 'en')).toBe(
       path.join('/tmp/gae', 'abc1234_feat-add-batch-AI-summary', 'full_file_summary.md'),
-    );
-    expect(getCommitNoteFilePath('/tmp/gae', 'abc123456789', 'feat: add batch AI summary', 'en')).toBe(
-      path.join('/tmp/gae', 'abc1234_feat-add-batch-AI-summary', 'note.md'),
-    );
-    expect(getCommitNoteFilePath('/tmp/gae', 'abc123456789', 'feat: add batch AI summary')).toBe(
-      path.join('/tmp/gae', 'abc1234_feat-add-batch-AI-summary', '노트.md'),
     );
   });
 
@@ -72,26 +63,6 @@ describe('summaryFileService', () => {
     expect(loadCommitSummary(rootPath, 'abc123456789', 'feat: add batch AI summary')).toEqual({
       content: '# Summary',
       savedPath,
-    });
-  });
-
-  it('노트도 언어별 파일명으로 저장하고, 언어 지정 없이 양쪽 파일명을 모두 찾는다', () => {
-    const rootPath = makeTempPath();
-    const koPath = saveNote(rootPath, 'abc123456789', '# 메모', 'feat: add batch AI summary');
-
-    expect(koPath).toBe(path.join(rootPath, 'abc1234_feat-add-batch-AI-summary', '노트.md'));
-    expect(loadNote(rootPath, 'abc123456789', 'feat: add batch AI summary')).toEqual({
-      content: '# 메모',
-      savedPath: koPath,
-    });
-
-    fs.rmSync(koPath);
-    const enPath = saveNote(rootPath, 'abc123456789', '# Note', 'feat: add batch AI summary', 'en');
-
-    expect(enPath).toBe(path.join(rootPath, 'abc1234_feat-add-batch-AI-summary', 'note.md'));
-    expect(loadNote(rootPath, 'abc123456789', 'feat: add batch AI summary')).toEqual({
-      content: '# Note',
-      savedPath: enPath,
     });
   });
 

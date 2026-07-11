@@ -1,4 +1,4 @@
 export { CopyMarkdownButton } from './CopyMarkdownButton';
-export { S07NoteScreen } from './S07_NoteScreen';
 export { NoteEditorPanel } from './NoteEditorPanel';
+export { NotesSection } from './NotesSection';
 export * from './markdown';

@@ -56,7 +56,7 @@ src/extension/
 │   ├── dependencyHandlers.ts         # ANALYZE_DEPENDENCIES (F04)
 │   ├── symbolHandlers.ts             # ANALYZE_SYMBOL_GRAPH (F10)
 │   ├── aiHandlers.ts                 # AI 설정/요약/QA 전체 (F05b/F06/F07/F09)
-│   └── noteHandlers.ts               # FETCH_NOTE/SAVE_NOTE (F11)
+│   └── noteHandlers.ts               # note tree/load/save/create/delete/move 메시지 (F11)
 ├── gitService.ts                     # simple-git 기반 Git 조회 서비스
 │   - fetchCommits(filter, page)      # git log 실행
 │   - GitRepositoryNotFoundError      # Git 저장소 미감지 오류 타입
@@ -78,6 +78,7 @@ src/extension/
 ├── prompts.ts                        # AI 정리 프롬프트 빌더
 │   - buildCommitSummaryPrompt(commitHash, diff)
 │   - buildSummaryQAPrompt(summaryContent, diff, question)  # F09 Q&A
+├── noteFileService.ts                # 독립 노트 파일 트리/읽기/쓰기/이동/삭제 (F11)
 └── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인
     - SummarySaveError                # 저장 경로 생성/쓰기 실패 전용 오류
     - loadCommitSummary(savePath, hash) → { content, savedPath } | null
@@ -95,10 +96,11 @@ src/webview/
 ├── main.tsx                          # ReactDOM.createRoot 진입점
 ├── App.tsx                           # currentScreen에 따라 Screen 렌더링 + 라우트 전환 슬롯 관리
 ├── store/
-│   ├── appStore.ts                   # Zustand 스토어 combinator (8개 slice 조합, 상태/액션 정의 없음)
-│   └── slices/                       # 도메인별 slice (commitList/navigation/changedFiles/dependencyGraph/symbolGraph/ai/note/toast)
+│   ├── appStore.ts                   # Zustand 스토어 combinator (10개 slice 조합, 상태/액션 정의 없음)
+│   └── slices/                       # 도메인별 slice (commitList/navigation/changedFiles/dependencyGraph/symbolGraph/ai/note/toast/workspaceTabs/github)
 ├── types/
-│   └── commit.ts                     # Commit, FilterState, ScreenID, RouteTransitionDirection 타입
+│   ├── commit.ts                     # Commit, FilterState, ScreenID, RouteTransitionDirection 타입
+│   └── note.ts                       # F11 NoteEntry 타입
 ├── bridge/
 │   └── vscodeApi.ts                  # acquireVsCodeApi() 래퍼
 │       - postMessage(type, payload)
@@ -116,8 +118,8 @@ src/webview/
 │   │   ├── InfiniteScrollTrigger.tsx # IntersectionObserver 추가 로드 트리거
 │   │   └── index.ts                  # F01 barrel export
 │   ├── F02/                          # S02 워크스페이스 (사이드바 + 본문 패널 전환)
-│   │   ├── S02_WorkspaceScreen.tsx   # S02 화면 조합, 변경 파일/의존성 메시지 구독
-│   │   ├── WorkspaceHeading.tsx      # 본문 상단 헤더 (노트/설정 아이콘)
+│   │   ├── S02_WorkspaceScreen.tsx   # S02 화면 조합, 변경 파일/의존성/노트 섹션 조합
+│   │   ├── WorkspaceHeading.tsx      # 본문/사이드바 상단 헤더
 │   │   ├── AISummaryToggleButton.tsx # 사이드바 헤더 [커밋 AI 정리] 토글
 │   │   ├── FileCanvasToggleButton.tsx # 사이드바 헤더 [캔버스 보기] 토글
 │   │   ├── CodeTabSplitArea.tsx      # code 탭 내부 2~3분할 조립 + 오버레이 토글
@@ -171,8 +173,14 @@ src/webview/
 │   │   ├── SymbolLegendPanel.tsx
 │   │   ├── symbolGraphUtils.ts       # Dagre/kind 그룹 레이아웃 계산
 │   │   └── index.ts
-│   └── F11/                          # 노트 에디터 (S07)
-│       ├── S07_NoteScreen.tsx        # S07 화면 조합, 노트 메시지 구독
+│   └── F11/                          # 독립 노트 (S02 사이드바 섹션 + note 탭)
+│       ├── NotesSection.tsx          # 노트 섹션 컨테이너, 메시지 구독
+│       ├── NoteTree.tsx              # 노트 트리 상태 분기/재귀 진입
+│       ├── NoteDirectoryNode.tsx     # 폴더 노드 + 드롭 타겟
+│       ├── NoteFileNode.tsx          # 파일 노드 + 삭제 확인/드래그 시작
+│       ├── noteTreeModel.ts          # NoteEntry[] → 디렉토리 트리 변환
+│       ├── NoteEditorPanel.tsx       # relativePath 기준 노트 에디터 패널
+│       ├── NoteEditorPanel.css       # 노트 미리보기 스타일
 │       ├── MermaidBlock.tsx          # ```mermaid 코드블록 다이어그램 렌더링
 │       ├── CopyMarkdownButton.tsx    # 마크다운 복사 버튼
 │       ├── markdown.ts               # 마크다운/Mermaid 파싱 유틸
@@ -210,7 +218,7 @@ src/webview/
 
 - `product/`, `project/`, `core/`: 프로젝트 전반의 고정 규칙 문서.
 - `features/F##_*/`: 기능별 `spec.md`(요구사항) + `blueprint.md`(UI/컴포넌트 계약) 2개 파일만 유지한다. AI 생성용 프롬프트나 구현 상세는 영구 문서로 두지 않고, 작업 시 계획서(Plan)로 생성 후 완료 시 spec/blueprint에 반영하고 폐기한다.
-- `screens/S##_*/blueprint.md`: 화면 단위 진입 조건·상태·내비게이션 흐름. 여러 Feature를 조합하는 화면은 S02만 별도로 조합 관계를 문서화하고, 단일 Feature 화면은 해당 Feature `blueprint.md`와 함께 참고한다.
+- `screens/S##_*/blueprint.md`: 화면 단위 진입 조건·상태·내비게이션 흐름. 현재는 여러 Feature를 조합하는 S02만 별도로 유지한다.
 - Feature 전용 컴포넌트는 별도 `components/*.md`를 두지 않고 해당 `blueprint.md`의 Component Definitions 섹션이 유일한 문서다. 여러 Feature가 공유하는 컴포넌트만 [core/global_components.md](../core/global_components.md)에 문서화한다.
 
 ---
@@ -233,7 +241,8 @@ tests/
 │   ├── appStorePersistence.test.ts
 │   ├── DependencyGraph.render.test.tsx
 │   ├── LegendPanel.test.tsx
-│   ├── S07NoteScreen.test.tsx                # F11
+│   ├── NoteEditorPanel.test.tsx              # F11
+│   ├── noteFileService.test.ts               # F11
 │   └── markdown.test.ts                      # F11
 ├── mocks/
 │   └── vscode.ts                             # vscode 모듈 목

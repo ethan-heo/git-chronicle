@@ -34,7 +34,15 @@ import {
   type FetchPullRequestsPayload,
   type FetchRelatedCommitsPayload,
 } from './messageHandler/githubHandlers';
-import { handleFetchNote, handleSaveNote, type NotePayload } from './messageHandler/noteHandlers';
+import {
+  handleCreateNote,
+  handleDeleteNote,
+  handleFetchNote,
+  handleFetchNoteTree,
+  handleMoveNote,
+  handleSaveNote,
+  type NotePayload,
+} from './messageHandler/noteHandlers';
 import { l10n } from './messageHandler/shared';
 
 interface WebviewMessage {
@@ -117,6 +125,18 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'FETCH_NOTE':
         await handleFetchNote(panel, message.payload as NotePayload);
+        break;
+      case 'FETCH_NOTE_TREE':
+        await handleFetchNoteTree(panel, message.payload as NotePayload);
+        break;
+      case 'CREATE_NOTE':
+        await handleCreateNote(panel, message.payload as NotePayload);
+        break;
+      case 'DELETE_NOTE':
+        await handleDeleteNote(panel, message.payload as NotePayload);
+        break;
+      case 'MOVE_NOTE':
+        await handleMoveNote(panel, message.payload as NotePayload);
         break;
       case 'SAVE_NOTE':
         await handleSaveNote(panel, message.payload as NotePayload);

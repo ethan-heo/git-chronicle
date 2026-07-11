@@ -7,19 +7,18 @@ import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import { HighlightedCode } from '../../shared/highlighter';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useAppStore } from '../../store/appStore';
-import type { Commit } from '../../types/commit';
 import { MermaidBlock } from './MermaidBlock';
-import './S07_NoteScreen.css';
+import './NoteEditorPanel.css';
 
 const SAVE_DEBOUNCE_MS = 1000;
 
 interface NoteEditorPanelProps {
   paneId: string;
-  commit: Commit;
+  relativePath: string;
   isActive: boolean;
 }
 
-export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isActive }) => {
+export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, relativePath, isActive }) => {
   const { t } = useTranslation();
   const savePath = useAppStore((state) => state.savePath);
   const noteState = useAppStore((state) => state.notesByPane[paneId] ?? {
@@ -65,11 +64,10 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isAc
     startNoteLoading(paneId);
     postMessage('FETCH_NOTE', {
       paneId,
-      commitHash: commit.hash,
-      commitMessage: commit.message,
+      relativePath,
       savePath,
     });
-  }, [commit.hash, commit.message, handleNoteLoadFailed, handleNoteLoaded, isActive, paneId, savePath, startNoteLoading]);
+  }, [handleNoteLoadFailed, handleNoteLoaded, isActive, paneId, relativePath, savePath, startNoteLoading]);
 
   useEffect(() => {
     const handler = (event: MessageEvent<{ type: string; payload?: { paneId?: string; content?: string; savedPath?: string | null; hasSavedNote?: boolean; message?: string } }>): void => {
@@ -134,8 +132,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isAc
 
       postMessage('SAVE_NOTE', {
         paneId,
-        commitHash: commit.hash,
-        commitMessage: commit.message,
+        relativePath,
         savePath,
         content: draftContent,
       });
@@ -149,7 +146,7 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, commit, isAc
         saveNow();
       }
     };
-  }, [commit.hash, commit.message, draftContent, handleNoteSaved, hasInitializedLoad, isActive, noteState.hasSavedNote, noteState.noteSavedPath, paneId, savePath, startNoteSaving]);
+  }, [draftContent, handleNoteSaved, hasInitializedLoad, isActive, noteState.hasSavedNote, noteState.noteSavedPath, paneId, relativePath, savePath, startNoteSaving]);
 
   const statusLabel = useMemo(() => {
     if (noteState.isSaving) return t('note.saving');

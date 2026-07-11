@@ -10,6 +10,8 @@ export interface PersistedWorkspaceSidebarState {
   prsSectionHeight: number;
   isIssuesSectionExpanded: boolean;
   issuesSectionHeight: number;
+  isNotesSectionExpanded?: boolean;
+  notesSectionHeight?: number;
   sidebarWidth: number;
   lastSidebarWidth: number;
 }

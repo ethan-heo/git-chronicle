@@ -2,7 +2,7 @@
 
 > **요약:** Extension Host/Webview 이중 런타임 구조, Feature-First 디렉토리 규칙, `postMessage` 메시지 프로토콜 전체 타입 정의를 담는다. 새 메시지 타입을 추가하거나 Extension↔Webview 통신 흐름을 확인할 때 참고한다.
 
-> **버전** v1.1 | **작성일** 2026-06-26 | **갱신** 2026-07-07 (F11 노트 메시지 프로토콜 반영) | **상태** 확정
+> **버전** v1.2 | **작성일** 2026-06-26 | **갱신** 2026-07-11 (F11 독립 노트 트리 전환 반영) | **상태** 확정
 
 ---
 
@@ -106,8 +106,12 @@ type WebviewToExtensionMessage =
   | { type: 'OPEN_EXTERNAL_URL'; payload: { url: string } }
   | { type: 'SET_SAVE_PATH' }
   | { type: 'CLEAR_SAVE_PATH' }
-  | { type: 'FETCH_NOTE'; payload: { commitHash: string; commitMessage?: string; savePath?: string | null } }
-  | { type: 'SAVE_NOTE'; payload: { commitHash: string; commitMessage?: string; savePath?: string | null; content: string } }
+  | { type: 'FETCH_NOTE_TREE'; payload: { savePath?: string | null } }
+  | { type: 'CREATE_NOTE'; payload: { savePath?: string | null; relativePath: string } }
+  | { type: 'DELETE_NOTE'; payload: { savePath?: string | null; relativePath: string } }
+  | { type: 'MOVE_NOTE'; payload: { savePath?: string | null; fromRelativePath: string; toRelativePath: string } }
+  | { type: 'FETCH_NOTE'; payload: { paneId?: string; relativePath: string; savePath?: string | null } }
+  | { type: 'SAVE_NOTE'; payload: { paneId?: string; relativePath: string; savePath?: string | null; content: string } }
   | { type: 'FETCH_GITHUB_AUTH_STATE' }
   | { type: 'CONNECT_GITHUB' }
   | { type: 'FETCH_PULL_REQUESTS'; payload: { page?: number } }
@@ -149,10 +153,18 @@ type ExtensionToWebviewMessage =
   | { type: 'AI_SETTINGS_ERROR'; payload: { message: string } }
   | { type: 'SAVE_PATH_SET'; payload: AISettingsState }
   | { type: 'SAVE_PATH_CLEARED'; payload: AISettingsState }
-  | { type: 'NOTE_LOADED'; payload: { content: string; savedPath: string | null } }
-  | { type: 'NOTE_LOAD_FAILED'; payload: { message: string } }
-  | { type: 'NOTE_SAVED'; payload: { savedPath: string } }
-  | { type: 'NOTE_SAVE_FAILED'; payload: { message: string } }
+  | { type: 'NOTE_TREE_LOADED'; payload: { entries: NoteEntry[] } }
+  | { type: 'NOTE_TREE_LOAD_FAILED'; payload: { message: string } }
+  | { type: 'NOTE_CREATED'; payload: { entry: NoteEntry } }
+  | { type: 'NOTE_CREATE_FAILED'; payload: { message: string; relativePath: string } }
+  | { type: 'NOTE_DELETED'; payload: { relativePath: string } }
+  | { type: 'NOTE_DELETE_FAILED'; payload: { message: string; relativePath: string } }
+  | { type: 'NOTE_MOVED'; payload: { fromRelativePath: string; toRelativePath: string } }
+  | { type: 'NOTE_MOVE_FAILED'; payload: { message: string; fromRelativePath: string } }
+  | { type: 'NOTE_LOADED'; payload: { paneId?: string; content: string; savedPath: string | null; hasSavedNote: boolean } }
+  | { type: 'NOTE_LOAD_FAILED'; payload: { paneId?: string; message: string } }
+  | { type: 'NOTE_SAVED'; payload: { paneId?: string; content: string; savedPath: string | null; hasSavedNote: boolean } }
+  | { type: 'NOTE_SAVE_FAILED'; payload: { paneId?: string; message: string } }
   | { type: 'GITHUB_AUTH_STATE'; payload: { status: GithubAuthStatus; login?: string } }
   | { type: 'PULL_REQUESTS_LOADED'; payload: { items: PullRequestSummary[]; hasMore: boolean; page: number } }
   | { type: 'PULL_REQUESTS_LOAD_FAILED'; payload: { message: string } }
@@ -182,14 +194,14 @@ interface AISettingsState {
 ### Zustand 상태 관리 (Webview 전용)
 
 - Webview 내 전역 상태는 Zustand 단일 스토어(`useAppStore`, 구현 파일: `src/webview/store/appStore.ts`)에서 관리한다.
-- Extension에서 받은 메시지는 현재 `App.tsx`(AI 설정 초기화, 심볼 그래프 로드), `features/F01/S01_CommitListScreen.tsx`(커밋 목록), `features/F02/S02_WorkspaceScreen.tsx`(변경 파일, 의존성 캔버스), `features/F03/useFileDiff.ts`(코드 diff), `features/F05b/useAISummary.ts`(AI 요약), `features/F06/SidebarSettingsPanel.tsx`(AI 설정), `features/F11/S07_NoteScreen.tsx`(노트)에서 구독하여 화면 또는 Zustand 상태를 업데이트한다.
+- Extension에서 받은 메시지는 현재 `App.tsx`(AI 설정 초기화, 심볼 그래프 로드), `features/F01/S01_CommitListScreen.tsx`(커밋 목록), `features/F02/S02_WorkspaceScreen.tsx`(변경 파일, 의존성 캔버스), `features/F03/useFileDiff.ts`(코드 diff), `features/F05b/useAISummary.ts`(AI 요약), `features/F06/SidebarSettingsPanel.tsx`(AI 설정), `features/F11/NotesSection.tsx` 및 `NoteEditorPanel.tsx`(노트)에서 구독하여 화면 또는 Zustand 상태를 업데이트한다.
 - 화면 전환(`currentScreen`)도 Zustand 상태로 관리한다. `react-router`는 사용하지 않는다.
 
 ### Browser Dev Fallback
 
 - `pnpm dev`로 Webview를 브라우저에서 직접 실행하면 VSCode API가 없으므로 `acquireVsCodeApi()`가 존재하지 않는다.
 - 이 경우 `isVSCodeRuntime()`이 false가 되고, `appStore.ts`는 F01 커밋 목록과 F02 변경 파일 트리용 데모 데이터를 사용해 UI를 확인할 수 있게 한다.
-- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF`, F04가 `ANALYZE_DEPENDENCIES`, F05b/F02가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_COMMIT` / `START_AI_SUMMARY_FILE`, F09가 `START_AI_QA`, F10이 `ANALYZE_SYMBOL_GRAPH`, F11이 `FETCH_NOTE` / `SAVE_NOTE` 메시지를 보낸다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`/`SET_ACTIVE_AI_PROVIDER`, `SET_AI_MODEL`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
+- 실제 Extension Host 실행에서는 F01이 `FETCH_COMMITS`, F02가 `FETCH_CHANGED_FILES`, F03이 `FETCH_FILE_DIFF`, F04가 `ANALYZE_DEPENDENCIES`, F05b/F02가 `FETCH_AI_SUMMARY_SETTINGS` / `START_AI_SUMMARY_COMMIT` / `START_AI_SUMMARY_FILE`, F09가 `START_AI_QA`, F10이 `ANALYZE_SYMBOL_GRAPH`, F11이 `FETCH_NOTE_TREE` / `CREATE_NOTE` / `DELETE_NOTE` / `MOVE_NOTE` / `FETCH_NOTE` / `SAVE_NOTE` 메시지를 보낸다. F06/F07 설정 화면은 `FETCH_AI_SUMMARY_SETTINGS`, `REGISTER_AI_PROVIDER`, `ACTIVATE_AI_PROVIDER`/`SET_ACTIVE_AI_PROVIDER`, `SET_AI_MODEL`, `SET_SAVE_PATH`, `CLEAR_SAVE_PATH` 메시지를 보내고 Extension Host 결과로 상태를 갱신한다.
 - Browser dev fallback에서는 VSCode 파일 다이얼로그를 열 수 없으므로 S02 사이드바 설정 뷰의 저장 경로 선택이 데모 경로를 설정한다. 실제 디렉토리 선택은 Extension Host의 `vscode.window.showOpenDialog()`에서만 동작한다.
 
 ### child_process (Extension Host 전용)

@@ -77,7 +77,7 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **F07** 저장 경로 설정 | [spec](features/F07_save_path_settings/spec.md) | [blueprint](features/F07_save_path_settings/blueprint.md) |
 | **F09** AI 요약 Q&A | [spec](features/F09_ai_summary_qa/spec.md) | [blueprint](features/F09_ai_summary_qa/blueprint.md) |
 | **F10** 파일 내부 심볼 의존성 캔버스 | [spec](features/F10_intra_file_symbol_dependency_canvas/spec.md) | [blueprint](features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
-| **F11** 노트 에디터 | [spec](features/F11_note_editor/spec.md) | [blueprint](features/F11_note_editor/blueprint.md) |
+| **F11** 노트 | [spec](features/F11_notes/spec.md) | [blueprint](features/F11_notes/blueprint.md) |
 | **F12** GitHub PR/Issue | [spec](features/F12_github_activity/spec.md) | [blueprint](features/F12_github_activity/blueprint.md) |
 
 ---
@@ -89,6 +89,4 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | 화면 | 파일 | 설명 |
 |------|------|------|
 | **S02** 워크스페이스 | [blueprint](screens/S02_history_view/blueprint.md) | 사이드바 + 본문 레이아웃에서 변경 파일 트리, Diff, AI 요약, 의존성 캔버스, 심볼 그래프를 전환하는 통합 화면 |
-| **S07** 노트 | [blueprint](screens/S07_note/blueprint.md) | 커밋 컨텍스트 노트 작성·자동 저장 화면 (F11) |
-
-> S01, S03, S04, S05, S06, S08은 독립 화면으로 유지하지 않는다. S01은 S02 사이드바 섹션으로, S06 설정도 S02 사이드바 로컬 뷰로 흡수되었으며, S03/S04/S05/S08은 S02 워크스페이스 본문 패널로 통합되었다.
+> S01, S03, S04, S05, S06, S07, S08은 독립 화면으로 유지하지 않는다. S01은 S02 사이드바 섹션으로, S06 설정과 F11 노트는 각각 S02 사이드바 로컬 뷰/섹션과 워크스페이스 탭으로 흡수되었으며, S03/S04/S05/S08은 S02 워크스페이스 본문 패널로 통합되었다.

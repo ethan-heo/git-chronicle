@@ -31,9 +31,9 @@ GitChronicle의 상태는 두 레이어에 분리하여 관리한다.
 | `dependencyGraphSlice.ts` | DependencyGraph(F04) | |
 | `symbolGraphSlice.ts` | SymbolGraph(F10) | 코드 패널 열림/호버 상태 포함 |
 | `aiSlice.ts` | AI 통합(F05b/F06/F07/F09) | 설정(`savePath`/`registeredProviders`/`activeAIProvider`/모델)과 요약/QA 런타임 상태를 하나로 유지 — `setAISummarySettings`가 여러 필드를 한 번에 부분 병합하기 때문 |
-| `noteSlice.ts` | Note(F11) | |
+| `noteSlice.ts` | Note(F11) | `notesByPane` 편집 상태와 `noteTree` 목록 상태를 함께 관리 |
 | `toastSlice.ts` | Toast | cross-slice 의존 없음 |
-| `workspaceTabsSlice.ts` | WorkspaceTabs(F02/F12) | `paneTree`/`focusedPaneId`와 탭 열기·닫기·활성화·분할 액션 소유. `pr`/`issue` 탭은 `commit`이 없어 `selectedCommit` 동기화 시 마지막 값을 유지하는 예외가 있다 |
+| `workspaceTabsSlice.ts` | WorkspaceTabs(F02/F11/F12) | `paneTree`/`focusedPaneId`와 탭 열기·닫기·활성화·분할 액션 소유. `note`/`pr`/`issue` 탭은 `commit`이 없어 `selectedCommit` 동기화 시 마지막 값을 유지하는 예외가 있다 |
 | `githubSlice.ts` | GitHub PR/Issue(F12) | 인증 상태(`githubAuthStatus`), PR/Issue 목록(무한 스크롤), 번호별 상세(`prDetailsByNumber`/`issueDetailsByNumber`), 번호별 연관 커밋 페이지 캐시(`prRelatedCommitsByNumber`/`issueRelatedCommitsByNumber`) |
 
 각 slice의 정확한 상태/액션 목록, cross-slice 참조 지점은 `ttsc_graph`로 조회하거나 해당 slice 파일을 직접 연다 — 이 표는 "어느 파일을 열어야 하는가"까지만 안내한다.
@@ -122,7 +122,7 @@ stateDiagram-v2
 ```
 
 - S02의 설정 진입은 `currentScreen` 전환이 아니라 `S02_WorkspaceScreen` 로컬 `sidebarView = 'settings'`로 처리하며, 본문 패널 상태는 유지된다.
-- `openWorkspaceTab`은 포커스된 leaf pane 안에서 동일 대상 탭 중복 생성을 막고, 새 탭 생성 또는 활성화 시 `selectedCommit`을 탭의 커밋과 동기화한다. `pr`/`issue` 탭은 커밋과 무관하므로 예외다 — 탭 식별은 `panelType + commitHash + filePath` 대신 `panelType + prNumber`/`panelType + issueNumber`를 쓰고, 해당 탭을 열거나 포커스해도 `selectedCommit`은 갱신하지 않고 마지막 값을 그대로 유지한다(F12).
+- `openWorkspaceTab`은 포커스된 leaf pane 안에서 동일 대상 탭 중복 생성을 막고, 새 탭 생성 또는 활성화 시 `selectedCommit`을 탭의 커밋과 동기화한다. `note`/`pr`/`issue` 탭은 커밋과 무관하므로 예외다 — 탭 식별은 `panelType + commitHash + filePath`, `note:${relativePath}`, `pr:${number}`, `issue:${number}`를 각각 사용하고, 커밋 없는 탭을 열거나 포커스해도 `selectedCommit`은 마지막 값을 그대로 유지한다.
 - `moveWorkspaceTab`은 드래그된 탭을 다른 leaf pane으로 이동시킨다. 상/하/좌/우 가장자리 드롭이면 `paneTree`를 split node로 재구성하고, 다른 pane의 탭바/본문 중앙 드롭이면 해당 leaf pane의 기존 탭 목록 끝에 병합한다. 타겟에 같은 탭 id가 이미 있으면 중복 생성 대신 기존 탭만 활성화한다.
 - `closeWorkspaceTab`은 leaf pane의 마지막 탭이 닫히면 해당 pane을 트리에서 제거하고 sibling pane을 승격시킨다.
 - Diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 S02 내부의 `useFileDiff()` 로컬 상태로 관리한다.

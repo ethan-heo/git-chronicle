@@ -71,8 +71,7 @@ S02_WorkspaceScreen
       │  │  └─ FixedActions
       │  │     └─ PaneActionsGroup (기본 접힘, 토글 버튼으로 펼침/접힘)
       │  │        ├─ AISummaryToggleButton
-      │  │        ├─ FileCanvasToggleButton
-      │  │        └─ NoteToggleButton
+      │  │        └─ FileCanvasToggleButton
       │  ├─ DropZoneOverlay (drag 중 left/right/top/bottom)
       │  └─ ActiveTabPanel
       │     ├─ code → CodeTabSplitArea
@@ -89,7 +88,7 @@ S02_WorkspaceScreen
       └─ split → ResizableSplitPane (재귀)
 ```
 
-사이드바 안의 `CommitsSection`/`FileTreeSection`/`PRsSection`/`IssuesSection` 4개 섹션은 [`SidebarSectionGroup`](../../core/global_components.md#sidebarsectiongroup)이 동등한 형제로 묶어 배치한다. 각 섹션은 독립적으로 접고 펼칠 수 있고, 펼침 상태와 마지막 높이를 모두 Webview State에 저장한다(4섹션 모두 동일한 규칙 — F01/F02와 F12 사이의 차이는 없다). 필터 입력은 커밋 목록 섹션 헤더의 토글 버튼이 여는 팝오버 오버레이로 제공되며, 목록 레이아웃 높이에는 영향을 주지 않는다.
+사이드바 안의 `CommitsSection`/`FileTreeSection`/`PRsSection`/`IssuesSection`/`NotesSection` 5개 섹션은 [`SidebarSectionGroup`](../../core/global_components.md#sidebarsectiongroup)이 동등한 형제로 묶어 배치한다. 각 섹션은 독립적으로 접고 펼칠 수 있고, 펼침 상태와 마지막 높이를 모두 Webview State에 저장한다. 필터 입력은 커밋 목록 섹션 헤더의 토글 버튼이 여는 팝오버 오버레이로 제공되며, 목록 레이아웃 높이에는 영향을 주지 않는다.
 
 연속으로 펼쳐진 섹션들은 서로 `ResizableSplitPane` 세로 분할로 드래그 리사이즈할 수 있다 — 클러스터의 마지막 섹션이 `flex-1`로 남은 공간을 흡수하고, 그 앞 섹션들은 각각 최소 높이(120px)를 지키는 선에서 고정 높이를 가진다. 컨테이너가 좁아져 모든 펼친 섹션이 자기 최소 높이조차 못 받으면, 각 섹션이 정확히 최소 높이를 받고 사이드바 본문 컨테이너 자체가 세로 스크롤된다(어느 섹션도 0으로 사라지지 않는다). 접힌 섹션으로 서로 떨어진 펼침 섹션들(예: Commit만 펼치고 File은 접고 PR을 펼친 경우)은 독립된 그룹으로 남은 공간을 비례 분배한다. 자세한 동작은 [global_components](../../core/global_components.md#sidebarsectiongroup)를 참고한다.
 
@@ -110,7 +109,7 @@ S02_WorkspaceScreen
 | `PaneActionsGroup` | 이 문서 | `src/webview/features/F02/PaneActionsGroup.tsx` |
 | `AISummaryToggleButton` | 이 문서 | `src/webview/features/F02/AISummaryToggleButton.tsx` |
 | `FileCanvasToggleButton` | 이 문서 | `src/webview/features/F02/FileCanvasToggleButton.tsx` |
-| `NoteToggleButton` | 이 문서 | `src/webview/features/F02/NoteToggleButton.tsx` |
+| `NotesSection` | [F11 blueprint](../../features/F11_notes/blueprint.md) | `src/webview/features/F11/NotesSection.tsx` |
 | `SettingsToggleButton` | 이 문서 | `src/webview/features/F02/SettingsToggleButton.tsx` |
 | `SidebarSettingsPanel` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-sidebarsettingspanel) | `src/webview/features/F06/SidebarSettingsPanel.tsx` |
 | `ResizableSplitPane` | [global_components](../../core/global_components.md#resizablesplitpane) | `src/webview/shared/components/ResizableSplitPane.tsx` |
@@ -149,14 +148,14 @@ S02_WorkspaceScreen
 - AI 요약 패널의 "설정으로 이동" CTA도 동일한 사이드바 `settings` 로컬 뷰를 연다.
 - `PaneTree`는 leaf pane 또는 split pane으로 이루어진 재귀 트리다. split pane은 `ResizableSplitPane`을 재사용해 좌우/상하 분할을 렌더링한다.
 - `WorkspaceTabBar`의 좌측 탭 목록은 가로 스크롤되고, 스크롤바가 탭 내용을 덮지 않도록 `scrollbar-gutter`와 하단 여백을 둔다.
-- `WorkspaceTabBar` 우측의 `AISummaryToggleButton` / `FileCanvasToggleButton` / `NoteToggleButton`은 `PaneActionsGroup`으로 묶여 기본 접힘 상태이며, 그룹 토글 버튼을 눌러야 펼쳐진다. 이 펼침 상태는 leaf pane별로 독립이며 Webview State에 저장되지 않는다.
+- `WorkspaceTabBar` 우측의 `AISummaryToggleButton` / `FileCanvasToggleButton`은 `PaneActionsGroup`으로 묶여 기본 접힘 상태이며, 그룹 토글 버튼을 눌러야 펼쳐진다. 이 펼침 상태는 leaf pane별로 독립이며 Webview State에 저장되지 않는다.
 - leaf pane은 클릭해도 포커스 강조 아웃라인을 표시하지 않는다. `focusedPaneId`는 사이드바 커밋/파일 컨텍스트가 어느 pane을 따를지 결정하는 내부 상태로만 쓰인다.
-- 같은 대상(`panelType + commitHash + filePath`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.
+- 같은 대상(`panelType + commitHash + filePath`, `note:${relativePath}`, `pr:${number}`, `issue:${number}`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.
 - 최상위 워크스페이스 탭은 `code` / `aiSummary` / `fileCanvas` / `note` / `pr` / `issue` 여섯 종류를 연다. 파일 단위 AI 요약과 심볼 캔버스는 독립 탭이 아니라 `code` 탭 내부 토글로만 연다.
 - `pr`/`issue` 탭은 사이드바 `PRsSection`/`IssuesSection` 목록 클릭으로 연다. 커밋과 무관하므로 탭 식별은 `panelType + prNumber`/`panelType + issueNumber`를 쓰고(F02 나머지 탭의 `panelType + commitHash + filePath`와 별도 규칙), 이 탭이 포커스돼도 사이드바의 `selectedCommit` 기반 커밋 컨텍스트(파일 트리 등)는 갱신되지 않고 마지막 값을 그대로 유지한다.
 - 탭을 드래그해 다른 leaf pane의 상/하/좌/우 가장자리로 드롭하면 해당 방향으로 pane이 분할된다. 다른 pane의 탭바 전체 또는 본문 중앙(가장자리 25% 바깥)에 드롭하면 새 분할 없이 해당 pane의 탭 목록 끝에 병합되어 활성화된다. 타겟 pane에 같은 대상 탭이 이미 열려 있으면 중복 생성하지 않고 기존 탭만 활성화하며, 같은 pane 안에서 탭바/본문 중앙으로 재드롭하는 동작은 무시한다.
 - 탭을 닫으면 같은 pane 안에서 오른쪽 우선 fallback 탭을 활성화하고, leaf pane의 마지막 탭을 닫으면 그 pane은 트리에서 제거되며 sibling pane이 공간을 승계한다.
 - 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환되며, 사이드바의 커밋/파일 컨텍스트는 `focusedPaneId`가 가리키는 leaf pane을 따른다.
 - 분할 레이아웃은 Webview State에 저장하지 않는다. 웹뷰 재생성 후에는 단일 pane으로 초기화된다.
-- 노트는 더 이상 S07 화면으로 이동하지 않고 S02 내부 `note` 탭으로 열리며, 탭 이탈 시 저장되지 않은 초안은 즉시 플러시 저장된다.
+- 노트는 사이드바 `NotesSection`에서만 열며, S02 내부 `note` 탭으로 표시된다. 탭 이탈 시 저장되지 않은 초안은 즉시 플러시 저장되고, 목록에서 드래그 이동/삭제하면 열린 note 탭도 같은 `relativePath` 기준으로 갱신된다.
 - `code` 탭 내부의 `codeInnerPanels`(파일 AI 요약 / 심볼 캔버스) 상태도 최상위 pane 분할과 마찬가지로 영속화하지 않는다.

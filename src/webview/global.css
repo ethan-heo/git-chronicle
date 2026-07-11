@@ -63,6 +63,10 @@
   --gae-color-surface-tertiary: color-mix(in srgb, var(--color-elevated) 82%, var(--color-surface));
   --gae-color-surface-hover: var(--color-hover);
   --gae-color-surface-selected: var(--color-selected);
+  --gae-color-surface-drop: var(
+    --vscode-list-dropBackground,
+    color-mix(in srgb, var(--gae-color-accent-primary) 16%, transparent)
+  );
   --gae-color-text-primary: var(--color-text);
   --gae-color-text-secondary: var(--color-muted);
   --gae-color-text-disabled: var(--color-dim);

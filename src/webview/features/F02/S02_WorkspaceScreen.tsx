@@ -10,14 +10,13 @@ import { CommitFilterPanel, CommitList, FilterToggleButton, SortOrderToggle, use
 import { DependencyCanvasPanel } from '../F04';
 import { AISummaryPanel } from '../F05b';
 import { SidebarSettingsPanel } from '../F06';
-import { NoteEditorPanel } from '../F11';
+import { NoteEditorPanel, NotesSection } from '../F11';
 import { IssueDetailPanel, IssuesSection, PRDetailPanel, PRsSection, useGithubAuth } from '../F12';
 import type { IssueSummary, PullRequestSummary } from '../F12';
 import { AISummaryToggleButton } from './AISummaryToggleButton';
 import { CodeTabSplitArea } from './CodeTabSplitArea';
 import { FileCanvasToggleButton } from './FileCanvasToggleButton';
 import { FileTree } from './FileTree';
-import { NoteToggleButton } from './NoteToggleButton';
 import { PaneActionsGroup } from './PaneActionsGroup';
 import { PaneTree } from './PaneTree';
 import { SettingsToggleButton } from './SettingsToggleButton';
@@ -34,6 +33,7 @@ const DEFAULT_COMMIT_LIST_SECTION_HEIGHT = 280;
 const DEFAULT_FILE_TREE_SECTION_HEIGHT = 280;
 const DEFAULT_PRS_SECTION_HEIGHT = 200;
 const DEFAULT_ISSUES_SECTION_HEIGHT = 200;
+const DEFAULT_NOTES_SECTION_HEIGHT = 220;
 const SIDEBAR_VIEW_TRANSITION_DURATION_MS = 200;
 
 const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
@@ -45,6 +45,8 @@ const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
   prsSectionHeight: DEFAULT_PRS_SECTION_HEIGHT,
   isIssuesSectionExpanded: false,
   issuesSectionHeight: DEFAULT_ISSUES_SECTION_HEIGHT,
+  isNotesSectionExpanded: true,
+  notesSectionHeight: DEFAULT_NOTES_SECTION_HEIGHT,
   sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
   lastSidebarWidth: SIDEBAR_DEFAULT_WIDTH,
 };
@@ -121,6 +123,12 @@ export const S02WorkspaceScreen: FC = () => {
   const [issuesSectionHeight, setIssuesSectionHeight] = useState(
     persistedSidebarState.issuesSectionHeight ?? DEFAULT_SIDEBAR_STATE.issuesSectionHeight,
   );
+  const [isNotesSectionExpanded, setIsNotesSectionExpanded] = useState(
+    persistedSidebarState.isNotesSectionExpanded ?? DEFAULT_SIDEBAR_STATE.isNotesSectionExpanded,
+  );
+  const [notesSectionHeight, setNotesSectionHeight] = useState(
+    persistedSidebarState.notesSectionHeight ?? DEFAULT_SIDEBAR_STATE.notesSectionHeight,
+  );
   const [prevSelectedCommitHash, setPrevSelectedCommitHash] = useState(selectedCommit?.hash);
   const [sidebarView, setSidebarView] = useState<SidebarView>('default');
   const [renderedSidebarView, setRenderedSidebarView] = useState<SidebarView>('default');
@@ -155,7 +163,7 @@ export const S02WorkspaceScreen: FC = () => {
     );
   }, [changedFileTree.changedFiles]);
 
-  const openTab = useCallback((panelType: 'code' | 'aiSummary' | 'fileCanvas' | 'note', file?: ChangedFile | null) => {
+  const openTab = useCallback((panelType: 'code' | 'aiSummary' | 'fileCanvas', file?: ChangedFile | null) => {
     if (!selectedCommit) {
       return;
     }
@@ -202,6 +210,8 @@ export const S02WorkspaceScreen: FC = () => {
         prsSectionHeight,
         isIssuesSectionExpanded,
         issuesSectionHeight,
+        isNotesSectionExpanded,
+        notesSectionHeight,
         sidebarWidth: isSidebarCollapsed ? 0 : sidebarWidth,
         lastSidebarWidth,
       },
@@ -212,10 +222,12 @@ export const S02WorkspaceScreen: FC = () => {
     isCommitListSectionExpanded,
     isFileTreeSectionExpanded,
     isIssuesSectionExpanded,
+    isNotesSectionExpanded,
     isPRsSectionExpanded,
     isSidebarCollapsed,
     issuesSectionHeight,
     lastSidebarWidth,
+    notesSectionHeight,
     prsSectionHeight,
     sidebarWidth,
   ]);
@@ -469,6 +481,21 @@ export const S02WorkspaceScreen: FC = () => {
         />
       ),
     },
+    {
+      key: 'note',
+      minHeightPx: SECTION_MIN_HEIGHT,
+      heightPx: notesSectionHeight ?? DEFAULT_NOTES_SECTION_HEIGHT,
+      isExpanded: isNotesSectionExpanded ?? true,
+      onHeightChange: setNotesSectionHeight,
+      node: (
+        <NotesSection
+          isActive={isRouteSlotActive}
+          isExpanded={isNotesSectionExpanded ?? true}
+          onToggleExpanded={() => setIsNotesSectionExpanded((current) => !current)}
+          activeRelativePath={activeTab?.panelType === 'note' ? activeTab.relativePath ?? null : null}
+        />
+      ),
+    },
   ];
 
   const renderSidebarView = (view: SidebarView, state: 'entering' | 'exiting' | null): ReactElement => {
@@ -582,7 +609,7 @@ function renderPaneActions(options: {
   activeTab: WorkspaceTab | null;
   selectedCommit: ReturnType<typeof useAppStore.getState>['selectedCommit'];
   openCommitAISummaryFromSidebar: () => void;
-  openTab: (panelType: 'code' | 'aiSummary' | 'fileCanvas' | 'note') => void;
+  openTab: (panelType: 'code' | 'aiSummary' | 'fileCanvas') => void;
 }): ReactNode {
   const { activeTab, selectedCommit, openCommitAISummaryFromSidebar, openTab } = options;
 
@@ -595,10 +622,6 @@ function renderPaneActions(options: {
       <FileCanvasToggleButton
         isActive={Boolean(selectedCommit && activeTab?.id === computeWorkspaceTabId('fileCanvas', selectedCommit.hash))}
         onClick={() => openTab('fileCanvas')}
-      />
-      <NoteToggleButton
-        isActive={Boolean(selectedCommit && activeTab?.id === computeWorkspaceTabId('note', selectedCommit.hash))}
-        onClick={() => openTab('note')}
       />
     </PaneActionsGroup>
   );
@@ -659,6 +682,10 @@ const WorkspacePaneContent: FC<{
     return <IssueDetailPanel issueNumber={activeTab.issueNumber} isActive={isRouteSlotActive} />;
   }
 
+  if (activeTab.panelType === 'note' && activeTab.relativePath) {
+    return <NoteEditorPanel paneId={paneId} relativePath={activeTab.relativePath} isActive={isRouteSlotActive} />;
+  }
+
   if (!activeTab.commit) {
     return null;
   }
@@ -689,8 +716,7 @@ const WorkspacePaneContent: FC<{
   if (activeTab.panelType === 'fileCanvas') {
     return <DependencyCanvasPanel isActive={isRouteSlotActive} paneId={paneId} commit={activeTab.commit} onFileCodeView={openCodeTab} />;
   }
-
-  return <NoteEditorPanel paneId={paneId} commit={activeTab.commit} isActive={isRouteSlotActive} />;
+  return null;
 };
 
 function findFirstPane(node: PaneLeafNode | ReturnType<typeof useAppStore.getState>['paneTree']): PaneLeafNode {

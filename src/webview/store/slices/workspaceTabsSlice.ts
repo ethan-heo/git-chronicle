@@ -15,9 +15,10 @@ export interface CodeInnerPanelsState {
 export interface WorkspaceTab {
   id: string;
   panelType: WorkspaceTabPanelType;
-  // 'pr'/'issue' 탭은 커밋과 무관하므로 commit이 없다. 나머지 panelType은 항상 non-null이다.
+  // 'note'/'pr'/'issue' 탭은 커밋과 무관하므로 commit이 없다. 나머지 panelType은 항상 non-null이다.
   commit: Commit | null;
   filePath: string | null;
+  relativePath?: string | null;
   codeInnerPanels?: CodeInnerPanelsState;
   prNumber?: number | null;
   issueNumber?: number | null;
@@ -26,7 +27,8 @@ export interface WorkspaceTab {
 }
 
 export type OpenWorkspaceTabInput =
-  | { panelType: 'code' | 'aiSummary' | 'fileCanvas' | 'note'; commit: Commit; filePath?: string | null; paneId?: string }
+  | { panelType: 'code' | 'aiSummary' | 'fileCanvas'; commit: Commit; filePath?: string | null; paneId?: string }
+  | { panelType: 'note'; relativePath: string; paneId?: string }
   | { panelType: 'pr'; prNumber: number; title?: string | null; paneId?: string }
   | { panelType: 'issue'; issueNumber: number; title?: string | null; paneId?: string };
 
@@ -57,6 +59,8 @@ export interface WorkspaceTabsSlice {
   focusPane: (paneId: string) => void;
   moveWorkspaceTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
   setPaneSplitSize: (paneId: string, sizePercent: number) => void;
+  renameNoteTabs: (fromRelativePath: string, toRelativePath: string) => void;
+  closeNoteTabs: (relativePath: string) => void;
 }
 
 export function computeWorkspaceTabId(panelType: WorkspaceTabPanelType, commitHash: string, filePath?: string | null): string {
@@ -67,13 +71,31 @@ export function computeGithubWorkspaceTabId(panelType: 'pr' | 'issue', number: n
   return `${panelType}:${number}`;
 }
 
+export function computeNoteWorkspaceTabId(relativePath: string): string {
+  return `note:${relativePath}`;
+}
+
 export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
+  if (input.panelType === 'note') {
+    return {
+      id: computeNoteWorkspaceTabId(input.relativePath),
+      panelType: 'note',
+      commit: null,
+      filePath: null,
+      relativePath: input.relativePath,
+      prNumber: null,
+      issueNumber: null,
+      title: null,
+    };
+  }
+
   if (input.panelType === 'pr') {
     return {
       id: computeGithubWorkspaceTabId('pr', input.prNumber),
       panelType: 'pr',
       commit: null,
       filePath: null,
+      relativePath: null,
       prNumber: input.prNumber,
       issueNumber: null,
       title: input.title ?? null,
@@ -86,6 +108,7 @@ export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
       panelType: 'issue',
       commit: null,
       filePath: null,
+      relativePath: null,
       prNumber: null,
       issueNumber: input.issueNumber,
       title: input.title ?? null,
@@ -97,6 +120,7 @@ export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
     panelType: input.panelType,
     commit: input.commit,
     filePath: input.filePath ?? null,
+    relativePath: null,
     codeInnerPanels: input.panelType === 'code'
       ? { aiSummary: false, symbolGraph: false }
       : undefined,
@@ -304,7 +328,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           };
         }),
         focusedPaneId: targetPaneId,
-        // pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
+        // note/pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
         selectedCommit: nextTab.commit ?? current.selectedCommit,
       }));
     },
@@ -351,7 +375,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           ? { ...currentPane, activeTabId: tabId }
           : currentPane),
         focusedPaneId: paneId,
-        // pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
+        // note/pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
         selectedCommit: tab.commit ?? current.selectedCommit,
       }));
     },
@@ -393,7 +417,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
       const activeTab = getActiveTab(pane);
       set((state) => ({
         focusedPaneId: paneId,
-        // pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
+        // note/pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
         selectedCommit: activeTab?.commit ?? state.selectedCommit,
       }));
     },
@@ -429,5 +453,55 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           : pane),
       }));
     },
+
+    renameNoteTabs: (fromRelativePath, toRelativePath) => {
+      set((state) => ({
+        paneTree: mapLeafPanes(state.paneTree, (pane) => ({
+          ...pane,
+          tabs: pane.tabs.map((tab) => tab.panelType === 'note' && tab.relativePath === fromRelativePath
+            ? {
+              ...tab,
+              id: computeNoteWorkspaceTabId(toRelativePath),
+              relativePath: toRelativePath,
+            }
+            : tab),
+          activeTabId: pane.activeTabId === computeNoteWorkspaceTabId(fromRelativePath)
+            ? computeNoteWorkspaceTabId(toRelativePath)
+            : pane.activeTabId,
+        })),
+      }));
+    },
+
+    closeNoteTabs: (relativePath) => {
+      set((state) => ({
+        paneTree: removeNoteTabsFromTree(state.paneTree, relativePath),
+      }));
+    },
   };
 };
+
+function mapLeafPanes(node: PaneNode, mapper: (pane: PaneLeafNode) => PaneLeafNode): PaneNode {
+  if (node.kind === 'leaf') {
+    return mapper(node);
+  }
+
+  return {
+    ...node,
+    children: [mapLeafPanes(node.children[0], mapper), mapLeafPanes(node.children[1], mapper)],
+  };
+}
+
+function removeNoteTabsFromTree(node: PaneNode, relativePath: string): PaneNode {
+  return mapLeafPanes(node, (pane) => {
+    const nextTabs = pane.tabs.filter((tab) => !(tab.panelType === 'note' && tab.relativePath === relativePath));
+    const nextActiveTabId = nextTabs.some((tab) => tab.id === pane.activeTabId)
+      ? pane.activeTabId
+      : nextTabs.at(-1)?.id ?? null;
+
+    return {
+      ...pane,
+      tabs: nextTabs,
+      activeTabId: nextActiveTabId,
+    };
+  });
+}
