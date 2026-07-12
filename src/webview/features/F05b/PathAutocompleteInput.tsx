@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC, type KeyboardEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type FC, type KeyboardEvent, type ReactNode } from 'react';
 
 interface PathAutocompleteInputProps {
   value: string;
@@ -13,99 +13,138 @@ export const PathAutocompleteInput: FC<PathAutocompleteInputProps> = ({
   directorySuggestions,
   onChange,
 }) => {
-  const [caretAtEnd, setCaretAtEnd] = useState(true);
-  const [isSuggestionDismissed, setIsSuggestionDismissed] = useState(false);
+  const listboxId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+
+  const matches = useMemo(
+    () => getMatchingSuggestions(value, directorySuggestions),
+    [value, directorySuggestions],
+  );
+  const isOpen = isFocused && !isDismissed && matches.length > 0;
 
   useEffect(() => {
-    setIsSuggestionDismissed(false);
-  }, [value]);
+    setActiveIndex(-1);
+    setIsDismissed(false);
+  }, [value, directorySuggestions]);
 
-  const suggestion = useMemo(() => {
-    if (!caretAtEnd || isSuggestionDismissed) {
-      return null;
-    }
-
-    return getActiveSuggestion(value, directorySuggestions);
-  }, [caretAtEnd, directorySuggestions, isSuggestionDismissed, value]);
-
-  const handleSelectionState = (input: HTMLInputElement): void => {
-    const selectionEnd = input.selectionEnd ?? input.value.length;
-    const selectionStart = input.selectionStart ?? selectionEnd;
-    setCaretAtEnd(selectionStart === selectionEnd && selectionEnd === input.value.length);
+  const selectSuggestion = (suggestion: string): void => {
+    onChange(suggestion);
+    setActiveIndex(-1);
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
-    if (event.key === 'Tab' && suggestion) {
-      const completed = applyAutocompleteSegment(value, suggestion);
-      if (completed !== value) {
-        event.preventDefault();
-        onChange(completed);
-        setIsSuggestionDismissed(false);
-      }
+    if (!isOpen) {
       return;
     }
 
-    if (event.key === 'Escape' && suggestion) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveIndex((current) => Math.min(current + 1, matches.length - 1));
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveIndex((current) => Math.max(current - 1, 0));
+      return;
+    }
+
+    if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      selectSuggestion(matches[activeIndex]);
+      return;
+    }
+
+    if (event.key === 'Escape') {
       event.preventDefault();
       event.stopPropagation();
-      setIsSuggestionDismissed(true);
+      setActiveIndex(-1);
+      setIsDismissed(true);
     }
   };
 
   return (
-    <div className="relative">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-md border border-transparent px-3 py-2 text-sm whitespace-pre"
-      >
-        <span className="invisible">{value}</span>
-        {suggestion ? <span className="text-muted/70">{suggestion.slice(value.length)}</span> : null}
-      </div>
+    <div>
       <input
-        className="relative z-[1] w-full rounded-md border border-line bg-panel/80 px-3 py-2 text-sm text-text outline-none focus:border-focus"
+        ref={inputRef}
+        className="w-full rounded-md border border-line bg-panel/80 px-3 py-2 text-sm text-text outline-none focus:border-focus"
         value={value}
-        onChange={(event) => {
-          setIsSuggestionDismissed(false);
-          onChange(event.target.value);
-        }}
-        onClick={(event) => handleSelectionState(event.currentTarget)}
+        onChange={(event) => onChange(event.target.value)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         onKeyDown={handleKeyDown}
-        onKeyUp={(event) => handleSelectionState(event.currentTarget)}
-        onSelect={(event) => handleSelectionState(event.currentTarget)}
         placeholder={placeholder}
         autoFocus
         spellCheck={false}
         autoCapitalize="off"
         autoCorrect="off"
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+        aria-activedescendant={activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined}
+        aria-autocomplete="list"
       />
+      {isOpen ? (
+        <ul
+          id={listboxId}
+          role="listbox"
+          className="mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-line bg-panel/80"
+        >
+          {matches.map((suggestion, index) => (
+            <li
+              key={suggestion}
+              id={`${listboxId}-option-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+              className={`cursor-pointer px-3 py-1.5 text-sm text-text ${index === activeIndex ? 'bg-hover' : ''}`}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                selectSuggestion(suggestion);
+              }}
+              onMouseEnter={() => setActiveIndex(index)}
+            >
+              {renderHighlighted(suggestion, value)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 };
 
-export function getActiveSuggestion(value: string, directorySuggestions: string[]): string | null {
-  if (!value) {
-    return directorySuggestions[0] ?? null;
+export function getMatchingSuggestions(value: string, directorySuggestions: string[]): string[] {
+  const normalizedValue = value.replaceAll('\\', '/').toLowerCase();
+
+  if (!normalizedValue) {
+    return [];
   }
 
-  const normalizedValue = value.replaceAll('\\', '/');
-  const matches = directorySuggestions.filter((candidate) => (
-    candidate.startsWith(normalizedValue) && candidate.length > normalizedValue.length
-  ));
-
-  return matches[0] ?? null;
+  return directorySuggestions.filter((candidate) => candidate.toLowerCase().includes(normalizedValue));
 }
 
-export function applyAutocompleteSegment(value: string, suggestion: string): string {
-  if (!suggestion.startsWith(value) || suggestion.length <= value.length) {
-    return value;
+function renderHighlighted(suggestion: string, value: string): ReactNode {
+  const normalizedValue = value.replaceAll('\\', '/').toLowerCase();
+
+  if (!normalizedValue) {
+    return suggestion;
   }
 
-  const remainder = suggestion.slice(value.length);
-  const nextSlashIndex = remainder.indexOf('/');
-
-  if (nextSlashIndex === -1) {
-    return `${value}${remainder}`;
+  const matchIndex = suggestion.toLowerCase().indexOf(normalizedValue);
+  if (matchIndex === -1) {
+    return suggestion;
   }
 
-  return `${value}${remainder.slice(0, nextSlashIndex + 1)}`;
+  const before = suggestion.slice(0, matchIndex);
+  const match = suggestion.slice(matchIndex, matchIndex + normalizedValue.length);
+  const after = suggestion.slice(matchIndex + normalizedValue.length);
+
+  return [
+    before,
+    <mark key="match" className="rounded-sm bg-accent/25 text-text">{match}</mark>,
+    after,
+  ];
 }

@@ -138,7 +138,7 @@
     "source_generated": "{{provider}} generated",
     "save": "Save",
     "save_dialog_title": "Save as note",
-    "save_dialog_body": "Type a path and use Tab to quickly complete an existing folder path before saving.",
+    "save_dialog_body": "As you type, matching folders appear below. Pick one with the arrow keys and Enter, or click it.",
     "save_dialog_filename": "Filename",
     "save_dialog_placeholder": "ideas/commit-summary.md",
     "save_dialog_overwrite_warning": "This note may have been edited after the last save. Saving again will overwrite it with the current summary.",
