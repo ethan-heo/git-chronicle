@@ -6,6 +6,7 @@ import { WorkspaceTabBar } from './WorkspaceTabBar';
 
 interface PaneTreeProps {
   paneTree: PaneNode;
+  focusedPaneId: string;
   activeSummaryCommitHash: string | null;
   isGeneratingSummary: boolean;
   onActivateTab: (paneId: string, tabId: string) => void;
@@ -41,6 +42,7 @@ export const PaneTree: FC<PaneTreeProps> = (props) => {
 const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
   node,
   paneTree,
+  focusedPaneId,
   activeSummaryCommitHash,
   isGeneratingSummary,
   onActivateTab,
@@ -62,6 +64,7 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
           <PaneNodeRenderer
             node={node.children[0]}
             paneTree={paneTree}
+            focusedPaneId={focusedPaneId}
             activeSummaryCommitHash={activeSummaryCommitHash}
             isGeneratingSummary={isGeneratingSummary}
             onActivateTab={onActivateTab}
@@ -77,6 +80,7 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
           <PaneNodeRenderer
             node={node.children[1]}
             paneTree={paneTree}
+            focusedPaneId={focusedPaneId}
             activeSummaryCommitHash={activeSummaryCommitHash}
             isGeneratingSummary={isGeneratingSummary}
             onActivateTab={onActivateTab}
@@ -101,6 +105,7 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
   return (
     <WorkspacePane
       pane={node}
+      focusedPaneId={focusedPaneId}
       activeSummaryCommitHash={activeSummaryCommitHash}
       isGeneratingSummary={isGeneratingSummary}
       onActivateTab={onActivateTab}
@@ -115,6 +120,7 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
 
 const WorkspacePane: FC<{
   pane: PaneLeafNode;
+  focusedPaneId: string;
   activeSummaryCommitHash: string | null;
   isGeneratingSummary: boolean;
   onActivateTab: (paneId: string, tabId: string) => void;
@@ -125,6 +131,7 @@ const WorkspacePane: FC<{
   renderPanel: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
 }> = ({
   pane,
+  focusedPaneId,
   activeSummaryCommitHash,
   isGeneratingSummary,
   onActivateTab,
@@ -141,7 +148,7 @@ const WorkspacePane: FC<{
   const isDropEnabled = Boolean(dragContext?.dragState && !(dragContext.dragState.sourcePaneId === pane.paneId && pane.tabs.length <= 1));
   const isSamePaneDrag = dragContext?.dragState?.sourcePaneId === pane.paneId;
 
-  const commitDrop = (zone: DropZone) => {
+  const commitDrop = (zone: DropZone): void => {
     if (!dragContext?.dragState) {
       setDropZone(null);
       return;
@@ -166,6 +173,7 @@ const WorkspacePane: FC<{
         paneId={pane.paneId}
         tabs={pane.tabs}
         activeTabId={pane.activeTabId}
+        isFocusedPane={pane.paneId === focusedPaneId}
         activeSummaryCommitHash={activeSummaryCommitHash}
         isGeneratingSummary={isGeneratingSummary}
         onActivateTab={(tabId) => onActivateTab(pane.paneId, tabId)}

@@ -6,6 +6,7 @@ interface WorkspaceTabBarProps {
   paneId: string;
   tabs: WorkspaceTab[];
   activeTabId: string | null;
+  isFocusedPane: boolean;
   activeSummaryCommitHash: string | null;
   isGeneratingSummary: boolean;
   onActivateTab: (tabId: string) => void;
@@ -22,6 +23,7 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
   paneId,
   tabs,
   activeTabId,
+  isFocusedPane,
   activeSummaryCommitHash,
   isGeneratingSummary,
   onActivateTab,
@@ -46,7 +48,7 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
             <WorkspaceTabItem
               key={tab.id}
               tab={tab}
-              isActive={tab.id === activeTabId}
+              isActive={isFocusedPane && tab.id === activeTabId}
               isGenerating={isGeneratingSummary && tab.panelType === 'aiSummary' && tab.commit?.hash === activeSummaryCommitHash}
               onActivate={() => onActivateTab(tab.id)}
               onClose={() => onCloseTab(tab.id)}

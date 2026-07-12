@@ -576,6 +576,7 @@ export const S02WorkspaceScreen: FC = () => {
       <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <PaneTree
           paneTree={paneTree}
+          focusedPaneId={focusedPaneId}
           activeSummaryCommitHash={activeSummaryCommitHash}
           isGeneratingSummary={isGeneratingSummary}
           onActivateTab={(paneId, tabId) => activateWorkspaceTab(paneId, tabId)}
