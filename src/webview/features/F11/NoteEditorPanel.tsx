@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { DEMO_NOTE_CONTENTS } from '../../demo/aiSummarySamples';
@@ -37,6 +37,57 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, relativePath
   const [hasInitializedLoad, setHasInitializedLoad] = useState(false);
   const [draftContent, setDraftContent] = useState('');
   const lastSavedContentRef = useRef('');
+  const pendingSaveTimerRef = useRef<number | null>(null);
+  const latestSaveContextRef = useRef({
+    draftContent: '',
+    hasInitializedLoad: false,
+    savePath: savePath ?? '',
+    noteSavedPath: noteState.noteSavedPath,
+    hasSavedNote: noteState.hasSavedNote,
+  });
+
+  useEffect(() => {
+    latestSaveContextRef.current = {
+      draftContent,
+      hasInitializedLoad,
+      savePath: savePath ?? '',
+      noteSavedPath: noteState.noteSavedPath,
+      hasSavedNote: noteState.hasSavedNote,
+    };
+  }, [draftContent, hasInitializedLoad, noteState.hasSavedNote, noteState.noteSavedPath, savePath]);
+
+  const flushSave = useCallback((): void => {
+    const {
+      draftContent: pendingContent,
+      hasInitializedLoad: hasLoaded,
+      savePath: currentSavePath,
+      noteSavedPath,
+      hasSavedNote,
+    } = latestSaveContextRef.current;
+
+    if (!currentSavePath || !hasLoaded || pendingContent === lastSavedContentRef.current) {
+      return;
+    }
+
+    startNoteSaving(paneId);
+    if (!isVSCodeRuntime()) {
+      lastSavedContentRef.current = pendingContent;
+      handleNoteSaved({
+        paneId,
+        content: pendingContent,
+        savedPath: noteSavedPath,
+        hasSavedNote: pendingContent.length > 0 || hasSavedNote,
+      });
+      return;
+    }
+
+    postMessage('SAVE_NOTE', {
+      paneId,
+      relativePath,
+      savePath: currentSavePath,
+      content: pendingContent,
+    });
+  }, [handleNoteSaved, paneId, relativePath, startNoteSaving]);
 
   useEffect(() => {
     if (!isActive) {
@@ -120,31 +171,32 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, relativePath
       return;
     }
 
-    const saveNow = (): void => {
-      startNoteSaving(paneId);
-      if (!isVSCodeRuntime()) {
-        lastSavedContentRef.current = draftContent;
-        handleNoteSaved({ paneId, content: draftContent, savedPath: noteState.noteSavedPath, hasSavedNote: draftContent.length > 0 || noteState.hasSavedNote });
-        return;
-      }
+    if (pendingSaveTimerRef.current !== null) {
+      window.clearTimeout(pendingSaveTimerRef.current);
+    }
 
-      postMessage('SAVE_NOTE', {
-        paneId,
-        relativePath,
-        savePath,
-        content: draftContent,
-      });
-    };
-
-    const timer = window.setTimeout(saveNow, SAVE_DEBOUNCE_MS);
+    pendingSaveTimerRef.current = window.setTimeout(() => {
+      pendingSaveTimerRef.current = null;
+      flushSave();
+    }, SAVE_DEBOUNCE_MS);
 
     return () => {
-      window.clearTimeout(timer);
-      if (draftContent !== lastSavedContentRef.current) {
-        saveNow();
+      if (pendingSaveTimerRef.current !== null) {
+        window.clearTimeout(pendingSaveTimerRef.current);
+        pendingSaveTimerRef.current = null;
       }
     };
-  }, [draftContent, handleNoteSaved, hasInitializedLoad, isActive, noteState.hasSavedNote, noteState.noteSavedPath, paneId, relativePath, savePath, startNoteSaving]);
+  }, [draftContent, flushSave, hasInitializedLoad, isActive, savePath]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingSaveTimerRef.current !== null) {
+        window.clearTimeout(pendingSaveTimerRef.current);
+        pendingSaveTimerRef.current = null;
+      }
+      flushSave();
+    };
+  }, [flushSave]);
 
   const statusLabel = useMemo(() => {
     if (noteState.isSaving) return t('note.saving');
