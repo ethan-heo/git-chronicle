@@ -451,6 +451,21 @@ export const S02WorkspaceScreen: FC = () => {
       node: renderFileTreeSection(),
     },
     {
+      key: 'note',
+      minHeightPx: SECTION_MIN_HEIGHT,
+      heightPx: notesSectionHeight ?? DEFAULT_NOTES_SECTION_HEIGHT,
+      isExpanded: isNotesSectionExpanded ?? true,
+      onHeightChange: setNotesSectionHeight,
+      node: (
+        <NotesSection
+          isActive={isRouteSlotActive}
+          isExpanded={isNotesSectionExpanded ?? true}
+          onToggleExpanded={() => setIsNotesSectionExpanded((current) => !current)}
+          activeRelativePath={activeTab?.panelType === 'note' ? activeTab.relativePath ?? null : null}
+        />
+      ),
+    },
+    {
       key: 'pr',
       minHeightPx: SECTION_MIN_HEIGHT,
       heightPx: prsSectionHeight,
@@ -479,21 +494,6 @@ export const S02WorkspaceScreen: FC = () => {
           isExpanded={isIssuesSectionExpanded}
           onToggleExpanded={() => setIsIssuesSectionExpanded((current) => !current)}
           onSelectIssue={openIssueTab}
-        />
-      ),
-    },
-    {
-      key: 'note',
-      minHeightPx: SECTION_MIN_HEIGHT,
-      heightPx: notesSectionHeight ?? DEFAULT_NOTES_SECTION_HEIGHT,
-      isExpanded: isNotesSectionExpanded ?? true,
-      onHeightChange: setNotesSectionHeight,
-      node: (
-        <NotesSection
-          isActive={isRouteSlotActive}
-          isExpanded={isNotesSectionExpanded ?? true}
-          onToggleExpanded={() => setIsNotesSectionExpanded((current) => !current)}
-          activeRelativePath={activeTab?.panelType === 'note' ? activeTab.relativePath ?? null : null}
         />
       ),
     },
