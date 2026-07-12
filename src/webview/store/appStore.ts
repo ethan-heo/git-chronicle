@@ -3,6 +3,7 @@ import { createCommitListSlice, type CommitListSlice } from './slices/commitList
 import { createNavigationSlice, type NavigationSlice } from './slices/navigationSlice';
 import { createChangedFilesSlice, type ChangedFilesSlice } from './slices/changedFilesSlice';
 import { createDependencyGraphSlice, type DependencyGraphSlice } from './slices/dependencyGraphSlice';
+import { createFileDiffSlice, type FileDiffSlice } from './slices/fileDiffSlice';
 import { createSymbolGraphSlice, type SymbolGraphSlice } from './slices/symbolGraphSlice';
 import { createAISlice, type AISlice } from './slices/aiSlice';
 import { createGithubSlice, type GithubSlice } from './slices/githubSlice';
@@ -14,6 +15,7 @@ export type AppState = CommitListSlice &
   NavigationSlice &
   ChangedFilesSlice &
   DependencyGraphSlice &
+  FileDiffSlice &
   SymbolGraphSlice &
   AISlice &
   NoteSlice &
@@ -26,6 +28,7 @@ export const useAppStore = create<AppState>()((...a) => ({
   ...createNavigationSlice(...a),
   ...createChangedFilesSlice(...a),
   ...createDependencyGraphSlice(...a),
+  ...createFileDiffSlice(...a),
   ...createSymbolGraphSlice(...a),
   ...createAISlice(...a),
   ...createNoteSlice(...a),

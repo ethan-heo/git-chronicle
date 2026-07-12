@@ -37,6 +37,7 @@ export type DiffDisplayItem =
     };
 
 export interface FileDiffPayload {
+  tabId?: string;
   rawDiff: string;
   isBinary: boolean;
   isDeleted: boolean;

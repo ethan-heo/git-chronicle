@@ -89,6 +89,7 @@ export const CodeTabSplitArea: FC<CodeTabSplitAreaProps> = ({
           </div>
           <CodeDiffPanel
             isActive={isActive}
+            tabId={tab.id}
             commitHash={tab.commit.hash}
             filePath={tab.filePath}
             isDeletedFile={selectedFile?.status === 'D'}

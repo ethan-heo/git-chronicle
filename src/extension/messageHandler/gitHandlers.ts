@@ -22,6 +22,7 @@ export interface FetchChangedFilesPayload {
 }
 
 export interface FetchFileDiffPayload {
+  tabId?: string;
   commitHash?: string;
   filePath?: string;
 }
@@ -157,6 +158,7 @@ export async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: F
       type: 'FILE_DIFF_LOAD_FAILED',
       payload: {
         message: 'No Git repository detected',
+        tabId: payload.tabId,
       },
     });
     return;
@@ -167,6 +169,7 @@ export async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: F
       type: 'FILE_DIFF_LOAD_FAILED',
       payload: {
         message: 'No file selected',
+        tabId: payload.tabId,
       },
     });
     return;
@@ -177,13 +180,17 @@ export async function handleFetchFileDiff(panel: vscode.WebviewPanel, payload: F
 
     await panel.webview.postMessage({
       type: 'FILE_DIFF_LOADED',
-      payload: diff,
+      payload: {
+        ...diff,
+        tabId: payload.tabId,
+      },
     });
   } catch (error) {
     await panel.webview.postMessage({
       type: 'FILE_DIFF_LOAD_FAILED',
       payload: {
         message: error instanceof Error ? error.message : 'Failed to load diff',
+        tabId: payload.tabId,
       },
     });
   }

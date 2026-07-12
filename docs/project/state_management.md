@@ -21,7 +21,7 @@ GitChronicle의 상태는 두 레이어에 분리하여 관리한다.
 
 ## Zustand 스토어 구조
 
-`useAppStore`(`src/webview/store/appStore.ts`)는 8개 도메인 slice를 조합하는 combinator다. 각 slice는 `src/webview/store/slices/`에 독립 파일로 존재하며, slice 경계는 "화면/기능 전이 또는 단일 비동기 라이프사이클에 대한 응집도" 기준으로 나뉜다([coding_standards.md](./coding_standards.md)의 "레이어/모듈 구조 규칙" 참고). 실제 필드/액션 목록은 `ttsc_graph`로 조회한다 — 아래는 slice 파일과 담당 도메인 매핑만 표로 유지한다.
+`useAppStore`(`src/webview/store/appStore.ts`)는 10개 도메인 slice를 조합하는 combinator다. 각 slice는 `src/webview/store/slices/`에 독립 파일로 존재하며, slice 경계는 "화면/기능 전이 또는 단일 비동기 라이프사이클에 대한 응집도" 기준으로 나뉜다([coding_standards.md](./coding_standards.md)의 "레이어/모듈 구조 규칙" 참고). 실제 필드/액션 목록은 `ttsc_graph`로 조회한다 — 아래는 slice 파일과 담당 도메인 매핑만 표로 유지한다.
 
 | Slice 파일 | 담당 도메인 | 비고 |
 |---|---|---|
@@ -29,6 +29,7 @@ GitChronicle의 상태는 두 레이어에 분리하여 관리한다.
 | `navigationSlice.ts` | Navigation | `selectCommit` 등 화면 전이 액션이 여러 slice 필드를 리셋하는 hub. Zustand slices 패턴상 `set`/`get`이 전체 `AppState` 기준이라 cross-slice 참조가 정상 동작 |
 | `changedFilesSlice.ts` | ChangedFiles(F02) | 파일 목록 갱신 시 DependencyGraph slice의 캐시도 함께 무효화 |
 | `dependencyGraphSlice.ts` | DependencyGraph(F04) | |
+| `fileDiffSlice.ts` | FileDiff(F03) | `fileDiffsByTab[tabId]`로 split pane/code tab별 diff 로딩 상태를 격리 |
 | `symbolGraphSlice.ts` | SymbolGraph(F10) | 코드 패널 열림/호버 상태 포함 |
 | `aiSlice.ts` | AI 통합(F05b/F06/F07/F09) | 설정(`savePath`/`registeredProviders`/`activeAIProvider`/모델)과 요약/QA 런타임 상태를 하나로 유지 — `setAISummarySettings`가 여러 필드를 한 번에 부분 병합하기 때문 |
 | `noteSlice.ts` | Note(F11) | `notesByPane` 편집 상태와 `noteTree` 목록 상태를 함께 관리 |
@@ -125,7 +126,7 @@ stateDiagram-v2
 - `openWorkspaceTab`은 포커스된 leaf pane 안에서 동일 대상 탭 중복 생성을 막고, 새 탭 생성 또는 활성화 시 `selectedCommit`을 탭의 커밋과 동기화한다. `note`/`pr`/`issue` 탭은 커밋과 무관하므로 예외다 — 탭 식별은 `panelType + commitHash + filePath`, `note:${relativePath}`, `pr:${number}`, `issue:${number}`를 각각 사용하고, 커밋 없는 탭을 열거나 포커스해도 `selectedCommit`은 마지막 값을 그대로 유지한다.
 - `moveWorkspaceTab`은 드래그된 탭을 다른 leaf pane으로 이동시킨다. 상/하/좌/우 가장자리 드롭이면 `paneTree`를 split node로 재구성하고, 다른 pane의 탭바/본문 중앙 드롭이면 해당 leaf pane의 기존 탭 목록 끝에 병합한다. 타겟에 같은 탭 id가 이미 있으면 중복 생성 대신 기존 탭만 활성화한다.
 - `closeWorkspaceTab`은 leaf pane의 마지막 탭이 닫히면 해당 pane을 트리에서 제거하고 sibling pane을 승격시킨다.
-- Diff 로딩 상태(`diffLines`, `isLoading`, `error`, `isBinaryFile`, `isDeletedFile`)는 S02 내부의 `useFileDiff()` 로컬 상태로 관리한다.
+- Diff 로딩 상태(`diffLines`, `isLoading`, `hasLoaded`, `error`, `isBinaryFile`, `isDeletedFile`)는 `fileDiffSlice.ts`의 `fileDiffsByTab[tabId]`로 관리한다. `useFileDiff()`는 현재 code tab의 `tabId`를 키로 selector/action만 연결하고, `FILE_DIFF_LOADED` / `FILE_DIFF_LOAD_FAILED` 응답도 같은 `tabId`일 때만 반영한다.
 - 의존성 캔버스는 전역 상태의 `dependencyEdges`, `isLoadingDependencies`, `dependenciesError`를 사용하며, S02의 활성 탭이 `fileCanvas`일 때만 로드를 트리거한다.
 
 전환 애니메이션 중 outgoing 화면도 잠시 mount되므로, 각 최상위 화면은 `shared/route/RouteSlotContext.tsx`의 `useRouteSlotActive()`를 확인한다. inactive 슬롯에서는 초기 데이터 로딩 effect와 Extension 메시지 listener를 실행하지 않는다.

@@ -5,6 +5,7 @@ import { useFileDiff } from './useFileDiff';
 
 interface CodeDiffPanelProps {
   isActive: boolean;
+  tabId: string;
   commitHash: string | null;
   filePath: string;
   isDeletedFile: boolean;
@@ -15,6 +16,7 @@ interface CodeDiffPanelProps {
 
 export const CodeDiffPanel: FC<CodeDiffPanelProps> = ({
   isActive,
+  tabId,
   commitHash,
   filePath,
   isDeletedFile,
@@ -22,7 +24,13 @@ export const CodeDiffPanel: FC<CodeDiffPanelProps> = ({
   scrollToRange = null,
   scrollRequestId = 0,
 }) => {
-  const { diffState, loadFileDiff } = useFileDiff({ isActive, commitHash, filePath, isDeletedFile });
+  const { diffState, loadFileDiff } = useFileDiff({
+    isActive,
+    tabId,
+    commitHash,
+    filePath,
+    isDeletedFile,
+  });
 
   return (
     <div className="h-full min-h-0">
