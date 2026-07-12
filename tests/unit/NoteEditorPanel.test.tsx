@@ -1,20 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import mermaid from 'mermaid';
-import type { RenderResult } from 'mermaid';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { NoteEditorPanel } from '../../src/webview/features/F11';
 import { initI18n } from '../../src/webview/i18n';
 import { RouteSlotProvider } from '../../src/webview/shared/route/RouteSlotContext';
 import { useAppStore } from '../../src/webview/store/appStore';
-
-vi.mock('mermaid', () => ({
-  default: {
-    initialize: vi.fn(),
-    render: vi.fn(async (id: string, code: string) => ({
-      svg: `<svg data-testid="mermaid-svg" data-id="${id}"><text>${code}</text></svg>`,
-    })),
-  },
-}));
+import type { EditorView } from '@codemirror/view';
 
 describe('NoteEditorPanel', () => {
   beforeEach(() => {
@@ -35,81 +25,53 @@ describe('NoteEditorPanel', () => {
     });
   });
 
-  it('keeps typed content in the textarea in browser-dev fallback', async () => {
+  it('keeps typed content in the live editor in browser-dev fallback', async () => {
     render(
       <RouteSlotProvider isActive>
         <NoteEditorPanel paneId="test-pane" relativePath="ideas/todo.md" isActive />
       </RouteSlotProvider>,
     );
 
-    const textarea = await screen.findByPlaceholderText('마크다운으로 메모를 남겨보세요.');
-    fireEvent.change(textarea, { target: { value: 'hello note' } });
+    await screen.findByRole('textbox', { name: '마크다운으로 메모를 남겨보세요.' });
+    updateEditorContent('hello note');
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('마크다운으로 메모를 남겨보세요.')).toHaveValue('hello note');
+      expect(getEditorView().state.doc.toString()).toBe('hello note');
     });
   });
 
-  it('renders mermaid code fences as diagrams in preview', async () => {
+  it('renders only the live editor without mode buttons', async () => {
     render(
       <RouteSlotProvider isActive>
         <NoteEditorPanel paneId="test-pane" relativePath="ideas/todo.md" isActive />
       </RouteSlotProvider>,
     );
 
-    const textarea = await screen.findByPlaceholderText('마크다운으로 메모를 남겨보세요.');
-    fireEvent.change(textarea, { target: { value: '```mermaid\nflowchart TD\n  A --> B\n```' } });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
-    });
-  });
-
-  it('keeps the previous mermaid preview visible while a new diagram is rendering', async () => {
-    let resolveRender: ((value: RenderResult) => void) | undefined;
-    const renderMock = vi.mocked(mermaid.render);
-    renderMock.mockClear();
-
-    renderMock.mockImplementationOnce(async (id: string, code: string): Promise<RenderResult> => ({
-      diagramType: 'flowchart',
-      svg: `<svg data-testid="mermaid-svg" data-id="${id}"><text>${code}</text></svg>`,
-    }));
-    renderMock.mockImplementationOnce(
-      () => new Promise<RenderResult>((resolve) => {
-        resolveRender = resolve;
-      }),
-    );
-
-    render(
-      <RouteSlotProvider isActive>
-        <NoteEditorPanel paneId="test-pane" relativePath="ideas/todo.md" isActive />
-      </RouteSlotProvider>,
-    );
-
-    const textarea = await screen.findByPlaceholderText('마크다운으로 메모를 남겨보세요.');
-    fireEvent.change(textarea, { target: { value: '```mermaid\nflowchart TD\n  A --> B\n```' } });
-
-    await waitFor(() => {
-      expect(renderMock).toHaveBeenCalledTimes(1);
-    });
-    expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
-
-    fireEvent.change(textarea, { target: { value: '```mermaid\nflowchart TD\n  A --> C\n```' } });
-
-    expect(screen.getByTestId('mermaid-svg')).toBeInTheDocument();
-    expect(screen.queryByText('Mermaid 다이어그램을 렌더링하는 중...')).not.toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(resolveRender).toBeDefined();
-    });
-
-    resolveRender?.({
-      diagramType: 'flowchart',
-      svg: '<svg data-testid="mermaid-svg" data-id="updated"><text>updated</text></svg>',
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText('updated')).toBeInTheDocument();
-    });
+    await screen.findByRole('textbox', { name: '마크다운으로 메모를 남겨보세요.' });
+    expect(screen.queryByRole('button', { name: '편집' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '분할' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '미리보기' })).not.toBeInTheDocument();
   });
 });
+
+function getEditorView(): EditorView {
+  const host = screen.getByTestId('markdown-live-editor-host') as HTMLDivElement & { __cmView?: EditorView };
+  if (!host.__cmView) {
+    throw new Error('EditorView is not attached to the host.');
+  }
+
+  return host.__cmView;
+}
+
+function updateEditorContent(nextValue: string): void {
+  const view = getEditorView();
+  act(() => {
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: view.state.doc.length,
+        insert: nextValue,
+      },
+    });
+  });
+}

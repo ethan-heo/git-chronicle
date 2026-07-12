@@ -1,14 +1,11 @@
-import { isValidElement, useEffect, useMemo, useRef, useState, type FC, type ReactNode } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { translate } from '../../i18n/runtime';
-import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
-import { HighlightedCode } from '../../shared/highlighter';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { DEMO_NOTE_CONTENTS } from '../../demo/aiSummarySamples';
+import { translate } from '../../i18n/runtime';
+import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import { useAppStore } from '../../store/appStore';
-import { MermaidBlock } from './MermaidBlock';
+import { MarkdownLiveEditor } from './MarkdownLiveEditor';
 import './NoteEditorPanel.css';
 
 const SAVE_DEBOUNCE_MS = 1000;
@@ -37,7 +34,6 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, relativePath
   const handleNoteLoadFailed = useAppStore((state) => state.handleNoteLoadFailed);
   const handleNoteSaved = useAppStore((state) => state.handleNoteSaved);
   const handleNoteSaveFailed = useAppStore((state) => state.handleNoteSaveFailed);
-  const [mode, setMode] = useState<'edit' | 'split' | 'preview'>('split');
   const [hasInitializedLoad, setHasInitializedLoad] = useState(false);
   const [draftContent, setDraftContent] = useState('');
   const lastSavedContentRef = useRef('');
@@ -157,16 +153,8 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, relativePath
     return t('note.autosave_pending');
   }, [noteState.error, noteState.hasSavedNote, noteState.isSaving, t]);
 
-  let mermaidBlockIndex = 0;
-  let highlightedCodeBlockIndex = 0;
-
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface">
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2 rounded-md border border-line bg-panel/90 p-1 backdrop-blur">
-        <ModeButton active={mode === 'edit'} onClick={() => setMode('edit')} label={t('note.mode_edit')} />
-        <ModeButton active={mode === 'split'} onClick={() => setMode('split')} label={t('note.mode_split')} />
-        <ModeButton active={mode === 'preview'} onClick={() => setMode('preview')} label={t('note.mode_preview')} />
-      </div>
       {!savePath ? (
         <div className="flex min-h-0 flex-1 items-center justify-center p-8">
           <EmptyState message={t('ai_summary.no_save_path')} />
@@ -180,69 +168,24 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, relativePath
           <ErrorState message={noteState.error} />
         </div>
       ) : (
-        <div className={`grid min-h-0 flex-1 gap-0 overflow-hidden ${mode === 'split' ? 'grid-cols-1 grid-rows-2 md:grid-cols-2 md:grid-rows-1' : 'grid-cols-1'}`}>
-          {mode !== 'preview' ? (
-            <textarea
-              className={`min-h-0 w-full resize-none border-0 border-b border-line bg-panel px-6 pt-16 pb-5 font-mono text-sm text-text outline-none ${mode === 'split' ? 'md:border-b-0 md:border-r' : ''} ${mode === 'edit' ? 'md:col-span-2' : ''}`}
-              value={draftContent}
-              onChange={(event) => {
-                const nextValue = event.target.value;
-                setDraftContent(nextValue);
-                setNoteContent(paneId, nextValue);
-              }}
-              placeholder={t('note.placeholder')}
-              spellCheck={false}
-            />
-          ) : null}
-          {mode !== 'edit' ? (
-            <section className={`min-h-0 overflow-auto px-6 pt-16 pb-5 ${mode === 'preview' ? 'md:col-span-2' : ''}`}>
-              <div className="note-preview text-text">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    pre({ children }) {
-                      if (containsMermaidBlock(children)) {
-                        return <>{children}</>;
-                      }
+        <div className="min-h-0 flex-1 overflow-hidden border-0 border-b border-line bg-panel">
+          <MarkdownLiveEditor
+            key={relativePath}
+            value={draftContent}
+            onChange={(nextValue) => {
+              setDraftContent(nextValue);
+              setNoteContent(paneId, nextValue);
+            }}
+            onOpenUrl={(url) => {
+              if (!isVSCodeRuntime()) {
+                window.open(url, '_blank', 'noopener,noreferrer');
+                return;
+              }
 
-                      return <pre>{children}</pre>;
-                    },
-                    code({ className, children, node, ...props }) {
-                      const match = /language-(\w+)/.exec(className ?? '');
-                      const language = match?.[1];
-                      const content = String(children).replace(/\n$/, '');
-                      const blockStart = node?.position?.start?.offset;
-
-                      if (language === 'mermaid') {
-                        const mermaidCacheKey = getStableNotePreviewCacheKey('mermaid-block', blockStart, mermaidBlockIndex);
-                        if (typeof blockStart !== 'number') {
-                          mermaidBlockIndex += 1;
-                        }
-                        return <MermaidBlock cacheKey={mermaidCacheKey} code={content} />;
-                      }
-
-                      if (language) {
-                        const highlightedCacheKey = getStableNotePreviewCacheKey('note-code-block', blockStart, highlightedCodeBlockIndex);
-                        if (typeof blockStart !== 'number') {
-                          highlightedCodeBlockIndex += 1;
-                        }
-
-                        return <HighlightedCode cacheKey={highlightedCacheKey} className={className} code={content} language={language} />;
-                      }
-
-                      return (
-                        <code className={className} {...props}>
-                          {children}
-                        </code>
-                      );
-                    },
-                  }}
-                >
-                  {draftContent || t('note.preview_placeholder')}
-                </ReactMarkdown>
-              </div>
-            </section>
-          ) : null}
+              postMessage('OPEN_EXTERNAL_URL', { url });
+            }}
+            placeholder={t('note.placeholder')}
+          />
         </div>
       )}
       <div className="border-t border-line bg-panel px-6 py-2 text-sm text-muted">
@@ -252,39 +195,3 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, relativePath
     </div>
   );
 };
-
-const ModeButton: FC<{ active: boolean; label: string; onClick: () => void }> = ({ active, label, onClick }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`rounded-sm px-2 py-1 text-xs ${active ? 'bg-hover text-text' : 'text-muted hover:bg-hover hover:text-text'}`}
-    aria-label={label}
-    title={label}
-  >
-    {label}
-  </button>
-);
-
-function containsMermaidBlock(children: ReactNode): boolean {
-  if (Array.isArray(children)) {
-    return children.some((child) => containsMermaidBlock(child));
-  }
-
-  if (!isValidElement(children)) {
-    return false;
-  }
-
-  if (children.type === MermaidBlock) {
-    return true;
-  }
-
-  return containsMermaidBlock((children.props as { children?: ReactNode }).children);
-}
-
-function getStableNotePreviewCacheKey(prefix: string, blockStart: number | null | undefined, fallbackIndex: number): string {
-  if (typeof blockStart === 'number') {
-    return `${prefix}-${blockStart}`;
-  }
-
-  return `${prefix}-fallback-${fallbackIndex}`;
-}

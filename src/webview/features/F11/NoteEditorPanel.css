@@ -2,6 +2,103 @@
   color: var(--gae-color-text-primary);
 }
 
+.markdown-live-editor {
+  background: var(--gae-color-surface-primary);
+}
+
+.markdown-live-editor .cm-editor,
+.markdown-live-editor .cm-scroller {
+  height: 100%;
+}
+
+.markdown-live-editor .cm-md-hidden-syntax {
+  display: none;
+}
+
+.markdown-live-editor .cm-md-heading {
+  color: var(--gae-color-text-primary);
+  font-weight: var(--gae-font-weight-bold);
+  line-height: 1.35;
+}
+
+.markdown-live-editor .cm-md-heading-1 {
+  font-size: 24px;
+}
+
+.markdown-live-editor .cm-md-heading-2 {
+  font-size: 20px;
+}
+
+.markdown-live-editor .cm-md-heading-3 {
+  font-size: 17px;
+}
+
+.markdown-live-editor .cm-md-heading-4,
+.markdown-live-editor .cm-md-heading-5,
+.markdown-live-editor .cm-md-heading-6 {
+  font-size: 14px;
+}
+
+.markdown-live-editor .cm-md-strong {
+  font-weight: var(--gae-font-weight-bold);
+}
+
+.markdown-live-editor .cm-md-emphasis {
+  font-style: italic;
+}
+
+.markdown-live-editor .cm-md-strike {
+  text-decoration: line-through;
+}
+
+.markdown-live-editor .cm-md-inline-code {
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-sm);
+  background: var(--gae-color-surface-elevated);
+  padding: 1px 5px;
+  color: #ce9178;
+}
+
+.markdown-live-editor .cm-md-link {
+  color: var(--gae-color-text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.markdown-live-editor .cm-md-blockquote {
+  border-left: 3px solid var(--gae-color-text-link);
+  padding-left: 12px;
+  color: color-mix(in srgb, var(--gae-color-text-primary) 94%, var(--gae-color-text-secondary));
+}
+
+.markdown-live-editor .cm-md-list-item {
+  color: color-mix(in srgb, var(--gae-color-text-primary) 94%, var(--gae-color-text-secondary));
+}
+
+.markdown-live-editor .cm-md-list-marker {
+  color: var(--gae-color-text-secondary);
+}
+
+.markdown-live-editor .cm-md-checkbox {
+  display: inline-flex;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.markdown-live-editor .cm-md-checkbox input {
+  pointer-events: none;
+}
+
+.markdown-live-editor .cm-md-hr {
+  margin: 10px 0;
+  border-top: 1px solid var(--gae-border-color-default);
+}
+
+.markdown-live-editor .cm-md-mermaid-widget {
+  margin: 8px 0 14px;
+}
+
 .note-preview > :first-child {
   margin-top: 0;
 }
