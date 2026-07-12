@@ -30,6 +30,8 @@
 ## Components
 
 - `AISummaryViewer`
+- `SaveAsNotePopover`
+- `PathAutocompleteInput`
 - `HighlightedCode`
 - `StreamingTextRenderer`
 - `RegenerateButton`
@@ -65,12 +67,15 @@ interface AISummaryViewerProps {
   onGoToSettings: () => void;
   onRegenerate: () => void;
   onRetry: () => void;
+  onSave?: () => void;
+  saveButtonRef?: RefObject<HTMLButtonElement | null>;
 }
 ```
 
 #### Interaction
 - 스크롤 가능
 - 수정 불가 (읽기 전용)
+- 저장본이 없는 완료 상태에서는 헤더의 저장 아이콘 버튼을 누르면 해당 버튼 아래 `SaveAsNotePopover`가 열린다
 - 완료된 마크다운 본문에서 드래그 선택 후 복사 시, 선택 범위에 대응하는 원본 마크다운 조각을 클립보드에 기록한다
 - fenced 코드블록 위에는 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 복사하고 성공 토스트를 표시한다
 - fenced 코드블록에 언어 태그가 있으면 `HighlightedCode`가 `shiki` 기반 문법 강조 결과를 `<code>` 내부 토큰 span으로 렌더링한다
@@ -84,6 +89,60 @@ interface AISummaryViewerProps {
 
 #### Accessibility
 - `role="region"`, `aria-label="AI 정리 결과"`, `aria-live="polite"` (스트리밍 중)
+
+#### Reusability
+F05b_AISummaryCommit 전용.
+
+### Component: SaveAsNotePopover
+
+#### Purpose
+AI 요약을 노트로 저장할 상대 경로를 입력받는 저장 버튼 앵커형 팝오버.
+
+#### Data
+- `entries: NoteEntry[]`
+- `initialValue: string`
+- `shouldWarnBeforeOverwrite: boolean`
+
+#### Props
+```typescript
+interface SaveAsNotePopoverProps {
+  anchorRef: RefObject<HTMLElement | null>;
+  entries: NoteEntry[];
+  initialValue: string;
+  isOpen: boolean;
+  onCancel: () => void;
+  onChange: (value: string) => void;
+  onConfirm: () => void;
+  shouldWarnBeforeOverwrite: boolean;
+}
+```
+
+#### Interaction
+- 저장 버튼 바로 아래에 표시된다
+- 팝오버 바깥 클릭 또는 `Escape`로 닫힌다
+- 덮어쓰기 가능성이 있으면 경고 배너를 표시한다
+- 경로 입력은 `PathAutocompleteInput`을 사용한다
+
+#### Accessibility
+- 공용 `Popover`의 `role="dialog"`와 `aria-labelledby`를 따른다
+
+#### Reusability
+F05b_AISummaryCommit 전용.
+
+### Component: PathAutocompleteInput
+
+#### Purpose
+저장 경로 입력 중 기존 폴더 경로를 고스트 텍스트와 Tab 키로 보조하는 F05b 전용 입력 컴포넌트.
+
+#### Data
+- `value: string`
+- `directorySuggestions: string[]`
+
+#### Interaction
+- 캐럿이 입력 끝에 있을 때만 고스트 텍스트 제안을 표시한다
+- `Tab` 1회 입력 시 다음 `/` 구간까지만 채운다
+- 활성 제안이 있을 때 `Escape`를 누르면 팝오버를 닫지 않고 제안만 숨긴다
+- 파일명은 자동완성하지 않고 폴더 경로만 제안한다
 
 #### Reusability
 F05b_AISummaryCommit 전용.
@@ -260,6 +319,8 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 | 인터랙션 | 트리거 | 결과 |
 |---------|--------|------|
 | 패널 진입 | `aiSummary` 패널 활성화 | 저장본 존재 시 즉시 표시, 없으면 AI 생성 시작 |
+| 저장 아이콘 | 클릭 | `SaveAsNotePopover` 표시 |
+| 저장 팝오버 입력 + `Tab` | 기존 폴더 접두어가 있을 때 | 다음 `/` 구간까지만 자동완성 |
 | 재생성 아이콘 | 클릭 | `OverwriteConfirmDialog` 표시 |
 | [확인] | 다이얼로그 확인 | 동일 diff로 AI 재호출, 결과 덮어쓰기 |
 | [취소] | 다이얼로그 취소 | 현재 저장본 유지 |

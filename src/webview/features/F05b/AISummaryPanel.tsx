@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import type { ChangedFile, Commit } from '../../types/commit';
 import { AISummaryViewer } from './AISummaryViewer';
 import { OverwriteConfirmDialog } from './OverwriteConfirmDialog';
-import { SaveAsNoteDialog } from './SaveAsNoteDialog';
+import { SaveAsNotePopover } from './SaveAsNotePopover';
 import { TokenLimitWarning } from './TokenLimitWarning';
 import { useAISummary } from './useAISummary';
 
@@ -23,7 +23,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
     isGeneratingSummary,
     isLoadingSummary,
     isRegenerateDialogOpen,
-    isSaveDialogOpen,
+    isSavePopoverOpen,
     isSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
     noteEntries,
@@ -35,9 +35,10 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
     onSave,
     qaCompletionCount,
     saveDraft,
+    saveButtonRef,
     savePath,
     setIsRegenerateDialogOpen,
-    setIsSaveDialogOpen,
+    setIsSavePopoverOpen,
     setIsTokenWarningDismissed,
     setSaveDraft,
     shouldWarnBeforeOverwrite,
@@ -70,17 +71,19 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
         onRegenerate={onRegenerate}
         onRetry={onRetry}
         onSave={onSave}
+        saveButtonRef={saveButtonRef}
       />
       <OverwriteConfirmDialog
         isOpen={isRegenerateDialogOpen}
         onCancel={() => setIsRegenerateDialogOpen(false)}
         onConfirm={onConfirmRegenerate}
       />
-      <SaveAsNoteDialog
+      <SaveAsNotePopover
+        anchorRef={saveButtonRef}
         entries={noteEntries}
         initialValue={saveDraft.relativePath}
-        isOpen={isSaveDialogOpen}
-        onCancel={() => setIsSaveDialogOpen(false)}
+        isOpen={isSavePopoverOpen}
+        onCancel={() => setIsSavePopoverOpen(false)}
         onChange={(relativePath) => setSaveDraft({ ...saveDraft, relativePath })}
         onConfirm={() => onConfirmSave(saveDraft.relativePath)}
         shouldWarnBeforeOverwrite={shouldWarnBeforeOverwrite}

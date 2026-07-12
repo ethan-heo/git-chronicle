@@ -1,4 +1,4 @@
-import { isValidElement, useEffect, useMemo, useRef, type FC, type ReactNode } from 'react';
+import { isValidElement, useEffect, useMemo, useRef, type FC, type ReactNode, type RefObject } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { rehypeAnnotateSourceOffsets } from './rehypeAnnotateSourceOffsets';
 import remarkGfm from 'remark-gfm';
@@ -32,6 +32,7 @@ interface AISummaryViewerProps {
   onRegenerate: () => void;
   onRetry: () => void;
   onSave?: () => void;
+  saveButtonRef?: RefObject<HTMLButtonElement | null>;
 }
 
 export const AISummaryViewer: FC<AISummaryViewerProps> = ({
@@ -51,6 +52,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   onRegenerate,
   onRetry,
   onSave = () => {},
+  saveButtonRef,
 }) => {
   const { t } = useTranslation();
   const summaryEndRef = useRef<HTMLDivElement | null>(null);
@@ -222,6 +224,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
         <div className="flex items-center gap-2">
           {!hasSavedSummary && content ? (
             <button
+              ref={saveButtonRef}
               type="button"
               className="inline-flex size-8 items-center justify-center rounded-md bg-secondary text-text transition-colors hover:bg-secondary-hi"
               aria-label={t('ai_summary.save')}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useAppStore } from '../../store/appStore';
 import type { AIProviderName, ChangedFile, Commit } from '../../types/commit';
@@ -57,7 +57,7 @@ interface UseAISummaryResult {
   isGeneratingSummary: boolean;
   isLoadingSummary: boolean;
   isRegenerateDialogOpen: boolean;
-  isSaveDialogOpen: boolean;
+  isSavePopoverOpen: boolean;
   isSummaryTokenLimitExceeded: boolean;
   isTokenWarningDismissed: boolean;
   noteEntries: { relativePath: string; name: string; updatedAt: string }[];
@@ -72,9 +72,10 @@ interface UseAISummaryResult {
   qaMessages: QAMessage[];
   qaCompletionCount: number;
   saveDraft: SaveDraft;
+  saveButtonRef: RefObject<HTMLButtonElement | null>;
   savePath: string | null;
   setIsRegenerateDialogOpen: (isOpen: boolean) => void;
-  setIsSaveDialogOpen: (isOpen: boolean) => void;
+  setIsSavePopoverOpen: (isOpen: boolean) => void;
   setIsTokenWarningDismissed: (isDismissed: boolean) => void;
   setSaveDraft: (draft: SaveDraft) => void;
   shouldWarnBeforeOverwrite: boolean;
@@ -117,12 +118,13 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   const loadNoteTree = useAppStore((state) => state.loadNoteTree);
 
   const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [isSavePopoverOpen, setIsSavePopoverOpen] = useState(false);
   const [isTokenWarningDismissed, setIsTokenWarningDismissed] = useState(false);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(!isVSCodeRuntime());
   const [qaMessages, setQAMessages] = useState<QAMessage[]>([]);
   const [qaCompletionCount, setQACompletionCount] = useState(0);
   const [saveDraft, setSaveDraft] = useState<SaveDraft>({ relativePath: '', mode: 'create' });
+  const saveButtonRef = useRef<HTMLButtonElement | null>(null);
   const qaResetKey = `${commit?.hash ?? ''}::${targetFile?.path ?? ''}`;
   const [prevQAResetKey, setPrevQAResetKey] = useState(qaResetKey);
 
@@ -246,7 +248,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
     });
   }, [activeAIProvider, commit, completeAIQA, displayedNoteRelativePath, displayedSummaryContent, qaModel, savePath, startAIQA, targetFile]);
 
-  const openSaveDialog = useCallback(() => {
+  const openSavePopover = useCallback(() => {
     if (!displayedSummaryContent) {
       return;
     }
@@ -258,7 +260,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
       relativePath,
       mode: relativePath ? 'overwrite' : 'create',
     });
-    setIsSaveDialogOpen(true);
+    setIsSavePopoverOpen(true);
 
     if (isVSCodeRuntime() && savePath) {
       loadNoteTree();
@@ -293,7 +295,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
         commitHash: commit.hash,
         targetKey: summaryTargetKey,
       });
-      setIsSaveDialogOpen(false);
+      setIsSavePopoverOpen(false);
       return;
     }
 
@@ -306,7 +308,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
       content: displayedSummaryContent,
       linkContext,
     });
-    setIsSaveDialogOpen(false);
+    setIsSavePopoverOpen(false);
   }, [activeAIProvider, commit, displayedSummaryContent, markCurrentSummarySaved, noteEntries, savePath, summaryScope, summaryTargetKey, targetFile?.path]);
 
   useEffect(() => {
@@ -391,7 +393,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
     isGeneratingSummary: displayedIsGeneratingSummary,
     isLoadingSummary: displayedIsLoadingSummary,
     isRegenerateDialogOpen,
-    isSaveDialogOpen,
+    isSavePopoverOpen,
     isSummaryTokenLimitExceeded: displayedIsSummaryTokenLimitExceeded,
     isTokenWarningDismissed,
     noteEntries,
@@ -404,14 +406,15 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
     dismissTokenWarning: () => setIsTokenWarningDismissed(true),
     onRegenerate: () => setIsRegenerateDialogOpen(true),
     onRetry: () => startSummary(true),
-    onSave: openSaveDialog,
+    onSave: openSavePopover,
     qaError,
     qaMessages,
     qaCompletionCount,
     saveDraft,
+    saveButtonRef,
     savePath,
     setIsRegenerateDialogOpen,
-    setIsSaveDialogOpen,
+    setIsSavePopoverOpen,
     setIsTokenWarningDismissed,
     setSaveDraft,
     shouldWarnBeforeOverwrite,
