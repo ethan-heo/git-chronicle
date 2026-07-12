@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type FC } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { Compartment, EditorState, RangeSetBuilder, StateField, type Extension } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import {
@@ -16,7 +15,7 @@ import {
 } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { getMarkdownHighlighter, resolveLanguageTag } from '../../shared/highlighter/shikiHighlighter';
-import { MermaidBlock } from './MermaidBlock';
+import { prewarmMermaidDiagram, renderedDiagramCache } from './MermaidBlock';
 
 interface MarkdownLiveEditorProps {
   value: string;
@@ -66,6 +65,7 @@ export const MarkdownLiveEditor: FC<MarkdownLiveEditorProps> = ({ value, onChang
   const initialValueRef = useRef(value);
   const lastKnownContentRef = useRef(value);
   const [highlightedBlocks, setHighlightedBlocks] = useState<Record<string, HighlightLineTokens[] | null>>({});
+  const [mermaidReadyTick, setMermaidReadyTick] = useState(0);
 
   onChangeRef.current = onChange;
   onOpenUrlRef.current = onOpenUrl;
@@ -130,6 +130,30 @@ export const MarkdownLiveEditor: FC<MarkdownLiveEditorProps> = ({ value, onChang
   }, [blocks]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const pendingMermaidBlocks = blocks.filter(
+      (block) => block.language === 'mermaid' && block.contentTo > block.contentFrom && !renderedDiagramCache.has(`cm-mermaid-${block.key}`),
+    );
+
+    if (pendingMermaidBlocks.length === 0) {
+      return;
+    }
+
+    void Promise.all(
+      pendingMermaidBlocks.map((block) => prewarmMermaidDiagram(`cm-mermaid-${block.key}`, block.lines.join('\n'))),
+    ).then(() => {
+      if (!cancelled) {
+        setMermaidReadyTick((tick) => tick + 1);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [blocks]);
+
+  useEffect(() => {
     const host = hostRef.current;
     if (!host) {
       return;
@@ -184,7 +208,13 @@ export const MarkdownLiveEditor: FC<MarkdownLiveEditorProps> = ({ value, onChang
           drawSelection(),
           highlightActiveLine(),
           markdown(),
-          keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+          keymap.of([
+            { key: 'ArrowUp', run: (v) => moveVerticalLineAvoidingMermaid(v, false) },
+            { key: 'ArrowDown', run: (v) => moveVerticalLineAvoidingMermaid(v, true) },
+            ...defaultKeymap,
+            ...historyKeymap,
+            indentWithTab,
+          ]),
           EditorView.lineWrapping,
           EditorView.updateListener.of((update: ViewUpdate) => {
             if (!update.docChanged) {
@@ -264,7 +294,9 @@ export const MarkdownLiveEditor: FC<MarkdownLiveEditorProps> = ({ value, onChang
         }),
       ),
     });
-  }, [highlightedBlocks, onOpenUrl]);
+    // mermaidReadyTick은 값 자체를 쓰지 않지만, prewarm이 끝날 때마다 이 effect를 다시 돌려
+    // 방금 캐시가 채워진 mermaid 블록의 데코레이션을 다시 계산하기 위한 트리거로 사용한다.
+  }, [highlightedBlocks, onOpenUrl, mermaidReadyTick]);
 
   return <div ref={hostRef} data-testid="markdown-live-editor-host" className="markdown-live-editor h-full min-h-0" />;
 };
@@ -354,15 +386,20 @@ function buildDecorations(state: EditorState, highlightedBlocks: Record<string, 
     }
 
     if (block.language === 'mermaid' && block.contentTo > block.contentFrom) {
-      const mermaidReplaceTo = block.closingFenceFrom ?? block.contentTo;
-      pending.push({
-        from: block.contentFrom,
-        to: mermaidReplaceTo,
-        decoration: Decoration.replace({
-          block: true,
-          widget: new MermaidWidget(block.key, block.lines.join('\n')),
-        }),
-      });
+      // 다이어그램이 아직 렌더링되지 않았다면 위젯으로 접지 않는다. 미리 캐시를 채워두지 않고
+      // 접었다가 렌더링이 끝난 뒤 위젯 높이가 그 자리에서 커지면, CodeMirror가 이후 줄들의 높이
+      // 캐시를 제대로 갱신하지 못해 방향키 커서 이동이 엉뚱한 줄로 튀는 문제가 생긴다.
+      if (renderedDiagramCache.has(`cm-mermaid-${block.key}`)) {
+        const mermaidReplaceTo = block.closingFenceFrom ?? block.contentTo;
+        pending.push({
+          from: block.contentFrom,
+          to: mermaidReplaceTo,
+          decoration: Decoration.replace({
+            block: true,
+            widget: new MermaidWidget(block.key, block.lines.join('\n')),
+          }),
+        });
+      }
       continue;
     }
 
@@ -398,12 +435,12 @@ function buildDecorations(state: EditorState, highlightedBlocks: Record<string, 
   }
 
   for (let lineNumber = 1; lineNumber <= doc.lines; lineNumber += 1) {
-    if (activeLines.has(lineNumber) || codeLineNumbers.has(lineNumber)) {
+    if (codeLineNumbers.has(lineNumber)) {
       continue;
     }
 
     const line = doc.line(lineNumber);
-    decorateLine(pending, line.from, line.text);
+    decorateLine(pending, line.from, line.text, activeLines.has(lineNumber));
   }
 
   pending
@@ -415,13 +452,17 @@ function buildDecorations(state: EditorState, highlightedBlocks: Record<string, 
   return builder.finish();
 }
 
-function decorateLine(pending: PendingDecoration[], lineFrom: number, text: string): void {
+function decorateLine(pending: PendingDecoration[], lineFrom: number, text: string, isActive: boolean): void {
   if (!text) {
     return;
   }
 
   const hrMatch = text.match(/^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/);
   if (hrMatch) {
+    if (isActive) {
+      return;
+    }
+
     pending.push({ from: lineFrom, to: lineFrom + text.length, decoration: Decoration.replace({ block: true, widget: new HorizontalRuleWidget() }) });
     return;
   }
@@ -429,10 +470,24 @@ function decorateLine(pending: PendingDecoration[], lineFrom: number, text: stri
   const headingMatch = text.match(/^(\s{0,3}#{1,6})\s+(.*)$/);
   if (headingMatch) {
     const markerLength = headingMatch[1].length + 1;
-    pending.push({ from: lineFrom, to: lineFrom + markerLength, decoration: hiddenSyntaxDecoration });
     const level = headingMatch[1].trim().length;
-    pending.push({ from: lineFrom + markerLength, to: lineFrom + text.length, decoration: Decoration.mark({ class: `cm-md-heading cm-md-heading-${level}` }) });
-    decorateInline(pending, lineFrom + markerLength, headingMatch[2]);
+    const headingDecoration = Decoration.mark({ class: `cm-md-heading cm-md-heading-${level}` });
+
+    // 커서가 헤딩 줄에 있어도 원문 `#` 마커만 드러내고 헤딩 폰트 스타일은 유지한다.
+    pending.push({
+      from: lineFrom,
+      to: lineFrom + markerLength,
+      decoration: isActive ? headingDecoration : hiddenSyntaxDecoration,
+    });
+    pending.push({ from: lineFrom + markerLength, to: lineFrom + text.length, decoration: headingDecoration });
+
+    if (!isActive) {
+      decorateInline(pending, lineFrom + markerLength, headingMatch[2]);
+    }
+    return;
+  }
+
+  if (isActive) {
     return;
   }
 
@@ -600,6 +655,53 @@ function hasActiveLine(activeLines: Set<number>, fromLine: number, toLine: numbe
   return false;
 }
 
+// CodeMirror의 내부 posAtCoords()는 세로 방향 커서 이동 시 block:true 위젯을 건너뛰는 로직에서
+// 위젯 바로 다음 실제 줄과의 경계를 잘못 판정하는 결함이 있다(CodeMirror 6.43.6 기준). 그 결과
+// mermaid 다이어그램 위젯을 지나쳐 방향키로 이동할 때 커서가 엉뚱한 줄로 튄다. 픽셀 좌표 기반인
+// CodeMirror 기본 알고리즘을 우회하고, 우리가 이미 알고 있는 논리적 줄 구조로 직접 다음 줄을
+// 계산해 이 문제를 피한다. mermaid 다이어그램이 없는 노트에서는 관여하지 않는다.
+function moveVerticalLineAvoidingMermaid(view: EditorView, forward: boolean): boolean {
+  const range = view.state.selection.main;
+  if (!range.empty) {
+    return false;
+  }
+
+  const doc = view.state.doc;
+  const blocks = parseCodeBlocks(doc.toString());
+  const collapsedMermaidBlocks = blocks.filter(
+    (block) => block.language === 'mermaid' && block.contentTo > block.contentFrom && renderedDiagramCache.has(`cm-mermaid-${block.key}`),
+  );
+
+  if (collapsedMermaidBlocks.length === 0) {
+    return false;
+  }
+
+  const currentLine = doc.lineAt(range.head);
+  const column = range.head - currentLine.from;
+  let targetLineNumber = currentLine.number + (forward ? 1 : -1);
+
+  if (targetLineNumber < 1 || targetLineNumber > doc.lines) {
+    return false;
+  }
+
+  const collapsingBlock = collapsedMermaidBlocks.find(
+    (block) => targetLineNumber > block.fenceStartLine && targetLineNumber < block.fenceEndLine,
+  );
+  if (collapsingBlock) {
+    targetLineNumber = forward ? collapsingBlock.fenceEndLine : collapsingBlock.fenceStartLine;
+  }
+
+  const targetLine = doc.line(targetLineNumber);
+  const targetPos = Math.min(targetLine.from + column, targetLine.to);
+
+  view.dispatch({
+    selection: { anchor: targetPos },
+    scrollIntoView: true,
+    userEvent: 'select',
+  });
+  return true;
+}
+
 function parseCodeBlocks(content: string): ParsedCodeBlock[] {
   const lines = content.split('\n');
   const blocks: ParsedCodeBlock[] = [];
@@ -667,7 +769,10 @@ function normalizeTokens(tokens: Array<{ content: string; color?: string }> | un
   }));
 }
 
-const hiddenSyntaxDecoration = Decoration.mark({ class: 'cm-md-hidden-syntax' });
+// mark + CSS display:none 방식은 숨겨진 span이 DOM에 남아 CodeMirror의 좌표<->포지션 매핑을
+// 왜곡시켜 위/아래 방향키 커서 이동이 엉뚱한 줄로 튀는 문제를 일으킨다. 실제로 콘텐츠를 렌더링
+// 트리에서 제거하는 replace 데코레이션을 사용해야 커서 이동 좌표 계산이 올바르게 이뤄진다.
+const hiddenSyntaxDecoration = Decoration.replace({});
 
 class CheckboxWidget extends WidgetType {
   constructor(
@@ -738,24 +843,25 @@ class MermaidWidget extends WidgetType {
     return this.cacheKey === other.cacheKey && this.code === other.code;
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const element = document.createElement('div');
     element.className = 'cm-md-mermaid-widget';
     element.contentEditable = 'false';
-    const root = createRoot(element);
-    root.render(<MermaidBlock cacheKey={`cm-mermaid-${this.cacheKey}`} code={this.code} />);
-    (element as HTMLElement & { __reactRoot?: Root }).__reactRoot = root;
+
+    // buildDecorations()는 renderedDiagramCache에 이미 렌더링된 SVG가 있을 때만 이 위젯을
+    // 만든다(prewarmMermaidDiagram 참고). 캐시된 SVG를 innerHTML로 동기 삽입해 위젯이 처음
+    // DOM에 붙는 순간 이미 최종 크기여야 한다는 것을 보장한다.
+    const svg = renderedDiagramCache.get(`cm-mermaid-${this.cacheKey}`) ?? '';
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'note-preview-mermaid';
+    contentWrapper.innerHTML = svg;
+    element.append(contentWrapper);
+
+    // 방향키 커서 이동 자체는 moveVerticalLineAvoidingMermaid()가 CodeMirror의 픽셀 좌표
+    // 계산을 우회해서 처리하지만, 스크롤 위치 계산 등 다른 용도로도 줄 높이 캐시는 정확해야
+    // 하므로 위젯이 붙은 직후 명시적으로 재측정을 예약해 둔다.
+    view.requestMeasure();
+
     return element;
-  }
-
-  destroy(dom: HTMLElement): void {
-    const root = (dom as HTMLElement & { __reactRoot?: Root }).__reactRoot;
-    if (!root) {
-      return;
-    }
-
-    queueMicrotask(() => {
-      root.unmount();
-    });
   }
 }

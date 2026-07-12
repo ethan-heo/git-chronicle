@@ -32,4 +32,5 @@
 - 탭 전환/닫기로 패널이 언마운트될 때 저장되지 않은 초안이 있으면 즉시 플러시 저장
 - `NoteEditorPanel`은 별도 모드 전환 UI 없이 `MarkdownLiveEditor` 하나만 렌더링한다
 - `MarkdownLiveEditor`는 `relativePath`를 React `key`로 받아 노트 전환 시 전체 재마운트된다. 덕분에 각 노트의 undo 히스토리, selection, decoration cache가 다른 노트와 섞이지 않는다
-- `MarkdownLiveEditor`는 `MermaidBlock`과 shared Shiki highlighter를 재사용하되, 편집 커서가 블록 밖일 때만 위젯/하이라이트를 적용한다
+- `MarkdownLiveEditor`는 shared Shiki highlighter를 재사용하되, 편집 커서가 블록 밖일 때만 위젯/하이라이트를 적용한다
+- mermaid 다이어그램은 `MermaidBlock`이 사용하는 렌더 캐시를 `prewarmMermaidDiagram()`으로 미리 채운 뒤에만 위젯으로 접힌다. 접힌 위젯은 `MermaidBlock`을 마운트하지 않고 캐시된 SVG를 직접 삽입한다 — 위젯이 빈 상태로 먼저 붙었다가 렌더링이 끝난 뒤 그 자리에서 커지면 CodeMirror의 줄 높이 캐시가 어긋나 방향키 커서 이동이 엉뚱한 줄로 튀기 때문이다

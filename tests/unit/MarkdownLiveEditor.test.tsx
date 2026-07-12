@@ -4,9 +4,17 @@ import type { EditorView } from '@codemirror/view';
 import { MarkdownLiveEditor } from '../../src/webview/features/F11';
 import { initI18n } from '../../src/webview/i18n';
 
-vi.mock('../../src/webview/features/F11/MermaidBlock', () => ({
-  MermaidBlock: ({ code }: { code: string }) => <div data-testid="mock-mermaid-widget">{code}</div>,
-}));
+vi.mock('../../src/webview/features/F11/MermaidBlock', () => {
+  const renderedDiagramCache = new Map<string, string>();
+
+  return {
+    renderedDiagramCache,
+    prewarmMermaidDiagram: vi.fn(async (cacheKey: string, code: string) => {
+      renderedDiagramCache.set(cacheKey, `<div data-testid="mock-mermaid-svg">${code}</div>`);
+    }),
+    MermaidBlock: ({ code }: { code: string }) => <div data-testid="mock-mermaid-widget">{code}</div>,
+  };
+});
 
 vi.mock('../../src/webview/shared/highlighter/shikiHighlighter', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/webview/shared/highlighter/shikiHighlighter')>();
@@ -54,10 +62,9 @@ describe('MarkdownLiveEditor', () => {
     });
 
     await waitFor(() => {
-      const hiddenSyntax = document.querySelector<HTMLElement>('.cm-md-hidden-syntax');
-      expect(hiddenSyntax).not.toBeNull();
-      expect(hiddenSyntax).toHaveTextContent('#');
-      expect(document.querySelector('.cm-md-heading-1')).not.toBeNull();
+      const heading = document.querySelector<HTMLElement>('.cm-md-heading-1');
+      expect(heading).not.toBeNull();
+      expect(heading).not.toHaveTextContent('#');
     });
     expect(screen.getByText('Title')).toBeInTheDocument();
   });
@@ -112,9 +119,9 @@ describe('MarkdownLiveEditor', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('mock-mermaid-widget')).toHaveTextContent('flowchart TD');
+      expect(screen.getByTestId('mock-mermaid-svg')).toHaveTextContent('flowchart TD');
     });
-    expect(screen.getByTestId('mock-mermaid-widget')).toHaveTextContent('A --> B');
+    expect(screen.getByTestId('mock-mermaid-svg')).toHaveTextContent('A --> B');
     expect(screen.getByText('After')).toBeInTheDocument();
   });
 

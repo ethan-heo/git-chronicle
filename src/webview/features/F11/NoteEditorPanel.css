@@ -11,10 +11,6 @@
   height: 100%;
 }
 
-.markdown-live-editor .cm-md-hidden-syntax {
-  display: none;
-}
-
 .markdown-live-editor .cm-md-heading {
   color: var(--gae-color-text-primary);
   font-weight: var(--gae-font-weight-bold);
