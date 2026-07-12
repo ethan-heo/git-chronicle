@@ -6,6 +6,7 @@ import { translate } from '../../i18n/runtime';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import { HighlightedCode } from '../../shared/highlighter';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
+import { DEMO_NOTE_CONTENTS } from '../../demo/aiSummarySamples';
 import { useAppStore } from '../../store/appStore';
 import { MermaidBlock } from './MermaidBlock';
 import './NoteEditorPanel.css';
@@ -54,9 +55,10 @@ export const NoteEditorPanel: FC<NoteEditorPanelProps> = ({ paneId, relativePath
     }
 
     if (!isVSCodeRuntime()) {
-      handleNoteLoaded({ paneId, content: '', savedPath: null, hasSavedNote: false });
-      lastSavedContentRef.current = '';
-      setDraftContent('');
+      const demoContent = DEMO_NOTE_CONTENTS[relativePath] ?? '';
+      handleNoteLoaded({ paneId, content: demoContent, savedPath: `${savePath}/${relativePath}`, hasSavedNote: true });
+      lastSavedContentRef.current = demoContent;
+      setDraftContent(demoContent);
       setHasInitializedLoad(true);
       return;
     }

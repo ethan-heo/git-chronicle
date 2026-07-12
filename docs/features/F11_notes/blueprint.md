@@ -26,7 +26,7 @@
 
 - Notes 섹션 활성 시 `FETCH_NOTE_TREE`
 - 새 노트 생성 시 `CREATE_NOTE`, 삭제 시 `DELETE_NOTE`, 폴더 드롭 이동 시 `MOVE_NOTE`
-- 파일 클릭으로 `relativePath` 기준 `note` 탭을 연다
+- 파일 클릭으로 `relativePath`를 조회해 일반 노트면 `note` 탭을, `aiSummaryLink`가 있으면 연결된 `aiSummary` 또는 `code` 탭을 연다
 - 진입 시 현재 탭의 `relativePath` 기준으로 `FETCH_NOTE`
 - 입력 후 1000ms 디바운스 뒤 `SAVE_NOTE`
 - 탭 전환/닫기로 패널이 언마운트될 때 저장되지 않은 초안이 있으면 즉시 플러시 저장

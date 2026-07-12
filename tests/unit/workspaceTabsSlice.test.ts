@@ -189,6 +189,68 @@ describe('workspaceTabsSlice note tabs (F11)', () => {
     expect(nextState.paneTree.tabs).toHaveLength(0);
     expect(nextState.paneTree.activeTabId).toBeNull();
   });
+
+  it('reopens linked AI summary notes into aiSummary tabs instead of note tabs', async () => {
+    const { useAppStore } = await import('../../src/webview/store/appStore');
+    const state = useAppStore.getState();
+
+    state.handleNoteTreeLoaded({
+      entries: [{
+        relativePath: 'summaries/commit.ai.md',
+        name: 'commit.ai.md',
+        updatedAt: '2026-07-12T00:00:00.000Z',
+        aiSummaryLink: {
+          commitHash: 'aaaaaaaa',
+          scope: 'commit',
+          commitMessage: 'Commit A',
+        },
+      }],
+    });
+
+    state.selectCommit(commitB);
+    state.openNoteTreeEntry('summaries/commit.ai.md');
+
+    const nextState = useAppStore.getState();
+    expect(nextState.selectedCommit).toMatchObject({
+      hash: commitA.hash,
+      shortHash: commitA.shortHash,
+      message: commitA.message,
+    });
+    if (nextState.paneTree.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane');
+    }
+    expect(nextState.paneTree.tabs.find((tab) => tab.id === 'aiSummary:aaaaaaaa:_')?.panelType).toBe('aiSummary');
+  });
+
+  it('reopens linked file AI summary notes into code tabs with aiSummary panel enabled', async () => {
+    const { useAppStore } = await import('../../src/webview/store/appStore');
+    const state = useAppStore.getState();
+
+    state.handleNoteTreeLoaded({
+      entries: [{
+        relativePath: 'summaries/file.ai.md',
+        name: 'file.ai.md',
+        updatedAt: '2026-07-12T00:00:00.000Z',
+        aiSummaryLink: {
+          commitHash: 'aaaaaaaa',
+          filePath: 'src/app.ts',
+          scope: 'file',
+          commitMessage: 'Commit A',
+        },
+      }],
+    });
+
+    state.openNoteTreeEntry('summaries/file.ai.md');
+    state.openNoteTreeEntry('summaries/file.ai.md');
+
+    const nextState = useAppStore.getState();
+    if (nextState.paneTree.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane');
+    }
+    const codeTab = nextState.paneTree.tabs.find((tab) => tab.id === 'code:aaaaaaaa:src/app.ts');
+    expect(codeTab?.panelType).toBe('code');
+    expect(codeTab?.codeInnerPanels?.aiSummary).toBe(true);
+  });
 });
 
 describe('workspaceTabsSlice moveWorkspaceTab', () => {

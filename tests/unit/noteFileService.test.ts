@@ -6,6 +6,7 @@ import {
   NoteFileError,
   createNote,
   deleteNote,
+  ensureAiMdExtension,
   getNotesRoot,
   listNotes,
   moveNote,
@@ -37,6 +38,13 @@ describe('noteFileService', () => {
     expect(entry.relativePath).toBe('ideas/todo.md');
     expect(fs.existsSync(path.join(getNotesRoot(savePath), 'ideas', 'todo.md'))).toBe(true);
     expect(getNotesRoot(savePath)).toBe(savePath);
+  });
+
+  it('forces AI summary note paths to use the .ai.md suffix', () => {
+    expect(ensureAiMdExtension('summary')).toBe('summary.ai.md');
+    expect(ensureAiMdExtension('summary.md')).toBe('summary.ai.md');
+    expect(ensureAiMdExtension('summary.ai.md')).toBe('summary.ai.md');
+    expect(ensureAiMdExtension('summary.txt')).toBe('summary.ai.md');
   });
 
   it('moves notes, rejects overwriting, and prunes emptied source folders', () => {

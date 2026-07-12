@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { Commit } from '../../types/commit';
+import type { NoteEntry } from '../../types/note';
 import type { AppState } from '../appStore';
 
 export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'note' | 'pr' | 'issue';
@@ -53,6 +54,7 @@ export interface WorkspaceTabsSlice {
   paneTree: PaneNode;
   focusedPaneId: string;
   openWorkspaceTab: (input: OpenWorkspaceTabInput) => void;
+  openNoteTreeEntry: (relativePath: string) => void;
   closeWorkspaceTab: (paneId: string, tabId: string) => void;
   activateWorkspaceTab: (paneId: string, tabId: string) => void;
   toggleCodeInnerPanel: (paneId: string, tabId: string, panel: CodeInnerPanelType) => void;
@@ -77,6 +79,20 @@ export function computeNoteWorkspaceTabId(relativePath: string): string {
 
 function getNoteTabTitle(relativePath: string): string {
   return relativePath.split('/').at(-1) ?? relativePath;
+}
+
+function synthesizeCommitFromLink(entry: NoteEntry['aiSummaryLink']): Commit | null {
+  if (!entry) {
+    return null;
+  }
+
+  return {
+    hash: entry.commitHash,
+    shortHash: entry.commitHash.slice(0, 7),
+    message: entry.commitMessage,
+    author: '',
+    date: '',
+  };
 }
 
 export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
@@ -335,6 +351,40 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
         // note/pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
         selectedCommit: nextTab.commit ?? current.selectedCommit,
       }));
+    },
+
+    openNoteTreeEntry: (relativePath) => {
+      const state = get();
+      const entry = state.noteTree.find((item) => item.relativePath === relativePath);
+      const link = entry?.aiSummaryLink ?? null;
+      if (!link) {
+        get().openWorkspaceTab({ panelType: 'note', relativePath });
+        return;
+      }
+
+      const commit = synthesizeCommitFromLink(link);
+      if (!commit) {
+        get().openWorkspaceTab({ panelType: 'note', relativePath });
+        return;
+      }
+
+      if (link.scope === 'commit') {
+        get().openWorkspaceTab({ panelType: 'aiSummary', commit, filePath: null });
+        return;
+      }
+
+      const filePath = link.filePath ?? null;
+      get().openWorkspaceTab({ panelType: 'code', commit, filePath });
+
+      const nextState = get();
+      const tabId = computeWorkspaceTabId('code', commit.hash, filePath);
+      const pane = findLeafPane(nextState.paneTree, nextState.focusedPaneId);
+      const tab = pane?.tabs.find((item) => item.id === tabId);
+      if (!pane || !tab || tab.panelType !== 'code' || tab.codeInnerPanels?.aiSummary) {
+        return;
+      }
+
+      get().toggleCodeInnerPanel(pane.paneId, tab.id, 'aiSummary');
     },
 
     closeWorkspaceTab: (paneId, tabId) => {

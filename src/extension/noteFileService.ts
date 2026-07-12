@@ -55,6 +55,16 @@ export function ensureMdExtension(relativePath: string): string {
   return segments.join('/');
 }
 
+export function ensureAiMdExtension(relativePath: string): string {
+  const normalized = sanitizeRelativePath(relativePath);
+  const segments = normalized.split('/');
+  const fileName = segments.at(-1) ?? '';
+  const suffixless = fileName.includes('.') ? fileName.split('.')[0] : fileName;
+
+  segments[segments.length - 1] = `${suffixless}.ai.md`;
+  return segments.join('/');
+}
+
 export function listNotes(savePath: string): NoteEntry[] {
   const notesRoot = getNotesRoot(savePath);
   if (!fs.existsSync(notesRoot)) {

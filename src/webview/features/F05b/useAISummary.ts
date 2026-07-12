@@ -280,10 +280,11 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
       commitHash: commit.hash,
       filePath: targetFile?.path,
       scope: summaryScope,
+      commitMessage: commit.message,
     } as const;
 
     if (!isVSCodeRuntime()) {
-      const normalized = ensureDemoNotePath(trimmed);
+      const normalized = ensureDemoAiNotePath(trimmed);
       markCurrentSummarySaved({
         content: displayedSummaryContent,
         savedPath: `${savePath}/${normalized}`,
@@ -296,7 +297,7 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
       return;
     }
 
-    const normalized = ensureDemoNotePath(trimmed);
+    const normalized = ensureDemoAiNotePath(trimmed);
     const noteExists = noteEntries.some((entry) => entry.relativePath === normalized);
 
     postMessage(noteExists ? 'SAVE_NOTE' : 'CREATE_NOTE', {
@@ -420,14 +421,12 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   };
 }
 
-function ensureDemoNotePath(relativePath: string): string {
+function ensureDemoAiNotePath(relativePath: string): string {
   const normalized = relativePath.replaceAll('\\', '/').trim().replace(/^\/+|\/+$/g, '');
   const parts = normalized.split('/').filter(Boolean);
   const fileName = parts.at(-1) ?? 'untitled';
-
-  if (!fileName.includes('.')) {
-    parts[parts.length - 1] = `${fileName}.md`;
-  }
+  const suffixless = fileName.includes('.') ? fileName.split('.')[0] : fileName;
+  parts[parts.length - 1] = `${suffixless}.ai.md`;
 
   return parts.join('/');
 }

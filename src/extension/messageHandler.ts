@@ -127,7 +127,7 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         await handleFetchNote(panel, message.payload as NotePayload);
         break;
       case 'FETCH_NOTE_TREE':
-        await handleFetchNoteTree(panel, message.payload as NotePayload);
+        await handleFetchNoteTree(panel, context, message.payload as NotePayload);
         break;
       case 'CREATE_NOTE':
         await handleCreateNote(panel, context, message.payload as NotePayload);

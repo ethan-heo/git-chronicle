@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
+import { DEMO_AI_SUMMARY_NOTE_ENTRIES } from '../../demo/aiSummarySamples';
 import { SidebarSection } from '../../shared/components';
 import { useAppStore } from '../../store/appStore';
 import type { NoteEntry } from '../../types/note';
@@ -31,7 +32,7 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
   const handleNoteDeleteFailed = useAppStore((state) => state.handleNoteDeleteFailed);
   const handleNoteMoved = useAppStore((state) => state.handleNoteMoved);
   const handleNoteMoveFailed = useAppStore((state) => state.handleNoteMoveFailed);
-  const openWorkspaceTab = useAppStore((state) => state.openWorkspaceTab);
+  const openNoteTreeEntry = useAppStore((state) => state.openNoteTreeEntry);
   const renameNoteTabs = useAppStore((state) => state.renameNoteTabs);
   const closeNoteTabs = useAppStore((state) => state.closeNoteTabs);
   const pushToast = useAppStore((state) => state.pushToast);
@@ -194,7 +195,7 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
             loadNoteTree();
             postMessage('FETCH_NOTE_TREE', { savePath });
           }}
-          onOpen={(relativePath: string) => openWorkspaceTab({ panelType: 'note', relativePath })}
+          onOpen={(relativePath: string) => openNoteTreeEntry(relativePath)}
           onDelete={(relativePath: string) => {
             if (!savePath) {
               return;
@@ -237,6 +238,7 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
 };
 
 const DEMO_NOTE_ENTRIES: NoteEntry[] = [
+  ...DEMO_AI_SUMMARY_NOTE_ENTRIES,
   createDemoNoteEntry('ideas/todo.md', '2026-07-11T09:00:00.000Z'),
   createDemoNoteEntry('ideas/retro.md', '2026-07-10T15:30:00.000Z'),
   createDemoNoteEntry('scratch.md', '2026-07-09T05:20:00.000Z'),

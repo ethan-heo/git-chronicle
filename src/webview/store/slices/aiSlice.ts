@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { isVSCodeRuntime } from '../../bridge/vscodeApi';
+import { DEMO_AI_SUMMARY_VIEW_CACHE } from '../../demo/aiSummarySamples';
 import type { AIProviderName } from '../../types/commit';
 import type { AppState } from '../appStore';
 
@@ -59,7 +60,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
   activeSummaryCommitHash: null,
   activeSummaryTargetKey: null,
   completedSummaryCache: {},
-  summaryViewCache: {},
+  summaryViewCache: isVSCodeRuntime() ? {} : DEMO_AI_SUMMARY_VIEW_CACHE,
 
   setAISummarySettings: (settings) => {
     set({

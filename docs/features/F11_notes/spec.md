@@ -11,6 +11,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 용어 | 정의 | 관련 코드 식별자 |
 |---|---|---|
 | 노트(Note) | `savePath` 아래 실제 파일로 저장되는 독립 마크다운 문서. 열려 있는 탭에서는 디바운스 자동저장된다 | `noteTree`, `relativePath`, `SAVE_NOTE` |
+| AI 요약 링크 노트 | F05b/F09에서 저장한 AI 요약 노트. `aiSummaryLink` 메타데이터가 있으면 클릭 시 일반 노트 대신 AI 요약 탭을 복원한다 | `aiSummaryLink`, `openNoteTreeEntry()` |
 | 노트 트리(Note Tree) | 실제 디렉토리 구조를 그대로 반영한 사이드바 목록. 폴더 펼침/접힘, 파일 클릭, 드래그 이동을 지원한다 | `NotesSection`, `buildNoteTree()` |
 
 ## Business Rules
@@ -22,7 +23,9 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 - 사이드바에서 파일을 폴더로 드래그하면 실제 파일도 같은 경로로 이동한다. 대상에 동명 파일이 있으면 이동을 거부한다.
 - 삭제는 인라인 재클릭 확인 방식이며, 파일 삭제 뒤 비어 있는 상위 폴더는 `savePath` 루트 직전까지 자동 정리한다.
 - 저장 방식은 명시적 버튼 없이 디바운스 자동저장이다.
-- F05b AI 요약을 [저장]하면 일반 노트와 동일한 `.md` 파일로 저장되어 이 노트 트리에 즉시 나타난다.
+- F05b AI 요약을 [저장]하면 `.ai.md` 파일로 저장되어 이 노트 트리에 즉시 나타난다.
+- `aiSummaryLink.commitMessage`가 포함된 AI 요약 노트를 클릭하면 일반 `note` 탭 대신 연결된 `aiSummary` 탭 또는 `code` 탭 내부 AI 요약 패널을 연다.
+- 이 기능 배포 전 저장돼 `aiSummaryLink.commitMessage`가 없는 기존 요약 노트는 하위 호환을 위해 계속 일반 `note` 탭으로 연다.
 - 탭 전환 또는 닫기로 `NoteEditorPanel`이 언마운트될 때 저장되지 않은 초안이 있으면 디바운스를 기다리지 않고 즉시 저장한다.
 - 저장 경로가 없으면 F05b와 동일한 "저장 경로를 먼저 설정해주세요" 안내를 사용한다.
 - F01/F02/F03/F04/F10에서 복사한 내용은 마크다운 또는 Mermaid 코드블록으로 클립보드에 기록된다.

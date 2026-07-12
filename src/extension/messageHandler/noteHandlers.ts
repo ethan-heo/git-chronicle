@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { createNote, deleteNote, listNotes, moveNote, NoteFileError, readNote, writeNote, type NoteEntry } from '../noteFileService';
-import { linkSummaryToNote, moveLinkedSummaryNote, removeLinkedSummaryNote, type SummaryLinkContext } from '../summaryNoteLinkService';
+import { createNote, deleteNote, ensureAiMdExtension, listNotes, moveNote, NoteFileError, readNote, writeNote } from '../noteFileService';
+import { getSummaryLinkByNoteRelativePath, linkSummaryToNote, moveLinkedSummaryNote, removeLinkedSummaryNote, type SummaryLinkContext } from '../summaryNoteLinkService';
 import { l10n } from './shared';
 
 export interface NotePayload {
@@ -13,11 +13,33 @@ export interface NotePayload {
   linkContext?: SummaryLinkContext;
 }
 
-async function postNoteTree(panel: vscode.WebviewPanel, entries: NoteEntry[]): Promise<void> {
+interface NoteTreeEntryPayload {
+  relativePath: string;
+  name: string;
+  updatedAt: string;
+  aiSummaryLink?: {
+    commitHash: string;
+    filePath?: string | null;
+    scope: 'commit' | 'file';
+    commitMessage: string;
+  } | null;
+}
+
+async function postNoteTree(panel: vscode.WebviewPanel, entries: NoteTreeEntryPayload[]): Promise<void> {
   await panel.webview.postMessage({
     type: 'NOTE_TREE_LOADED',
     payload: { entries },
   });
+}
+
+function buildNoteTreeEntries(
+  context: vscode.ExtensionContext,
+  savePath: string,
+): NoteTreeEntryPayload[] {
+  return listNotes(savePath).map((entry) => ({
+    ...entry,
+    aiSummaryLink: getSummaryLinkByNoteRelativePath(context, entry.relativePath),
+  }));
 }
 
 function getNoteErrorMessage(error: unknown, fallbackMessage: string): string {
@@ -97,9 +119,10 @@ export async function handleSaveNote(panel: vscode.WebviewPanel, context: vscode
   }
 
   try {
-    const saved = writeNote(payload.savePath, payload.relativePath, payload.content ?? '');
+    const noteRelativePath = payload.linkContext ? ensureAiMdExtension(payload.relativePath) : payload.relativePath;
+    const saved = writeNote(payload.savePath, noteRelativePath, payload.content ?? '');
     if (payload.linkContext) {
-      await linkSummaryToNote(context, payload.linkContext, payload.relativePath);
+      await linkSummaryToNote(context, payload.linkContext, noteRelativePath);
     }
     await panel.webview.postMessage({
       type: 'NOTE_SAVED',
@@ -114,7 +137,7 @@ export async function handleSaveNote(panel: vscode.WebviewPanel, context: vscode
       await postSummaryNoteLinked(panel, {
         content: saved.content,
         savedPath: saved.savedPath,
-        noteRelativePath: payload.relativePath,
+        noteRelativePath,
         linkContext: payload.linkContext,
       });
     }
@@ -126,7 +149,7 @@ export async function handleSaveNote(panel: vscode.WebviewPanel, context: vscode
   }
 }
 
-export async function handleFetchNoteTree(panel: vscode.WebviewPanel, payload: NotePayload = {}): Promise<void> {
+export async function handleFetchNoteTree(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: NotePayload = {}): Promise<void> {
   if (!payload.savePath) {
     await panel.webview.postMessage({
       type: 'NOTE_TREE_LOAD_FAILED',
@@ -136,7 +159,7 @@ export async function handleFetchNoteTree(panel: vscode.WebviewPanel, payload: N
   }
 
   try {
-    await postNoteTree(panel, listNotes(payload.savePath));
+    await postNoteTree(panel, buildNoteTreeEntries(context, payload.savePath));
   } catch (error) {
     await panel.webview.postMessage({
       type: 'NOTE_TREE_LOAD_FAILED',
@@ -155,7 +178,8 @@ export async function handleCreateNote(panel: vscode.WebviewPanel, context: vsco
   }
 
   try {
-    const entry = createNote(payload.savePath, payload.relativePath);
+    const noteRelativePath = payload.linkContext ? ensureAiMdExtension(payload.relativePath) : payload.relativePath;
+    const entry = createNote(payload.savePath, noteRelativePath);
     if (payload.linkContext) {
       await linkSummaryToNote(context, payload.linkContext, entry.relativePath);
       const saved = writeNote(payload.savePath, entry.relativePath, payload.content ?? '');
@@ -167,7 +191,7 @@ export async function handleCreateNote(panel: vscode.WebviewPanel, context: vsco
       });
     }
     await panel.webview.postMessage({ type: 'NOTE_CREATED', payload: { entry } });
-    await postNoteTree(panel, listNotes(payload.savePath));
+    await postNoteTree(panel, buildNoteTreeEntries(context, payload.savePath));
   } catch (error) {
     await panel.webview.postMessage({
       type: 'NOTE_CREATE_FAILED',
@@ -192,7 +216,7 @@ export async function handleDeleteNote(panel: vscode.WebviewPanel, context: vsco
     deleteNote(payload.savePath, payload.relativePath);
     await removeLinkedSummaryNote(context, payload.relativePath);
     await panel.webview.postMessage({ type: 'NOTE_DELETED', payload: { relativePath: payload.relativePath } });
-    await postNoteTree(panel, listNotes(payload.savePath));
+    await postNoteTree(panel, buildNoteTreeEntries(context, payload.savePath));
   } catch (error) {
     await panel.webview.postMessage({
       type: 'NOTE_DELETE_FAILED',
@@ -220,7 +244,7 @@ export async function handleMoveNote(panel: vscode.WebviewPanel, context: vscode
       type: 'NOTE_MOVED',
       payload: { fromRelativePath: payload.fromRelativePath, toRelativePath: entry.relativePath },
     });
-    await postNoteTree(panel, listNotes(payload.savePath));
+    await postNoteTree(panel, buildNoteTreeEntries(context, payload.savePath));
   } catch (error) {
     await panel.webview.postMessage({
       type: 'NOTE_MOVE_FAILED',
