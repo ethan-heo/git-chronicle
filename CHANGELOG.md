@@ -1,4 +1,21 @@
 
+## [1.5.0](https://github.com/ethan-heo/git-chronicle/compare/v1.4.0...v1.5.0) (2026-07-12)
+
+### Features
+
+* **f05b:** add folder suggestion dropdown for save path ([d001715](https://github.com/ethan-heo/git-chronicle/commit/d00171577d4f7038be45214aeef0df92e5bab4d4))
+* **ai-summary:** improve save path popover autocomplete ([03302b1](https://github.com/ethan-heo/git-chronicle/commit/03302b1a0fab19e38df89835a06a5e783e92b61a))
+* **note:** reopen ai summary notes in summary tabs ([c6aff72](https://github.com/ethan-heo/git-chronicle/commit/c6aff72e43ada47ae3c8921f297f7524f562b7ee))
+* **webview:** unify icon button accessibility and styling ([ca9d7bf](https://github.com/ethan-heo/git-chronicle/commit/ca9d7bf6459dcbe6bc53ae4fbfdfcb87e1715d1b))
+* replace note sidebar text actions with icons ([9ccb3d4](https://github.com/ethan-heo/git-chronicle/commit/9ccb3d42413fcb498e8a07df1f7cb894274ec4a2))
+* **notes:** save ai summaries as notes ([f13adec](https://github.com/ethan-heo/git-chronicle/commit/f13adec19b0259c34ade7ff59bbfa4478932dac4))
+* add standalone notes workspace ([e6bbcf3](https://github.com/ethan-heo/git-chronicle/commit/e6bbcf306877775403d29df04cdf30fbe150978d))
+* **workspace:** merge dragged tabs into existing panes ([7cf0a1a](https://github.com/ethan-heo/git-chronicle/commit/7cf0a1a69944bb3ecb5c99fa9538a69f969b34b3))
+
+### Bug Fixes
+
+* **workspace:** move notes section below changed files ([b301c7b](https://github.com/ethan-heo/git-chronicle/commit/b301c7bb61b01fe4993f3f4c1cbed3ad97ecfd76))
+
 ## [1.4.0](https://github.com/ethan-heo/git-chronicle/compare/v1.3.0...v1.4.0) (2026-07-10)
 
 ### Features
