@@ -209,8 +209,8 @@ export const MarkdownLiveEditor: FC<MarkdownLiveEditorProps> = ({ value, onChang
           highlightActiveLine(),
           markdown(),
           keymap.of([
-            { key: 'ArrowUp', run: (v) => moveVerticalLineAvoidingMermaid(v, false) },
-            { key: 'ArrowDown', run: (v) => moveVerticalLineAvoidingMermaid(v, true) },
+            { key: 'ArrowUp', run: (v) => moveVerticalLineAvoidingLayoutAmbiguity(v, false) },
+            { key: 'ArrowDown', run: (v) => moveVerticalLineAvoidingLayoutAmbiguity(v, true) },
             ...defaultKeymap,
             ...historyKeymap,
             indentWithTab,
@@ -655,27 +655,25 @@ function hasActiveLine(activeLines: Set<number>, fromLine: number, toLine: numbe
   return false;
 }
 
-// CodeMirror의 내부 posAtCoords()는 세로 방향 커서 이동 시 block:true 위젯을 건너뛰는 로직에서
-// 위젯 바로 다음 실제 줄과의 경계를 잘못 판정하는 결함이 있다(CodeMirror 6.43.6 기준). 그 결과
-// mermaid 다이어그램 위젯을 지나쳐 방향키로 이동할 때 커서가 엉뚱한 줄로 튄다. 픽셀 좌표 기반인
-// CodeMirror 기본 알고리즘을 우회하고, 우리가 이미 알고 있는 논리적 줄 구조로 직접 다음 줄을
-// 계산해 이 문제를 피한다. mermaid 다이어그램이 없는 노트에서는 관여하지 않는다.
-function moveVerticalLineAvoidingMermaid(view: EditorView, forward: boolean): boolean {
+// CodeMirror의 내부 posAtCoords()는 세로 방향 커서 이동 시 픽셀 좌표만으로 목표 위치를 찾는데,
+// 두 가지 경우에 그 좌표 계산이 실제 문서 위치와 어긋나는 결함이 있다(CodeMirror 6.43.6 기준).
+// 1) block:true 위젯(mermaid 다이어그램)을 건너뛸 때 위젯 바로 다음 실제 줄과의 경계를 잘못
+//    판정해 커서가 엉뚱한 줄로 튄다.
+// 2) 이동할 줄이 폭 0인 hiddenSyntaxDecoration으로 문법 기호(헤딩 `#`, 인용구 `>`, **굵게**,
+//    *기울임*, `링크`, `인라인 코드`, ~~취소선~~ 등)를 줄 맨 앞에서 숨기고 있을 때, 그 폭 0 구간의
+//    시작과 끝이 화면상 같은 x좌표에 놓여 posAtCoords가 어느 위치인지 구분하지 못하고 항상 구간
+//    끝(문법 기호 바로 뒤)으로 커서를 보낸다. 그 결과 인용구 등 바로 아래 줄에서 위로 이동하면
+//    커서가 줄 맨 앞이 아니라 숨겨진 기호 뒤로 튄다.
+// 두 경우 모두 픽셀 좌표 기반 기본 알고리즘을 우회하고, 우리가 이미 알고 있는 논리적 줄 구조로
+// 직접 다음 줄과 컬럼을 계산해 문제를 피한다. 두 상황에 해당하지 않는 일반적인 이동(줄바꿈된 긴
+// 줄 사이 이동 등)에는 관여하지 않고 CodeMirror 기본 동작에 맡긴다.
+function moveVerticalLineAvoidingLayoutAmbiguity(view: EditorView, forward: boolean): boolean {
   const range = view.state.selection.main;
   if (!range.empty) {
     return false;
   }
 
   const doc = view.state.doc;
-  const blocks = parseCodeBlocks(doc.toString());
-  const collapsedMermaidBlocks = blocks.filter(
-    (block) => block.language === 'mermaid' && block.contentTo > block.contentFrom && renderedDiagramCache.has(`cm-mermaid-${block.key}`),
-  );
-
-  if (collapsedMermaidBlocks.length === 0) {
-    return false;
-  }
-
   const currentLine = doc.lineAt(range.head);
   const column = range.head - currentLine.from;
   let targetLineNumber = currentLine.number + (forward ? 1 : -1);
@@ -684,11 +682,23 @@ function moveVerticalLineAvoidingMermaid(view: EditorView, forward: boolean): bo
     return false;
   }
 
-  const collapsingBlock = collapsedMermaidBlocks.find(
-    (block) => targetLineNumber > block.fenceStartLine && targetLineNumber < block.fenceEndLine,
+  const blocks = parseCodeBlocks(doc.toString());
+  const collapsingBlock = blocks.find(
+    (block) =>
+      block.language === 'mermaid' &&
+      block.contentTo > block.contentFrom &&
+      renderedDiagramCache.has(`cm-mermaid-${block.key}`) &&
+      targetLineNumber > block.fenceStartLine &&
+      targetLineNumber < block.fenceEndLine,
   );
+
   if (collapsingBlock) {
     targetLineNumber = forward ? collapsingBlock.fenceEndLine : collapsingBlock.fenceStartLine;
+  } else {
+    const hiddenPrefixLength = getLeadingHiddenMarkerLength(doc.line(targetLineNumber).text);
+    if (hiddenPrefixLength === 0 || column > hiddenPrefixLength) {
+      return false;
+    }
   }
 
   const targetLine = doc.line(targetLineNumber);
@@ -700,6 +710,22 @@ function moveVerticalLineAvoidingMermaid(view: EditorView, forward: boolean): bo
     userEvent: 'select',
   });
   return true;
+}
+
+// 어떤 줄이 비활성 상태(커서가 그 줄에 없음)일 때 hiddenSyntaxDecoration으로 줄 맨 앞부터
+// 몇 글자를 숨기는지 계산한다. decorateLine과 동일한 규칙을 재사용해 판정 로직이 어긋나지
+// 않도록 한다. 체크박스·목록처럼 위젯으로 치환되는 마커는 폭이 0이 아니므로 대상에서 제외된다.
+function getLeadingHiddenMarkerLength(text: string): number {
+  const probe: PendingDecoration[] = [];
+  decorateLine(probe, 0, text, false);
+
+  let length = 0;
+  for (const entry of probe) {
+    if (entry.from === 0 && entry.decoration === hiddenSyntaxDecoration) {
+      length = Math.max(length, entry.to);
+    }
+  }
+  return length;
 }
 
 function parseCodeBlocks(content: string): ParsedCodeBlock[] {
