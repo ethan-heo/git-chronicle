@@ -13,7 +13,10 @@ const resolveOptions = payload.resolveOptions && typeof payload.resolveOptions =
 const transpileOptions = payload.transpileOptions && typeof payload.transpileOptions === 'object' ? payload.transpileOptions : undefined;
 
 const result = await cruise(files, options, resolveOptions, transpileOptions);
-process.stdout.write(`${JSON.stringify(result)}\n`);
+// cruise() resolves to { output, exitCode }, not the cruise result itself.
+// For outputType: 'json' (used by dependencyService.ts), `output` is already a JSON string.
+const output = typeof result.output === 'string' ? result.output : JSON.stringify(result.output);
+process.stdout.write(`${output}\n`);
 
 async function readStdin() {
   const chunks = [];

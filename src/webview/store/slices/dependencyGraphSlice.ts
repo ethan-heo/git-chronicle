@@ -7,6 +7,7 @@ export interface DependencyGraphStateEntry {
   dependencyEdges: DependencyEdge[];
   isLoading: boolean;
   error: string | null;
+  hasLoaded: boolean;
 }
 
 export interface DependencyGraphSlice {
@@ -32,6 +33,7 @@ export const EMPTY_DEPENDENCY_GRAPH_STATE: DependencyGraphStateEntry = {
   dependencyEdges: [],
   isLoading: false,
   error: null,
+  hasLoaded: false,
 };
 
 function getEntry(state: AppState, paneId: string): DependencyGraphStateEntry {
@@ -82,6 +84,7 @@ export const createDependencyGraphSlice: StateCreator<AppState, [], [], Dependen
           dependencyEdges: edges,
           isLoading: false,
           error: null,
+          hasLoaded: true,
         },
       },
     }));
@@ -95,6 +98,7 @@ export const createDependencyGraphSlice: StateCreator<AppState, [], [], Dependen
           dependencyEdges: [],
           isLoading: false,
           error: message,
+          hasLoaded: true,
         },
       },
     }));

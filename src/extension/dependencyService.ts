@@ -739,14 +739,35 @@ function getDependencyCruiserBinPath(): string {
   return candidatePaths[0];
 }
 
+const DEPENDENCY_CRUISER_TIMEOUT_MS = 30_000;
+
 function runDependencyCruiser(scriptPath: string, payload: unknown, cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [scriptPath], {
       cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        // process.execPath is the VSCode/Electron binary inside the extension host; without this,
+        // the child launches as Electron (GUI init) instead of plain Node and can hang indefinitely.
+        ELECTRON_RUN_AS_NODE: '1',
+        // Strips any inherited --inspect flag from the debugged extension host so the child doesn't
+        // try to bind the same debug port and hang waiting for a debugger to attach.
+        NODE_OPTIONS: '',
+      },
     });
     const stdoutChunks: Buffer[] = [];
     const stderrChunks: Buffer[] = [];
+    let settled = false;
+
+    const timeoutId = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      child.kill();
+      reject(new Error(`dependency-cruiser timed out after ${DEPENDENCY_CRUISER_TIMEOUT_MS / 1000}s`));
+    }, DEPENDENCY_CRUISER_TIMEOUT_MS);
 
     child.stdout?.on('data', (chunk: Buffer) => {
       stdoutChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -756,10 +777,24 @@ function runDependencyCruiser(scriptPath: string, payload: unknown, cwd: string)
       stderrChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     });
 
-    child.on('error', reject);
+    child.on('error', (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(error);
+    });
+
     child.stdin?.end(`${JSON.stringify(payload)}\n`);
 
     child.on('close', (code) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timeoutId);
+
       const stdout = Buffer.concat(stdoutChunks).toString('utf8');
       const stderr = Buffer.concat(stderrChunks).toString('utf8');
 

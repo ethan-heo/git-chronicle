@@ -33,7 +33,7 @@ export function useDependencyCanvas(options: { isActive: boolean; paneId: string
       return;
     }
 
-    if (changedFilesState.changedFiles.length > 0 && !changedFilesState.isLoading && !changedFilesState.error && dependencyState.dependencyEdges.length === 0 && !dependencyState.isLoading && !dependencyState.error) {
+    if (changedFilesState.changedFiles.length > 0 && !changedFilesState.isLoading && !changedFilesState.error && !dependencyState.hasLoaded && !dependencyState.isLoading && !dependencyState.error) {
       loadDependencies({
         paneId,
         commitHash: commit.hash,
@@ -46,7 +46,7 @@ export function useDependencyCanvas(options: { isActive: boolean; paneId: string
     changedFilesState.hasLoaded,
     changedFilesState.isLoading,
     commit,
-    dependencyState.dependencyEdges.length,
+    dependencyState.hasLoaded,
     dependencyState.error,
     dependencyState.isLoading,
     isActive,
