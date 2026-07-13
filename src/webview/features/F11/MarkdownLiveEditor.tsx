@@ -463,7 +463,12 @@ function decorateLine(pending: PendingDecoration[], lineFrom: number, text: stri
       return;
     }
 
-    pending.push({ from: lineFrom, to: lineFrom + text.length, decoration: Decoration.replace({ block: true, widget: new HorizontalRuleWidget() }) });
+    // MermaidWidget과 달리 block:true를 주지 않는다. 이 줄은 어차피 한 줄 전체를 위젯으로
+    // 대체하므로 block:true 없이도 정상적으로 렌더링되는데, block:true를 주면 CodeMirror
+    // 6.43.6의 posAtCoords/moveVertically가 이 위젯보다 아래에 있는 모든 줄에서 세로 방향
+    // 커서 이동 좌표를 잘못 계산해, 거리와 무관하게 항상 위젯 바로 앞 줄로 커서가 튄다
+    // (moveVerticalLineAvoidingLayoutAmbiguity의 mermaid collapsingBlock 주석과 같은 결함).
+    pending.push({ from: lineFrom, to: lineFrom + text.length, decoration: Decoration.replace({ widget: new HorizontalRuleWidget() }) });
     return;
   }
 
@@ -849,6 +854,13 @@ class ListMarkerWidget extends WidgetType {
 }
 
 class HorizontalRuleWidget extends WidgetType {
+  // CheckboxWidget/ListMarkerWidget/MermaidWidget처럼 eq()를 둬서, 셀렉션만 바뀌어 내용은
+  // 그대로인 buildDecorations() 재계산에서도 CodeMirror가 이 위젯의 DOM을 불필요하게
+  // 파괴·재생성하지 않도록 한다(WidgetType 기본 eq()는 항상 false를 반환한다).
+  eq(): boolean {
+    return true;
+  }
+
   toDOM(): HTMLElement {
     const element = document.createElement('div');
     element.className = 'cm-md-hr';
