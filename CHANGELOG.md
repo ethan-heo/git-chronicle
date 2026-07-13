@@ -1,4 +1,20 @@
 
+## [1.7.0](https://github.com/ethan-heo/git-chronicle/compare/v1.6.0...v1.7.0) (2026-07-13)
+
+### Features
+
+* **f11:** add table live preview to note editor ([3240ba8](https://github.com/ethan-heo/git-chronicle/commit/3240ba89f2659bbf32fe07bd9fb5af5514524058))
+* add workspace tab keyboard shortcuts ([d505be7](https://github.com/ethan-heo/git-chronicle/commit/d505be740b2719815dae498f3e94e94211bcf158))
+* **workspace:** clarify split pane tab visibility state ([c69bac8](https://github.com/ethan-heo/git-chronicle/commit/c69bac8657e447efac03b825543e46f4ec270889))
+* **workspace:** isolate sidebar context from tab focus changes ([1ba97d5](https://github.com/ethan-heo/git-chronicle/commit/1ba97d5b864aaa8124f08bac1bb491365630259b))
+
+### Bug Fixes
+
+* **workspace:** route close-tab shortcut through host ([00c0f3a](https://github.com/ethan-heo/git-chronicle/commit/00c0f3af149b9d671658ac2a4600f4b28c1f9ca5))
+* **dependency:** stabilize dependency cruiser execution ([da5f920](https://github.com/ethan-heo/git-chronicle/commit/da5f920247fc48d7f7c3373d6fdf67954208d50a))
+* **workspace:** guard code panels during file-tree loading ([6cbe1af](https://github.com/ethan-heo/git-chronicle/commit/6cbe1af865d1fff4e479cd9eb4cb07062cd9ebe0))
+* **notes:** stabilize folded-block cursor navigation ([6a6f56a](https://github.com/ethan-heo/git-chronicle/commit/6a6f56af6ec4852ed09509dc00c22d6754ffc433))
+
 ## [1.6.0](https://github.com/ethan-heo/git-chronicle/compare/v1.5.0...v1.6.0) (2026-07-13)
 
 ### Features
