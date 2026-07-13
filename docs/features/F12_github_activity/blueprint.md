@@ -60,6 +60,7 @@ interface IssuesSectionProps {
 ```
 
 `isExpanded`/`onToggleExpanded`는 `S02_WorkspaceScreen`이 소유하고 `SidebarSectionGroup`에 전달하는 controlled 상태다(컴포넌트 로컬 상태가 아니다) — `CommitsSection`/`FileTreeSection`과 동일한 패턴.
+`activePRNumber`/`activeIssueNumber`는 포커스된 탭에서 파생하지 않고 `workspaceTabsSlice`의 `sidebarActivePRNumber`/`sidebarActiveIssueNumber`를 그대로 전달한다. 즉, 사이드바에서 해당 번호를 열 때만 갱신되고 단순 탭 포커스 전환으로는 바뀌지 않는다.
 
 #### Interaction
 - 마운트 시 `PULL_REQUESTS_LOADED`/`PULL_REQUESTS_LOAD_FAILED`(`ISSUES_*`) 메시지를 구독한다. 최초 로드 트리거는 `githubSlice`의 `handleGithubAuthState`가 인증 성공 시 자동으로 호출한다.

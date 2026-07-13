@@ -57,6 +57,8 @@ export const S02WorkspaceScreen: FC = () => {
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const paneTree = useAppStore((state) => state.paneTree);
   const focusedPaneId = useAppStore((state) => state.focusedPaneId);
+  const sidebarActivePRNumber = useAppStore((state) => state.sidebarActivePRNumber);
+  const sidebarActiveIssueNumber = useAppStore((state) => state.sidebarActiveIssueNumber);
   const openWorkspaceTab = useAppStore((state) => state.openWorkspaceTab);
   const closeWorkspaceTab = useAppStore((state) => state.closeWorkspaceTab);
   const activateWorkspaceTab = useAppStore((state) => state.activateWorkspaceTab);
@@ -196,8 +198,8 @@ export const S02WorkspaceScreen: FC = () => {
     openWorkspaceTab({ panelType: 'issue', issueNumber: issue.number, title: issue.title });
   }, [openWorkspaceTab]);
 
-  const activePRNumber = activeTab?.panelType === 'pr' ? activeTab.prNumber ?? null : null;
-  const activeIssueNumber = activeTab?.panelType === 'issue' ? activeTab.issueNumber ?? null : null;
+  const activePRNumber = sidebarActivePRNumber;
+  const activeIssueNumber = sidebarActiveIssueNumber;
 
   useEffect(() => {
     mergePersistedWebviewState({

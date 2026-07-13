@@ -149,13 +149,13 @@ S02_WorkspaceScreen
 - `PaneTree`는 leaf pane 또는 split pane으로 이루어진 재귀 트리다. split pane은 `ResizableSplitPane`을 재사용해 좌우/상하 분할을 렌더링한다.
 - `WorkspaceTabBar`의 좌측 탭 목록은 가로 스크롤되고, 스크롤바가 탭 내용을 덮지 않도록 `scrollbar-gutter`와 하단 여백을 둔다.
 - `WorkspaceTabBar` 우측의 `AISummaryToggleButton` / `FileCanvasToggleButton`은 `PaneActionsGroup`으로 묶여 기본 접힘 상태이며, 그룹 토글 버튼을 눌러야 펼쳐진다. 이 펼침 상태는 leaf pane별로 독립이며 Webview State에 저장되지 않는다.
-- leaf pane은 클릭해도 포커스 강조 아웃라인을 표시하지 않는다. `focusedPaneId`는 사이드바 커밋/파일 컨텍스트가 어느 pane을 따를지 결정하는 내부 상태로만 쓰인다.
+- leaf pane은 클릭해도 포커스 강조 아웃라인을 표시하지 않는다. `focusedPaneId`는 pane-local 본문 상호작용과 탭 조작의 대상 pane을 결정하는 내부 상태로만 쓰이며, 이미 열린 탭 사이를 오갈 때 사이드바 커밋/PR/Issue 컨텍스트를 바꾸지 않는다.
 - 같은 대상(`panelType + commitHash + filePath`, `note:${relativePath}`, `pr:${number}`, `issue:${number}`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.
 - 최상위 워크스페이스 탭은 `code` / `aiSummary` / `fileCanvas` / `note` / `pr` / `issue` 여섯 종류를 연다. 파일 단위 AI 요약과 심볼 캔버스는 독립 탭이 아니라 `code` 탭 내부 토글로만 연다.
-- `pr`/`issue` 탭은 사이드바 `PRsSection`/`IssuesSection` 목록 클릭으로 연다. 커밋과 무관하므로 탭 식별은 `panelType + prNumber`/`panelType + issueNumber`를 쓰고(F02 나머지 탭의 `panelType + commitHash + filePath`와 별도 규칙), 이 탭이 포커스돼도 사이드바의 `selectedCommit` 기반 커밋 컨텍스트(파일 트리 등)는 갱신되지 않고 마지막 값을 그대로 유지한다.
+- `pr`/`issue` 탭은 사이드바 `PRsSection`/`IssuesSection` 목록 클릭으로 연다. 커밋과 무관하므로 탭 식별은 `panelType + prNumber`/`panelType + issueNumber`를 쓰고(F02 나머지 탭의 `panelType + commitHash + filePath`와 별도 규칙), 이 탭이 포커스돼도 사이드바의 `selectedCommit` 기반 커밋 컨텍스트(파일 트리 등)는 갱신되지 않고 마지막 값을 그대로 유지한다. PR/Issue 섹션의 활성 하이라이트도 마찬가지로 사이드바 목록 클릭에서만 바뀐다.
 - 탭을 드래그해 다른 leaf pane의 상/하/좌/우 가장자리로 드롭하면 해당 방향으로 pane이 분할된다. 다른 pane의 탭바 전체 또는 본문 중앙(가장자리 25% 바깥)에 드롭하면 새 분할 없이 해당 pane의 탭 목록 끝에 병합되어 활성화된다. 타겟 pane에 같은 대상 탭이 이미 열려 있으면 중복 생성하지 않고 기존 탭만 활성화하며, 같은 pane 안에서 탭바/본문 중앙으로 재드롭하는 동작은 무시한다.
 - 탭을 닫으면 같은 pane 안에서 오른쪽 우선 fallback 탭을 활성화하고, leaf pane의 마지막 탭을 닫으면 그 pane은 트리에서 제거되며 sibling pane이 공간을 승계한다.
-- 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환되며, 사이드바의 커밋/파일 컨텍스트는 `focusedPaneId`가 가리키는 leaf pane을 따른다.
+- 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환된다. 다만 이미 열린 탭 사이의 포커스 전환, 탭 닫기 fallback, 중앙 드롭 병합 활성화는 사이드바의 커밋/파일/PR/Issue 컨텍스트를 바꾸지 않으며, 사이드바에서 새 항목을 열 때만 그 컨텍스트가 갱신된다.
 - 분할 레이아웃은 Webview State에 저장하지 않는다. 웹뷰 재생성 후에는 단일 pane으로 초기화된다.
 - 노트는 사이드바 `NotesSection`에서만 열며, S02 내부 `note` 탭으로 표시된다. 탭 이탈 시 저장되지 않은 초안은 즉시 플러시 저장되고, 목록에서 드래그 이동/삭제하면 열린 note 탭도 같은 `relativePath` 기준으로 갱신된다.
 - `code` 탭 내부의 `codeInnerPanels`(파일 AI 요약 / 심볼 캔버스) 상태도 최상위 pane 분할과 마찬가지로 영속화하지 않는다.

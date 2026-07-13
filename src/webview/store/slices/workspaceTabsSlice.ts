@@ -53,6 +53,8 @@ export type PaneNode = PaneLeafNode | PaneSplitNode;
 export interface WorkspaceTabsSlice {
   paneTree: PaneNode;
   focusedPaneId: string;
+  sidebarActivePRNumber: number | null;
+  sidebarActiveIssueNumber: number | null;
   openWorkspaceTab: (input: OpenWorkspaceTabInput) => void;
   openNoteTreeEntry: (relativePath: string) => void;
   closeWorkspaceTab: (paneId: string, tabId: string) => void;
@@ -318,6 +320,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
   return {
     paneTree: rootPane,
     focusedPaneId: rootPane.paneId,
+    sidebarActivePRNumber: null,
+    sidebarActiveIssueNumber: null,
 
     openWorkspaceTab: (input) => {
       const nextTab = createWorkspaceTab(input);
@@ -331,6 +335,13 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
 
       const existingTab = targetPane.tabs.find((tab) => tab.id === nextTab.id);
       if (existingTab) {
+        set((current) => ({
+          selectedCommit: nextTab.commit ?? current.selectedCommit,
+          sidebarActivePRNumber: nextTab.panelType === 'pr' ? nextTab.prNumber ?? null : current.sidebarActivePRNumber,
+          sidebarActiveIssueNumber: nextTab.panelType === 'issue'
+            ? nextTab.issueNumber ?? null
+            : current.sidebarActiveIssueNumber,
+        }));
         get().activateWorkspaceTab(targetPaneId, existingTab.id);
         return;
       }
@@ -350,6 +361,10 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
         focusedPaneId: targetPaneId,
         // note/pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
         selectedCommit: nextTab.commit ?? current.selectedCommit,
+        sidebarActivePRNumber: nextTab.panelType === 'pr' ? nextTab.prNumber ?? null : current.sidebarActivePRNumber,
+        sidebarActiveIssueNumber: nextTab.panelType === 'issue'
+          ? nextTab.issueNumber ?? null
+          : current.sidebarActiveIssueNumber,
       }));
     },
 
@@ -407,12 +422,10 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
         ? removeLeafPane(updatedTree, paneId) ?? createLeafPane()
         : updatedTree;
       const nextFocusedPane = findLeafPane(collapsedTree, state.focusedPaneId) ?? getFirstLeafPane(collapsedTree);
-      const nextActiveTab = getActiveTab(nextFocusedPane);
 
       set({
         paneTree: collapsedTree,
         focusedPaneId: nextFocusedPane.paneId,
-        selectedCommit: nextActiveTab?.commit ?? state.selectedCommit,
       });
     },
 
@@ -429,8 +442,6 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           ? { ...currentPane, activeTabId: tabId }
           : currentPane),
         focusedPaneId: paneId,
-        // note/pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
-        selectedCommit: tab.commit ?? current.selectedCommit,
       }));
     },
 
@@ -468,27 +479,22 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
         return;
       }
 
-      const activeTab = getActiveTab(pane);
-      set((state) => ({
+      set({
         focusedPaneId: paneId,
-        // note/pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
-        selectedCommit: activeTab?.commit ?? state.selectedCommit,
-      }));
+      });
     },
 
     moveWorkspaceTab: ({ sourcePaneId, tabId, targetPaneId, zone }) => {
       const state = get();
-      const movingTab = findLeafPane(state.paneTree, sourcePaneId)?.tabs.find((tab) => tab.id === tabId) ?? null;
       const nextTree = zone === 'center'
         ? mergeTabIntoLeaf(state.paneTree, sourcePaneId, targetPaneId, tabId)
         : moveTabBetweenLeaves(state.paneTree, sourcePaneId, targetPaneId, tabId, zone);
 
       if (zone === 'center') {
-        set((current) => ({
+        set({
           paneTree: nextTree,
           focusedPaneId: targetPaneId,
-          selectedCommit: movingTab?.commit ?? current.selectedCommit,
-        }));
+        });
         return;
       }
 

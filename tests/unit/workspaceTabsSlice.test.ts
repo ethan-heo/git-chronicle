@@ -53,7 +53,7 @@ describe('workspaceTabsSlice closeWorkspaceTab', () => {
     expect(nextState.paneTree.activeTabId).toBeNull();
   });
 
-  it('switches the selected commit to the fallback tab commit when another tab remains', async () => {
+  it('keeps the current sidebar commit when another tab remains after closing the active tab', async () => {
     const { useAppStore } = await import('../../src/webview/store/appStore');
     const state = useAppStore.getState();
 
@@ -69,12 +69,36 @@ describe('workspaceTabsSlice closeWorkspaceTab', () => {
     useAppStore.getState().closeWorkspaceTab(pane.paneId, pane.activeTabId);
 
     const nextState = useAppStore.getState();
-    expect(nextState.selectedCommit).toEqual(commitA);
+    expect(nextState.selectedCommit).toEqual(commitB);
     expect(nextState.paneTree.kind).toBe('leaf');
     if (nextState.paneTree.kind !== 'leaf') {
       throw new Error('Expected a single leaf pane after closing the active tab');
     }
     expect(nextState.paneTree.activeTabId).toBe('aiSummary:aaaaaaaa:_');
+  });
+
+  it('keeps the sidebar commit when fallback activates another open tab', async () => {
+    const { useAppStore } = await import('../../src/webview/store/appStore');
+    const state = useAppStore.getState();
+
+    state.selectCommit(commitA);
+    state.openWorkspaceTab({ panelType: 'aiSummary', commit: commitA });
+    state.openWorkspaceTab({ panelType: 'fileCanvas', commit: commitB });
+    state.openWorkspaceTab({ panelType: 'aiSummary', commit: commitA });
+
+    const pane = useAppStore.getState().paneTree;
+    if (pane.kind !== 'leaf' || !pane.activeTabId) {
+      throw new Error('Expected a single active leaf pane');
+    }
+
+    useAppStore.getState().closeWorkspaceTab(pane.paneId, pane.activeTabId);
+
+    const nextState = useAppStore.getState();
+    expect(nextState.selectedCommit).toEqual(commitA);
+    if (nextState.paneTree.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane after closing the active tab');
+    }
+    expect(nextState.paneTree.activeTabId).toBe('fileCanvas:bbbbbbbb:_');
   });
 });
 
@@ -105,6 +129,8 @@ describe('workspaceTabsSlice pr/issue tabs (F12)', () => {
     expect(prTab?.commit).toBeNull();
     expect(prTab?.prNumber).toBe(42);
     expect(prTab?.title).toBe('fix: race condition');
+    expect(nextState.sidebarActivePRNumber).toBe(42);
+    expect(nextState.sidebarActiveIssueNumber).toBeNull();
   });
 
   it('reopening the same pr number activates the existing tab instead of creating a new one', async () => {
@@ -121,6 +147,7 @@ describe('workspaceTabsSlice pr/issue tabs (F12)', () => {
     }
     expect(pane.tabs).toHaveLength(2);
     expect(pane.activeTabId).toBe('pr:42');
+    expect(useAppStore.getState().sidebarActivePRNumber).toBe(42);
   });
 
   it('closing the active pr tab falls back to keeping the last selected commit', async () => {
@@ -138,6 +165,52 @@ describe('workspaceTabsSlice pr/issue tabs (F12)', () => {
     useAppStore.getState().closeWorkspaceTab(pane.paneId, pane.activeTabId);
 
     const nextState = useAppStore.getState();
+    expect(nextState.selectedCommit).toEqual(commitB);
+  });
+
+  it('keeps sidebar pr highlight when focus moves away, but updates on sidebar reopen', async () => {
+    const { useAppStore } = await import('../../src/webview/store/appStore');
+    const state = useAppStore.getState();
+
+    state.selectCommit(commitA);
+    state.openWorkspaceTab({ panelType: 'pr', prNumber: 42, title: 'fix: race condition' });
+    const rootPane = useAppStore.getState().paneTree;
+    if (rootPane.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane before splitting');
+    }
+
+    state.openWorkspaceTab({ panelType: 'fileCanvas', commit: commitB });
+    state.moveWorkspaceTab({
+      sourcePaneId: rootPane.paneId,
+      tabId: 'fileCanvas:bbbbbbbb:_',
+      targetPaneId: rootPane.paneId,
+      zone: 'right',
+    });
+
+    const splitTree = useAppStore.getState().paneTree;
+    const [, rightPane] = collectLeafPanes(splitTree);
+    useAppStore.getState().focusPane(rightPane.paneId);
+
+    let nextState = useAppStore.getState();
+    expect(nextState.sidebarActivePRNumber).toBe(42);
+
+    useAppStore.getState().openWorkspaceTab({ panelType: 'pr', prNumber: 99, title: 'feat: new sidebar' });
+    nextState = useAppStore.getState();
+    expect(nextState.sidebarActivePRNumber).toBe(99);
+  });
+
+  it('keeps sidebar issue highlight when activating an existing non-issue tab', async () => {
+    const { useAppStore } = await import('../../src/webview/store/appStore');
+    const state = useAppStore.getState();
+
+    state.selectCommit(commitA);
+    state.openWorkspaceTab({ panelType: 'issue', issueNumber: 7, title: 'Crash on empty repository' });
+    state.openWorkspaceTab({ panelType: 'aiSummary', commit: commitB });
+    state.activateWorkspaceTab(useAppStore.getState().focusedPaneId, 'issue:7');
+    state.activateWorkspaceTab(useAppStore.getState().focusedPaneId, 'aiSummary:bbbbbbbb:_');
+
+    const nextState = useAppStore.getState();
+    expect(nextState.sidebarActiveIssueNumber).toBe(7);
     expect(nextState.selectedCommit).toEqual(commitB);
   });
 });

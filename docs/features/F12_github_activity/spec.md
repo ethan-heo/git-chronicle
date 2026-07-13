@@ -62,6 +62,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | Issue 목록 필터링 | GitHub `issues` 엔드포인트는 PR도 함께 반환하므로 `pull_request` 필드가 있는 항목은 제외 |
 | 탭 식별 | `pr`/`issue` 탭은 `panelType + prNumber`/`panelType + issueNumber`로 식별하며 커밋 기반 탭(`panelType + commitHash + filePath`)과는 별도 규칙을 쓴다 |
 | 커밋 컨텍스트 유지 | `pr`/`issue` 탭이 포커스되어도 `selectedCommit`은 갱신·초기화하지 않고 마지막 값을 유지 |
+| 사이드바 활성 PR/Issue 유지 | `sidebarActivePRNumber` / `sidebarActiveIssueNumber`는 사이드바에서 PR/Issue를 열 때만 갱신한다. 이미 열린 탭을 포커스/활성화/닫기 fallback/드래그 병합으로 전환할 때는 유지한다 |
 | 인증 세션 확인 | 데이터 조회 함수는 항상 silent 세션 확인(`createIfNone: false`)만 사용해 백그라운드에서 로그인 팝업이 뜨지 않게 한다. 로그인 팝업은 `CONNECT_GITHUB`(명시적 [연결하기] 클릭)에서만 발생 |
 
 ---
@@ -124,3 +125,5 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | `prRelatedCommitsByNumber[number]` / `issueRelatedCommitsByNumber[number]` 갱신 | `pr`/`issue` 탭 진입 후 연관 커밋 로드/추가 로드 | 해당 번호의 연관 커밋 목록을 교체(첫 페이지) 또는 이어붙인다 |
 | `selectedCommit` 갱신 | 연관 커밋 클릭 | PR/Issue 탭은 유지한 채 F02/F03/F04/F11 등 커밋 종속 컨텍스트만 선택된 커밋 기준으로 전환 |
 | `selectedCommit` 미변경 | `pr`/`issue` 탭 열기/활성화/포커스 | F02의 커밋 기반 탭과 달리 커밋 컨텍스트를 갱신하지 않는다 |
+| `sidebarActivePRNumber` / `sidebarActiveIssueNumber` 갱신 | 사이드바 PR/Issue 목록 클릭으로 탭 열기(신규 생성 또는 기존 탭 재사용) | 사이드바 활성 항목 하이라이트를 클릭한 번호로 맞춘다 |
+| `sidebarActivePRNumber` / `sidebarActiveIssueNumber` 미변경 | 기존 탭 포커스 이동, 탭 활성화, 탭 닫기 fallback, pane 간 중앙 병합 | 사이드바 하이라이트는 마지막으로 사이드바에서 연 번호를 유지한다 |
