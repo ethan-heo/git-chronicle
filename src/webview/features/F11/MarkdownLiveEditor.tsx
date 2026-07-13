@@ -46,6 +46,19 @@ interface ParsedCodeBlock {
   lines: string[];
 }
 
+type TableColumnAlign = 'left' | 'center' | 'right' | null;
+
+interface ParsedTableBlock {
+  key: string;
+  headerLine: number;
+  alignLine: number;
+  bodyStartLine: number;
+  bodyEndLine: number;
+  headerCells: string[];
+  aligns: TableColumnAlign[];
+  rows: string[][];
+}
+
 interface PendingDecoration {
   from: number;
   to: number;
@@ -373,7 +386,9 @@ function buildDecorations(state: EditorState, highlightedBlocks: Record<string, 
   const doc = state.doc;
   const activeLines = getActiveLines(state);
   const codeBlocks = parseCodeBlocks(doc.toString());
+  const tableBlocks = parseTableBlocks(doc.toString());
   const codeLineNumbers = new Set<number>();
+  const tableLineNumbers = new Set<number>();
 
   for (const block of codeBlocks) {
     for (let lineNumber = block.fenceStartLine; lineNumber <= block.fenceEndLine; lineNumber += 1) {
@@ -434,8 +449,29 @@ function buildDecorations(state: EditorState, highlightedBlocks: Record<string, 
     }
   }
 
+  for (const block of tableBlocks) {
+    for (let lineNumber = block.headerLine; lineNumber <= block.bodyEndLine; lineNumber += 1) {
+      tableLineNumbers.add(lineNumber);
+    }
+
+    if (hasActiveLine(activeLines, block.headerLine, block.bodyEndLine)) {
+      continue;
+    }
+
+    const headerLine = doc.line(block.headerLine);
+    const bodyEndLine = doc.line(block.bodyEndLine);
+    pending.push({
+      from: headerLine.from,
+      to: bodyEndLine.to,
+      decoration: Decoration.replace({
+        block: true,
+        widget: new TableWidget(block),
+      }),
+    });
+  }
+
   for (let lineNumber = 1; lineNumber <= doc.lines; lineNumber += 1) {
-    if (codeLineNumbers.has(lineNumber)) {
+    if (codeLineNumbers.has(lineNumber) || tableLineNumbers.has(lineNumber)) {
       continue;
     }
 
@@ -553,65 +589,45 @@ function decorateLine(pending: PendingDecoration[], lineFrom: number, text: stri
 }
 
 function decorateInline(pending: PendingDecoration[], lineFrom: number, text: string): void {
-  const occupied: Array<[number, number]> = [];
+  forEachInlineMatch(text, (match, start) => {
+    const absoluteStart = lineFrom + start;
 
-  applyPattern(text, lineFrom, /\[([^\]]+)\]\(([^)]+)\)/g, occupied, (match, start) => {
-    const label = match[1];
-    const url = match[2];
-    const openLength = 1;
-    const labelFrom = start + openLength;
-    const labelTo = labelFrom + label.length;
-    const closeFrom = labelTo;
-    const suffixTo = start + match[0].length;
+    if (match.kind === 'link') {
+      const labelFrom = absoluteStart + 1;
+      const labelTo = labelFrom + match.label.length;
+      const closeFrom = labelTo;
+      const suffixTo = absoluteStart + match.raw.length;
 
-    pending.push({ from: start, to: labelFrom, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: closeFrom, to: suffixTo, decoration: hiddenSyntaxDecoration });
+      pending.push({ from: absoluteStart, to: labelFrom, decoration: hiddenSyntaxDecoration });
+      pending.push({ from: closeFrom, to: suffixTo, decoration: hiddenSyntaxDecoration });
+      pending.push({
+        from: labelFrom,
+        to: labelTo,
+        decoration: Decoration.mark({
+          class: 'cm-md-link',
+          attributes: {
+            'data-markdown-link': match.url,
+          },
+        }),
+      });
+      return;
+    }
+
     pending.push({
-      from: labelFrom,
-      to: labelTo,
-      decoration: Decoration.mark({
-        class: 'cm-md-link',
-        attributes: {
-          'data-markdown-link': url,
-        },
-      }),
+      from: absoluteStart,
+      to: absoluteStart + match.markerLength,
+      decoration: hiddenSyntaxDecoration,
     });
-  });
-
-  applyPattern(text, lineFrom, /\*\*([^*\n]+)\*\*/g, occupied, (match, start) => {
-    const content = match[1];
-    const contentFrom = start + 2;
-    const contentTo = contentFrom + content.length;
-    pending.push({ from: start, to: contentFrom, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: contentTo, to: start + match[0].length, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: contentFrom, to: contentTo, decoration: Decoration.mark({ class: 'cm-md-strong' }) });
-  });
-
-  applyPattern(text, lineFrom, /~~([^~\n]+)~~/g, occupied, (match, start) => {
-    const content = match[1];
-    const contentFrom = start + 2;
-    const contentTo = contentFrom + content.length;
-    pending.push({ from: start, to: contentFrom, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: contentTo, to: start + match[0].length, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: contentFrom, to: contentTo, decoration: Decoration.mark({ class: 'cm-md-strike' }) });
-  });
-
-  applyPattern(text, lineFrom, /`([^`\n]+)`/g, occupied, (match, start) => {
-    const content = match[1];
-    const contentFrom = start + 1;
-    const contentTo = contentFrom + content.length;
-    pending.push({ from: start, to: contentFrom, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: contentTo, to: start + match[0].length, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: contentFrom, to: contentTo, decoration: Decoration.mark({ class: 'cm-md-inline-code' }) });
-  });
-
-  applyPattern(text, lineFrom, /(?<!\*)\*([^*\n]+)\*(?!\*)/g, occupied, (match, start) => {
-    const content = match[1];
-    const contentFrom = start + 1;
-    const contentTo = contentFrom + content.length;
-    pending.push({ from: start, to: contentFrom, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: contentTo, to: start + match[0].length, decoration: hiddenSyntaxDecoration });
-    pending.push({ from: contentFrom, to: contentTo, decoration: Decoration.mark({ class: 'cm-md-emphasis' }) });
+    pending.push({
+      from: absoluteStart + match.markerLength + match.content.length,
+      to: absoluteStart + match.raw.length,
+      decoration: hiddenSyntaxDecoration,
+    });
+    pending.push({
+      from: absoluteStart + match.markerLength,
+      to: absoluteStart + match.markerLength + match.content.length,
+      decoration: Decoration.mark({ class: match.className }),
+    });
   });
 }
 
@@ -688,6 +704,7 @@ function moveVerticalLineAvoidingLayoutAmbiguity(view: EditorView, forward: bool
   }
 
   const blocks = parseCodeBlocks(doc.toString());
+  const tableBlocks = parseTableBlocks(doc.toString());
   const collapsingBlock = blocks.find(
     (block) =>
       block.language === 'mermaid' &&
@@ -700,9 +717,16 @@ function moveVerticalLineAvoidingLayoutAmbiguity(view: EditorView, forward: bool
   if (collapsingBlock) {
     targetLineNumber = forward ? collapsingBlock.fenceEndLine : collapsingBlock.fenceStartLine;
   } else {
+    const collapsingTableBlock = tableBlocks.find(
+      (block) => targetLineNumber >= block.headerLine && targetLineNumber <= block.bodyEndLine,
+    );
+    if (collapsingTableBlock) {
+      targetLineNumber = forward ? collapsingTableBlock.bodyEndLine : collapsingTableBlock.headerLine;
+    } else {
     const hiddenPrefixLength = getLeadingHiddenMarkerLength(doc.line(targetLineNumber).text);
     if (hiddenPrefixLength === 0 || column > hiddenPrefixLength) {
       return false;
+    }
     }
   }
 
@@ -789,6 +813,104 @@ function parseCodeBlocks(content: string): ParsedCodeBlock[] {
   return blocks;
 }
 
+function parseTableBlocks(content: string): ParsedTableBlock[] {
+  const lines = content.split('\n');
+  const blocks: ParsedTableBlock[] = [];
+  let index = 0;
+
+  while (index < lines.length - 1) {
+    const headerCells = parseTableRow(lines[index]);
+    if (!headerCells) {
+      index += 1;
+      continue;
+    }
+
+    const aligns = parseTableAlignmentRow(lines[index + 1]);
+    if (!aligns || aligns.length !== headerCells.length) {
+      index += 1;
+      continue;
+    }
+
+    const rows: string[][] = [];
+    let bodyIndex = index + 2;
+    while (bodyIndex < lines.length) {
+      const rowCells = parseTableRow(lines[bodyIndex]);
+      if (!rowCells) {
+        break;
+      }
+
+      if (rowCells.length !== headerCells.length) {
+        rows.length = 0;
+        bodyIndex = index + 1;
+        break;
+      }
+
+      rows.push(rowCells);
+      bodyIndex += 1;
+    }
+
+    if (bodyIndex === index + 1) {
+      index += 1;
+      continue;
+    }
+
+    const bodyEndLine = Math.max(index + 2, bodyIndex) ;
+    blocks.push({
+      key: `${index}-${lines.slice(index, bodyIndex).join('\n')}`,
+      headerLine: index + 1,
+      alignLine: index + 2,
+      bodyStartLine: index + 3,
+      bodyEndLine,
+      headerCells,
+      aligns,
+      rows,
+    });
+    index = bodyIndex;
+  }
+
+  return blocks;
+}
+
+function parseTableRow(line: string): string[] | null {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) {
+    return null;
+  }
+
+  return trimmed
+    .slice(1, -1)
+    .split('|')
+    .map((cell) => cell.trim());
+}
+
+function parseTableAlignmentRow(line: string): TableColumnAlign[] | null {
+  const cells = parseTableRow(line);
+  if (!cells || cells.length === 0) {
+    return null;
+  }
+
+  const aligns: TableColumnAlign[] = [];
+  for (const cell of cells) {
+    if (!/^:?-{3,}:?$/.test(cell)) {
+      return null;
+    }
+
+    const startsWithColon = cell.startsWith(':');
+    const endsWithColon = cell.endsWith(':');
+    if (startsWithColon && endsWithColon) {
+      aligns.push('center');
+    } else if (endsWithColon) {
+      aligns.push('right');
+    } else if (startsWithColon) {
+      aligns.push('left');
+    } else {
+      aligns.push(null);
+    }
+  }
+
+  return aligns;
+}
+
 function normalizeTokens(tokens: Array<{ content: string; color?: string }> | undefined, fallback: string): HighlightLineTokens {
   if (!tokens || tokens.length === 0) {
     return [{ content: fallback }];
@@ -804,6 +926,78 @@ function normalizeTokens(tokens: Array<{ content: string; color?: string }> | un
 // 왜곡시켜 위/아래 방향키 커서 이동이 엉뚱한 줄로 튀는 문제를 일으킨다. 실제로 콘텐츠를 렌더링
 // 트리에서 제거하는 replace 데코레이션을 사용해야 커서 이동 좌표 계산이 올바르게 이뤄진다.
 const hiddenSyntaxDecoration = Decoration.replace({});
+
+type InlineMatch =
+  | { kind: 'link'; raw: string; label: string; url: string }
+  | { kind: 'strong' | 'strike' | 'code' | 'emphasis'; raw: string; content: string; markerLength: number; className: string };
+
+function forEachInlineMatch(text: string, decorate: (match: InlineMatch, start: number) => void): void {
+  const occupied: Array<[number, number]> = [];
+
+  applyPattern(text, 0, /\[([^\]]+)\]\(([^)]+)\)/g, occupied, (match, start) => {
+    decorate(
+      {
+        kind: 'link',
+        raw: match[0],
+        label: match[1],
+        url: match[2],
+      },
+      start,
+    );
+  });
+
+  applyPattern(text, 0, /\*\*([^*\n]+)\*\*/g, occupied, (match, start) => {
+    decorate(
+      {
+        kind: 'strong',
+        raw: match[0],
+        content: match[1],
+        markerLength: 2,
+        className: 'cm-md-strong',
+      },
+      start,
+    );
+  });
+
+  applyPattern(text, 0, /~~([^~\n]+)~~/g, occupied, (match, start) => {
+    decorate(
+      {
+        kind: 'strike',
+        raw: match[0],
+        content: match[1],
+        markerLength: 2,
+        className: 'cm-md-strike',
+      },
+      start,
+    );
+  });
+
+  applyPattern(text, 0, /`([^`\n]+)`/g, occupied, (match, start) => {
+    decorate(
+      {
+        kind: 'code',
+        raw: match[0],
+        content: match[1],
+        markerLength: 1,
+        className: 'cm-md-inline-code',
+      },
+      start,
+    );
+  });
+
+  applyPattern(text, 0, /(?<!\*)\*([^*\n]+)\*(?!\*)/g, occupied, (match, start) => {
+    decorate(
+      {
+        kind: 'emphasis',
+        raw: match[0],
+        content: match[1],
+        markerLength: 1,
+        className: 'cm-md-emphasis',
+      },
+      start,
+    );
+  });
+}
 
 class CheckboxWidget extends WidgetType {
   constructor(
@@ -902,4 +1096,93 @@ class MermaidWidget extends WidgetType {
 
     return element;
   }
+}
+
+class TableWidget extends WidgetType {
+  constructor(private readonly block: ParsedTableBlock) {
+    super();
+  }
+
+  eq(other: TableWidget): boolean {
+    return JSON.stringify(this.block) === JSON.stringify(other.block);
+  }
+
+  toDOM(view: EditorView): HTMLElement {
+    const element = document.createElement('div');
+    element.className = 'cm-md-table-widget';
+    element.contentEditable = 'false';
+
+    const table = document.createElement('table');
+    table.className = 'cm-md-table';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    this.block.headerCells.forEach((cell, index) => {
+      headerRow.append(createTableCell('th', cell, this.block.aligns[index]));
+    });
+    thead.append(headerRow);
+    table.append(thead);
+
+    const tbody = document.createElement('tbody');
+    this.block.rows.forEach((row) => {
+      const tr = document.createElement('tr');
+      row.forEach((cell, index) => {
+        tr.append(createTableCell('td', cell, this.block.aligns[index]));
+      });
+      tbody.append(tr);
+    });
+    table.append(tbody);
+
+    element.append(table);
+    view.requestMeasure();
+    return element;
+  }
+}
+
+function createTableCell(tagName: 'th' | 'td', text: string, align: TableColumnAlign): HTMLElement {
+  const cell = document.createElement(tagName);
+  cell.className = ['cm-md-table-cell', align ? `cm-md-table-cell-${align}` : ''].filter(Boolean).join(' ');
+  if (align) {
+    cell.style.textAlign = align;
+  }
+  cell.append(renderInlineContent(text));
+  return cell;
+}
+
+function renderInlineContent(text: string): DocumentFragment {
+  const fragment = document.createDocumentFragment();
+  const matches: Array<{ start: number; match: InlineMatch }> = [];
+
+  forEachInlineMatch(text, (match, start) => {
+    matches.push({ start, match });
+  });
+
+  matches.sort((left, right) => left.start - right.start);
+  let cursor = 0;
+  for (const entry of matches) {
+    if (cursor < entry.start) {
+      fragment.append(document.createTextNode(text.slice(cursor, entry.start)));
+    }
+
+    if (entry.match.kind === 'link') {
+      const link = document.createElement('span');
+      link.className = 'cm-md-link';
+      link.dataset.markdownLink = entry.match.url;
+      link.textContent = entry.match.label;
+      fragment.append(link);
+    } else {
+      const span = document.createElement('span');
+      span.className = entry.match.className;
+      span.textContent = entry.match.content;
+      fragment.append(span);
+    }
+
+    cursor = entry.start + entry.match.raw.length;
+  }
+
+  if (cursor < text.length) {
+    fragment.append(document.createTextNode(text.slice(cursor)));
+  }
+
+  return fragment;
 }

@@ -24,7 +24,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 - 삭제는 인라인 재클릭 확인 방식이며, 파일 삭제 뒤 비어 있는 상위 폴더는 `savePath` 루트 직전까지 자동 정리한다.
 - 저장 방식은 명시적 버튼 없이 디바운스 자동저장이다.
 - `edit` 모드는 순수 텍스트 영역이 아니라 Obsidian 스타일 라이브 프리뷰 편집기다. 커서가 위치한 줄/구간만 원본 마크다운 문법을 유지하고, 그 밖의 줄에서는 렌더링 결과를 인라인으로 보여준다.
-- 라이브 프리뷰 1차 지원 범위는 heading, bold, italic, strikethrough, inline code, link, checkbox, blockquote, hr, 목록(`-`/`*`/`1.`)이다.
+- 라이브 프리뷰 1차 지원 범위는 heading, bold, italic, strikethrough, inline code, link, checkbox, blockquote, hr, 목록(`-`/`*`/`1.`), GFM 파이프 테이블(`| ... |`)과 정렬 구문(`:---`, `---:`, `:---:`)이다.
 - 링크는 편집 중 오동작을 막기 위해 일반 클릭으로는 열리지 않고 Cmd/Ctrl+클릭에서만 `OPEN_EXTERNAL_URL`로 연다.
 - 체크박스는 렌더링된 위젯 클릭으로 원문 `- [ ]` / `- [x]` 텍스트를 직접 토글한다.
 - F05b AI 요약을 [저장]하면 `.ai.md` 파일로 저장되어 이 노트 트리에 즉시 나타난다.

@@ -95,6 +95,50 @@
   margin: 8px 0 14px;
 }
 
+.markdown-live-editor .cm-md-table-widget {
+  margin: 8px 0 14px;
+}
+
+.markdown-live-editor .cm-md-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid var(--gae-border-color-default);
+  background: var(--gae-color-surface-primary);
+}
+
+.markdown-live-editor .cm-md-table th,
+.markdown-live-editor .cm-md-table td {
+  border: 1px solid var(--gae-border-color-default);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown-live-editor .cm-md-table th {
+  background: var(--gae-color-surface-secondary);
+  color: var(--gae-color-text-primary);
+  font-size: var(--gae-font-size-sm);
+  font-weight: var(--gae-font-weight-bold);
+}
+
+.markdown-live-editor .cm-md-table td {
+  color: color-mix(in srgb, var(--gae-color-text-primary) 94%, var(--gae-color-text-secondary));
+  font-size: var(--gae-font-size-sm);
+}
+
+.markdown-live-editor .cm-md-table-cell-left {
+  text-align: left;
+}
+
+.markdown-live-editor .cm-md-table-cell-center {
+  text-align: center;
+}
+
+.markdown-live-editor .cm-md-table-cell-right {
+  text-align: right;
+}
+
 .note-preview > :first-child {
   margin-top: 0;
 }

@@ -150,6 +150,67 @@ describe('MarkdownLiveEditor', () => {
       expect(added.getAttribute('style')).toContain('rgb(0, 255, 0)');
     });
   });
+
+  it('renders GFM tables as a widget with alignment when the cursor leaves the block', async () => {
+    initI18n('ko');
+
+    render(
+      <MarkdownLiveEditor
+        value={'| Name | Score | Role |\n|:---|---:|:---:|\n| Alpha | `10` | [Dev](https://openai.com) |\nAfter'}
+        onChange={() => {}}
+        placeholder="마크다운으로 메모를 남겨보세요."
+      />,
+    );
+
+    const view = getEditorView();
+    act(() => {
+      view.dispatch({
+        selection: { anchor: view.state.doc.length },
+      });
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('.cm-md-table')).not.toBeNull();
+    });
+
+    const headers = Array.from(document.querySelectorAll<HTMLTableCellElement>('.cm-md-table th'));
+    expect(headers).toHaveLength(3);
+    expect(headers[0]?.style.textAlign).toBe('left');
+    expect(headers[1]?.style.textAlign).toBe('right');
+    expect(headers[2]?.style.textAlign).toBe('center');
+
+    const codeCell = screen.getByText('10');
+    expect(codeCell.className).toContain('cm-md-inline-code');
+
+    const linkCell = document.querySelector<HTMLElement>('[data-markdown-link="https://openai.com"]');
+    expect(linkCell).not.toBeNull();
+    expect(linkCell).toHaveTextContent('Dev');
+    expect(screen.getByText('After')).toBeInTheDocument();
+  });
+
+  it('keeps malformed tables as raw markdown text', async () => {
+    initI18n('ko');
+
+    render(
+      <MarkdownLiveEditor
+        value={'| Name | Score |\n|---|\n| Alpha | 10 |'}
+        onChange={() => {}}
+        placeholder="마크다운으로 메모를 남겨보세요."
+      />,
+    );
+
+    const view = getEditorView();
+    act(() => {
+      view.dispatch({
+        selection: { anchor: view.state.doc.length },
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('|---|')).toBeInTheDocument();
+    });
+    expect(document.querySelector('.cm-md-table')).toBeNull();
+  });
 });
 
 function getEditorView(): EditorView {
