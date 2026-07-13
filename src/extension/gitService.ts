@@ -237,6 +237,8 @@ export async function fetchFileDiff(repoPath: string, commitHash: string, filePa
     throw new GitRepositoryNotFoundError(repoPath);
   }
 
+  await ensureCommitExistsLocallyOrFetch(git, commitHash);
+
   const rawDiff = await git.show(['--format=', '--find-renames', '--unified=99999', commitHash, '--', filePath]);
   const isBinary = /^Binary files? /m.test(rawDiff) || /^GIT binary patch$/m.test(rawDiff);
   const isDeleted = /^deleted file mode /m.test(rawDiff);

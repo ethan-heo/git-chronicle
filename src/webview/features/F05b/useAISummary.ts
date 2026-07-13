@@ -84,9 +84,15 @@ interface UseAISummaryResult {
   summarySavedPath: string | null;
 }
 
-export function useAISummary(options?: { isActive?: boolean; targetFile?: ChangedFile | null; commit?: Commit | null }): UseAISummaryResult {
+export function useAISummary(options?: {
+  isActive?: boolean;
+  targetFile?: ChangedFile | null;
+  isTargetFilePending?: boolean;
+  commit?: Commit | null;
+}): UseAISummaryResult {
   const isActive = options?.isActive ?? true;
   const targetFile = options?.targetFile ?? null;
+  const isTargetFilePending = options?.isTargetFilePending ?? false;
   const commit = options?.commit ?? null;
   const savePath = useAppStore((state) => state.savePath);
   const noteEntries = useAppStore((state) => state.noteTree);
@@ -378,11 +384,11 @@ export function useAISummary(options?: { isActive?: boolean; targetFile?: Change
   }, [completeAIQA, failAIQA, setAISummarySettings]);
 
   useEffect(() => {
-    if (!isActive || !hasLoadedSettings || !canStartSummary || displayedSummaryContent || displayedIsLoadingSummary || displayedIsGeneratingSummary || displayedSummaryError) {
+    if (!isActive || !hasLoadedSettings || !canStartSummary || isTargetFilePending || displayedSummaryContent || displayedIsLoadingSummary || displayedIsGeneratingSummary || displayedSummaryError) {
       return;
     }
     startSummary(false);
-  }, [canStartSummary, displayedIsGeneratingSummary, displayedIsLoadingSummary, displayedSummaryContent, displayedSummaryError, hasLoadedSettings, isActive, startSummary]);
+  }, [canStartSummary, displayedIsGeneratingSummary, displayedIsLoadingSummary, displayedSummaryContent, displayedSummaryError, hasLoadedSettings, isActive, isTargetFilePending, startSummary]);
 
   return {
     activeAIProvider,

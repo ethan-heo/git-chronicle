@@ -64,8 +64,11 @@ export function useFileDiff(options: {
             isDeleted: Boolean(payload?.isDeleted),
           },
           loadedFilePath: filePath,
-        }).catch(() => {
-          useAppStore.getState().handleFileDiffLoadFailed({ tabId });
+        }).catch((error: unknown) => {
+          useAppStore.getState().handleFileDiffLoadFailed({
+            tabId,
+            message: error instanceof Error ? error.message : undefined,
+          });
         });
         return;
       }

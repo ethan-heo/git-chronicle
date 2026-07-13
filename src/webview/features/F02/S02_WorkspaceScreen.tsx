@@ -679,6 +679,9 @@ const WorkspacePaneContent: FC<{
   const codeFile = activeTab.panelType === 'code' && activeTab.filePath
     ? changedFileTree.changedFiles.find((file) => file.path === activeTab.filePath) ?? null
     : null;
+  // changedFileTree가 아직 로드되기 전에는 codeFile이 파일 미해당인지 아직 로딩 중인지 구분되지 않는다.
+  // AISummaryPanel이 이 구간을 '커밋 스코프'로 오인해 자동 재생성하지 않도록 로딩 상태를 함께 전달한다.
+  const isSelectedFilePending = activeTab.panelType === 'code' && Boolean(activeTab.filePath) && !changedFileTree.hasLoaded;
 
   if (activeTab.panelType === 'pr' && activeTab.prNumber != null) {
     return <PRDetailPanel prNumber={activeTab.prNumber} isActive={isRouteSlotActive} />;
@@ -702,6 +705,7 @@ const WorkspacePaneContent: FC<{
         tab={activeTab}
         isActive={isRouteSlotActive}
         selectedFile={codeFile}
+        isSelectedFilePending={isSelectedFilePending}
         onToggleInnerPanel={(panel) => toggleCodeInnerPanel(paneId, activeTab.id, panel)}
         onGoToSettings={openSidebarSettings}
       />

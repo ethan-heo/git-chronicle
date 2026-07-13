@@ -9,11 +9,12 @@ import { useAISummary } from './useAISummary';
 interface AISummaryPanelProps {
   isActive: boolean;
   targetFile: ChangedFile | null;
+  isTargetFilePending?: boolean;
   commit: Commit | null;
   onGoToSettings: () => void;
 }
 
-export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, commit, onGoToSettings }) => {
+export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, isTargetFilePending, commit, onGoToSettings }) => {
   const {
     activeAIProvider,
     currentSummaryContent,
@@ -45,7 +46,9 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
     summaryError,
     summaryNoteRelativePath,
     summarySavedPath,
-  } = useAISummary({ isActive, targetFile, commit });
+  } = useAISummary({
+    isActive, targetFile, commit, isTargetFilePending,
+  });
 
   return (
     <div className="flex h-full min-h-0 flex-col">

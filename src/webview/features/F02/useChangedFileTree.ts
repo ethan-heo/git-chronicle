@@ -6,6 +6,7 @@ import type { ChangedFile, Commit } from '../../types/commit';
 interface UseChangedFileTreeResult {
   changedFiles: ChangedFile[];
   isLoading: boolean;
+  hasLoaded: boolean;
   error: string | null;
   retryTree: () => void;
 }
@@ -77,6 +78,7 @@ export function useChangedFileTree(options: { isActive: boolean; commit: Commit 
   return {
     changedFiles: changedFilesState.changedFiles,
     isLoading: changedFilesState.isLoading,
+    hasLoaded: changedFilesState.hasLoaded,
     error: changedFilesState.error,
     retryTree,
   };

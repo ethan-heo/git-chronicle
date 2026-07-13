@@ -12,6 +12,7 @@ interface CodeTabSplitAreaProps {
   tab: WorkspaceTab;
   isActive: boolean;
   selectedFile: ChangedFile | null;
+  isSelectedFilePending: boolean;
   onToggleInnerPanel: (panel: 'aiSummary' | 'symbolGraph') => void;
   onGoToSettings: () => void;
 }
@@ -20,6 +21,7 @@ export const CodeTabSplitArea: FC<CodeTabSplitAreaProps> = ({
   tab,
   isActive,
   selectedFile,
+  isSelectedFilePending,
   onToggleInnerPanel,
   onGoToSettings,
 }) => {
@@ -49,6 +51,7 @@ export const CodeTabSplitArea: FC<CodeTabSplitAreaProps> = ({
           <AISummaryPanel
             isActive={isActive}
             targetFile={selectedFile}
+            isTargetFilePending={isSelectedFilePending}
             commit={tab.commit}
             onGoToSettings={onGoToSettings}
           />
@@ -61,6 +64,7 @@ export const CodeTabSplitArea: FC<CodeTabSplitAreaProps> = ({
         <AISummaryPanel
           isActive={isActive}
           targetFile={selectedFile}
+          isTargetFilePending={isSelectedFilePending}
           commit={tab.commit}
           onGoToSettings={onGoToSettings}
         />

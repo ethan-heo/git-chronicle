@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { translate } from '../../i18n/runtime';
 import { parseDiff } from '../../features/F03/parseDiff';
+import { highlightDiffLines } from '../../features/F03/highlightDiff';
 import type { DiffLineData, FileDiffPayload } from '../../features/F03/types';
 import type { AppState } from '../appStore';
 
@@ -99,7 +100,6 @@ export const createFileDiffSlice: StateCreator<AppState, [], [], FileDiffSlice> 
     }
 
     const parsedLines = parseDiff(payload.rawDiff);
-    const { highlightDiffLines } = await import('../../features/F03/highlightDiff');
     const highlightedLines = await highlightDiffLines(parsedLines, loadedFilePath);
 
     set((state) => ({
