@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { registerMessageHandler } from './messageHandler';
 
@@ -60,12 +61,14 @@ export class GitChroniclePanel {
 
   private getHtmlForWebview(extensionUri: vscode.Uri, language: string): string {
     const webview = this.panel.webview;
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'assets', 'index.js'),
-    );
-    const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'assets', 'index.css'),
-    );
+    const scriptPath = vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'assets', 'index.js');
+    const stylePath = vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'assets', 'index.css');
+    // vite가 index.js/index.css를 콘텐츠 해시 없이 고정 파일명으로 내보내기 때문에, 빌드를
+    // 다시 해도 URI 문자열이 그대로면 webview(Electron/Chromium)가 이전 빌드를 캐시에서 계속
+    // 서빙할 수 있다. 빌드 파일의 mtime을 쿼리로 붙여 재빌드마다 URI 자체가 바뀌도록 한다.
+    const cacheBuster = getCacheBuster(scriptPath.fsPath);
+    const scriptUri = `${webview.asWebviewUri(scriptPath).toString()}?v=${cacheBuster}`;
+    const styleUri = `${webview.asWebviewUri(stylePath).toString()}?v=${cacheBuster}`;
     const normalizedLanguage = normalizeLanguage(language);
     const nonce = getNonce();
 
@@ -100,4 +103,12 @@ function getNonce(): string {
 
 function normalizeLanguage(language: string): 'en' | 'ko' {
   return language.toLowerCase().startsWith('ko') ? 'ko' : 'en';
+}
+
+function getCacheBuster(filePath: string): number {
+  try {
+    return fs.statSync(filePath).mtimeMs;
+  } catch {
+    return Date.now();
+  }
 }

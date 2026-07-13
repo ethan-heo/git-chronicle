@@ -339,6 +339,7 @@ function createLivePreviewExtension({
 
   return [
     decorationsField,
+    EditorView.atomicRanges.of((view) => buildAtomicRanges(view.state)),
     EditorView.domEventHandlers({
       mousedown(event, view) {
         const target = event.target;
@@ -378,6 +379,62 @@ function createLivePreviewExtension({
       },
     }),
   ];
+}
+
+// mermaid/table 위젯처럼 여러 줄을 하나의 block:true replace 데코레이션으로 접는 경우,
+// EditorView.decorations에만 등록하고 EditorView.atomicRanges에 같은 범위를 등록하지 않으면
+// CodeMirror의 moveVertically()가 이 범위를 하나의 단위로 건너뛰어야 한다는 사실을 모른다.
+// 그 결과 접힌 범위 아래에 있는 모든 줄에서(그 범위와 맞닿지 않은 줄까지 포함해) 방향키 위
+// 이동이 줄 높이 좌표 계산에 실패해 항상 접힌 범위 바로 앞 줄로 순간이동하는 문제가 생긴다.
+// buildAtomicRanges()가 이 함수와 동일한 기준으로 계산한 범위를 atomicRanges에 등록해 해결한다.
+function getFoldedMermaidRange(block: ParsedCodeBlock, activeLines: Set<number>): { from: number; to: number } | null {
+  if (block.language !== 'mermaid' || block.contentTo <= block.contentFrom) {
+    return null;
+  }
+  if (hasActiveLine(activeLines, block.fenceStartLine, block.fenceEndLine)) {
+    return null;
+  }
+  if (!renderedDiagramCache.has(`cm-mermaid-${block.key}`)) {
+    return null;
+  }
+
+  return { from: block.contentFrom, to: block.closingFenceFrom ?? block.contentTo };
+}
+
+function getFoldedTableRange(block: ParsedTableBlock, doc: EditorState['doc'], activeLines: Set<number>): { from: number; to: number } | null {
+  if (hasActiveLine(activeLines, block.headerLine, block.bodyEndLine)) {
+    return null;
+  }
+
+  return { from: doc.line(block.headerLine).from, to: doc.line(block.bodyEndLine).to };
+}
+
+function buildAtomicRanges(state: EditorState): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const activeLines = getActiveLines(state);
+  const ranges: Array<{ from: number; to: number }> = [];
+
+  for (const block of parseCodeBlocks(state.doc.toString())) {
+    const range = getFoldedMermaidRange(block, activeLines);
+    if (range && range.to > range.from) {
+      ranges.push(range);
+    }
+  }
+
+  for (const block of parseTableBlocks(state.doc.toString())) {
+    const range = getFoldedTableRange(block, state.doc, activeLines);
+    if (range && range.to > range.from) {
+      ranges.push(range);
+    }
+  }
+
+  ranges
+    .sort((left, right) => left.from - right.from)
+    .forEach((range) => {
+      builder.add(range.from, range.to, Decoration.replace({}));
+    });
+
+  return builder.finish();
 }
 
 function buildDecorations(state: EditorState, highlightedBlocks: Record<string, HighlightLineTokens[] | null>): DecorationSet {
@@ -705,28 +762,51 @@ function moveVerticalLineAvoidingLayoutAmbiguity(view: EditorView, forward: bool
 
   const blocks = parseCodeBlocks(doc.toString());
   const tableBlocks = parseTableBlocks(doc.toString());
+  // 커서가 이미 블록 내부 줄(헤더~바디 끝, 펜스 시작~끝)에 있다면 그 블록은 isActive로 이미
+  // 펼쳐진 상태다. 이때는 진입 보정을 적용하지 않고 일반 줄 이동에 맡겨야 한다. 그렇지 않으면
+  // 블록 내부에서 위/아래로 이동할 때마다 매번 "진입"으로 오인해 헤더/바디 끝 줄로 순간이동해
+  // 중간 줄(정렬 구분자, 표 행 등)이 전부 건너뛰어진다.
   const collapsingBlock = blocks.find(
     (block) =>
       block.language === 'mermaid' &&
       block.contentTo > block.contentFrom &&
       renderedDiagramCache.has(`cm-mermaid-${block.key}`) &&
       targetLineNumber > block.fenceStartLine &&
-      targetLineNumber < block.fenceEndLine,
+      targetLineNumber < block.fenceEndLine &&
+      (currentLine.number < block.fenceStartLine || currentLine.number > block.fenceEndLine),
   );
 
   if (collapsingBlock) {
     targetLineNumber = forward ? collapsingBlock.fenceEndLine : collapsingBlock.fenceStartLine;
   } else {
     const collapsingTableBlock = tableBlocks.find(
-      (block) => targetLineNumber >= block.headerLine && targetLineNumber <= block.bodyEndLine,
+      (block) =>
+        targetLineNumber >= block.headerLine &&
+        targetLineNumber <= block.bodyEndLine &&
+        (currentLine.number < block.headerLine || currentLine.number > block.bodyEndLine),
     );
     if (collapsingTableBlock) {
-      targetLineNumber = forward ? collapsingTableBlock.bodyEndLine : collapsingTableBlock.headerLine;
+      // 방향키는 항상 한 줄씩만 이동하므로, 블록 밖에서 안으로 "진입"하는 시점의 targetLineNumber는
+      // 이미 진입 방향에 가장 가까운 경계 줄(아래로 진입하면 헤더 줄, 위로 진입하면 마지막 row 줄)과
+      // 같다. 여기서 반대쪽 경계로 재할당하면 표 전체를 한 번에 건너뛰어 버리므로, 같은 방향의
+      // 경계 줄을 그대로 사용해 CodeMirror의 기본 픽셀 좌표 계산만 우회한다.
+      targetLineNumber = forward ? collapsingTableBlock.headerLine : collapsingTableBlock.bodyEndLine;
     } else {
-    const hiddenPrefixLength = getLeadingHiddenMarkerLength(doc.line(targetLineNumber).text);
-    if (hiddenPrefixLength === 0 || column > hiddenPrefixLength) {
-      return false;
-    }
+      const hiddenPrefixLength = getLeadingHiddenMarkerLength(doc.line(targetLineNumber).text);
+      const needsHiddenPrefixCorrection = hiddenPrefixLength > 0 && column <= hiddenPrefixLength;
+
+      // mermaid/table을 하나의 block:true 위젯으로 접는 것(여러 문서 줄을 한 range로 replace)은
+      // CodeMirror 6.43.6에서 내부 높이 맵(heightMap)이 실제 DOM 높이와 어긋나게 만드는 별도
+      // 결함이 있다 — 위젯 실측 높이가 반영된 뒤에도 절대 스스로 복구되지 않고, 그 블록보다
+      // 아래에 있는 모든 줄에서(그 블록과 맞닿지 않은, 훨씬 떨어진 줄까지 포함해) 위 방향키가
+      // 블록 바로 앞 줄로 순간이동한다(EditorView.atomicRanges를 등록해도 moveVertically 내부의
+      // posAtCoords가 이 높이 맵을 그대로 쓰기 때문에 해결되지 않았다). mermaid/table 블록이
+      // 문서 어디에든 존재하면 CodeMirror의 픽셀 좌표 기반 이동을 아예 신뢰할 수 없으므로, 화면에
+      // 줄바꿈되지 않은(단일 시각적 줄인) 일반 줄 이동도 여기서 논리 줄/컬럼으로 직접 계산한다.
+      // 줄바꿈된 긴 줄 내부에서의 시각적 줄 이동만 CodeMirror 기본 동작에 맡긴다.
+      if (!needsHiddenPrefixCorrection && isLineWrapped(view, currentLine.from)) {
+        return false;
+      }
     }
   }
 
@@ -739,6 +819,21 @@ function moveVerticalLineAvoidingLayoutAmbiguity(view: EditorView, forward: bool
     userEvent: 'select',
   });
   return true;
+}
+
+// 줄이 뷰포트 너비 안에서 여러 시각적 줄로 감싸져 있는지(line wrapping) 실제 DOM 사각형
+// 개수로 판정한다. CodeMirror의 내부 높이 맵은 이 문서에서 신뢰할 수 없으므로(위
+// moveVerticalLineAvoidingLayoutAmbiguity의 주석 참고), 높이 맵을 참조하는 API 대신
+// getClientRects()로 실측한다.
+function isLineWrapped(view: EditorView, pos: number): boolean {
+  const domPos = view.domAtPos(pos);
+  const node = domPos.node instanceof Element ? domPos.node : domPos.node.parentElement;
+  const lineElement = node?.closest('.cm-line');
+  if (!lineElement) {
+    return false;
+  }
+
+  return lineElement.getClientRects().length > 1;
 }
 
 // 어떤 줄이 비활성 상태(커서가 그 줄에 없음)일 때 hiddenSyntaxDecoration으로 줄 맨 앞부터

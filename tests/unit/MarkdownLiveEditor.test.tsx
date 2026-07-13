@@ -188,6 +188,122 @@ describe('MarkdownLiveEditor', () => {
     expect(screen.getByText('After')).toBeInTheDocument();
   });
 
+  it('enters a folded table from below at the last row, not the header', async () => {
+    initI18n('ko');
+
+    render(
+      <MarkdownLiveEditor
+        value={'Before\n| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |\n| 5 | 6 |\nAfter'}
+        onChange={() => {}}
+        placeholder="마크다운으로 메모를 남겨보세요."
+      />,
+    );
+
+    const view = getEditorView();
+    const lastRowLine = view.state.doc.line(6);
+    const afterLine = view.state.doc.line(7);
+
+    act(() => {
+      view.dispatch({ selection: { anchor: afterLine.from } });
+      view.focus();
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('.cm-md-table')).not.toBeNull();
+    });
+
+    fireEvent.keyDown(view.contentDOM, { key: 'ArrowUp', code: 'ArrowUp' });
+
+    const pos = view.state.selection.main.head;
+    const line = view.state.doc.lineAt(pos);
+    expect(line.number).toBe(lastRowLine.number);
+  });
+
+  it('moves the cursor to the adjacent row instead of jumping to the header when already inside an unfolded table', async () => {
+    initI18n('ko');
+
+    render(
+      <MarkdownLiveEditor
+        value={'Before\n| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |\n| 5 | 6 |\nAfter'}
+        onChange={() => {}}
+        placeholder="마크다운으로 메모를 남겨보세요."
+      />,
+    );
+
+    const view = getEditorView();
+    const headerLine = view.state.doc.line(2);
+    const lastRowLine = view.state.doc.line(6);
+
+    act(() => {
+      view.dispatch({ selection: { anchor: lastRowLine.from } });
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('.cm-md-table')).toBeNull();
+    });
+
+    const dispatchSpy = vi.spyOn(view, 'dispatch');
+    fireEvent.keyDown(view.contentDOM, { key: 'ArrowUp', code: 'ArrowUp' });
+
+    const jumpedStraightToHeader = dispatchSpy.mock.calls.some((call) => {
+      const spec = call[0] as { selection?: { anchor?: number } };
+      return spec?.selection?.anchor === headerLine.from;
+    });
+    expect(jumpedStraightToHeader).toBe(false);
+  });
+
+  it('walks every line in order with ArrowUp when a table sits earlier in the document', async () => {
+    initI18n('ko');
+
+    const value = [
+      '### 84d3f0ddd fix: 예약금액 설정 시 number 변환이 아닌 parseInt 변환으로 수정한다',
+      '>',
+      '> 예약금이 항상 정수로 표현되도록 처리',
+      '',
+      '**Number vs parseInt**',
+      '- 소수점 처리',
+      '  | 입력값 | `Number()` | `parseInt()` |',
+      '  |--------|-----------|-------------|',
+      '  | `"123.45"` | `123.45` | `123` |',
+      '  | `"123"` | `123` | `123` |',
+      '  | `"123.99"` | `123.99` | `123` |',
+      '',
+      '- 부분 문자열 처리',
+      '  - Number("123abc") -> NaN',
+      '  - parseInt("123abc") -> 123',
+      '- 기수(radix) 파라미터 사용 유무',
+      '  - parseInt("123", 기수)',
+      '',
+      '',
+      '### 접근 권한을 Server Side, Clident Side 에서 막는 것이 어떤 차이가 있을까?',
+    ].join('\n');
+
+    render(<MarkdownLiveEditor value={value} onChange={() => {}} placeholder="마크다운으로 메모를 남겨보세요." />);
+
+    const view = getEditorView();
+    const totalLines = view.state.doc.lines;
+
+    act(() => {
+      view.dispatch({ selection: { anchor: view.state.doc.length } });
+      view.focus();
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('.cm-md-table')).not.toBeNull();
+    });
+
+    const visitedLines = [totalLines];
+    for (let step = 0; step < totalLines - 1; step += 1) {
+      fireEvent.keyDown(view.contentDOM, { key: 'ArrowUp', code: 'ArrowUp' });
+      const pos = view.state.selection.main.head;
+      visitedLines.push(view.state.doc.lineAt(pos).number);
+    }
+
+    expect(visitedLines).toEqual(
+      Array.from({ length: totalLines }, (_, index) => totalLines - index),
+    );
+  });
+
   it('keeps malformed tables as raw markdown text', async () => {
     initI18n('ko');
 
