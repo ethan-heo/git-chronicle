@@ -148,6 +148,7 @@ S02_WorkspaceScreen
 - AI 요약 패널의 "설정으로 이동" CTA도 동일한 사이드바 `settings` 로컬 뷰를 연다.
 - `PaneTree`는 leaf pane 또는 split pane으로 이루어진 재귀 트리다. split pane은 `ResizableSplitPane`을 재사용해 좌우/상하 분할을 렌더링한다.
 - `WorkspaceTabBar`의 좌측 탭 목록은 가로 스크롤되고, 스크롤바가 탭 내용을 덮지 않도록 `scrollbar-gutter`와 하단 여백을 둔다.
+- 분할된 leaf pane마다 `WorkspaceTabBar`는 `activeTabId` 기준의 "현재 표시 중" 상태를 항상 유지해, 포커스를 잃어도 어떤 탭이 그 pane 본문을 보여주고 있는지 계속 드러낸다. `focusedPaneId`는 탭 자체가 아니라 탭바 컨테이너의 별도 강조/라벨로 표현해 "현재 표시 중"과 "조작 대상 포커스"를 구분한다.
 - `WorkspaceTabBar` 우측의 `AISummaryToggleButton` / `FileCanvasToggleButton`은 `PaneActionsGroup`으로 묶여 기본 접힘 상태이며, 그룹 토글 버튼을 눌러야 펼쳐진다. 이 펼침 상태는 leaf pane별로 독립이며 Webview State에 저장되지 않는다.
 - leaf pane은 클릭해도 포커스 강조 아웃라인을 표시하지 않는다. `focusedPaneId`는 pane-local 본문 상호작용과 탭 조작의 대상 pane을 결정하는 내부 상태로만 쓰이며, 이미 열린 탭 사이를 오갈 때 사이드바 커밋/PR/Issue 컨텍스트를 바꾸지 않는다.
 - 같은 대상(`panelType + commitHash + filePath`, `note:${relativePath}`, `pr:${number}`, `issue:${number}`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.

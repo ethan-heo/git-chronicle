@@ -37,10 +37,16 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
 }) => {
   return (
     <div
-      className="flex items-stretch gap-3 border-b border-line bg-panel px-4 py-2"
+      className={[
+        'flex items-stretch gap-3 border-b px-4 py-2 transition-colors',
+        isFocusedPane
+          ? 'border-accent/60 bg-[color-mix(in_srgb,var(--color-accent)_8%,var(--color-panel))]'
+          : 'border-line bg-panel',
+      ].join(' ')}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
+      data-pane-focus-state={isFocusedPane ? 'focused' : 'visible'}
     >
       <div className="workspace-tab-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 [scrollbar-gutter:stable]">
         <div className="flex min-w-max items-center gap-2 pr-1">
@@ -48,7 +54,8 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
             <WorkspaceTabItem
               key={tab.id}
               tab={tab}
-              isActive={isFocusedPane && tab.id === activeTabId}
+              isVisible={tab.id === activeTabId}
+              isFocused={isFocusedPane && tab.id === activeTabId}
               isGenerating={isGeneratingSummary && tab.panelType === 'aiSummary' && tab.commit?.hash === activeSummaryCommitHash}
               onActivate={() => onActivateTab(tab.id)}
               onClose={() => onCloseTab(tab.id)}
@@ -69,7 +76,8 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
 interface WorkspaceTabItemProps {
   paneId: string;
   tab: WorkspaceTab;
-  isActive: boolean;
+  isVisible: boolean;
+  isFocused: boolean;
   isGenerating: boolean;
   onActivate: () => void;
   onClose: () => void;
@@ -77,7 +85,7 @@ interface WorkspaceTabItemProps {
   onDragEnd?: () => void;
 }
 
-const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, isGenerating, onActivate, onClose, onDragStart, onDragEnd }) => {
+const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isVisible, isFocused, isGenerating, onActivate, onClose, onDragStart, onDragEnd }) => {
   const { t } = useTranslation();
   const tabLabel = getTabLabel(tab, t);
   const tabBadge = getTabBadge(tab, t);
@@ -86,10 +94,14 @@ const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, is
     <div
       draggable
       data-pane-id={paneId}
+      data-tab-visibility-state={isVisible ? 'visible' : 'hidden'}
+      data-tab-focus-state={isFocused ? 'focused' : 'unfocused'}
       className={[
         'group flex h-10 items-center gap-2 rounded-md border pl-3 pr-2 text-sm transition-colors',
-        isActive
+        isFocused
           ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_16%,transparent)] text-text'
+          : isVisible
+            ? 'border-[color-mix(in_srgb,var(--color-accent)_35%,var(--color-line))] bg-[color-mix(in_srgb,var(--color-foreground)_6%,var(--color-surface))] text-text'
           : 'border-line bg-surface text-muted hover:bg-hover hover:text-text',
       ].join(' ')}
       onDragStart={onDragStart}
@@ -100,6 +112,7 @@ const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, is
         className="flex items-center gap-2"
         onClick={onActivate}
         aria-label={tabLabel}
+        aria-current={isVisible ? 'page' : undefined}
         title={tabLabel}
       >
         {tabBadge ? (

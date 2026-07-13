@@ -18,7 +18,7 @@ describe('WorkspaceTabBar', () => {
     initI18n('ko');
   });
 
-  it('shows the active tab style only for the focused pane', () => {
+  it('shows the visible tab state in every pane and separates focus state', () => {
     render(
       <>
         <WorkspaceTabBar
@@ -48,10 +48,21 @@ describe('WorkspaceTabBar', () => {
 
     const focusedTabLabel = screen.getByRole('button', { name: 'alpha.ts' });
     const unfocusedTabLabel = screen.getByRole('button', { name: 'beta.ts' });
+    const focusedTab = focusedTabLabel.parentElement;
+    const visibleTab = unfocusedTabLabel.parentElement;
+    const focusedPaneBar = focusedTab?.closest('[data-pane-focus-state="focused"]');
+    const visiblePaneBar = visibleTab?.closest('[data-pane-focus-state="visible"]');
 
-    expect(focusedTabLabel.parentElement).toHaveClass('border-accent');
-    expect(unfocusedTabLabel.parentElement).toHaveClass('border-line');
-    expect(unfocusedTabLabel.parentElement).not.toHaveClass('border-accent');
+    expect(focusedTab).toHaveAttribute('data-tab-visibility-state', 'visible');
+    expect(focusedTab).toHaveAttribute('data-tab-focus-state', 'focused');
+    expect(focusedTab).toHaveClass('border-accent');
+    expect(focusedPaneBar).toHaveClass('border-accent/60');
+
+    expect(visibleTab).toHaveAttribute('data-tab-visibility-state', 'visible');
+    expect(visibleTab).toHaveAttribute('data-tab-focus-state', 'unfocused');
+    expect(visibleTab).not.toHaveClass('border-line');
+    expect(visibleTab).not.toHaveClass('border-accent');
+    expect(visiblePaneBar).toHaveClass('border-line');
   });
 
   it('shows the note badge text for note tabs', () => {
