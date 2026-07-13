@@ -21,6 +21,7 @@ import { PaneActionsGroup } from './PaneActionsGroup';
 import { PaneTree } from './PaneTree';
 import { SettingsToggleButton } from './SettingsToggleButton';
 import { useChangedFileTree } from './useChangedFileTree';
+import { useWorkspaceKeyboardShortcuts } from './useWorkspaceKeyboardShortcuts';
 import { WorkspaceHeading } from './WorkspaceHeading';
 
 const SIDEBAR_DEFAULT_WIDTH = 320;
@@ -54,6 +55,7 @@ type SidebarView = 'default' | 'settings';
 
 export const S02WorkspaceScreen: FC = () => {
   const { t, i18n } = useTranslation();
+  useWorkspaceKeyboardShortcuts();
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const paneTree = useAppStore((state) => state.paneTree);
   const focusedPaneId = useAppStore((state) => state.focusedPaneId);

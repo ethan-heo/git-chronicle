@@ -87,6 +87,13 @@
 - **결과:** 비활성화 → 활성화 또는 활성화 → 비활성화
 - **규칙:** 하나가 활성화되면 나머지는 자동으로 비활성화. 상호 배타적 선택.
 
+### KeyboardShortcut
+
+- **트리거:** modifier 조합 키 입력
+- **적용 대상:** `S02_WorkspaceScreen`의 워크스페이스 탭
+- **결과:** `Ctrl/Cmd+W`는 포커스된 pane의 활성 탭을 닫고, `Ctrl+Tab` / `Ctrl+Shift+Tab`은 Win/Linux에서만 같은 pane 안 다음/이전 탭 순환 전환에 사용한다.
+- **규칙:** 웹뷰 `document` 레벨 keydown 리스너가 `preventDefault()`로 지원 대상 단축키를 가로챈다. macOS의 `Cmd+Tab` 계열은 시스템 앱 전환과 충돌하므로 워크스페이스 단축키로 사용하지 않는다.
+
 ### ConfirmDialog
 
 - **트리거:** 재생성 아이콘 클릭 (기존 저장본이 있는 경우)

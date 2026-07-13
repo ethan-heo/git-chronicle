@@ -156,6 +156,8 @@ S02_WorkspaceScreen
 - `pr`/`issue` 탭은 사이드바 `PRsSection`/`IssuesSection` 목록 클릭으로 연다. 커밋과 무관하므로 탭 식별은 `panelType + prNumber`/`panelType + issueNumber`를 쓰고(F02 나머지 탭의 `panelType + commitHash + filePath`와 별도 규칙), 이 탭이 포커스돼도 사이드바의 `selectedCommit` 기반 커밋 컨텍스트(파일 트리 등)는 갱신되지 않고 마지막 값을 그대로 유지한다. PR/Issue 섹션의 활성 하이라이트도 마찬가지로 사이드바 목록 클릭에서만 바뀐다.
 - 탭을 드래그해 다른 leaf pane의 상/하/좌/우 가장자리로 드롭하면 해당 방향으로 pane이 분할된다. 다른 pane의 탭바 전체 또는 본문 중앙(가장자리 25% 바깥)에 드롭하면 새 분할 없이 해당 pane의 탭 목록 끝에 병합되어 활성화된다. 타겟 pane에 같은 대상 탭이 이미 열려 있으면 중복 생성하지 않고 기존 탭만 활성화하며, 같은 pane 안에서 탭바/본문 중앙으로 재드롭하는 동작은 무시한다.
 - 탭을 닫으면 같은 pane 안에서 오른쪽 우선 fallback 탭을 활성화하고, leaf pane의 마지막 탭을 닫으면 그 pane은 트리에서 제거되며 sibling pane이 공간을 승계한다.
+- `Ctrl+W`(Win/Linux) 또는 `Cmd+W`(Mac)는 `focusedPaneId`의 활성 탭을 닫는다. 이 단축키는 텍스트 입력 필드에 커서가 있어도 항상 워크스페이스 탭 닫기로 처리되며, 웹뷰가 `preventDefault()`로 VS Code 기본 "에디터 닫기" 동작을 가로챈다.
+- `Ctrl+Tab` / `Ctrl+Shift+Tab`은 Win/Linux에서만 `focusedPaneId` 안의 다음/이전 탭 순환 전환에 사용한다. macOS의 `Cmd+Tab` / `Cmd+Shift+Tab`은 시스템 앱 전환과 충돌하므로 워크스페이스 단축키로 지원하지 않는다.
 - 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환된다. 다만 이미 열린 탭 사이의 포커스 전환, 탭 닫기 fallback, 중앙 드롭 병합 활성화는 사이드바의 커밋/파일/PR/Issue 컨텍스트를 바꾸지 않으며, 사이드바에서 새 항목을 열 때만 그 컨텍스트가 갱신된다.
 - 분할 레이아웃은 Webview State에 저장하지 않는다. 웹뷰 재생성 후에는 단일 pane으로 초기화된다.
 - 노트는 사이드바 `NotesSection`에서만 열며, S02 내부 `note` 탭으로 표시된다. 탭 이탈 시 저장되지 않은 초안은 즉시 플러시 저장되고, 목록에서 드래그 이동/삭제하면 열린 note 탭도 같은 `relativePath` 기준으로 갱신된다.

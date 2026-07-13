@@ -59,6 +59,7 @@ export interface WorkspaceTabsSlice {
   openNoteTreeEntry: (relativePath: string) => void;
   closeWorkspaceTab: (paneId: string, tabId: string) => void;
   activateWorkspaceTab: (paneId: string, tabId: string) => void;
+  activateAdjacentWorkspaceTab: (paneId: string, direction: 'next' | 'prev') => void;
   toggleCodeInnerPanel: (paneId: string, tabId: string, panel: CodeInnerPanelType) => void;
   focusPane: (paneId: string) => void;
   moveWorkspaceTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
@@ -443,6 +444,28 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           : currentPane),
         focusedPaneId: paneId,
       }));
+    },
+
+    activateAdjacentWorkspaceTab: (paneId, direction) => {
+      const state = get();
+      const pane = findLeafPane(state.paneTree, paneId);
+      if (!pane || pane.tabs.length < 2 || !pane.activeTabId) {
+        return;
+      }
+
+      const activeIndex = pane.tabs.findIndex((tab) => tab.id === pane.activeTabId);
+      if (activeIndex === -1) {
+        return;
+      }
+
+      const offset = direction === 'next' ? 1 : -1;
+      const nextIndex = (activeIndex + offset + pane.tabs.length) % pane.tabs.length;
+      const nextTab = pane.tabs[nextIndex];
+      if (!nextTab) {
+        return;
+      }
+
+      get().activateWorkspaceTab(paneId, nextTab.id);
     },
 
     toggleCodeInnerPanel: (paneId, tabId, panel) => {
