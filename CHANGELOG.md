@@ -1,4 +1,21 @@
 
+## [1.6.0](https://github.com/ethan-heo/git-chronicle/compare/v1.5.0...v1.6.0) (2026-07-13)
+
+### Features
+
+* simplify copied markdown output ([d3a639f](https://github.com/ethan-heo/git-chronicle/commit/d3a639f1df732313cb0ecb7e91b1c6a294e71b88))
+* **workspace:** isolate split pane file diffs ([c6f697d](https://github.com/ethan-heo/git-chronicle/commit/c6f697dfbe1b0a93bad5cecb2740179f07a2b6f5))
+* **f11:** add live preview markdown note editor ([3d95139](https://github.com/ethan-heo/git-chronicle/commit/3d95139004e91b7279d5c67b830b04c24f625474))
+
+### Bug Fixes
+
+* restore note tab badge label ([76ab6eb](https://github.com/ethan-heo/git-chronicle/commit/76ab6ebd9b289bdb5ddbe42fbf8e2b9697115ce0))
+* **notes:** prevent cursor jump below markdown horizontal rules ([0f0bf12](https://github.com/ethan-heo/git-chronicle/commit/0f0bf12b2765fb1efaea63df3cc783e95a78cc42))
+* **f11:** preserve vertical cursor movement on hidden markdown syntax ([1b573ad](https://github.com/ethan-heo/git-chronicle/commit/1b573ad71ef650b4832a6a10d597499b98a8e658))
+* **f11:** stabilize mermaid widget cursor navigation ([606f2fd](https://github.com/ethan-heo/git-chronicle/commit/606f2fdae9f981f7f4005250b6cca9b577735ba4))
+* **note:** prevent editor autosave status flicker ([a9874e0](https://github.com/ethan-heo/git-chronicle/commit/a9874e00385f9eedeaa39586eaf757b9efd6ebcf))
+* **workspace:** limit active tab styling to focused pane ([301ff14](https://github.com/ethan-heo/git-chronicle/commit/301ff14dc99ca225ab3c02cc7b912f66dcbba66f))
+
 ## [1.5.0](https://github.com/ethan-heo/git-chronicle/compare/v1.4.0...v1.5.0) (2026-07-12)
 
 ### Features
