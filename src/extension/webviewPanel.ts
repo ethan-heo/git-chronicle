@@ -50,6 +50,10 @@ export class GitChroniclePanel {
     GitChroniclePanel.currentPanel?.dispose();
   }
 
+  public static closeActiveTab(): void {
+    GitChroniclePanel.currentPanel?.panel.webview.postMessage({ type: 'CLOSE_ACTIVE_TAB' });
+  }
+
   private dispose(): void {
     GitChroniclePanel.currentPanel = undefined;
 

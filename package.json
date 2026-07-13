@@ -30,6 +30,14 @@
         "title": "%command.openInNewWindow.title%"
       }
     ],
+    "keybindings": [
+      {
+        "command": "gitChronicle.closeActiveTab",
+        "key": "ctrl+w",
+        "mac": "cmd+w",
+        "when": "activeWebviewPanelId == 'gitChronicle'"
+      }
+    ],
     "configuration": {
       "title": "%configuration.title%",
       "properties": {

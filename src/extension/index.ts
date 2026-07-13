@@ -10,7 +10,11 @@ export function activate(context: vscode.ExtensionContext): void {
     GitChroniclePanel.createOrShowInNewWindow(context);
   });
 
-  context.subscriptions.push(openCommand, openInNewWindowCommand);
+  const closeActiveTabCommand = vscode.commands.registerCommand('gitChronicle.closeActiveTab', () => {
+    GitChroniclePanel.closeActiveTab();
+  });
+
+  context.subscriptions.push(openCommand, openInNewWindowCommand, closeActiveTabCommand);
 }
 
 export function deactivate(): void {

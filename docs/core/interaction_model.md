@@ -92,7 +92,7 @@
 - **트리거:** modifier 조합 키 입력
 - **적용 대상:** `S02_WorkspaceScreen`의 워크스페이스 탭
 - **결과:** `Ctrl/Cmd+W`는 포커스된 pane의 활성 탭을 닫고, `Ctrl+Tab` / `Ctrl+Shift+Tab`은 Win/Linux에서만 같은 pane 안 다음/이전 탭 순환 전환에 사용한다.
-- **규칙:** 웹뷰 `document` 레벨 keydown 리스너가 `preventDefault()`로 지원 대상 단축키를 가로챈다. macOS의 `Cmd+Tab` 계열은 시스템 앱 전환과 충돌하므로 워크스페이스 단축키로 사용하지 않는다.
+- **규칙:** `Ctrl/Cmd+W`는 `package.json`의 `activeWebviewPanelId` when절 키바인딩으로 `gitChronicle.closeActiveTab` 커맨드로 라우팅되고, 그 커맨드가 웹뷰에 `CLOSE_ACTIVE_TAB` 메시지를 보내 처리한다. VS Code는 웹뷰의 `preventDefault()`와 무관하게 워크벤치 키바인딩(에디터 닫기 등)을 항상 호스트로 전달하기 때문에, 순수 `document` keydown 가로채기만으로는 VS Code 기본 동작을 막을 수 없다. `Ctrl+Tab` / `Ctrl+Shift+Tab` 탭 순환은 여전히 웹뷰 `document` 레벨 keydown 리스너가 `preventDefault()`로 처리한다. macOS의 `Cmd+Tab` 계열은 시스템 앱 전환과 충돌하므로 워크스페이스 단축키로 사용하지 않는다.
 
 ### ConfirmDialog
 
