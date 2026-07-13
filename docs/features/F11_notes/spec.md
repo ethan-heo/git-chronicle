@@ -32,7 +32,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 - 이 기능 배포 전 저장돼 `aiSummaryLink.commitMessage`가 없는 기존 요약 노트는 하위 호환을 위해 계속 일반 `note` 탭으로 연다.
 - 탭 전환 또는 닫기로 `NoteEditorPanel`이 언마운트될 때 저장되지 않은 초안이 있으면 디바운스를 기다리지 않고 즉시 저장한다.
 - 저장 경로가 없으면 F05b와 동일한 "저장 경로를 먼저 설정해주세요" 안내를 사용한다.
-- F01/F02/F03/F04/F10에서 복사한 내용은 마크다운 또는 Mermaid 코드블록으로 클립보드에 기록된다.
+- F01/F02/F03/F04/F10에서 복사한 내용은 불필요한 제목/라벨 없이 핵심 텍스트만 클립보드에 기록된다. F03/F04/F10은 선택 본문 기준의 코드블록/Mermaid를 유지하고, F01/F02는 식별에 필요한 최소 텍스트만 복사한다.
 - `NoteEditorPanel`은 별도 모드 전환 없이 라이브 프리뷰 편집기 하나만 렌더링한다.
 - `edit` 라이브 프리뷰의 fenced code block은 언어 태그가 있으면 `shiki` 기반 문법 강조를 적용한다. 지원 언어 범위는 css/html/javascript/json/jsx/markdown/mdx/tsx/typescript/yaml/bash/python/sql/diff다.
 - `edit` 라이브 프리뷰에서 ```mermaid 블록은 커서가 블록 밖에 있을 때 다이어그램 위젯으로 치환되고, 커서가 블록 안으로 들어오면 다시 원문 마크다운으로 편집 가능해야 한다.

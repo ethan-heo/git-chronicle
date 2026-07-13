@@ -132,7 +132,7 @@ interface FileTreeNodeProps {
 
 #### Interaction
 - 호버 시 `FileActionButtons` 표시, `FileStatusBadge` 유지
-- [마크다운으로 복사] 클릭 → 해당 파일 정보를 마크다운 형식으로 클립보드에 복사
+- [마크다운으로 복사] 클릭 → 해당 파일의 핵심 식별 텍스트만(기본은 현재 경로, rename은 `oldPath -> path`) 클립보드에 복사
 - [코드 보기] 클릭 → `selectedFile` 업데이트 → S02 본문 `code` 패널 활성화
 - [AI 요약 보기] 클릭 → 해당 파일을 컨텍스트로 S02 본문 `aiSummary` 패널 활성화
 - [심볼 그래프] 클릭 → `selectedFileForSymbolGraph` 업데이트 → S02 본문 `symbolGraph` 패널 활성화
@@ -193,7 +193,7 @@ interface FileStatusBadgeProps {
 |---------|--------|------|
 | 파일 호버 | `FileTreeNode` 마우스 진입 | 복사/코드/AI/심볼 액션 그룹 표시 |
 | 파일 호버 해제 | 마우스 이탈 | `FileActionButtons` 숨김 |
-| [마크다운으로 복사] | 버튼 클릭 | 파일 정보 마크다운을 클립보드에 복사 |
+| [마크다운으로 복사] | 버튼 클릭 | 파일의 핵심 식별 텍스트만 클립보드에 복사 |
 | [코드 보기] | 버튼 클릭 | `selectedFile` 설정 후 S02 본문 `code` 패널 활성화 |
 | [AI 요약 보기] | 버튼 클릭 | 해당 파일을 선택 컨텍스트로 S02 본문 `aiSummary` 패널 활성화 |
 | [심볼 그래프] | 버튼 클릭 | `selectedFileForSymbolGraph` 설정 후 S02 본문 `symbolGraph` 패널 활성화 |

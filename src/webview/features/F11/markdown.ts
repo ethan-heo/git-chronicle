@@ -2,36 +2,17 @@ import type { ChangedFile, Commit, DependencyEdge, SymbolEdge, SymbolNode } from
 import type { DiffLineData } from '../F03/types';
 
 export function commitToMarkdown(commit: Commit): string {
-  return [
-    `## Commit ${commit.shortHash}`,
-    '',
-    `- Message: ${commit.message}`,
-    `- Author: ${commit.author}`,
-    `- Date: ${commit.date}`,
-    '',
-  ].join('\n');
+  return `${commit.shortHash} ${commit.message}`;
 }
 
 export function changedFileToMarkdown(file: ChangedFile): string {
-  return [
-    `## File ${file.path}`,
-    '',
-    `- Status: ${file.status}`,
-    ...(file.oldPath ? [`- Previous path: ${file.oldPath}`] : []),
-    '',
-  ].join('\n');
+  return file.oldPath ? `${file.oldPath} -> ${file.path}` : file.path;
 }
 
 export function diffRangeToMarkdown(filePath: string, diffLines: DiffLineData[], startIndex: number, endIndex: number): string {
   const selectedLines = diffLines.slice(startIndex, endIndex + 1);
-  const firstLine = selectedLines.find((line) => line.oldLineNumber || line.newLineNumber);
-  const lastLine = [...selectedLines].reverse().find((line) => line.oldLineNumber || line.newLineNumber);
 
   return [
-    `## Diff ${filePath}`,
-    '',
-    `- Range: ${formatDiffRange(firstLine?.oldLineNumber ?? firstLine?.newLineNumber, lastLine?.newLineNumber ?? lastLine?.oldLineNumber)}`,
-    '',
     '```diff',
     ...selectedLines.map((line) => `${toDiffPrefix(line.type)}${line.tokens.map((token) => token.content).join('')}`),
     '```',
@@ -45,10 +26,6 @@ export function codeRangeToMarkdown(filePath: string, lines: string[], startLine
   const selectedLines = lines.slice(normalizedStart - 1, normalizedEnd);
 
   return [
-    `## Code ${filePath}`,
-    '',
-    `- Range: ${formatDiffRange(normalizedStart, normalizedEnd)}`,
-    '',
     `\`\`\`${normalizeCodeFenceLanguage(language)}`,
     ...selectedLines,
     '```',
@@ -171,16 +148,6 @@ function graphSelectionToMermaid(
     '```',
     '',
   ].join('\n');
-}
-
-function formatDiffRange(start?: number | null, end?: number | null): string {
-  if (!start && !end) {
-    return 'n/a';
-  }
-  if (!end || start === end) {
-    return `L${start ?? end}`;
-  }
-  return `L${start}-${end}`;
 }
 
 function toDiffPrefix(type: DiffLineData['type']): string {

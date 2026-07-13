@@ -1,6 +1,76 @@
 import { describe, expect, it } from 'vitest';
-import { dependencySelectionToMermaid, symbolSelectionToMermaid } from '../../src/webview/features/F11/markdown';
+import { codeRangeToMarkdown, commitToMarkdown, dependencySelectionToMermaid, diffRangeToMarkdown, changedFileToMarkdown, symbolSelectionToMermaid } from '../../src/webview/features/F11/markdown';
 import type { ChangedFile, DependencyEdge, SymbolEdge, SymbolNode } from '../../src/webview/types/commit';
+import type { DiffLineData } from '../../src/webview/features/F03/types';
+
+describe('commitToMarkdown', () => {
+  it('copies only the short hash and message', () => {
+    const markdown = commitToMarkdown({
+      hash: '1234567890abcdef',
+      shortHash: '1234567',
+      message: 'Fix copy output',
+      author: 'Ethan',
+      date: '2026-07-13',
+    });
+
+    expect(markdown).toBe('1234567 Fix copy output');
+  });
+});
+
+describe('changedFileToMarkdown', () => {
+  it('copies only the current file path by default', () => {
+    const markdown = changedFileToMarkdown({ path: 'src/webview/features/F11/markdown.ts', status: 'M' });
+
+    expect(markdown).toBe('src/webview/features/F11/markdown.ts');
+  });
+
+  it('copies rename information without extra labels', () => {
+    const markdown = changedFileToMarkdown({
+      path: 'src/new-name.ts',
+      oldPath: 'src/old-name.ts',
+      status: 'R',
+    });
+
+    expect(markdown).toBe('src/old-name.ts -> src/new-name.ts');
+  });
+});
+
+describe('diffRangeToMarkdown', () => {
+  it('copies only the selected diff block', () => {
+    const diffLines: DiffLineData[] = [
+      {
+        type: 'removed',
+        content: 'const before = true;',
+        oldLineNumber: 10,
+        newLineNumber: null,
+        tokens: [{ content: 'const before = true;' }],
+      },
+      {
+        type: 'added',
+        content: 'const after = true;',
+        oldLineNumber: null,
+        newLineNumber: 10,
+        tokens: [{ content: 'const after = true;' }],
+      },
+    ];
+
+    const markdown = diffRangeToMarkdown('src/example.ts', diffLines, 0, 1);
+
+    expect(markdown).toBe(['```diff', '-const before = true;', '+const after = true;', '```', ''].join('\n'));
+    expect(markdown).not.toContain('## Diff');
+    expect(markdown).not.toContain('Range:');
+  });
+});
+
+describe('codeRangeToMarkdown', () => {
+  it('copies only the selected code block', () => {
+    const markdown = codeRangeToMarkdown('src/example.ts', ['first()', 'second()', 'third()'], 2, 3, 'ts');
+
+    expect(markdown).toBe(['```typescript', 'second()', 'third()', '```', ''].join('\n'));
+    expect(markdown).not.toContain('## Code');
+    expect(markdown).not.toContain('Range:');
+  });
+});
 
 describe('dependencySelectionToMermaid', () => {
   it('uses file names rather than full paths for node labels', () => {
