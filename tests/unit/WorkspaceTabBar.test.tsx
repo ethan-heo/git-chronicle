@@ -53,6 +53,25 @@ describe('WorkspaceTabBar', () => {
     expect(unfocusedTabLabel.parentElement).toHaveClass('border-line');
     expect(unfocusedTabLabel.parentElement).not.toHaveClass('border-accent');
   });
+
+  it('shows the note badge text for note tabs', () => {
+    render(
+      <WorkspaceTabBar
+        paneId="pane-note"
+        tabs={[createNoteTab('note:ideas/todo.md', 'ideas/todo.md', 'todo.md')]}
+        activeTabId="note:ideas/todo.md"
+        isFocusedPane
+        activeSummaryCommitHash={null}
+        isGeneratingSummary={false}
+        onActivateTab={vi.fn()}
+        onCloseTab={vi.fn()}
+        fixedActions={null}
+      />,
+    );
+
+    expect(screen.getByText('노트')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'todo.md' })).toBeInTheDocument();
+  });
 });
 
 function createCodeTab(id: string, filePath: string): WorkspaceTab {
@@ -62,5 +81,16 @@ function createCodeTab(id: string, filePath: string): WorkspaceTab {
     title: null,
     commit: commitA,
     filePath,
+  };
+}
+
+function createNoteTab(id: string, relativePath: string, title: string): WorkspaceTab {
+  return {
+    id,
+    panelType: 'note',
+    title,
+    commit: null,
+    filePath: null,
+    relativePath,
   };
 }

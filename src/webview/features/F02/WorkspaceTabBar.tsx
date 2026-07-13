@@ -80,6 +80,7 @@ interface WorkspaceTabItemProps {
 const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, isGenerating, onActivate, onClose, onDragStart, onDragEnd }) => {
   const { t } = useTranslation();
   const tabLabel = getTabLabel(tab, t);
+  const tabBadge = getTabBadge(tab, t);
 
   return (
     <div
@@ -101,9 +102,11 @@ const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isActive, is
         aria-label={tabLabel}
         title={tabLabel}
       >
-        <span className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text">
-          {getTabBadge(tab)}
-        </span>
+        {tabBadge ? (
+          <span className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text">
+            {tabBadge}
+          </span>
+        ) : null}
         <span className="max-w-[180px] truncate">{tabLabel}</span>
         {isGenerating ? <span className="size-2 rounded-full bg-accent" aria-label={t('ai_summary.generating_badge_aria')} /> : null}
       </button>
@@ -140,7 +143,11 @@ function getTabLabel(tab: WorkspaceTab, t: (key: string) => string): string {
   return tab.title ?? tab.relativePath?.split('/').at(-1) ?? t('workspace.tab_label_note');
 }
 
-function getTabBadge(tab: WorkspaceTab): string {
+function getTabBadge(tab: WorkspaceTab, t: (key: string) => string): string {
+  if (tab.panelType === 'note') {
+    return t('workspace.tab_label_note');
+  }
+
   if (tab.panelType === 'pr' || tab.panelType === 'issue') {
     return `#${tab.prNumber ?? tab.issueNumber}`;
   }
