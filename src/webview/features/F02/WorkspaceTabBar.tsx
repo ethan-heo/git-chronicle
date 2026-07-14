@@ -38,10 +38,8 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
   return (
     <div
       className={[
-        'flex items-stretch gap-3 border-b px-4 py-2 transition-colors',
-        isFocusedPane
-          ? 'border-accent/60 bg-[color-mix(in_srgb,var(--color-accent)_8%,var(--color-panel))]'
-          : 'border-line bg-panel',
+        'flex items-stretch gap-2 border-b-2 bg-panel px-2 py-1 transition-colors',
+        isFocusedPane ? 'border-accent' : 'border-line',
       ].join(' ')}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
@@ -49,7 +47,7 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
       data-pane-focus-state={isFocusedPane ? 'focused' : 'visible'}
     >
       <div className="workspace-tab-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 [scrollbar-gutter:stable]">
-        <div className="flex min-w-max items-center gap-2 pr-1">
+        <div className="flex min-w-max items-center gap-1 pr-1">
           {tabs.map((tab) => (
             <WorkspaceTabItem
               key={tab.id}
@@ -97,12 +95,10 @@ const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isVisible, i
       data-tab-visibility-state={isVisible ? 'visible' : 'hidden'}
       data-tab-focus-state={isFocused ? 'focused' : 'unfocused'}
       className={[
-        'group flex h-10 items-center gap-2 rounded-md border pl-3 pr-2 text-sm transition-colors',
-        isFocused
-          ? 'border-accent bg-[color-mix(in_srgb,var(--color-accent)_16%,transparent)] text-text'
-          : isVisible
-            ? 'border-[color-mix(in_srgb,var(--color-accent)_35%,var(--color-line))] bg-[color-mix(in_srgb,var(--color-foreground)_6%,var(--color-surface))] text-text'
-          : 'border-line bg-surface text-muted hover:bg-hover hover:text-text',
+        'group flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm transition-colors',
+        isVisible
+          ? 'bg-selected text-text'
+          : 'bg-surface text-muted hover:bg-hover hover:text-text',
       ].join(' ')}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
