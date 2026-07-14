@@ -1,4 +1,14 @@
 
+## [1.7.1](https://github.com/ethan-heo/git-chronicle/compare/v1.7.0...v1.7.1) (2026-07-14)
+
+### Features
+
+* move commit panel actions into commit list hover buttons ([b5eb802](https://github.com/ethan-heo/git-chronicle/commit/b5eb8020ed6b0cded8ffa75fdde8dd79a6308a85))
+
+### Bug Fixes
+
+* simplify workspace tab bar styling ([eb741d4](https://github.com/ethan-heo/git-chronicle/commit/eb741d43af06352f100fc267006fb55d10db6dfa))
+
 ## [1.7.0](https://github.com/ethan-heo/git-chronicle/compare/v1.6.0...v1.7.0) (2026-07-13)
 
 ### Features
