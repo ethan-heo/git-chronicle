@@ -4,14 +4,27 @@ import type { Commit } from '../../types/commit';
 import { useAppStore } from '../../store/appStore';
 import { CopyMarkdownButton } from '../F11';
 import { commitToMarkdown } from '../F11';
+import { CommitActionButtons } from './CommitActionButtons';
 
 interface CommitListItemProps {
   commit: Commit;
   isSelected: boolean;
   onClick: (commit: Commit) => void;
+  onOpenAISummary: () => void;
+  onOpenFileCanvas: () => void;
+  isAIViewActive: boolean;
+  isFileCanvasActive: boolean;
 }
 
-const CommitListItemComponent: FC<CommitListItemProps> = ({ commit, isSelected, onClick }) => {
+const CommitListItemComponent: FC<CommitListItemProps> = ({
+  commit,
+  isSelected,
+  onClick,
+  onOpenAISummary,
+  onOpenFileCanvas,
+  isAIViewActive,
+  isFileCanvasActive,
+}) => {
   const { t, i18n } = useTranslation();
   const pushToast = useAppStore((state) => state.pushToast);
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
@@ -42,11 +55,23 @@ const CommitListItemComponent: FC<CommitListItemProps> = ({ commit, isSelected, 
       onClick={() => onClick(commit)}
       onKeyDown={handleKeyDown}
     >
-      <CopyMarkdownButton className="absolute top-2 right-2 group-hover:opacity-100" onClick={(event) => {
-        event.stopPropagation();
-        void handleCopy();
-      }}
-      />
+      <div className="absolute top-2 right-2 inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+        {isSelected ? (
+          <CommitActionButtons
+            isAIViewActive={isAIViewActive}
+            isFileCanvasActive={isFileCanvasActive}
+            onOpenAISummary={onOpenAISummary}
+            onOpenFileCanvas={onOpenFileCanvas}
+          />
+        ) : null}
+        <CopyMarkdownButton
+          className="opacity-100"
+          onClick={(event) => {
+            event.stopPropagation();
+            void handleCopy();
+          }}
+        />
+      </div>
       <span className={['overflow-hidden text-[13px] leading-[1.35] text-ellipsis whitespace-nowrap', isSelected ? 'text-text font-semibold' : 'text-text'].join(' ')}>
         {commit.message}
       </span>

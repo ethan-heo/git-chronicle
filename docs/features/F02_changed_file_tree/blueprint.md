@@ -235,7 +235,7 @@ interface FileStatusBadgeProps {
 ## Responsive Rules
 
 - S02 사이드바 최상단에는 `WorkspaceHeading`이 고정되고, 그 아래 `FileTreeSection`이 남은 세로 공간을 차지한다.
-- `AISummaryToggleButton` / `FileCanvasToggleButton`은 더 이상 사이드바에 있지 않고, S02 본문 `MainHeader` 좌측 버튼 그룹으로 이동했다.
+- 커밋 단위 `aiSummary` / `fileCanvas` 진입은 파일 트리 헤더가 아니라 F01 커밋 목록 항목의 호버 액션에서 담당한다.
 - 좁은 사이드바 폭에서는 섹션 헤더와 파일 행 모두 말줄임을 사용한다.
 
 ---

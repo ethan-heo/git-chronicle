@@ -13,7 +13,7 @@
 
 - **트리거:** 마우스 커서를 요소 위에 올림
 - **적용 대상:** `CommitListItem`, `FileTreeNode`, `FileNode` (캔버스)
-- **결과:** 호버된 요소의 배경색 변경 + 숨겨진 액션 버튼(`FileActionButtons`) 노출
+- **결과:** 호버된 요소의 배경색 변경 + 숨겨진 액션 버튼 노출 (`CommitListItem`은 선택된 항목일 때만 `CommitActionButtons`와 `CopyMarkdownButton`, `FileTreeNode`/`FileNode`는 `FileActionButtons`)
 - **규칙:** 호버 상태는 하나의 요소에만 적용. 이전 호버 상태는 즉시 해제.
 
 ### Click

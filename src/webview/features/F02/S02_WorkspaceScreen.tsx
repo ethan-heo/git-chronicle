@@ -13,11 +13,8 @@ import { SidebarSettingsPanel } from '../F06';
 import { NoteEditorPanel, NotesSection } from '../F11';
 import { IssueDetailPanel, IssuesSection, PRDetailPanel, PRsSection, useGithubAuth } from '../F12';
 import type { IssueSummary, PullRequestSummary } from '../F12';
-import { AISummaryToggleButton } from './AISummaryToggleButton';
 import { CodeTabSplitArea } from './CodeTabSplitArea';
-import { FileCanvasToggleButton } from './FileCanvasToggleButton';
 import { FileTree } from './FileTree';
-import { PaneActionsGroup } from './PaneActionsGroup';
 import { PaneTree } from './PaneTree';
 import { SettingsToggleButton } from './SettingsToggleButton';
 import { useChangedFileTree } from './useChangedFileTree';
@@ -188,6 +185,10 @@ export const S02WorkspaceScreen: FC = () => {
     openTab('aiSummary');
   }, [openTab]);
 
+  const openFileCanvasFromSidebar = useCallback(() => {
+    openTab('fileCanvas');
+  }, [openTab]);
+
   const openCodeTab = useCallback((file: ChangedFile) => {
     openTab('code', file);
   }, [openTab]);
@@ -310,6 +311,13 @@ export const S02WorkspaceScreen: FC = () => {
     setSidebarView('default');
   }, []);
 
+  const isAIViewActive = Boolean(
+    selectedCommit && activeTab?.id === computeWorkspaceTabId('aiSummary', selectedCommit.hash),
+  );
+  const isFileCanvasActive = Boolean(
+    selectedCommit && activeTab?.id === computeWorkspaceTabId('fileCanvas', selectedCommit.hash),
+  );
+
   const renderCommitListSection = (): ReactElement => (
     <SidebarSection
       title={t('commit.list_title')}
@@ -396,6 +404,10 @@ export const S02WorkspaceScreen: FC = () => {
         onClearFilters={clearFilters}
         savedScrollTop={commitListScrollTop}
         onScrollTopChange={setCommitListScrollTop}
+        onOpenAISummary={openCommitAISummaryFromSidebar}
+        onOpenFileCanvas={openFileCanvasFromSidebar}
+        isAIViewActive={isAIViewActive}
+        isFileCanvasActive={isFileCanvasActive}
       />
     </SidebarSection>
   );
@@ -588,13 +600,7 @@ export const S02WorkspaceScreen: FC = () => {
           onFocusPane={focusPane}
           onMoveTab={moveWorkspaceTab}
           onResizeSplit={setPaneSplitSize}
-          renderFixedActions={(paneId, paneActiveTab) => renderPaneActions({
-            paneId,
-            activeTab: paneActiveTab,
-            selectedCommit,
-            openCommitAISummaryFromSidebar,
-            openTab,
-          })}
+          renderFixedActions={() => null}
           renderPanel={(paneId, paneActiveTab) => renderWorkspacePanel({
           paneId,
           activeTab: paneActiveTab,
@@ -609,29 +615,6 @@ export const S02WorkspaceScreen: FC = () => {
     </main>
   );
 };
-
-function renderPaneActions(options: {
-  paneId: string;
-  activeTab: WorkspaceTab | null;
-  selectedCommit: ReturnType<typeof useAppStore.getState>['selectedCommit'];
-  openCommitAISummaryFromSidebar: () => void;
-  openTab: (panelType: 'code' | 'aiSummary' | 'fileCanvas') => void;
-}): ReactNode {
-  const { activeTab, selectedCommit, openCommitAISummaryFromSidebar, openTab } = options;
-
-  return (
-    <PaneActionsGroup>
-      <AISummaryToggleButton
-        isActive={Boolean(selectedCommit && activeTab?.id === computeWorkspaceTabId('aiSummary', selectedCommit.hash))}
-        onClick={openCommitAISummaryFromSidebar}
-      />
-      <FileCanvasToggleButton
-        isActive={Boolean(selectedCommit && activeTab?.id === computeWorkspaceTabId('fileCanvas', selectedCommit.hash))}
-        onClick={() => openTab('fileCanvas')}
-      />
-    </PaneActionsGroup>
-  );
-}
 
 function renderWorkspacePanel(options: {
   paneId: string;

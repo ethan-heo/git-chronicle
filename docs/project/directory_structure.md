@@ -120,8 +120,6 @@ src/webview/
 │   ├── F02/                          # S02 워크스페이스 (사이드바 + 본문 패널 전환)
 │   │   ├── S02_WorkspaceScreen.tsx   # S02 화면 조합, 변경 파일/의존성/노트 섹션 조합
 │   │   ├── WorkspaceHeading.tsx      # 본문/사이드바 상단 헤더
-│   │   ├── AISummaryToggleButton.tsx # 사이드바 헤더 [커밋 AI 정리] 토글
-│   │   ├── FileCanvasToggleButton.tsx # 사이드바 헤더 [캔버스 보기] 토글
 │   │   ├── CodeTabSplitArea.tsx      # code 탭 내부 2~3분할 조립 + 오버레이 토글
 │   │   ├── FileAISummaryToggleButton.tsx
 │   │   ├── SymbolGraphToggleButton.tsx

@@ -37,9 +37,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 1. 선택된 커밋의 변경 파일이 **디렉토리 트리** 형태로 표시된다.
 2. 파일 항목에 마우스를 호버링하면 액션 버튼이 활성화된다.
    - **[코드 보기]** → `selectedFile` 설정 후 S02 본문 `code` 패널 활성화
-3. 사이드바 헤더에는 워크스페이스 패널 전환 버튼이 위치한다.
-   - **[커밋 AI 정리]**(`AISummaryToggleButton`) → S02 본문 헤더의 좌측 버튼 그룹에서 `aiSummary` 패널 활성화. 해당 커밋의 AI 정리 저장본이 이미 존재하면 패널 진입 후 `AISummaryViewer`가 저장본을 즉시 표시한다.
-   - **[캔버스 보기]**(`FileCanvasToggleButton`) → S02 본문 헤더의 좌측 버튼 그룹에서 `fileCanvas` 패널 활성화
+3. 커밋 단위 `aiSummary` / `fileCanvas` 진입은 파일 트리 헤더가 아니라 선택된 커밋 목록 항목의 호버 액션에서 제공된다.
 
 > S02_WorkspaceScreen 통합 이후 코드 뷰어·AI 요약 뷰어·의존성 캔버스는 모두 독립 화면이 아니라 S02 본문의 탭 전환으로 구현된다.
 
@@ -69,7 +67,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 ## Dependencies
 
-- [F05b_AISummaryCommit](../F05b_ai_summary_commit/spec.md) — [커밋 AI 정리] 버튼
+- [F05b_AISummaryCommit](../F05b_ai_summary_commit/spec.md) — 선택된 커밋 기준 `aiSummary` 진입 이후 패널
 - [F03_CodeViewer](../F03_code_viewer/spec.md) — [코드 보기] 버튼
 
 ---
@@ -107,6 +105,6 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 |------|--------|------|
 | `changedFiles` 전역 상태 업데이트 | `selectedCommit` 설정 시 | 해당 커밋의 변경 파일 목록 로드 |
 | S02 `code` 탭 활성화 | `selectedFile` 설정 + [코드 보기] | `openWorkspaceTab({ panelType: "code" })` |
-| S02 `aiSummary` 탭 활성화 | [커밋 AI 정리] 클릭 | `openWorkspaceTab({ panelType: "aiSummary" })` |
-| S02 `fileCanvas` 탭 활성화 | [캔버스 보기] 클릭 | `openWorkspaceTab({ panelType: "fileCanvas" })` |
+| S02 `aiSummary` 탭 활성화 | 선택된 커밋 항목 호버 [AI 요약] 클릭 | `openWorkspaceTab({ panelType: "aiSummary" })` |
+| S02 `fileCanvas` 탭 활성화 | 선택된 커밋 항목 호버 [파일 캔버스] 클릭 | `openWorkspaceTab({ panelType: "fileCanvas" })` |
 | 코드 탭 내부 파일 AI 요약 / 심볼 캔버스 토글 | 열린 `code` 탭 내부 버튼 클릭 | `WorkspaceTab.codeInnerPanels` 반전으로 중첩 패널 on/off |

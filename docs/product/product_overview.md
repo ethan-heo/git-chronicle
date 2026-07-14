@@ -65,8 +65,8 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
        ↓ 커밋 클릭                               뒤로가기 │
   [S-02: 워크스페이스] ───────────────────────────────────┘
        ├─ 파일 [코드 보기]           → 본문 code 패널
-       ├─ [커밋 AI 정리]             → 본문 aiSummary 패널
-       ├─ [캔버스 보기]              → 본문 fileCanvas 패널
+       ├─ 선택된 커밋 호버 [AI 요약] → 본문 aiSummary 패널
+       ├─ 선택된 커밋 호버 [파일 캔버스] → 본문 fileCanvas 패널
        ├─ 파일 [심볼 그래프]         → 본문 symbolGraph 패널
        ├─ 사이드바 [PR 클릭]         → 본문 pr 패널
        ├─ 사이드바 [Issue 클릭]      → 본문 issue 패널

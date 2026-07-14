@@ -222,7 +222,7 @@ interface AISettingsState {
 
 ```
 Webview (F05b_AISummaryCommit)
-  └─ [커밋 AI 정리 클릭]
+  └─ [선택된 커밋 항목 호버 AI 요약 클릭]
        └─ postMessage({ type: 'START_AI_SUMMARY_COMMIT', payload: { commitHash, provider, savePath } })
             ↓
 Extension Host (messageHandler.ts)

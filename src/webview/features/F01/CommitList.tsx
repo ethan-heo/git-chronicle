@@ -21,6 +21,10 @@ interface CommitListProps {
   onClearFilters: () => void;
   savedScrollTop: number;
   onScrollTopChange: (top: number) => void;
+  onOpenAISummary: () => void;
+  onOpenFileCanvas: () => void;
+  isAIViewActive: boolean;
+  isFileCanvasActive: boolean;
 }
 
 export const CommitList: FC<CommitListProps> = ({
@@ -40,6 +44,10 @@ export const CommitList: FC<CommitListProps> = ({
   onClearFilters,
   savedScrollTop,
   onScrollTopChange,
+  onOpenAISummary,
+  onOpenFileCanvas,
+  isAIViewActive,
+  isFileCanvasActive,
 }) => {
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -65,9 +73,9 @@ export const CommitList: FC<CommitListProps> = ({
   }, [commitList.length, savedScrollTop]);
 
   useLayoutEffect(() => {
-    return () => {
-      const element = scrollContainerRef.current;
+    const element = scrollContainerRef.current;
 
+    return () => {
       if (element) {
         onScrollTopChange(element.scrollTop);
       }
@@ -131,6 +139,10 @@ export const CommitList: FC<CommitListProps> = ({
             commit={commit}
             isSelected={commit.hash === selectedCommitHash}
             onClick={onCommitClick}
+            onOpenAISummary={onOpenAISummary}
+            onOpenFileCanvas={onOpenFileCanvas}
+            isAIViewActive={isAIViewActive}
+            isFileCanvasActive={isFileCanvasActive}
           />
         ))}
       </div>

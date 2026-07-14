@@ -73,6 +73,10 @@ export const S01CommitListScreen: FC = () => {
         onClearFilters={clearFilters}
         savedScrollTop={commitListScrollTop}
         onScrollTopChange={setCommitListScrollTop}
+        onOpenAISummary={() => {}}
+        onOpenFileCanvas={() => {}}
+        isAIViewActive={false}
+        isFileCanvasActive={false}
       />
     </main>
   );

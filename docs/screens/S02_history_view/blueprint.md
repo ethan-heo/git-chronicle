@@ -67,11 +67,7 @@ S02_WorkspaceScreen
    └─ PaneTree
       ├─ leaf → WorkspacePane
       │  ├─ WorkspaceTabBar
-      │  │  ├─ WorkspaceTabItem[] (가로 스크롤, draggable)
-      │  │  └─ FixedActions
-      │  │     └─ PaneActionsGroup (기본 접힘, 토글 버튼으로 펼침/접힘)
-      │  │        ├─ AISummaryToggleButton
-      │  │        └─ FileCanvasToggleButton
+      │  │  └─ WorkspaceTabItem[] (가로 스크롤, draggable)
       │  ├─ DropZoneOverlay (drag 중 left/right/top/bottom)
       │  └─ ActiveTabPanel
       │     ├─ code → CodeTabSplitArea
@@ -106,9 +102,6 @@ S02_WorkspaceScreen
 | `FilterToggleButton` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-filtertogglebutton) | `src/webview/features/F01/FilterToggleButton.tsx` |
 | `CommitList` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitlist) | `src/webview/features/F01/CommitList.tsx` |
 | `FileTree` | [F02 blueprint](../../features/F02_changed_file_tree/blueprint.md#component-filetree) | `src/webview/features/F02/FileTree.tsx` |
-| `PaneActionsGroup` | 이 문서 | `src/webview/features/F02/PaneActionsGroup.tsx` |
-| `AISummaryToggleButton` | 이 문서 | `src/webview/features/F02/AISummaryToggleButton.tsx` |
-| `FileCanvasToggleButton` | 이 문서 | `src/webview/features/F02/FileCanvasToggleButton.tsx` |
 | `NotesSection` | [F11 blueprint](../../features/F11_notes/blueprint.md) | `src/webview/features/F11/NotesSection.tsx` |
 | `SettingsToggleButton` | 이 문서 | `src/webview/features/F02/SettingsToggleButton.tsx` |
 | `SidebarSettingsPanel` | [F06 blueprint](../../features/F06_ai_settings/blueprint.md#component-sidebarsettingspanel) | `src/webview/features/F06/SidebarSettingsPanel.tsx` |
@@ -149,7 +142,7 @@ S02_WorkspaceScreen
 - `PaneTree`는 leaf pane 또는 split pane으로 이루어진 재귀 트리다. split pane은 `ResizableSplitPane`을 재사용해 좌우/상하 분할을 렌더링한다.
 - `WorkspaceTabBar`의 좌측 탭 목록은 가로 스크롤되고, 스크롤바가 탭 내용을 덮지 않도록 `scrollbar-gutter`와 하단 여백을 둔다.
 - 분할된 leaf pane마다 `WorkspaceTabBar`는 `activeTabId` 기준의 "현재 표시 중" 상태를 항상 유지해, 포커스를 잃어도 어떤 탭이 그 pane 본문을 보여주고 있는지 계속 드러낸다. `focusedPaneId`는 탭 자체가 아니라 탭바 컨테이너의 별도 강조/라벨로 표현해 "현재 표시 중"과 "조작 대상 포커스"를 구분한다.
-- `WorkspaceTabBar` 우측의 `AISummaryToggleButton` / `FileCanvasToggleButton`은 `PaneActionsGroup`으로 묶여 기본 접힘 상태이며, 그룹 토글 버튼을 눌러야 펼쳐진다. 이 펼침 상태는 leaf pane별로 독립이며 Webview State에 저장되지 않는다.
+- `WorkspaceTabBar`는 탭 조작만 담당하며, 커밋 단위 `aiSummary` / `fileCanvas` 진입은 사이드바 커밋 목록 항목 호버 액션으로만 제공된다.
 - leaf pane은 클릭해도 포커스 강조 아웃라인을 표시하지 않는다. `focusedPaneId`는 pane-local 본문 상호작용과 탭 조작의 대상 pane을 결정하는 내부 상태로만 쓰이며, 이미 열린 탭 사이를 오갈 때 사이드바 커밋/PR/Issue 컨텍스트를 바꾸지 않는다.
 - 같은 대상(`panelType + commitHash + filePath`, `note:${relativePath}`, `pr:${number}`, `issue:${number}`) 탭이 이미 열려 있으면 현재 leaf pane 안에서 새 탭을 만들지 않고 기존 탭을 활성화한다.
 - 최상위 워크스페이스 탭은 `code` / `aiSummary` / `fileCanvas` / `note` / `pr` / `issue` 여섯 종류를 연다. 파일 단위 AI 요약과 심볼 캔버스는 독립 탭이 아니라 `code` 탭 내부 토글로만 연다.

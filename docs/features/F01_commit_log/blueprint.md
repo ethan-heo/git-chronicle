@@ -37,6 +37,7 @@
 - `AuthorDropdown`
 - `KeywordSearchInput`
 - `CommitList`
+- `CommitActionButtons`
 - `CommitListItem`
 - `InfiniteScrollTrigger`
 
@@ -245,6 +246,10 @@ interface CommitListProps {
   onLoadMore: () => void;
   savedScrollTop: number;
   onScrollTopChange: (top: number) => void;
+  onOpenAISummary: () => void;
+  onOpenFileCanvas: () => void;
+  isAIViewActive: boolean;
+  isFileCanvasActive: boolean;
 }
 ```
 
@@ -252,6 +257,7 @@ interface CommitListProps {
 - 스크롤 하단 도달 시 `InfiniteScrollTrigger` 발동 → 다음 200개 로드
 - 워크스페이스 안에서는 커밋 목록 섹션이 유지되므로 현재 스크롤 위치를 그대로 보존한다.
 - 필터 변경 시에는 목록을 첫 페이지부터 다시 로드하고 스크롤 위치를 0으로 초기화한다.
+- 각 행에는 `CommitActionButtons`와 `CopyMarkdownButton`을 함께 렌더링할 수 있도록 액션 콜백과 활성 상태를 전달한다.
 
 #### States
 - `loading` (초기 로드 중): `LoadingState` 표시
@@ -264,6 +270,43 @@ interface CommitListProps {
 
 #### Reusability
 F01_CommitLog 전용. S02_WorkspaceScreen 사이드바 커밋 목록 섹션에서 사용한다.
+
+---
+
+### Component: CommitActionButtons
+
+#### Purpose
+커밋 목록 항목 우상단에서 AI 전체 요약과 파일 캔버스로 바로 진입하는 호버 액션 버튼 그룹이다.
+
+#### Data
+- `isAIViewActive: boolean`
+- `isFileCanvasActive: boolean`
+
+#### Props
+```typescript
+interface CommitActionButtonsProps {
+  isAIViewActive: boolean;
+  isFileCanvasActive: boolean;
+  onOpenAISummary: () => void;
+  onOpenFileCanvas: () => void;
+}
+```
+
+#### Interaction
+- 호버 시 노출되며, 클릭은 `event.stopPropagation()`으로 행 선택과 분리한다.
+- 현재 선택된 커밋 항목에서만 렌더링된다.
+- 해당 패널이 현재 포커스 pane의 활성 탭이면 active 배경색과 텍스트 색으로 강조한다.
+
+#### States
+- `hidden`: 기본 상태. 행 호버/포커스 전에는 보이지 않는다.
+- `enabled`: 선택된 커밋 항목에서 클릭 가능하다.
+- `active`: 선택된 커밋 항목이며 해당 패널 탭이 현재 활성화되어 있다.
+
+#### Accessibility
+- 각 버튼은 기존 `action_bar.commit_ai_aria`, `action_bar.canvas_aria` 라벨을 재사용한다.
+
+#### Reusability
+F01_CommitLog 전용. `CommitListItem` 내부에서만 사용한다.
 
 ---
 
@@ -281,16 +324,21 @@ interface CommitListItemProps {
   commit: Commit;
   isSelected: boolean;
   onClick: (commit: Commit) => void;
+  onOpenAISummary: () => void;
+  onOpenFileCanvas: () => void;
+  isAIViewActive: boolean;
+  isFileCanvasActive: boolean;
 }
 ```
 
 #### Interaction
-- 호버: 배경색 변경
+- 호버: 배경색 변경 + 우상단 `CopyMarkdownButton` 노출, 선택된 항목이면 `CommitActionButtons`도 함께 노출
 - 클릭: `selectedCommit` 업데이트 → S-02 안에서 변경 파일/본문 컨텍스트 갱신
+- [AI 요약]/[파일 캔버스] 클릭: 현재 항목이 선택된 경우에만 각각 F05b `aiSummary`, F04 `fileCanvas` 탭을 연다
 - 선택됨: 현재 `selectedCommit`과 같은 항목은 강조 배경과 좌측 accent bar를 유지한다
 
 #### States
-- `default`, `hover`, `selected`
+- `default`, `hover`, `selected`, `actionActive`
 
 #### Accessibility
 - `role="listitem"`, `aria-label="{커밋메시지} by {작성자} on {날짜}"`, `tabIndex={0}`
@@ -332,6 +380,7 @@ interface InfiniteScrollTriggerProps {
 - `default`: 기본 행 표시
 - `hover`: 배경색 `color.surface.hover` 적용
 - `selected`: 강조 배경 + 좌측 accent bar + 메타데이터 대비 강화
+- `actionActive`: 선택된 항목이면서 해당 패널 탭이 현재 활성일 때 버튼 강조
 
 ### CommitList
 - `loading`: `LoadingState` 렌더링
@@ -362,6 +411,7 @@ interface InfiniteScrollTriggerProps {
 | 필터 변경 | 날짜 입력, 드롭다운 선택, 키워드 입력 | 커밋 목록 재로드 |
 | 키워드 입력 | 텍스트 입력 | 300ms 디바운스 후 필터 실행 |
 | 커밋 클릭 | `CommitListItem` 클릭 | `selectedCommit` 갱신 + 해당 항목 하이라이트 유지 |
+| 커밋 항목 액션 클릭 | 선택된 `CommitListItem`의 `CommitActionButtons` | `aiSummary` 또는 `fileCanvas` 탭 활성화 |
 | 스크롤 하단 도달 | `InfiniteScrollTrigger` | 다음 200개 추가 로드 |
 | S-01 재진입 | 이미 로드된 목록 존재 | 목록 재로드 없이 스크롤 위치 복원 |
 

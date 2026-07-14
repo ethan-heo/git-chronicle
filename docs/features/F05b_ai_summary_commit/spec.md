@@ -34,7 +34,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 ## User Scenarios
 
-1. [커밋 AI 정리] 클릭 시 S02 본문 `aiSummary` 패널 활성화. 헤더에 `{커밋 메시지} > 커밋 전체 요약` 표시.
+1. 선택된 커밋 항목의 호버 [AI 요약] 클릭 시 S02 본문 `aiSummary` 패널 활성화. 헤더에 `{커밋 메시지} > 커밋 전체 요약` 표시.
 2. **기존 저장 노트가 있는 경우**: 연결된 노트를 즉시 불러와 표시. 재생성 아이콘 버튼 제공.
 3. **저장본이 없는 경우**: 클릭 즉시 커밋 내 전체 파일 diff를 컨텍스트로 AI가 마크다운 형식으로 정리한다.
    - 생성 직후에는 디스크에 자동 저장하지 않는다.
@@ -179,7 +179,8 @@ Commit message: {commitMessage}
 
 - [F06_AISettings](../F06_ai_settings/spec.md) — `activeAIProvider` 필요
 - [F07_SavePathSettings](../F07_save_path_settings/spec.md) — `savePath` 필요
-- [F02_ChangedFileTree](../F02_changed_file_tree/spec.md) — [커밋 AI 정리] 버튼 진입점
+- [F02_ChangedFileTree](../F02_changed_file_tree/spec.md) — 변경 파일/커밋 컨텍스트 제공
+- [F01_CommitLog](../F01_commit_log/spec.md) — 선택된 커밋 항목 호버 [AI 요약] 버튼 진입점
 
 ---
 
