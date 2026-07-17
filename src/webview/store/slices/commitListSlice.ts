@@ -12,6 +12,7 @@ const DEFAULT_FILTER_STATE: FilterState = {
   filterAuthor: null,
   filterKeyword: '',
   filterExcludeKeyword: '',
+  filterGroupId: null,
   sortOrder: 'desc',
 };
 
@@ -56,6 +57,7 @@ function persistFilterState(state: FilterState): void {
       filterAuthor: state.filterAuthor,
       filterKeyword: state.filterKeyword,
       filterExcludeKeyword: state.filterExcludeKeyword,
+      filterGroupId: state.filterGroupId,
       sortOrder: state.sortOrder,
     },
   });
@@ -199,6 +201,7 @@ export const createCommitListSlice: StateCreator<AppState, [], [], CommitListSli
       filterAuthor: state.filterAuthor,
       filterKeyword: state.filterKeyword,
       filterExcludeKeyword: state.filterExcludeKeyword,
+      filterGroupId: state.filterGroupId,
       sortOrder: state.sortOrder,
       requestId,
     });

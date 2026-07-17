@@ -32,6 +32,7 @@ export interface FetchCommitsOptions {
   keyword?: string;
   sortOrder?: 'desc' | 'asc';
   excludeKeywords?: string[];
+  commitHashes?: string[];
 }
 
 export interface FetchCommitCountOptions {
@@ -81,9 +82,13 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<FetchC
 
   const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
   const shouldReverse = options.sortOrder === 'asc';
+  const isGroupScoped = Boolean(options.commitHashes?.length);
   const args = ['log', '--date=iso-strict', `--pretty=format:%H%x1f%h%x1f%s%x1f%an%x1f%aI%x1e`];
 
-  if (!shouldReverse) {
+  if (isGroupScoped) {
+    // 그룹은 사용자가 직접 고른 소규모 집합이므로 페이지네이션 없이 --no-walk로 지정된 커밋만 조회한다.
+    args.push('--no-walk=sorted');
+  } else if (!shouldReverse) {
     args.push(`--max-count=${pageSize}`);
     args.push(`--skip=${Math.max(options.page, 0) * pageSize}`);
   }
@@ -107,6 +112,10 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<FetchC
 
   if (shouldReverse) {
     args.push('--reverse');
+  }
+
+  if (isGroupScoped) {
+    args.push(...options.commitHashes!);
   }
 
   const output = await git.raw(args);
@@ -139,7 +148,7 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<FetchC
       return !excludeKeywords.some((keyword) => message.includes(keyword));
     });
 
-  if (!shouldReverse) {
+  if (isGroupScoped || !shouldReverse) {
     return { commits, rawCount: rawCommits.length };
   }
 

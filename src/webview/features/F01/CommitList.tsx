@@ -25,6 +25,9 @@ interface CommitListProps {
   onOpenFileCanvas: () => void;
   isAIViewActive: boolean;
   isFileCanvasActive: boolean;
+  isSelectModeActive?: boolean;
+  selectedCommitHashesForGroup?: Set<string>;
+  onToggleCheckForGroup?: (hash: string) => void;
 }
 
 export const CommitList: FC<CommitListProps> = ({
@@ -48,6 +51,9 @@ export const CommitList: FC<CommitListProps> = ({
   onOpenFileCanvas,
   isAIViewActive,
   isFileCanvasActive,
+  isSelectModeActive = false,
+  selectedCommitHashesForGroup,
+  onToggleCheckForGroup,
 }) => {
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -143,6 +149,9 @@ export const CommitList: FC<CommitListProps> = ({
             onOpenFileCanvas={onOpenFileCanvas}
             isAIViewActive={isAIViewActive}
             isFileCanvasActive={isFileCanvasActive}
+            isSelectModeActive={isSelectModeActive}
+            isCheckedForGroup={selectedCommitHashesForGroup?.has(commit.hash) ?? false}
+            onToggleCheckForGroup={onToggleCheckForGroup}
           />
         ))}
       </div>

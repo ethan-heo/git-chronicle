@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { createCommitGroupSlice, type CommitGroupSlice } from './slices/commitGroupSlice';
 import { createCommitListSlice, type CommitListSlice } from './slices/commitListSlice';
 import { createNavigationSlice, type NavigationSlice } from './slices/navigationSlice';
 import { createChangedFilesSlice, type ChangedFilesSlice } from './slices/changedFilesSlice';
@@ -21,7 +22,8 @@ export type AppState = CommitListSlice &
   NoteSlice &
   ToastSlice &
   WorkspaceTabsSlice &
-  GithubSlice;
+  GithubSlice &
+  CommitGroupSlice;
 
 export const useAppStore = create<AppState>()((...a) => ({
   ...createCommitListSlice(...a),
@@ -35,4 +37,5 @@ export const useAppStore = create<AppState>()((...a) => ({
   ...createToastSlice(...a),
   ...createWorkspaceTabsSlice(...a),
   ...createGithubSlice(...a),
+  ...createCommitGroupSlice(...a),
 }));

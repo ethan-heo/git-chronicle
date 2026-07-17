@@ -119,7 +119,11 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_PR_DETAIL'; payload: { number?: number } }
   | { type: 'FETCH_ISSUE_DETAIL'; payload: { number?: number } }
   | { type: 'FETCH_PR_RELATED_COMMITS'; payload: { number?: number; page?: number } }
-  | { type: 'FETCH_ISSUE_RELATED_COMMITS'; payload: { number?: number; page?: number } };
+  | { type: 'FETCH_ISSUE_RELATED_COMMITS'; payload: { number?: number; page?: number } }
+  | { type: 'FETCH_COMMIT_GROUPS' }
+  | { type: 'CREATE_COMMIT_GROUP'; payload: { name: string; commitHashes: string[] } }
+  | { type: 'UPDATE_COMMIT_GROUP'; payload: { id: string; name?: string; commitHashes?: string[] } }
+  | { type: 'DELETE_COMMIT_GROUP'; payload: { id: string } };
 
 // Host 내부 노트 파일 오류 코드 중 messageHandler 문맥에서 참조되는 값
 type NoteFileErrorCode = 'NOT_FOUND';
@@ -181,7 +185,23 @@ type ExtensionToWebviewMessage =
   | { type: 'PR_RELATED_COMMITS_LOADED'; payload: { number: number; items: Commit[]; hasMore: boolean; page: number } }
   | { type: 'PR_RELATED_COMMITS_LOAD_FAILED'; payload: { number?: number; message: string } }
   | { type: 'ISSUE_RELATED_COMMITS_LOADED'; payload: { number: number; items: Commit[]; hasMore: boolean; page: number } }
-  | { type: 'ISSUE_RELATED_COMMITS_LOAD_FAILED'; payload: { number?: number; message: string } };
+  | { type: 'ISSUE_RELATED_COMMITS_LOAD_FAILED'; payload: { number?: number; message: string } }
+  | { type: 'COMMIT_GROUPS_LOADED'; payload: { groups: CommitGroup[] } }
+  | { type: 'COMMIT_GROUP_CREATED'; payload: { group: CommitGroup } }
+  | { type: 'COMMIT_GROUP_CREATE_FAILED'; payload: { message: string } }
+  | { type: 'COMMIT_GROUP_UPDATED'; payload: { group: CommitGroup } }
+  | { type: 'COMMIT_GROUP_UPDATE_FAILED'; payload: { message: string; id?: string } }
+  | { type: 'COMMIT_GROUP_DELETED'; payload: { id: string } }
+  | { type: 'COMMIT_GROUP_DELETE_FAILED'; payload: { message: string } };
+
+// CommitGroup (src/extension/commitGroupService.ts, src/webview/types/commit.ts)
+interface CommitGroup {
+  id: string;
+  name: string;
+  commitHashes: string[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 // AISettingsState (src/extension/aiProviderService.ts)
 interface AISettingsState {

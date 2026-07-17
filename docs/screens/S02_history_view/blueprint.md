@@ -10,6 +10,7 @@
 - [F09_AISummaryQA](../../features/F09_ai_summary_qa/spec.md)
 - [F10_IntraFileSymbolDependencyCanvas](../../features/F10_intra_file_symbol_dependency_canvas/spec.md)
 - [F12_GitHubActivity](../../features/F12_github_activity/spec.md)
+- [F13_CommitGroups](../../features/F13_commit_groups/spec.md)
 
 ---
 
@@ -48,9 +49,12 @@ S02_WorkspaceScreen
 │     │  │  └─ SettingsToggleButton
 │     │  └─ SidebarSectionGroup
 │     │     ├─ CommitsSection
-│     │     │  ├─ header actions → SortOrderToggle, FilterToggleButton
+│     │     │  ├─ header actions → SortOrderToggle, FilterToggleButton, CommitGroupFilterToggleButton, SelectModeToggleButton
 │     │     │  ├─ Popover
 │     │     │  │  └─ CommitFilterPanel (embedded)
+│     │     │  ├─ Popover
+│     │     │  │  └─ CommitGroupFilterDropdown
+│     │     │  ├─ CommitSelectionActionBar (선택 모드 활성 시에만)
 │     │     │  └─ CommitList
 │     │     ├─ FileTreeSection
 │     │     │  └─ FileTree
@@ -110,6 +114,10 @@ S02_WorkspaceScreen
 | `IssuesSection` | [F12 blueprint](../../features/F12_github_activity/blueprint.md#component-prssection--issuessection) | `src/webview/features/F12/IssuesSection.tsx` |
 | `PRDetailPanel` | [F12 blueprint](../../features/F12_github_activity/blueprint.md#component-prdetailpanel--issuedetailpanel) | `src/webview/features/F12/PRDetailPanel.tsx` |
 | `IssueDetailPanel` | [F12 blueprint](../../features/F12_github_activity/blueprint.md#component-prdetailpanel--issuedetailpanel) | `src/webview/features/F12/IssueDetailPanel.tsx` |
+| `SelectModeToggleButton` | [F13 blueprint](../../features/F13_commit_groups/blueprint.md#component-selectmodetogglebutton) | `src/webview/features/F13/SelectModeToggleButton.tsx` |
+| `CommitSelectionActionBar` | [F13 blueprint](../../features/F13_commit_groups/blueprint.md#component-commitselectionactionbar) | `src/webview/features/F13/CommitSelectionActionBar.tsx` |
+| `CommitGroupFilterToggleButton` | [F13 blueprint](../../features/F13_commit_groups/blueprint.md#component-commitgroupfiltertogglebutton) | `src/webview/features/F13/CommitGroupFilterToggleButton.tsx` |
+| `CommitGroupFilterDropdown` | [F13 blueprint](../../features/F13_commit_groups/blueprint.md#component-commitgroupfilterdropdown) | `src/webview/features/F13/CommitGroupFilterDropdown.tsx` |
 | `PaneTree` | 이 문서 | `src/webview/features/F02/PaneTree.tsx` |
 | `useChangedFileTree` | 이 문서 (F02 소속 훅) | `src/webview/features/F02/useChangedFileTree.ts` |
 | `useSymbolGraph` | 이 문서 (F10 소속 훅) | `src/webview/features/F10/useSymbolGraph.ts` |

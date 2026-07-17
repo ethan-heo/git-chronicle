@@ -39,7 +39,24 @@
     "all_loaded": "모든 커밋을 불러왔습니다",
     "sort_desc": "최신순",
     "sort_asc": "오래된순",
-    "sort_aria": "정렬 순서 변경, 현재 {{order}}"
+    "sort_aria": "정렬 순서 변경, 현재 {{order}}",
+    "select_mode_toggle_aria": "선택 모드 {{state}}",
+    "select_mode_title": "커밋 선택",
+    "group_filter_title": "그룹",
+    "group_filter_toggle_aria": "그룹 필터 {{state}}",
+    "group_filter_popover_title": "커밋 그룹",
+    "group_filter_popover_close_aria": "그룹 팝오버 닫기",
+    "group_filter_empty": "저장된 그룹이 없습니다",
+    "group_edit_aria": "{{name}} 그룹 편집",
+    "group_delete_aria": "{{name}} 그룹 삭제",
+    "group_delete_confirm_aria": "{{name}} 그룹 삭제 확인",
+    "selection_bar_count": "{{count}}개 선택됨",
+    "selection_bar_name_placeholder": "그룹 이름",
+    "selection_bar_name_aria": "그룹 이름 입력",
+    "selection_bar_save_create": "새 그룹 만들기",
+    "selection_bar_save_update": "그룹 저장",
+    "selection_bar_cancel": "취소",
+    "selection_checkbox_aria": "{{message}} 선택"
   },
   "file_tree": {
     "loading": "변경 파일을 불러오는 중...",
@@ -324,6 +341,12 @@
     "file_markdown_copied": "파일 마크다운을 복사했습니다",
     "code_block_markdown_copied": "코드 블록 마크다운을 복사했습니다",
     "mermaid_markdown_copied": "Mermaid 마크다운을 복사했습니다",
-    "commit_markdown_copied": "커밋 마크다운을 복사했습니다"
+    "commit_markdown_copied": "커밋 마크다운을 복사했습니다",
+    "commit_group_created": "그룹이 생성되었습니다",
+    "commit_group_updated": "그룹이 저장되었습니다",
+    "commit_group_deleted": "그룹이 삭제되었습니다",
+    "commit_group_create_failed": "그룹을 생성하지 못했습니다",
+    "commit_group_update_failed": "그룹을 저장하지 못했습니다",
+    "commit_group_delete_failed": "그룹을 삭제하지 못했습니다"
   }
 }

@@ -39,7 +39,24 @@
     "all_loaded": "All commits loaded",
     "sort_desc": "Newest",
     "sort_asc": "Oldest",
-    "sort_aria": "Change sort order, current {{order}}"
+    "sort_aria": "Change sort order, current {{order}}",
+    "select_mode_toggle_aria": "Select mode {{state}}",
+    "select_mode_title": "Select commits",
+    "group_filter_title": "Groups",
+    "group_filter_toggle_aria": "Group filter {{state}}",
+    "group_filter_popover_title": "Commit groups",
+    "group_filter_popover_close_aria": "Close group popover",
+    "group_filter_empty": "No saved groups",
+    "group_edit_aria": "Edit group {{name}}",
+    "group_delete_aria": "Delete group {{name}}",
+    "group_delete_confirm_aria": "Confirm delete group {{name}}",
+    "selection_bar_count": "{{count}} selected",
+    "selection_bar_name_placeholder": "Group name",
+    "selection_bar_name_aria": "Group name input",
+    "selection_bar_save_create": "Create group",
+    "selection_bar_save_update": "Save group",
+    "selection_bar_cancel": "Cancel",
+    "selection_checkbox_aria": "Select {{message}}"
   },
   "file_tree": {
     "loading": "Loading changed files...",
@@ -324,6 +341,12 @@
     "file_markdown_copied": "Copied file Markdown",
     "code_block_markdown_copied": "Copied code block Markdown",
     "mermaid_markdown_copied": "Copied Mermaid Markdown",
-    "commit_markdown_copied": "Copied commit Markdown"
+    "commit_markdown_copied": "Copied commit Markdown",
+    "commit_group_created": "Group created",
+    "commit_group_updated": "Group saved",
+    "commit_group_deleted": "Group deleted",
+    "commit_group_create_failed": "Failed to create group",
+    "commit_group_update_failed": "Failed to save group",
+    "commit_group_delete_failed": "Failed to delete group"
   }
 }

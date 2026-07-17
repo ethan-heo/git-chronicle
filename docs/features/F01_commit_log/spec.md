@@ -59,7 +59,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 종료일 포함 | `--before=<date>T23:59:59` 형태로 전달하여 종료일 당일 커밋을 포함 |
 | 작성자 필터 | 드롭다운 선택. 커밋 로드 시 작성자 목록 추출하여 선택지 표시 |
 | 키워드 검색 | 커밋 메시지 대상 (`--grep`). 입력 후 300ms 디바운싱. 대소문자 구분 없음 |
-| 필터 조합 | 세 조건(기간·작성자·키워드) AND 고정 |
+| 필터 조합 | 기간·작성자·키워드 세 조건 AND 고정. [F13_CommitGroups](../F13_commit_groups/spec.md)의 그룹 필터(`filterGroupId`)도 같은 `FilterState`의 필드로 추가되어 네 번째 조건으로 AND 결합된다 |
 | 필터 상태 복원 | `vscode.getState()` / `setState()`에 필터 값만 저장하여 Webview 재생성 후 복원 |
 | 목록 스크롤 복원 | 워크스페이스 내에서는 커밋 목록 컴포넌트가 유지되어 스크롤 위치를 그대로 사용하고, Webview 재생성 시에는 저장된 `commitListScrollTop`으로 복원 |
 | 정렬 | 기본값은 커밋 생성 시간 기준 내림차순. 사용자는 `sortOrder`로 오래된순 전환 가능. `asc`일 때는 전체 건수를 먼저 계산한 뒤 역산된 페이지 기준으로 가져온다 |
@@ -86,6 +86,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 - [F05b_AISummaryCommit](../F05b_ai_summary_commit/spec.md) — 선택된 커밋 항목 호버 [AI 요약] 버튼 진입점 제공
 - [F04_DependencyCanvas](../F04_dependency_canvas/spec.md) — 선택된 커밋 항목 호버 [파일 캔버스] 버튼 진입점 제공
+- [F13_CommitGroups](../F13_commit_groups/spec.md) — `CommitListItem`에 다중 선택 체크박스를 추가하고, `filterGroupId`로 그룹 필터를 적용한다
 
 ---
 

@@ -13,6 +13,7 @@ import { SidebarSettingsPanel } from '../F06';
 import { NoteEditorPanel, NotesSection } from '../F11';
 import { IssueDetailPanel, IssuesSection, PRDetailPanel, PRsSection, useGithubAuth } from '../F12';
 import type { IssueSummary, PullRequestSummary } from '../F12';
+import { CommitGroupFilterDropdown, CommitGroupFilterToggleButton, CommitSelectionActionBar, SelectModeToggleButton, useCommitGroups } from '../F13';
 import { CodeTabSplitArea } from './CodeTabSplitArea';
 import { FileTree } from './FileTree';
 import { PaneTree } from './PaneTree';
@@ -71,6 +72,7 @@ export const S02WorkspaceScreen: FC = () => {
   const filterAuthor = useAppStore((state) => state.filterAuthor);
   const filterKeyword = useAppStore((state) => state.filterKeyword);
   const filterExcludeKeyword = useAppStore((state) => state.filterExcludeKeyword);
+  const filterGroupId = useAppStore((state) => state.filterGroupId);
   const sortOrder = useAppStore((state) => state.sortOrder);
   const setFilter = useAppStore((state) => state.setFilter);
   const clearFilters = useAppStore((state) => state.clearFilters);
@@ -97,6 +99,18 @@ export const S02WorkspaceScreen: FC = () => {
     onLoadMore,
     retry,
   } = useCommitList({ isActive: isRouteSlotActive });
+  const {
+    commitGroups,
+    isSelectModeActive,
+    selectedCommitHashesForGroup,
+    editingGroupId,
+    toggleSelectMode,
+    cancelSelectMode,
+    toggleCommitSelectionForGroup,
+    startEditingGroup,
+    saveGroup,
+    deleteGroup,
+  } = useCommitGroups({ isActive: isRouteSlotActive });
   const persistedSidebarState = readPersistedWebviewState().workspaceSidebar ?? DEFAULT_SIDEBAR_STATE;
   const [sidebarWidth, setSidebarWidth] = useState(
     persistedSidebarState.sidebarWidth > SIDEBAR_COLLAPSE_WIDTH
@@ -135,8 +149,10 @@ export const S02WorkspaceScreen: FC = () => {
   const [renderedSidebarView, setRenderedSidebarView] = useState<SidebarView>('default');
   const [exitingSidebarView, setExitingSidebarView] = useState<SidebarView | null>(null);
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
+  const [isGroupFilterPopoverOpen, setIsGroupFilterPopoverOpen] = useState(false);
   const sidebarDragStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const filterToggleButtonRef = useRef<HTMLButtonElement | null>(null);
+  const groupFilterToggleButtonRef = useRef<HTMLButtonElement | null>(null);
 
   if (prevSelectedCommitHash !== selectedCommit?.hash) {
     setPrevSelectedCommitHash(selectedCommit?.hash);
@@ -144,7 +160,7 @@ export const S02WorkspaceScreen: FC = () => {
 
   const isActiveTabCommitSelected = Boolean(activeTab && activeTab.commit && selectedCommit && activeTab.commit.hash === selectedCommit.hash);
   const isFilterActive = Boolean(
-    filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim(),
+    filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim() || filterGroupId,
   );
   const activeFilterCount = [
     filterDateStart,
@@ -153,6 +169,7 @@ export const S02WorkspaceScreen: FC = () => {
     filterKeyword.trim(),
     filterExcludeKeyword.trim(),
   ].filter(Boolean).length;
+  const editingGroup = editingGroupId ? commitGroups.find((group) => group.id === editingGroupId) ?? null : null;
 
   const fileTreeStats = useMemo(() => {
     return changedFileTree.changedFiles.reduce(
@@ -384,9 +401,67 @@ export const S02WorkspaceScreen: FC = () => {
               />
             </Popover>
           </div>
+          <div className="relative">
+            <CommitGroupFilterToggleButton
+              isOpen={isGroupFilterPopoverOpen}
+              isActive={Boolean(filterGroupId)}
+              onClick={() => setIsGroupFilterPopoverOpen((current) => !current)}
+              ref={groupFilterToggleButtonRef}
+            />
+            <Popover
+              isOpen={isGroupFilterPopoverOpen}
+              onClose={() => {
+                setIsGroupFilterPopoverOpen(false);
+                groupFilterToggleButtonRef.current?.focus();
+              }}
+              anchorRef={groupFilterToggleButtonRef}
+              className="w-[min(18rem,calc(100vw-2rem))]"
+              labelledBy="commit-group-filter-popover-title"
+            >
+              <div className="border-b border-line px-3 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <strong id="commit-group-filter-popover-title" className="text-xs font-semibold text-text">
+                    {t('commit.group_filter_popover_title')}
+                  </strong>
+                  <button
+                    className="inline-flex size-7 items-center justify-center rounded-md bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+                    type="button"
+                    onClick={() => {
+                      setIsGroupFilterPopoverOpen(false);
+                      groupFilterToggleButtonRef.current?.focus();
+                    }}
+                    aria-label={t('commit.group_filter_popover_close_aria')}
+                    title={t('commit.group_filter_popover_close_aria')}
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </div>
+              </div>
+              <CommitGroupFilterDropdown
+                groups={commitGroups}
+                selectedGroupId={filterGroupId}
+                onSelectGroup={(id) => setFilter({ filterGroupId: id })}
+                onEditGroup={(group) => {
+                  setIsGroupFilterPopoverOpen(false);
+                  startEditingGroup(group);
+                }}
+                onDeleteGroup={deleteGroup}
+              />
+            </Popover>
+          </div>
+          <SelectModeToggleButton isActive={isSelectModeActive} onClick={toggleSelectMode} />
         </>
       )}
     >
+      {isSelectModeActive ? (
+        <CommitSelectionActionBar
+          selectedCount={selectedCommitHashesForGroup.size}
+          isEditing={Boolean(editingGroupId)}
+          initialName={editingGroup?.name ?? ''}
+          onSave={saveGroup}
+          onCancel={cancelSelectMode}
+        />
+      ) : null}
       <CommitList
         commitList={commitList}
         selectedCommitHash={selectedCommit?.hash ?? null}
@@ -408,6 +483,9 @@ export const S02WorkspaceScreen: FC = () => {
         onOpenFileCanvas={openFileCanvasFromSidebar}
         isAIViewActive={isAIViewActive}
         isFileCanvasActive={isFileCanvasActive}
+        isSelectModeActive={isSelectModeActive}
+        selectedCommitHashesForGroup={selectedCommitHashesForGroup}
+        onToggleCheckForGroup={toggleCommitSelectionForGroup}
       />
     </SidebarSection>
   );

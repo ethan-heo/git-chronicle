@@ -6,7 +6,7 @@ import { DateRangeFilter } from './DateRangeFilter';
 import { KeywordSearchInput } from './KeywordSearchInput';
 import { SortOrderToggle } from './SortOrderToggle';
 
-interface CommitFilterPanelProps extends FilterState {
+interface CommitFilterPanelProps extends Omit<FilterState, 'filterGroupId'> {
   authorList: string[];
   onFilterChange: (filter: Partial<FilterState>) => void;
   onClearFilters: () => void;

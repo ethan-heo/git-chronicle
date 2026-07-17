@@ -14,6 +14,7 @@
 | ChangedFile | 선택된 커밋에서 변경된 파일 1건(경로 + 상태 A/M/D/R) | `ChangedFile` (`src/webview/types/commit.ts`, `src/extension/gitService.ts`) | F02, F03, F04, F05b |
 | shortHash | 커밋 해시 앞 7자리. 저장 디렉토리명 접두어로 사용 | `shortHash` (`Commit.shortHash`), `toCommitDirName()` (`src/extension/summaryFileService.ts`) | F02, F05b, F07, F09, F11 |
 | requestId | 커밋 목록 요청의 응답 순서를 보장하기 위한 값. 오래된 응답은 폐기 기준으로 사용 | `requestId`, `lastRequestId`, `pendingRequestId` (`src/webview/store/appStore.ts`) | F01 |
+| Commit Group | 사용자가 직접 여러 커밋을 선택해 이름 붙인 그룹. 워크스페이스에 종속된 `workspaceState`에 저장되며, `filterGroupId`로 F01 커밋 목록 필터에 AND 결합된다 | `CommitGroup` (`src/webview/types/commit.ts`, `src/extension/commitGroupService.ts`), `filterGroupId` (`FilterState`) | F01, F13 |
 
 ## Diff & 코드 표시 도메인
 

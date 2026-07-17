@@ -250,6 +250,9 @@ interface CommitListProps {
   onOpenFileCanvas: () => void;
   isAIViewActive: boolean;
   isFileCanvasActive: boolean;
+  isSelectModeActive?: boolean;
+  selectedCommitHashesForGroup?: Set<string>;
+  onToggleCheckForGroup?: (hash: string) => void;
 }
 ```
 
@@ -258,6 +261,7 @@ interface CommitListProps {
 - 워크스페이스 안에서는 커밋 목록 섹션이 유지되므로 현재 스크롤 위치를 그대로 보존한다.
 - 필터 변경 시에는 목록을 첫 페이지부터 다시 로드하고 스크롤 위치를 0으로 초기화한다.
 - 각 행에는 `CommitActionButtons`와 `CopyMarkdownButton`을 함께 렌더링할 수 있도록 액션 콜백과 활성 상태를 전달한다.
+- `isSelectModeActive`가 `true`이면 각 `CommitListItem`에 체크박스 상태(`isCheckedForGroup`)와 토글 콜백을 전달한다. 이 prop들은 [F13_CommitGroups](../F13_commit_groups/blueprint.md)가 조립 화면을 통해서만 채운다 — `CommitList`/`CommitListItem` 파일 자체는 F13을 import하지 않는다.
 
 #### States
 - `loading` (초기 로드 중): `LoadingState` 표시
@@ -328,6 +332,9 @@ interface CommitListItemProps {
   onOpenFileCanvas: () => void;
   isAIViewActive: boolean;
   isFileCanvasActive: boolean;
+  isSelectModeActive?: boolean;
+  isCheckedForGroup?: boolean;
+  onToggleCheckForGroup?: (hash: string) => void;
 }
 ```
 
@@ -336,9 +343,10 @@ interface CommitListItemProps {
 - 클릭: `selectedCommit` 업데이트 → S-02 안에서 변경 파일/본문 컨텍스트 갱신
 - [AI 요약]/[파일 캔버스] 클릭: 현재 항목이 선택된 경우에만 각각 F05b `aiSummary`, F04 `fileCanvas` 탭을 연다
 - 선택됨: 현재 `selectedCommit`과 같은 항목은 강조 배경과 좌측 accent bar를 유지한다
+- `isSelectModeActive`가 `true`이면 좌측에 체크박스가 나타난다. 체크박스 클릭은 `event.stopPropagation()`으로 행 클릭(단일 선택)과 분리되어 독립적으로 동작한다([F13_CommitGroups](../F13_commit_groups/blueprint.md) 참고)
 
 #### States
-- `default`, `hover`, `selected`, `actionActive`
+- `default`, `hover`, `selected`, `actionActive`, `checked`(선택 모드에서 체크박스 선택됨)
 
 #### Accessibility
 - `role="listitem"`, `aria-label="{커밋메시지} by {작성자} on {날짜}"`, `tabIndex={0}`

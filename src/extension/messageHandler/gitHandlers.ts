@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { loadAISettingsState } from '../aiProviderService';
+import { findCommitGroup } from '../commitGroupService';
 import { fetchChangedFiles, fetchCommitCount, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from '../gitService';
 
 export interface FetchCommitsPayload {
@@ -11,6 +12,7 @@ export interface FetchCommitsPayload {
   filterAuthor?: string | null;
   filterKeyword?: string;
   filterExcludeKeyword?: string;
+  filterGroupId?: string | null;
   sortOrder?: 'desc' | 'asc';
 }
 
@@ -27,7 +29,7 @@ export interface FetchFileDiffPayload {
   filePath?: string;
 }
 
-export async function handleFetchCommits(panel: vscode.WebviewPanel, payload: FetchCommitsPayload = {}): Promise<void> {
+export async function handleFetchCommits(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: FetchCommitsPayload = {}): Promise<void> {
   const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
   if (!repoPath) {
@@ -48,6 +50,26 @@ export async function handleFetchCommits(panel: vscode.WebviewPanel, payload: Fe
       .split(',')
       .map((keyword) => keyword.trim())
       .filter(Boolean);
+
+    let commitHashes: string[] | undefined;
+    if (payload.filterGroupId) {
+      commitHashes = findCommitGroup(context, payload.filterGroupId)?.commitHashes ?? [];
+
+      if (commitHashes.length === 0) {
+        await panel.webview.postMessage({
+          type: 'COMMITS_LOADED',
+          payload: {
+            commits: [],
+            page: 0,
+            pageSize,
+            ...(requestId !== undefined ? { requestId } : {}),
+            hasMore: false,
+          },
+        });
+        return;
+      }
+    }
+
     const result = await fetchCommits({
       repoPath,
       page,
@@ -58,23 +80,26 @@ export async function handleFetchCommits(panel: vscode.WebviewPanel, payload: Fe
       keyword: payload.filterKeyword,
       sortOrder: payload.sortOrder,
       excludeKeywords,
+      commitHashes,
     });
     const filteredCount = result.rawCount;
-    const hasMore = payload.sortOrder === 'asc'
-      ? (await fetchCommitCount({
-          repoPath,
-          dateStart: payload.filterDateStart,
-          dateEnd: payload.filterDateEnd,
-          author: payload.filterAuthor,
-          keyword: payload.filterKeyword,
-        })) > (page + 1) * pageSize
-      : filteredCount >= pageSize;
+    const hasMore = commitHashes
+      ? false
+      : payload.sortOrder === 'asc'
+        ? (await fetchCommitCount({
+            repoPath,
+            dateStart: payload.filterDateStart,
+            dateEnd: payload.filterDateEnd,
+            author: payload.filterAuthor,
+            keyword: payload.filterKeyword,
+          })) > (page + 1) * pageSize
+        : filteredCount >= pageSize;
 
     await panel.webview.postMessage({
       type: 'COMMITS_LOADED',
       payload: {
         commits: result.commits,
-        page,
+        page: commitHashes ? 0 : page,
         pageSize,
         ...(requestId !== undefined ? { requestId } : {}),
         hasMore,

@@ -12,7 +12,16 @@ export interface FilterState {
   filterAuthor: string | null;
   filterKeyword: string;
   filterExcludeKeyword: string;
+  filterGroupId: string | null;
   sortOrder: 'desc' | 'asc';
+}
+
+export interface CommitGroup {
+  id: string;
+  name: string;
+  commitHashes: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type FileStatus = 'A' | 'M' | 'D' | 'R';

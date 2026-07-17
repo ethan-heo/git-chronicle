@@ -1,4 +1,11 @@
 import * as vscode from 'vscode';
+import {
+  handleCreateCommitGroup,
+  handleDeleteCommitGroup,
+  handleFetchCommitGroups,
+  handleUpdateCommitGroup,
+  type CommitGroupPayload,
+} from './messageHandler/commitGroupHandlers';
 import { handleAnalyzeDependencies, type AnalyzeDependenciesPayload } from './messageHandler/dependencyHandlers';
 import { handleAnalyzeSymbolGraph, type AnalyzeSymbolGraphPayload } from './messageHandler/symbolHandlers';
 import {
@@ -63,7 +70,8 @@ interface WebviewMessage {
     | FetchIssuesPayload
     | FetchPRDetailPayload
     | FetchIssueDetailPayload
-    | FetchRelatedCommitsPayload;
+    | FetchRelatedCommitsPayload
+    | CommitGroupPayload;
 }
 
 export function registerMessageHandler(panel: vscode.WebviewPanel, context: vscode.ExtensionContext): void {
@@ -78,7 +86,7 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         });
         break;
       case 'FETCH_COMMITS':
-        await handleFetchCommits(panel, message.payload as FetchCommitsPayload);
+        await handleFetchCommits(panel, context, message.payload as FetchCommitsPayload);
         break;
       case 'FETCH_CHANGED_FILES':
         await handleFetchChangedFiles(panel, context, message.payload as FetchChangedFilesPayload);
@@ -167,6 +175,18 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
+        break;
+      case 'FETCH_COMMIT_GROUPS':
+        await handleFetchCommitGroups(panel, context);
+        break;
+      case 'CREATE_COMMIT_GROUP':
+        await handleCreateCommitGroup(panel, context, message.payload as CommitGroupPayload);
+        break;
+      case 'UPDATE_COMMIT_GROUP':
+        await handleUpdateCommitGroup(panel, context, message.payload as CommitGroupPayload);
+        break;
+      case 'DELETE_COMMIT_GROUP':
+        await handleDeleteCommitGroup(panel, context, message.payload as CommitGroupPayload);
         break;
       default:
         await panel.webview.postMessage({

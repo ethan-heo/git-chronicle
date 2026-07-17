@@ -56,9 +56,10 @@ src/extension/
 │   ├── dependencyHandlers.ts         # ANALYZE_DEPENDENCIES (F04)
 │   ├── symbolHandlers.ts             # ANALYZE_SYMBOL_GRAPH (F10)
 │   ├── aiHandlers.ts                 # AI 설정/요약/QA 전체 (F05b/F06/F07/F09)
-│   └── noteHandlers.ts               # note tree/load/save/create/delete/move 메시지 (F11)
+│   ├── noteHandlers.ts               # note tree/load/save/create/delete/move 메시지 (F11)
+│   └── commitGroupHandlers.ts        # FETCH_COMMIT_GROUPS/CREATE_COMMIT_GROUP/UPDATE_COMMIT_GROUP/DELETE_COMMIT_GROUP (F13)
 ├── gitService.ts                     # simple-git 기반 Git 조회 서비스
-│   - fetchCommits(filter, page)      # git log 실행
+│   - fetchCommits(filter, page)      # git log 실행. `commitHashes` 지정 시 `--no-walk=sorted`로 그룹 필터 조회(F13)
 │   - GitRepositoryNotFoundError      # Git 저장소 미감지 오류 타입
 ├── dependencyService.ts              # 언어별 의존 관계 분석 서비스
 │   - analyzeDependencies(repoPath, files[]) → DependencyEdge[]
@@ -79,11 +80,14 @@ src/extension/
 │   - buildCommitSummaryPrompt(commitHash, diff)
 │   - buildSummaryQAPrompt(summaryContent, diff, question)  # F09 Q&A
 ├── noteFileService.ts                # 독립 노트 파일 트리/읽기/쓰기/이동/삭제 (F11)
-└── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인
-    - SummarySaveError                # 저장 경로 생성/쓰기 실패 전용 오류
-    - loadCommitSummary(savePath, hash) → { content, savedPath } | null
-    - saveCommitSummary(savePath, hash, content) → savedPath
-    - appendSummaryQA(savedPath, question, answer) → string  # F09 질문/답변 append
+├── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인
+│   - SummarySaveError                # 저장 경로 생성/쓰기 실패 전용 오류
+│   - loadCommitSummary(savePath, hash) → { content, savedPath } | null
+│   - saveCommitSummary(savePath, hash, content) → savedPath
+│   - appendSummaryQA(savedPath, question, answer) → string  # F09 질문/답변 append
+└── commitGroupService.ts             # 커밋 그룹 CRUD, workspaceState(`gitChronicle.commitGroups`) 영속화 (F13)
+    - loadCommitGroups / createCommitGroup / updateCommitGroup / deleteCommitGroup
+    - CommitGroupNotFoundError         # 존재하지 않는 그룹 id 수정 시 오류 타입
 ```
 
 ---
@@ -96,8 +100,8 @@ src/webview/
 ├── main.tsx                          # ReactDOM.createRoot 진입점
 ├── App.tsx                           # currentScreen에 따라 Screen 렌더링 + 라우트 전환 슬롯 관리
 ├── store/
-│   ├── appStore.ts                   # Zustand 스토어 combinator (10개 slice 조합, 상태/액션 정의 없음)
-│   └── slices/                       # 도메인별 slice (commitList/navigation/changedFiles/dependencyGraph/symbolGraph/ai/note/toast/workspaceTabs/github)
+│   ├── appStore.ts                   # Zustand 스토어 combinator (11개 slice 조합, 상태/액션 정의 없음)
+│   └── slices/                       # 도메인별 slice (commitList/navigation/changedFiles/dependencyGraph/symbolGraph/ai/note/toast/workspaceTabs/github/commitGroup)
 ├── types/
 │   ├── commit.ts                     # Commit, FilterState, ScreenID, RouteTransitionDirection 타입
 │   └── note.ts                       # F11 NoteEntry 타입
@@ -171,17 +175,24 @@ src/webview/
 │   │   ├── SymbolLegendPanel.tsx
 │   │   ├── symbolGraphUtils.ts       # Dagre/kind 그룹 레이아웃 계산
 │   │   └── index.ts
-│   └── F11/                          # 독립 노트 (S02 사이드바 섹션 + note 탭)
-│       ├── NotesSection.tsx          # 노트 섹션 컨테이너, 메시지 구독
-│       ├── NoteTree.tsx              # 노트 트리 상태 분기/재귀 진입
-│       ├── NoteDirectoryNode.tsx     # 폴더 노드 + 드롭 타겟
-│       ├── NoteFileNode.tsx          # 파일 노드 + 삭제 확인/드래그 시작
-│       ├── noteTreeModel.ts          # NoteEntry[] → 디렉토리 트리 변환
-│       ├── NoteEditorPanel.tsx       # relativePath 기준 노트 에디터 패널
-│       ├── NoteEditorPanel.css       # 노트 미리보기 스타일
-│       ├── MermaidBlock.tsx          # ```mermaid 코드블록 다이어그램 렌더링
-│       ├── CopyMarkdownButton.tsx    # 마크다운 복사 버튼
-│       ├── markdown.ts               # 마크다운/Mermaid 파싱 유틸
+│   ├── F11/                          # 독립 노트 (S02 사이드바 섹션 + note 탭)
+│   │   ├── NotesSection.tsx          # 노트 섹션 컨테이너, 메시지 구독
+│   │   ├── NoteTree.tsx              # 노트 트리 상태 분기/재귀 진입
+│   │   ├── NoteDirectoryNode.tsx     # 폴더 노드 + 드롭 타겟
+│   │   ├── NoteFileNode.tsx          # 파일 노드 + 삭제 확인/드래그 시작
+│   │   ├── noteTreeModel.ts          # NoteEntry[] → 디렉토리 트리 변환
+│   │   ├── NoteEditorPanel.tsx       # relativePath 기준 노트 에디터 패널
+│   │   ├── NoteEditorPanel.css       # 노트 미리보기 스타일
+│   │   ├── MermaidBlock.tsx          # ```mermaid 코드블록 다이어그램 렌더링
+│   │   ├── CopyMarkdownButton.tsx    # 마크다운 복사 버튼
+│   │   ├── markdown.ts               # 마크다운/Mermaid 파싱 유틸
+│   │   └── index.ts
+│   └── F13/                          # 커밋 그룹 (S02 CommitsSection 헤더 버튼 + 팝오버)
+│       ├── SelectModeToggleButton.tsx      # 다중 선택 모드 토글 버튼
+│       ├── CommitSelectionActionBar.tsx    # 선택 개수 + 그룹 이름 입력 + 저장/취소
+│       ├── CommitGroupFilterToggleButton.tsx # 그룹 필터 팝오버 트리거
+│       ├── CommitGroupFilterDropdown.tsx   # 그룹 목록 조회/선택/편집 진입/삭제
+│       ├── useCommitGroups.ts        # 그룹 메시지 구독 + 선택 모드 액션 훅
 │       └── index.ts
 └── shared/
     ├── components/
@@ -241,7 +252,8 @@ tests/
 │   ├── LegendPanel.test.tsx
 │   ├── NoteEditorPanel.test.tsx              # F11
 │   ├── noteFileService.test.ts               # F11
-│   └── markdown.test.ts                      # F11
+│   ├── markdown.test.ts                      # F11
+│   └── commitGroupService.test.ts            # F13
 ├── mocks/
 │   └── vscode.ts                             # vscode 모듈 목
 └── setup.ts
