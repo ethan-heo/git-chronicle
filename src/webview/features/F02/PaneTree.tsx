@@ -169,40 +169,42 @@ const WorkspacePane: FC<{
       className="relative flex h-full min-h-0 flex-col overflow-hidden bg-surface"
       onMouseDown={() => onFocusPane(pane.paneId)}
     >
-      <WorkspaceTabBar
-        paneId={pane.paneId}
-        tabs={pane.tabs}
-        activeTabId={pane.activeTabId}
-        isFocusedPane={pane.paneId === focusedPaneId}
-        activeSummaryCommitHash={activeSummaryCommitHash}
-        isGeneratingSummary={isGeneratingSummary}
-        onActivateTab={(tabId) => onActivateTab(pane.paneId, tabId)}
-        onCloseTab={(tabId) => onCloseTab(pane.paneId, tabId)}
-        onDragTabStart={(tabId) => dragContext?.setDragState({ sourcePaneId: pane.paneId, tabId })}
-        onDragTabEnd={() => {
-          dragContext?.setDragState(null);
-          setDropZone(null);
-        }}
-        onDragOver={(event) => {
-          if (!isDropEnabled) {
-            return;
-          }
-
-          event.preventDefault();
-          setDropZone(isSamePaneDrag ? null : 'center');
-        }}
-        onDragLeave={() => setDropZone(null)}
-        onDrop={(event) => {
-          event.preventDefault();
-          if (isSamePaneDrag) {
+      {pane.tabs.length > 0 ? (
+        <WorkspaceTabBar
+          paneId={pane.paneId}
+          tabs={pane.tabs}
+          activeTabId={pane.activeTabId}
+          isFocusedPane={pane.paneId === focusedPaneId}
+          activeSummaryCommitHash={activeSummaryCommitHash}
+          isGeneratingSummary={isGeneratingSummary}
+          onActivateTab={(tabId) => onActivateTab(pane.paneId, tabId)}
+          onCloseTab={(tabId) => onCloseTab(pane.paneId, tabId)}
+          onDragTabStart={(tabId) => dragContext?.setDragState({ sourcePaneId: pane.paneId, tabId })}
+          onDragTabEnd={() => {
+            dragContext?.setDragState(null);
             setDropZone(null);
-            return;
-          }
+          }}
+          onDragOver={(event) => {
+            if (!isDropEnabled) {
+              return;
+            }
 
-          commitDrop('center');
-        }}
-        fixedActions={renderFixedActions(pane.paneId, activeTab)}
-      />
+            event.preventDefault();
+            setDropZone(isSamePaneDrag ? null : 'center');
+          }}
+          onDragLeave={() => setDropZone(null)}
+          onDrop={(event) => {
+            event.preventDefault();
+            if (isSamePaneDrag) {
+              setDropZone(null);
+              return;
+            }
+
+            commitDrop('center');
+          }}
+          fixedActions={renderFixedActions(pane.paneId, activeTab)}
+        />
+      ) : null}
       <div
         className="min-h-0 flex-1 overflow-hidden"
         onDragOver={(event) => {

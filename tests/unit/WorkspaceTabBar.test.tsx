@@ -55,8 +55,8 @@ describe('WorkspaceTabBar', () => {
 
     expect(focusedTab).toHaveAttribute('data-tab-visibility-state', 'visible');
     expect(focusedTab).toHaveAttribute('data-tab-focus-state', 'focused');
-    expect(focusedTab).toHaveClass('border-accent');
-    expect(focusedPaneBar).toHaveClass('border-accent/60');
+    expect(focusedTab).toHaveClass('bg-selected');
+    expect(focusedPaneBar).toHaveClass('border-accent');
 
     expect(visibleTab).toHaveAttribute('data-tab-visibility-state', 'visible');
     expect(visibleTab).toHaveAttribute('data-tab-focus-state', 'unfocused');

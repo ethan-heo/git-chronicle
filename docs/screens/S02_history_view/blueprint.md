@@ -70,7 +70,7 @@ S02_WorkspaceScreen
 └─ Main
    └─ PaneTree
       ├─ leaf → WorkspacePane
-      │  ├─ WorkspaceTabBar
+      │  ├─ WorkspaceTabBar (열린 탭이 1개 이상일 때만)
       │  │  └─ WorkspaceTabItem[] (가로 스크롤, draggable)
       │  ├─ DropZoneOverlay (drag 중 left/right/top/bottom)
       │  └─ ActiveTabPanel
@@ -148,6 +148,7 @@ S02_WorkspaceScreen
 - 사이드바 헤더의 설정 버튼은 헤더를 포함한 사이드바 뷰 전체를 `settings` 로컬 뷰로 전환하며, 본문 탭과 사이드바 리사이즈/섹션 펼침 상태는 유지된다.
 - AI 요약 패널의 "설정으로 이동" CTA도 동일한 사이드바 `settings` 로컬 뷰를 연다.
 - `PaneTree`는 leaf pane 또는 split pane으로 이루어진 재귀 트리다. split pane은 `ResizableSplitPane`을 재사용해 좌우/상하 분할을 렌더링한다.
+- `WorkspaceTabBar`는 leaf pane에 열린 탭이 1개 이상 있을 때만 렌더링된다. 열린 탭이 없으면 탭바 없이 본문 빈 상태만 보여준다.
 - `WorkspaceTabBar`의 좌측 탭 목록은 가로 스크롤되고, 스크롤바가 탭 내용을 덮지 않도록 `scrollbar-gutter`와 하단 여백을 둔다.
 - 분할된 leaf pane마다 `WorkspaceTabBar`는 `activeTabId` 기준의 "현재 표시 중" 상태를 항상 유지해, 포커스를 잃어도 어떤 탭이 그 pane 본문을 보여주고 있는지 계속 드러낸다. `focusedPaneId`는 탭 자체가 아니라 탭바 컨테이너의 별도 강조/라벨로 표현해 "현재 표시 중"과 "조작 대상 포커스"를 구분한다.
 - `WorkspaceTabBar`는 탭 조작만 담당하며, 커밋 단위 `aiSummary` / `fileCanvas` 진입은 사이드바 커밋 목록 항목 호버 액션으로만 제공된다.
