@@ -1,4 +1,15 @@
 
+## [1.8.0](https://github.com/ethan-heo/git-chronicle/compare/v1.7.1...v1.8.0) (2026-07-18)
+
+### Features
+
+* **commit-groups:** add saved commit group filters ([57420a9](https://github.com/ethan-heo/git-chronicle/commit/57420a9a215c0f064daac22ded96b91479bf960b))
+
+### Bug Fixes
+
+* hide empty workspace tab bar ([ba107aa](https://github.com/ethan-heo/git-chronicle/commit/ba107aacb781b31568e93014b314f54451a1101d))
+* **commit-groups:** compact selection action bar ([faa3dcc](https://github.com/ethan-heo/git-chronicle/commit/faa3dcc11a070a0558ac0d143c46fb3d3472bfd0))
+
 ## [1.7.1](https://github.com/ethan-heo/git-chronicle/compare/v1.7.0...v1.7.1) (2026-07-14)
 
 ### Features
