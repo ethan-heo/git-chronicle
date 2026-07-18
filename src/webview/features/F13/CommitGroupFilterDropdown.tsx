@@ -29,6 +29,8 @@ export const CommitGroupFilterDropdown: FC<CommitGroupFilterDropdownProps> = ({
         type="button"
         role="option"
         aria-selected={selectedGroupId === null}
+        aria-label={t('commit.group_filter_all_aria')}
+        title={t('commit.group_filter_all_aria')}
         onClick={() => onSelectGroup(null)}
       >
         {t('commit.all')}
@@ -73,6 +75,7 @@ const CommitGroupFilterRow: FC<{
         type="button"
         role="option"
         aria-selected={isSelected}
+        aria-label={`${group.name} (${group.commitHashes.length})`}
         title={`${group.name} (${group.commitHashes.length})`}
         onClick={onSelect}
       >

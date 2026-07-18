@@ -56,7 +56,8 @@
     "selection_bar_save_create": "Create group",
     "selection_bar_save_update": "Save group",
     "selection_bar_cancel": "Cancel",
-    "selection_checkbox_aria": "Select {{message}}"
+    "selection_checkbox_aria": "Select {{message}}",
+    "group_filter_all_aria": "Clear group filter (show all commits)"
   },
   "file_tree": {
     "loading": "Loading changed files...",

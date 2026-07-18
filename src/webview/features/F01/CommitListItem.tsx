@@ -79,6 +79,7 @@ const CommitListItemComponent: FC<CommitListItemProps> = ({
           onClick={(event) => event.stopPropagation()}
           onChange={() => onToggleCheckForGroup?.(commit.hash)}
           aria-label={t('commit.selection_checkbox_aria', { message: commit.message })}
+          title={t('commit.selection_checkbox_aria', { message: commit.message })}
         />
       ) : null}
       <div className="relative flex min-w-0 flex-1 flex-col justify-center gap-0.5">

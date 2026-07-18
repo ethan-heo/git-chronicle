@@ -75,7 +75,7 @@ F13 전용. `CommitsSection` 헤더에서만 사용한다.
 ### Component: CommitSelectionActionBar
 
 #### Purpose
-선택 모드가 활성일 때 커밋 목록 상단에 표시되며, 선택된 개수와 그룹 이름 입력, 저장/취소 액션을 제공한다.
+선택 모드가 활성일 때 커밋 목록 상단에 표시되며, 선택된 개수와 그룹 이름 입력, 저장/취소 액션을 제공한다. 좁은 사이드바 폭에서 공간을 아끼기 위해 선택 개수는 배지로, 저장/취소는 아이콘 버튼으로 표시한다(텍스트 라벨은 `aria-label`/`title`로만 제공).
 
 #### Data
 - `selectedCount: number`
@@ -94,9 +94,10 @@ interface CommitSelectionActionBarProps {
 ```
 
 #### Interaction
-- 이름 입력 후 Enter 또는 저장 버튼 클릭 시 `onSave(name)` 호출. 이름이 비어있거나 선택된 커밋이 없으면 저장 버튼이 비활성화된다.
-- `isEditing`이 `true`이면 저장 버튼 라벨이 "그룹 저장", `false`이면 "새 그룹 만들기"로 전환된다.
-- 취소 버튼은 선택 모드를 종료하고 선택 상태를 초기화한다.
+- 이름 입력 후 Enter 또는 체크 아이콘 버튼 클릭 시 `onSave(name)` 호출. 이름이 비어있거나 선택된 커밋이 없으면 저장 버튼이 비활성화된다.
+- `isEditing`이 `true`이면 저장 버튼의 `aria-label`/`title`이 "그룹 저장", `false`이면 "새 그룹 만들기"로 전환된다(아이콘 자체는 동일한 체크 표시).
+- × 아이콘 버튼(취소)은 선택 모드를 종료하고 선택 상태를 초기화한다.
+- 선택 개수는 체크박스 아이콘 + 숫자로 구성된 pill 배지(`rounded-full bg-secondary`)로 표시한다.
 
 #### States
 - `creating` (`isEditing === false`), `editing` (`isEditing === true`)
@@ -244,7 +245,7 @@ F13 전용. `CommitGroupFilterToggleButton`이 여는 팝오버 콘텐츠로만 
 
 ## Responsive Rules
 
-- `CommitSelectionActionBar`는 좁은 너비에서 개수 텍스트·입력창·버튼이 `flex-wrap`으로 줄바꿈된다.
+- `CommitSelectionActionBar`는 개수 배지·저장·취소 버튼이 모두 고정 크기(`shrink-0`) 아이콘이라 줄바꿈되지 않고, 이름 입력창(`flex-1`)만 남은 폭에 맞춰 늘었다 줄었다 한다.
 
 ---
 
