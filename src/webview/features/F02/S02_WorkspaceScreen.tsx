@@ -345,7 +345,7 @@ export const S02WorkspaceScreen: FC = () => {
       isExpanded={isCommitListSectionExpanded}
       onToggle={() => setIsCommitListSectionExpanded((current) => !current)}
       badge={(
-        <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">
+        <strong className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1.5 text-[10px] font-medium leading-none text-text">
           {commitList.length}
         </strong>
       )}
@@ -500,7 +500,7 @@ export const S02WorkspaceScreen: FC = () => {
       isExpanded={isFileTreeSectionExpanded}
       onToggle={() => setIsFileTreeSectionExpanded((current) => !current)}
       badge={selectedCommit ? (
-        <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">
+        <strong className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1.5 text-[10px] font-medium leading-none text-text">
           {changedFileTree.changedFiles.length}
         </strong>
       ) : undefined}

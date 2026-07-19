@@ -117,7 +117,7 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
   ]);
 
   const noteCountBadge = useMemo(() => (
-    <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">
+    <strong className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1.5 text-[10px] font-medium leading-none text-text">
       {noteTree.length}
     </strong>
   ), [noteTree.length]);
@@ -154,7 +154,7 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
       actions={(
         <button
           type="button"
-          className="inline-flex size-7 items-center justify-center rounded-md bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
+          className="inline-flex size-6 items-center justify-center rounded-md bg-panel text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
           aria-label={t('note.create')}
           title={t('note.create')}
           onClick={() => setIsCreating((current) => !current)}

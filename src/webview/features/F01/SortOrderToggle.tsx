@@ -16,7 +16,7 @@ export const SortOrderToggle: FC<SortOrderToggleProps> = ({ sortOrder, onSortOrd
 
   return (
     <button
-      className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-elevated text-[11px] leading-none text-text transition-colors duration-100 ease-in-out hover:bg-hover"
+      className="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-panel text-[11px] leading-none text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text"
       type="button"
       onClick={() => onSortOrderChange(nextSortOrder)}
       aria-label={ariaLabel}

@@ -61,7 +61,7 @@ export const IssuesSection: FC<IssuesSectionProps> = ({ isActive, activeIssueNum
       isExpanded={isExpanded}
       onToggle={onToggleExpanded}
       badge={issueList.length > 0 ? (
-        <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">
+        <strong className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1.5 text-[10px] font-medium leading-none text-text">
           {issueList.length}
         </strong>
       ) : undefined}

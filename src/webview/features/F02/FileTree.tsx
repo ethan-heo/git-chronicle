@@ -72,9 +72,9 @@ export const FileTree: FC<FileTreeProps> = ({
   return (
     <section className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-surface" aria-label={t('file_tree.panel_aria')}>
       {showHeader ? (
-        <div className="flex items-center gap-[7px] px-2.5 pt-1.5 pb-[5px] text-[11px] text-muted">
-          <span className="font-bold uppercase">{t('file_tree.panel_aria')}</span>
-          <strong className="rounded-full bg-secondary px-[7px] py-px text-xs font-medium text-text">{changedFiles.length}</strong>
+        <div className="flex min-h-8 items-center gap-1.5 px-2.5 py-1 text-[10px] text-muted">
+          <span className="font-bold uppercase leading-none">{t('file_tree.panel_aria')}</span>
+          <strong className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1.5 text-[10px] font-medium leading-none text-text">{changedFiles.length}</strong>
           <div className="inline-flex flex-1 justify-end gap-2 font-mono text-xs" aria-label={t('file_tree.stats_aria')}>
             {stats.A > 0 ? <span className="text-added">+{stats.A}</span> : null}
             {stats.M > 0 ? <span className="text-modified">~{stats.M}</span> : null}

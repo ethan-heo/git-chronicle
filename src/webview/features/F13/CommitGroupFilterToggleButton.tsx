@@ -15,7 +15,7 @@ export const CommitGroupFilterToggleButton = forwardRef<HTMLButtonElement, Commi
       <button
         ref={ref}
         className={[
-          'relative inline-flex size-7 shrink-0 items-center justify-center rounded-md transition-colors duration-100 ease-in-out',
+          'relative inline-flex size-6 shrink-0 items-center justify-center rounded-md transition-colors duration-100 ease-in-out',
           isOpen || isActive
             ? 'bg-[color-mix(in_srgb,var(--color-accent)_18%,transparent)] text-accent'
             : 'bg-panel text-muted hover:bg-hover hover:text-text',
