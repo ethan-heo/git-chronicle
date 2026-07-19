@@ -1,4 +1,11 @@
 
+## [1.9.0](https://github.com/ethan-heo/git-chronicle/compare/v1.8.0...v1.9.0) (2026-07-19)
+
+### Features
+
+* refine canvas fit-view icon ([975823e](https://github.com/ethan-heo/git-chronicle/commit/975823ee2b98524ee581ff8dfc5216286e5259df))
+* **workspace:** add free code tab panel splits ([bde9db4](https://github.com/ethan-heo/git-chronicle/commit/bde9db4c293907edaa9203dc70adcaa753c66f5d))
+
 ## [1.8.0](https://github.com/ethan-heo/git-chronicle/compare/v1.7.1...v1.8.0) (2026-07-18)
 
 ### Features
