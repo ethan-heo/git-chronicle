@@ -210,7 +210,7 @@ interface CanvasControlsProps {
 #### Interaction
 - [+] 클릭: 줌 인
 - [-] 클릭: 줌 아웃
-- [맞춤] 클릭: 전체 노드가 뷰포트에 맞게 자동 조정
+- 화면 맞춤 아이콘 클릭: 전체 노드가 뷰포트에 맞게 자동 조정
 
 #### States
 없음

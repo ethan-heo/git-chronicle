@@ -10,7 +10,7 @@ interface CanvasControlsProps {
 export const CanvasControls: FC<CanvasControlsProps> = ({ onZoomIn, onZoomOut, onFitView }) => {
   const { t } = useTranslation();
   const buttonClassName =
-    'h-[30px] min-w-[34px] border-r border-line bg-transparent px-[10px] text-[12px] text-text transition-colors duration-[var(--gae-motion-duration-fast)] ease-[var(--gae-motion-easing-default)] hover:bg-hover last:border-r-0';
+    'inline-flex h-[30px] min-w-[34px] items-center justify-center border-r border-line bg-transparent px-[10px] text-[12px] text-text transition-colors duration-[var(--gae-motion-duration-fast)] ease-[var(--gae-motion-easing-default)] hover:bg-hover last:border-r-0';
 
   return (
     <div
@@ -25,7 +25,16 @@ export const CanvasControls: FC<CanvasControlsProps> = ({ onZoomIn, onZoomOut, o
         -
       </button>
       <button className={buttonClassName} type="button" aria-label={t('dependency.fit_view')} title={t('dependency.fit_view')} onClick={onFitView}>
-        {t('dependency.fit_view')}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M6 2.5H2.5V6" />
+          <path d="M2.5 2.5 6 6" />
+          <path d="M10 2.5h3.5V6" />
+          <path d="M10 6 13.5 2.5" />
+          <path d="M6 13.5H2.5V10" />
+          <path d="M2.5 13.5 6 10" />
+          <path d="M10 13.5h3.5V10" />
+          <path d="M10 10 13.5 13.5" />
+        </svg>
       </button>
     </div>
   );
