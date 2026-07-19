@@ -75,11 +75,15 @@ S02_WorkspaceScreen
       │  ├─ DropZoneOverlay (drag 중 left/right/top/bottom)
       │  └─ ActiveTabPanel
       │     ├─ code → CodeTabSplitArea
-      │     │  ├─ CodeDiffPanel
-      │     │  ├─ FileAISummaryToggleButton (CodeDiffPanel 우측 상단 오버레이)
-      │     │  ├─ SymbolGraphToggleButton (CodeDiffPanel 우측 상단 오버레이)
-      │     │  ├─ AISummaryPanel (파일 스코프, 토글 시)
-      │     │  └─ SymbolGraphPanel (토글 시)
+      │     │  ├─ FileAISummaryToggleButton (루트 우측 상단 오버레이)
+      │     │  ├─ SymbolGraphToggleButton (루트 우측 상단 오버레이)
+      │     │  └─ CodeInnerPaneTree
+      │     │     ├─ leaf → CodeInnerPanelHost
+      │     │     │  ├─ CodeInnerPanelHeader (패널이 2개 이상일 때만)
+      │     │     │  ├─ CodeDiffPanel
+      │     │     │  ├─ AISummaryPanel (파일 스코프)
+      │     │     │  └─ SymbolGraphPanel
+      │     │     └─ split → ResizableSplitPane (재귀)
       │     ├─ aiSummary → AISummaryPanel
       │     ├─ fileCanvas → DependencyCanvasPanel
       │     ├─ note → NoteEditorPanel
@@ -131,7 +135,7 @@ S02_WorkspaceScreen
 | `idle` | `selectedCommit === null`, 모든 leaf pane의 `activeTabId === null` | 사이드바 헤더/파일트리에 placeholder, 각 pane 본문 빈 상태 |
 | `commitSelected` | `selectedCommit !== null`, 포커스 pane의 `activeTabId === null` | 커밋 컨텍스트만 갱신, 포커스 pane은 탭 미선택 상태 |
 | `split` | `paneTree.kind === "split"` | `ResizableSplitPane`로 재귀 분할된 다중 pane |
-| `code` | leaf pane의 `activeTab.panelType === "code"` | `CodeTabSplitArea` 내부에서 코드 뷰어 + 파일 AI 요약 + 심볼 캔버스를 중첩 분할 |
+| `code` | leaf pane의 `activeTab.panelType === "code"` | `CodeTabSplitArea` 내부에서 diff / 파일 AI 요약 / 심볼 그래프를 자유 분할 재배치 |
 | `aiSummary` | leaf pane의 `activeTab.panelType === "aiSummary"` | 커밋 단위 `AISummaryPanel` |
 | `fileCanvas` | leaf pane의 `activeTab.panelType === "fileCanvas"` | `DependencyCanvasPanel` |
 | `note` | leaf pane의 `activeTab.panelType === "note"` | `NoteEditorPanel` |
@@ -163,4 +167,4 @@ S02_WorkspaceScreen
 - 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환된다. 다만 이미 열린 탭 사이의 포커스 전환, 탭 닫기 fallback, 중앙 드롭 병합 활성화는 사이드바의 커밋/파일/PR/Issue 컨텍스트를 바꾸지 않으며, 사이드바에서 새 항목을 열 때만 그 컨텍스트가 갱신된다.
 - 분할 레이아웃은 Webview State에 저장하지 않는다. 웹뷰 재생성 후에는 단일 pane으로 초기화된다.
 - 노트는 사이드바 `NotesSection`에서만 열며, S02 내부 `note` 탭으로 표시된다. 탭 이탈 시 저장되지 않은 초안은 즉시 플러시 저장되고, 목록에서 드래그 이동/삭제하면 열린 note 탭도 같은 `relativePath` 기준으로 갱신된다.
-- `code` 탭 내부의 `codeInnerPanels`(파일 AI 요약 / 심볼 캔버스) 상태도 최상위 pane 분할과 마찬가지로 영속화하지 않는다.
+- `code` 탭 내부의 `codeInnerPaneTree`(diff / 파일 AI 요약 / 심볼 그래프) 상태도 최상위 pane 분할과 마찬가지로 영속화하지 않는다. 웹뷰 재생성 후에는 항상 diff 단일 리프로 초기화된다.

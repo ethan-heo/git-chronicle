@@ -73,9 +73,15 @@
     "empty": "표시할 diff가 없습니다",
     "binary": "Binary file - diff를 표시할 수 없습니다",
     "deleted_file": "삭제된 파일입니다",
+    "panel_title": "코드 변경",
     "panel_close_aria": "diff 패널 닫기",
     "region_aria": "{{filePath}} 코드 변경 내역",
     "fold_hidden_lines": "⋯ {{count}}줄 숨김 (라인 {{start}}-{{end}})"
+  },
+  "code_inner_panel": {
+    "diff_title": "코드 변경",
+    "symbol_graph_title": "심볼 그래프",
+    "diff_close_disabled": "코드 변경 패널은 닫을 수 없습니다"
   },
   "dependency": {
     "loading": "의존 관계를 분석하는 중...",

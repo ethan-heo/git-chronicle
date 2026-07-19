@@ -18,7 +18,7 @@ export const SymbolGraphToggleButton: FC<SymbolGraphToggleButtonProps> = ({ isAc
       className={[
         'inline-flex size-8 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-45',
         isActive
-          ? 'bg-[color-mix(in_srgb,var(--color-link)_14%,var(--color-panel))] text-link'
+          ? 'bg-[color-mix(in_srgb,var(--color-accent)_16%,var(--color-panel))] text-accent'
           : 'bg-panel text-muted hover:bg-hover hover:text-text disabled:hover:bg-panel disabled:hover:text-muted',
       ].join(' ')}
       aria-label={t('symbol_graph.open_aria')}

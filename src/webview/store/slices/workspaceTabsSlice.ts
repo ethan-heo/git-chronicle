@@ -6,12 +6,22 @@ import type { AppState } from '../appStore';
 export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'note' | 'pr' | 'issue';
 export type PaneSplitOrientation = 'horizontal' | 'vertical';
 export type DropZone = 'left' | 'right' | 'top' | 'bottom' | 'center';
-export type CodeInnerPanelType = 'aiSummary' | 'symbolGraph';
+export type CodeInnerPanelKind = 'diff' | 'aiSummary' | 'symbolGraph';
 
-export interface CodeInnerPanelsState {
-  aiSummary: boolean;
-  symbolGraph: boolean;
+export interface CodeInnerLeafNode {
+  kind: 'leaf';
+  panel: CodeInnerPanelKind;
 }
+
+export interface CodeInnerSplitNode {
+  nodeId: string;
+  kind: 'split';
+  orientation: PaneSplitOrientation;
+  children: [CodeInnerPaneNode, CodeInnerPaneNode];
+  sizePercent: number;
+}
+
+export type CodeInnerPaneNode = CodeInnerLeafNode | CodeInnerSplitNode;
 
 export interface WorkspaceTab {
   id: string;
@@ -20,7 +30,7 @@ export interface WorkspaceTab {
   commit: Commit | null;
   filePath: string | null;
   relativePath?: string | null;
-  codeInnerPanels?: CodeInnerPanelsState;
+  codeInnerPaneTree?: CodeInnerPaneNode;
   prNumber?: number | null;
   issueNumber?: number | null;
   // pr/issue 탭 전용 라벨. 상세 데이터 로드 전에도 탭바에 제목을 즉시 보여주기 위해 목록 클릭 시점에 캐시한다.
@@ -60,7 +70,15 @@ export interface WorkspaceTabsSlice {
   closeWorkspaceTab: (paneId: string, tabId: string) => void;
   activateWorkspaceTab: (paneId: string, tabId: string) => void;
   activateAdjacentWorkspaceTab: (paneId: string, direction: 'next' | 'prev') => void;
-  toggleCodeInnerPanel: (paneId: string, tabId: string, panel: CodeInnerPanelType) => void;
+  toggleCodeInnerPanel: (paneId: string, tabId: string, panel: Exclude<CodeInnerPanelKind, 'diff'>) => void;
+  moveCodeInnerPanel: (input: {
+    paneId: string;
+    tabId: string;
+    sourcePanel: CodeInnerPanelKind;
+    targetPanel: CodeInnerPanelKind;
+    zone: Exclude<DropZone, 'center'>;
+  }) => void;
+  resizeCodeInnerSplit: (paneId: string, tabId: string, nodeId: string, sizePercent: number) => void;
   focusPane: (paneId: string) => void;
   moveWorkspaceTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
   setPaneSplitSize: (paneId: string, sizePercent: number) => void;
@@ -144,13 +162,137 @@ export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
     commit: input.commit,
     filePath: input.filePath ?? null,
     relativePath: null,
-    codeInnerPanels: input.panelType === 'code'
-      ? { aiSummary: false, symbolGraph: false }
+    codeInnerPaneTree: input.panelType === 'code'
+      ? createDefaultCodeInnerPaneTree()
       : undefined,
     prNumber: null,
     issueNumber: null,
     title: null,
   };
+}
+
+export function createDefaultCodeInnerPaneTree(): CodeInnerPaneNode {
+  return { kind: 'leaf', panel: 'diff' };
+}
+
+export function countCodeInnerLeaves(node: CodeInnerPaneNode): number {
+  return node.kind === 'leaf'
+    ? 1
+    : countCodeInnerLeaves(node.children[0]) + countCodeInnerLeaves(node.children[1]);
+}
+
+export function hasCodeInnerPanel(node: CodeInnerPaneNode | undefined, panel: CodeInnerPanelKind): boolean {
+  if (!node) {
+    return panel === 'diff';
+  }
+
+  return node.kind === 'leaf'
+    ? node.panel === panel
+    : hasCodeInnerPanel(node.children[0], panel) || hasCodeInnerPanel(node.children[1], panel);
+}
+
+function getCodeInnerPaneTree(node: CodeInnerPaneNode | undefined): CodeInnerPaneNode {
+  return node ?? createDefaultCodeInnerPaneTree();
+}
+
+function replaceCodeInnerNode(
+  node: CodeInnerPaneNode,
+  matcher: (candidate: CodeInnerPaneNode) => boolean,
+  replacer: (candidate: CodeInnerPaneNode) => CodeInnerPaneNode,
+): CodeInnerPaneNode {
+  if (matcher(node)) {
+    return replacer(node);
+  }
+
+  if (node.kind === 'leaf') {
+    return node;
+  }
+
+  return {
+    ...node,
+    children: [
+      replaceCodeInnerNode(node.children[0], matcher, replacer),
+      replaceCodeInnerNode(node.children[1], matcher, replacer),
+    ],
+  };
+}
+
+function removeCodeInnerPanelNode(node: CodeInnerPaneNode, panel: CodeInnerPanelKind): CodeInnerPaneNode | null {
+  if (node.kind === 'leaf') {
+    return node.panel === panel ? null : node;
+  }
+
+  const left = removeCodeInnerPanelNode(node.children[0], panel);
+  const right = removeCodeInnerPanelNode(node.children[1], panel);
+
+  if (!left && !right) {
+    return null;
+  }
+
+  if (!left) {
+    return right;
+  }
+
+  if (!right) {
+    return left;
+  }
+
+  return {
+    ...node,
+    children: [left, right],
+  };
+}
+
+function insertCodeInnerPanel(
+  root: CodeInnerPaneNode,
+  targetPanel: CodeInnerPanelKind,
+  panel: CodeInnerPanelKind,
+  zone: Exclude<DropZone, 'center'>,
+): CodeInnerPaneNode {
+  if (panel === targetPanel || hasCodeInnerPanel(root, panel) || !hasCodeInnerPanel(root, targetPanel)) {
+    return root;
+  }
+
+  const orientation: PaneSplitOrientation = zone === 'left' || zone === 'right' ? 'horizontal' : 'vertical';
+  const newLeaf: CodeInnerLeafNode = { kind: 'leaf', panel };
+
+  return replaceCodeInnerNode(
+    root,
+    (candidate) => candidate.kind === 'leaf' && candidate.panel === targetPanel,
+    (candidate) => {
+      const targetLeaf = candidate as CodeInnerLeafNode;
+      const children: [CodeInnerPaneNode, CodeInnerPaneNode] =
+        zone === 'left' || zone === 'top'
+          ? [newLeaf, targetLeaf]
+          : [targetLeaf, newLeaf];
+
+      return {
+        nodeId: crypto.randomUUID(),
+        kind: 'split',
+        orientation,
+        children,
+        sizePercent: 50,
+      };
+    },
+  );
+}
+
+function moveCodeInnerPanelNode(
+  root: CodeInnerPaneNode,
+  sourcePanel: CodeInnerPanelKind,
+  targetPanel: CodeInnerPanelKind,
+  zone: Exclude<DropZone, 'center'>,
+): CodeInnerPaneNode {
+  if (sourcePanel === targetPanel || !hasCodeInnerPanel(root, sourcePanel) || !hasCodeInnerPanel(root, targetPanel)) {
+    return root;
+  }
+
+  const nextRoot = removeCodeInnerPanelNode(root, sourcePanel);
+  if (!nextRoot) {
+    return root;
+  }
+
+  return insertCodeInnerPanel(nextRoot, targetPanel, sourcePanel, zone);
 }
 
 function createLeafPane(tabs: WorkspaceTab[] = [], activeTabId: string | null = null): PaneLeafNode {
@@ -396,7 +538,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
       const tabId = computeWorkspaceTabId('code', commit.hash, filePath);
       const pane = findLeafPane(nextState.paneTree, nextState.focusedPaneId);
       const tab = pane?.tabs.find((item) => item.id === tabId);
-      if (!pane || !tab || tab.panelType !== 'code' || tab.codeInnerPanels?.aiSummary) {
+      if (!pane || !tab || tab.panelType !== 'code' || hasCodeInnerPanel(tab.codeInnerPaneTree, 'aiSummary')) {
         return;
       }
 
@@ -482,13 +624,14 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
                 return tab;
               }
 
-              const currentPanels = tab.codeInnerPanels ?? { aiSummary: false, symbolGraph: false };
+              const currentTree = getCodeInnerPaneTree(tab.codeInnerPaneTree);
+              const nextTree = hasCodeInnerPanel(currentTree, panel)
+                ? removeCodeInnerPanelNode(currentTree, panel) ?? createDefaultCodeInnerPaneTree()
+                : insertCodeInnerPanel(currentTree, 'diff', panel, 'right');
+
               return {
                 ...tab,
-                codeInnerPanels: {
-                  ...currentPanels,
-                  [panel]: !currentPanels[panel],
-                },
+                codeInnerPaneTree: nextTree,
               };
             }),
           };
@@ -529,11 +672,65 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
       });
     },
 
+    moveCodeInnerPanel: ({ paneId, tabId, sourcePanel, targetPanel, zone }) => {
+      set((state) => ({
+        paneTree: replacePaneNode(state.paneTree, paneId, (pane) => {
+          if (pane.kind !== 'leaf') {
+            return pane;
+          }
+
+          return {
+            ...pane,
+            tabs: pane.tabs.map((tab) => {
+              if (tab.id !== tabId || tab.panelType !== 'code') {
+                return tab;
+              }
+
+              return {
+                ...tab,
+                codeInnerPaneTree: moveCodeInnerPanelNode(getCodeInnerPaneTree(tab.codeInnerPaneTree), sourcePanel, targetPanel, zone),
+              };
+            }),
+          };
+        }),
+      }));
+    },
+
     setPaneSplitSize: (paneId, sizePercent) => {
       set((state) => ({
         paneTree: replacePaneNode(state.paneTree, paneId, (pane) => pane.kind === 'split'
           ? { ...pane, sizePercent }
           : pane),
+      }));
+    },
+
+    resizeCodeInnerSplit: (paneId, tabId, nodeId, sizePercent) => {
+      set((state) => ({
+        paneTree: replacePaneNode(state.paneTree, paneId, (pane) => {
+          if (pane.kind !== 'leaf') {
+            return pane;
+          }
+
+          return {
+            ...pane,
+            tabs: pane.tabs.map((tab) => {
+              if (tab.id !== tabId || tab.panelType !== 'code') {
+                return tab;
+              }
+
+              return {
+                ...tab,
+                codeInnerPaneTree: replaceCodeInnerNode(
+                  getCodeInnerPaneTree(tab.codeInnerPaneTree),
+                  (candidate) => candidate.kind === 'split' && candidate.nodeId === nodeId,
+                  (candidate) => candidate.kind === 'split'
+                    ? { ...candidate, sizePercent }
+                    : candidate,
+                ),
+              };
+            }),
+          };
+        }),
       }));
     },
 

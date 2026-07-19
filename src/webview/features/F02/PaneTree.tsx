@@ -14,7 +14,8 @@ interface PaneTreeProps {
   onFocusPane: (paneId: string) => void;
   onMoveTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
   onResizeSplit: (paneId: string, sizePercent: number) => void;
-  renderFixedActions: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
+  renderLeadingActions?: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
+  renderTrailingActions?: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
   renderPanel: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
 }
 
@@ -50,7 +51,8 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
   onFocusPane,
   onMoveTab,
   onResizeSplit,
-  renderFixedActions,
+  renderLeadingActions,
+  renderTrailingActions,
   renderPanel,
 }) => {
   if (node.kind === 'split') {
@@ -72,7 +74,8 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
             onFocusPane={onFocusPane}
             onMoveTab={onMoveTab}
             onResizeSplit={onResizeSplit}
-            renderFixedActions={renderFixedActions}
+            renderLeadingActions={renderLeadingActions}
+            renderTrailingActions={renderTrailingActions}
             renderPanel={renderPanel}
           />
         )}
@@ -88,7 +91,8 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
             onFocusPane={onFocusPane}
             onMoveTab={onMoveTab}
             onResizeSplit={onResizeSplit}
-            renderFixedActions={renderFixedActions}
+            renderLeadingActions={renderLeadingActions}
+            renderTrailingActions={renderTrailingActions}
             renderPanel={renderPanel}
           />
         )}
@@ -112,7 +116,8 @@ const PaneNodeRenderer: FC<PaneTreeProps & { node: PaneNode }> = ({
       onCloseTab={onCloseTab}
       onFocusPane={onFocusPane}
       onMoveTab={onMoveTab}
-      renderFixedActions={renderFixedActions}
+      renderLeadingActions={renderLeadingActions}
+      renderTrailingActions={renderTrailingActions}
       renderPanel={renderPanel}
     />
   );
@@ -127,7 +132,8 @@ const WorkspacePane: FC<{
   onCloseTab: (paneId: string, tabId: string) => void;
   onFocusPane: (paneId: string) => void;
   onMoveTab: (input: { sourcePaneId: string; tabId: string; targetPaneId: string; zone: DropZone }) => void;
-  renderFixedActions: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
+  renderLeadingActions?: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
+  renderTrailingActions?: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
   renderPanel: (paneId: string, activeTab: WorkspaceTab | null) => ReactNode;
 }> = ({
   pane,
@@ -138,7 +144,8 @@ const WorkspacePane: FC<{
   onCloseTab,
   onFocusPane,
   onMoveTab,
-  renderFixedActions,
+  renderLeadingActions,
+  renderTrailingActions,
   renderPanel,
 }) => {
   const { t } = useTranslation();
@@ -202,7 +209,8 @@ const WorkspacePane: FC<{
 
             commitDrop('center');
           }}
-          fixedActions={renderFixedActions(pane.paneId, activeTab)}
+          leadingActions={renderLeadingActions?.(pane.paneId, activeTab) ?? null}
+          trailingActions={renderTrailingActions?.(pane.paneId, activeTab) ?? null}
         />
       ) : null}
       <div

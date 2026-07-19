@@ -73,9 +73,15 @@
     "empty": "No diff to display",
     "binary": "Binary file - diff not available",
     "deleted_file": "Deleted file",
+    "panel_title": "Code Changes",
     "panel_close_aria": "Close diff panel",
     "region_aria": "{{filePath}} code changes",
     "fold_hidden_lines": "⋯ {{count}} lines hidden (lines {{start}}-{{end}})"
+  },
+  "code_inner_panel": {
+    "diff_title": "Code Changes",
+    "symbol_graph_title": "Symbol Graph",
+    "diff_close_disabled": "The code changes panel cannot be closed"
   },
   "dependency": {
     "loading": "Analyzing dependencies...",

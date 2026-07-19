@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { FC, ReactNode } from 'react';
 import type { ChangedFile, Commit } from '../../types/commit';
 import { AISummaryViewer } from './AISummaryViewer';
 import { OverwriteConfirmDialog } from './OverwriteConfirmDialog';
@@ -12,9 +12,19 @@ interface AISummaryPanelProps {
   isTargetFilePending?: boolean;
   commit: Commit | null;
   onGoToSettings: () => void;
+  headerLeading?: ReactNode;
+  headerTrailing?: ReactNode;
 }
 
-export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, isTargetFilePending, commit, onGoToSettings }) => {
+export const AISummaryPanel: FC<AISummaryPanelProps> = ({
+  isActive,
+  targetFile,
+  isTargetFilePending,
+  commit,
+  onGoToSettings,
+  headerLeading,
+  headerTrailing,
+}) => {
   const {
     activeAIProvider,
     currentSummaryContent,
@@ -69,6 +79,8 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({ isActive, targetFile, 
         savedPath={summarySavedPath}
         providerLabel={activeAIProvider}
         qaCompletionCount={qaCompletionCount}
+        headerLeading={headerLeading}
+        headerTrailing={headerTrailing}
         onAskQuestion={onAskQuestion}
         onGoToSettings={onGoToSettings}
         onRegenerate={onRegenerate}

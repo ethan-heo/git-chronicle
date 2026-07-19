@@ -4,7 +4,7 @@ import { mergePersistedWebviewState, readPersistedWebviewState, type PersistedWo
 import { EmptyState, Popover, SidebarSection, SidebarSectionGroup, type SidebarSectionGroupItem } from '../../shared/components';
 import { useRouteSlotActive } from '../../shared/route/RouteSlotContext';
 import { useAppStore } from '../../store/appStore';
-import { computeWorkspaceTabId, findLeafPane, getActiveTab, type PaneLeafNode, type WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
+import { computeWorkspaceTabId, findLeafPane, getActiveTab, hasCodeInnerPanel, type PaneLeafNode, type WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
 import type { ChangedFile } from '../../types/commit';
 import { CommitFilterPanel, CommitList, FilterToggleButton, SortOrderToggle, useCommitList } from '../F01';
 import { DependencyCanvasPanel } from '../F04';
@@ -15,9 +15,11 @@ import { IssueDetailPanel, IssuesSection, PRDetailPanel, PRsSection, useGithubAu
 import type { IssueSummary, PullRequestSummary } from '../F12';
 import { CommitGroupFilterDropdown, CommitGroupFilterToggleButton, CommitSelectionActionBar, SelectModeToggleButton, useCommitGroups } from '../F13';
 import { CodeTabSplitArea } from './CodeTabSplitArea';
+import { FileAISummaryToggleButton } from './FileAISummaryToggleButton';
 import { FileTree } from './FileTree';
 import { PaneTree } from './PaneTree';
 import { SettingsToggleButton } from './SettingsToggleButton';
+import { SymbolGraphToggleButton } from './SymbolGraphToggleButton';
 import { useChangedFileTree } from './useChangedFileTree';
 import { useWorkspaceKeyboardShortcuts } from './useWorkspaceKeyboardShortcuts';
 import { WorkspaceHeading } from './WorkspaceHeading';
@@ -63,6 +65,8 @@ export const S02WorkspaceScreen: FC = () => {
   const closeWorkspaceTab = useAppStore((state) => state.closeWorkspaceTab);
   const activateWorkspaceTab = useAppStore((state) => state.activateWorkspaceTab);
   const toggleCodeInnerPanel = useAppStore((state) => state.toggleCodeInnerPanel);
+  const moveCodeInnerPanel = useAppStore((state) => state.moveCodeInnerPanel);
+  const resizeCodeInnerSplit = useAppStore((state) => state.resizeCodeInnerSplit);
   const focusPane = useAppStore((state) => state.focusPane);
   const moveWorkspaceTab = useAppStore((state) => state.moveWorkspaceTab);
   const setPaneSplitSize = useAppStore((state) => state.setPaneSplitSize);
@@ -678,7 +682,15 @@ export const S02WorkspaceScreen: FC = () => {
           onFocusPane={focusPane}
           onMoveTab={moveWorkspaceTab}
           onResizeSplit={setPaneSplitSize}
-          renderFixedActions={() => null}
+          renderLeadingActions={() => null}
+          renderTrailingActions={(paneId, paneActiveTab) => (
+            <WorkspaceTabLeadingActions
+              paneId={paneId}
+              activeTab={paneActiveTab}
+              isRouteSlotActive={isRouteSlotActive}
+              toggleCodeInnerPanel={toggleCodeInnerPanel}
+            />
+          )}
           renderPanel={(paneId, paneActiveTab) => renderWorkspacePanel({
           paneId,
           activeTab: paneActiveTab,
@@ -686,11 +698,47 @@ export const S02WorkspaceScreen: FC = () => {
           openCodeTab,
           openSidebarSettings,
           toggleCodeInnerPanel,
+          moveCodeInnerPanel,
+          resizeCodeInnerSplit,
           noOpenTabMessage: t('workspace.no_open_tab'),
         })}
         />
       </section>
     </main>
+  );
+};
+
+const WorkspaceTabLeadingActions: FC<{
+  paneId: string;
+  activeTab: WorkspaceTab | null;
+  isRouteSlotActive: boolean;
+  toggleCodeInnerPanel: (paneId: string, tabId: string, panel: 'aiSummary' | 'symbolGraph') => void;
+}> = ({ paneId, activeTab, isRouteSlotActive, toggleCodeInnerPanel }) => {
+  const changedFileTree = useChangedFileTree({
+    isActive: isRouteSlotActive,
+    commit: activeTab?.panelType === 'code' ? activeTab.commit : null,
+  });
+
+  if (!activeTab || activeTab.panelType !== 'code') {
+    return null;
+  }
+
+  const selectedFile = activeTab.filePath
+    ? changedFileTree.changedFiles.find((file) => file.path === activeTab.filePath) ?? null
+    : null;
+
+  return (
+    <div className="flex items-center gap-1 self-center">
+      <FileAISummaryToggleButton
+        isActive={hasCodeInnerPanel(activeTab.codeInnerPaneTree, 'aiSummary')}
+        onClick={() => toggleCodeInnerPanel(paneId, activeTab.id, 'aiSummary')}
+      />
+      <SymbolGraphToggleButton
+        isActive={hasCodeInnerPanel(activeTab.codeInnerPaneTree, 'symbolGraph')}
+        disabled={selectedFile?.status === 'D'}
+        onClick={() => toggleCodeInnerPanel(paneId, activeTab.id, 'symbolGraph')}
+      />
+    </div>
   );
 };
 
@@ -701,9 +749,27 @@ function renderWorkspacePanel(options: {
   openCodeTab: (file: ChangedFile) => void;
   openSidebarSettings: () => void;
   toggleCodeInnerPanel: (paneId: string, tabId: string, panel: 'aiSummary' | 'symbolGraph') => void;
+  moveCodeInnerPanel: (input: {
+    paneId: string;
+    tabId: string;
+    sourcePanel: 'diff' | 'aiSummary' | 'symbolGraph';
+    targetPanel: 'diff' | 'aiSummary' | 'symbolGraph';
+    zone: 'left' | 'right' | 'top' | 'bottom';
+  }) => void;
+  resizeCodeInnerSplit: (paneId: string, tabId: string, nodeId: string, sizePercent: number) => void;
   noOpenTabMessage: string;
 }): ReactNode {
-  const { paneId, activeTab, isRouteSlotActive, openCodeTab, openSidebarSettings, toggleCodeInnerPanel, noOpenTabMessage } = options;
+  const {
+    paneId,
+    activeTab,
+    isRouteSlotActive,
+    openCodeTab,
+    openSidebarSettings,
+    toggleCodeInnerPanel,
+    moveCodeInnerPanel,
+    resizeCodeInnerSplit,
+    noOpenTabMessage,
+  } = options;
 
   if (!activeTab) {
     return (
@@ -721,6 +787,8 @@ function renderWorkspacePanel(options: {
       openCodeTab={openCodeTab}
       openSidebarSettings={openSidebarSettings}
       toggleCodeInnerPanel={toggleCodeInnerPanel}
+      moveCodeInnerPanel={moveCodeInnerPanel}
+      resizeCodeInnerSplit={resizeCodeInnerSplit}
     />
   );
 }
@@ -732,7 +800,24 @@ const WorkspacePaneContent: FC<{
   openCodeTab: (file: ChangedFile) => void;
   openSidebarSettings: () => void;
   toggleCodeInnerPanel: (paneId: string, tabId: string, panel: 'aiSummary' | 'symbolGraph') => void;
-}> = ({ paneId, activeTab, isRouteSlotActive, openCodeTab, openSidebarSettings, toggleCodeInnerPanel }) => {
+  moveCodeInnerPanel: (input: {
+    paneId: string;
+    tabId: string;
+    sourcePanel: 'diff' | 'aiSummary' | 'symbolGraph';
+    targetPanel: 'diff' | 'aiSummary' | 'symbolGraph';
+    zone: 'left' | 'right' | 'top' | 'bottom';
+  }) => void;
+  resizeCodeInnerSplit: (paneId: string, tabId: string, nodeId: string, sizePercent: number) => void;
+}> = ({
+  paneId,
+  activeTab,
+  isRouteSlotActive,
+  openCodeTab,
+  openSidebarSettings,
+  toggleCodeInnerPanel,
+  moveCodeInnerPanel,
+  resizeCodeInnerSplit,
+}) => {
   const changedFileTree = useChangedFileTree({
     isActive: isRouteSlotActive,
     commit: activeTab.commit,
@@ -768,6 +853,8 @@ const WorkspacePaneContent: FC<{
         selectedFile={codeFile}
         isSelectedFilePending={isSelectedFilePending}
         onToggleInnerPanel={(panel) => toggleCodeInnerPanel(paneId, activeTab.id, panel)}
+        onMoveInnerPanel={(input) => moveCodeInnerPanel({ paneId, tabId: activeTab.id, ...input })}
+        onResizeInnerSplit={(nodeId, sizePercent) => resizeCodeInnerSplit(paneId, activeTab.id, nodeId, sizePercent)}
         onGoToSettings={openSidebarSettings}
       />
     );

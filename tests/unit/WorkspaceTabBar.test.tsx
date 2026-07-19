@@ -30,7 +30,8 @@ describe('WorkspaceTabBar', () => {
           isGeneratingSummary={false}
           onActivateTab={vi.fn()}
           onCloseTab={vi.fn()}
-          fixedActions={null}
+          leadingActions={null}
+          trailingActions={null}
         />
         <WorkspaceTabBar
           paneId="pane-b"
@@ -41,7 +42,8 @@ describe('WorkspaceTabBar', () => {
           isGeneratingSummary={false}
           onActivateTab={vi.fn()}
           onCloseTab={vi.fn()}
-          fixedActions={null}
+          leadingActions={null}
+          trailingActions={null}
         />
       </>,
     );
@@ -76,7 +78,8 @@ describe('WorkspaceTabBar', () => {
         isGeneratingSummary={false}
         onActivateTab={vi.fn()}
         onCloseTab={vi.fn()}
-        fixedActions={null}
+        leadingActions={null}
+        trailingActions={null}
       />,
     );
 

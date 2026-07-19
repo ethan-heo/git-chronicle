@@ -30,7 +30,8 @@ describe('PaneTree', () => {
         onFocusPane={vi.fn()}
         onMoveTab={vi.fn()}
         onResizeSplit={vi.fn()}
-        renderFixedActions={() => null}
+        renderLeadingActions={() => null}
+        renderTrailingActions={() => null}
         renderPanel={() => null}
       />,
     );
@@ -51,7 +52,8 @@ describe('PaneTree', () => {
         onFocusPane={vi.fn()}
         onMoveTab={vi.fn()}
         onResizeSplit={vi.fn()}
-        renderFixedActions={() => null}
+        renderLeadingActions={() => null}
+        renderTrailingActions={() => null}
         renderPanel={(_, activeTab) => activeTab?.filePath ?? null}
       />,
     );

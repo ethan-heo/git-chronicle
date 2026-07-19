@@ -10,7 +10,7 @@ export const RegenerateButton: FC<RegenerateButtonProps> = ({ disabled, onClick 
   const { t } = useTranslation();
   return (
     <button
-      className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-text transition-colors duration-100 ease-in-out hover:bg-secondary-hi disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex h-8 shrink-0 items-center justify-center rounded-md px-1.5 text-muted transition-colors duration-100 ease-in-out hover:bg-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
       type="button"
       aria-label={t('ai_summary.regenerate')}
       title={t('ai_summary.regenerate')}

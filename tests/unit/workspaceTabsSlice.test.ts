@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { PaneLeafNode, PaneNode } from '../../src/webview/store/slices/workspaceTabsSlice';
+import { hasCodeInnerPanel, type CodeInnerPaneNode, type PaneLeafNode, type PaneNode } from '../../src/webview/store/slices/workspaceTabsSlice';
 import type { Commit } from '../../src/webview/types/commit';
 
 const commitA: Commit = {
@@ -322,7 +322,7 @@ describe('workspaceTabsSlice note tabs (F11)', () => {
     }
     const codeTab = nextState.paneTree.tabs.find((tab) => tab.id === 'code:aaaaaaaa:src/app.ts');
     expect(codeTab?.panelType).toBe('code');
-    expect(codeTab?.codeInnerPanels?.aiSummary).toBe(true);
+    expect(hasCodeInnerPanel(codeTab?.codeInnerPaneTree, 'aiSummary')).toBe(true);
   });
 });
 
@@ -416,3 +416,57 @@ describe('workspaceTabsSlice moveWorkspaceTab', () => {
     expect(nextState.paneTree.activeTabId).toBe('fileCanvas:aaaaaaaa:_');
   });
 });
+
+describe('workspaceTabsSlice moveCodeInnerPanel', () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.restoreAllMocks();
+    Reflect.deleteProperty(window, 'acquireVsCodeApi');
+  });
+
+  it('allows moving the diff panel below another inner panel', async () => {
+    const { useAppStore } = await import('../../src/webview/store/appStore');
+    const state = useAppStore.getState();
+
+    state.selectCommit(commitA);
+    state.openWorkspaceTab({ panelType: 'code', commit: commitA, filePath: 'src/app.ts' });
+
+    const pane = useAppStore.getState().paneTree;
+    if (pane.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane');
+    }
+
+    const codeTab = pane.tabs.find((tab) => tab.id === 'code:aaaaaaaa:src/app.ts');
+    if (!codeTab || codeTab.panelType !== 'code') {
+      throw new Error('Expected code tab to exist');
+    }
+
+    state.toggleCodeInnerPanel(pane.paneId, codeTab.id, 'aiSummary');
+    state.moveCodeInnerPanel({
+      paneId: pane.paneId,
+      tabId: codeTab.id,
+      sourcePanel: 'diff',
+      targetPanel: 'aiSummary',
+      zone: 'bottom',
+    });
+
+    const nextState = useAppStore.getState();
+    if (nextState.paneTree.kind !== 'leaf') {
+      throw new Error('Expected a single leaf pane after moving inner panel');
+    }
+
+    const nextCodeTab = nextState.paneTree.tabs.find((tab) => tab.id === codeTab.id);
+    expect(nextCodeTab?.panelType).toBe('code');
+    expect(getCodeInnerLeafPanels(nextCodeTab?.codeInnerPaneTree)).toEqual(['aiSummary', 'diff']);
+  });
+});
+
+function getCodeInnerLeafPanels(node: CodeInnerPaneNode | undefined): string[] {
+  if (!node) {
+    return [];
+  }
+
+  return node.kind === 'leaf'
+    ? [node.panel]
+    : [...getCodeInnerLeafPanels(node.children[0]), ...getCodeInnerLeafPanels(node.children[1])];
+}

@@ -16,7 +16,8 @@ interface WorkspaceTabBarProps {
   onDragOver?: DragEventHandler<HTMLDivElement>;
   onDragLeave?: DragEventHandler<HTMLDivElement>;
   onDrop?: DragEventHandler<HTMLDivElement>;
-  fixedActions: ReactNode;
+  leadingActions?: ReactNode;
+  trailingActions?: ReactNode;
 }
 
 export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
@@ -33,7 +34,8 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
   onDragOver,
   onDragLeave,
   onDrop,
-  fixedActions,
+  leadingActions,
+  trailingActions,
 }) => {
   return (
     <div
@@ -46,6 +48,11 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
       onDrop={onDrop}
       data-pane-focus-state={isFocusedPane ? 'focused' : 'visible'}
     >
+      {leadingActions ? (
+        <div className="flex shrink-0 items-center gap-2">
+          {leadingActions}
+        </div>
+      ) : null}
       <div className="workspace-tab-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 [scrollbar-gutter:stable]">
         <div className="flex min-w-max items-center gap-1 pr-1">
           {tabs.map((tab) => (
@@ -64,9 +71,11 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
           ))}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        {fixedActions}
-      </div>
+      {trailingActions ? (
+        <div className="flex shrink-0 items-center gap-2">
+          {trailingActions}
+        </div>
+      ) : null}
     </div>
   );
 };

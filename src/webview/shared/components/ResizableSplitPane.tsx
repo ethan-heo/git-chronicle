@@ -17,6 +17,50 @@ interface ResizableSplitPaneProps {
 
 export const DIVIDER_WIDTH_PX = 6;
 
+function resolveMinPaneSizes(
+  usableMainAxis: number,
+  minLeftPx: number,
+  minRightPx: number,
+): { minLeft: number; minRight: number } {
+  if (usableMainAxis <= 0) {
+    return { minLeft: 0, minRight: 0 };
+  }
+
+  if (minLeftPx + minRightPx <= usableMainAxis) {
+    return { minLeft: minLeftPx, minRight: minRightPx };
+  }
+
+  const fallbackMin = Math.floor(usableMainAxis / 2);
+  const minLeft = Math.min(minLeftPx, fallbackMin);
+  const minRight = Math.min(minRightPx, usableMainAxis - minLeft);
+
+  return { minLeft, minRight };
+}
+
+function clampSplitSizes(input: {
+  usableMainAxis: number;
+  minLeftPx: number;
+  minRightPx: number;
+  controlledLeftPx?: number;
+  leftPercent?: number;
+}): { leftPx: number; rightPx: number } {
+  const { usableMainAxis, minLeftPx, minRightPx, controlledLeftPx, leftPercent } = input;
+
+  if (usableMainAxis <= 0) {
+    return { leftPx: 0, rightPx: 0 };
+  }
+
+  const { minLeft, minRight } = resolveMinPaneSizes(usableMainAxis, minLeftPx, minRightPx);
+  const requestedLeftPx = typeof controlledLeftPx === 'number'
+    ? controlledLeftPx
+    : usableMainAxis * ((leftPercent ?? 50) / 100);
+  const maxLeftPx = Math.max(minLeft, usableMainAxis - minRight);
+  const leftPx = Math.min(maxLeftPx, Math.max(minLeft, requestedLeftPx));
+  const rightPx = Math.max(0, usableMainAxis - leftPx);
+
+  return { leftPx, rightPx };
+}
+
 export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
   isOpen,
   orientation = 'horizontal',
@@ -33,11 +77,10 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
   const [leftWidthPercent, setLeftWidthPercent] = useState(defaultLeftPercent);
   const [isDragging, setIsDragging] = useState(false);
   const [containerMainSizePx, setContainerMainSizePx] = useState<number | null>(null);
-  const hasControlledLeftPx = typeof controlledLeftPx === 'number';
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !hasControlledLeftPx) return;
+    if (!container) return;
 
     const updateSize = (): void => {
       const rect = container.getBoundingClientRect();
@@ -50,7 +93,7 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
     observer.observe(container);
 
     return () => observer.disconnect();
-  }, [hasControlledLeftPx, orientation]);
+  }, [orientation]);
 
   useEffect(() => {
     if (isOpen) {
@@ -73,17 +116,18 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
       const rect = container.getBoundingClientRect();
       const usableMainAxis = (orientation === 'horizontal' ? rect.width : rect.height) - DIVIDER_WIDTH_PX;
       if (usableMainAxis <= 0) return;
+      const { minLeft, minRight } = resolveMinPaneSizes(usableMainAxis, minLeftPx, minRightPx);
 
       const pointerOffset = orientation === 'horizontal' ? event.clientX - rect.left : event.clientY - rect.top;
-      const clampedLeftPx = Math.min(usableMainAxis - minRightPx, Math.max(minLeftPx, pointerOffset));
+      const clampedLeftPx = Math.min(usableMainAxis - minRight, Math.max(minLeft, pointerOffset));
 
       if (typeof controlledLeftPx === 'number') {
         onLeftPxChange?.(clampedLeftPx, usableMainAxis - clampedLeftPx);
         return;
       }
 
-      const minLeftPercent = (minLeftPx / usableMainAxis) * 100;
-      const minRightPercent = (minRightPx / usableMainAxis) * 100;
+      const minLeftPercent = (minLeft / usableMainAxis) * 100;
+      const minRightPercent = (minRight / usableMainAxis) * 100;
       const nextLeftPercent = (clampedLeftPx / usableMainAxis) * 100;
       const clampedLeftPercent = Math.min(100 - minRightPercent, Math.max(minLeftPercent, nextLeftPercent));
       setLeftWidthPercent(clampedLeftPercent);
@@ -104,25 +148,39 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
     };
   }, [controlledLeftPx, isDragging, minLeftPx, minRightPx, onLeftPxChange, orientation]);
 
-  const effectiveLeftPx = (() => {
-    if (typeof controlledLeftPx !== 'number' || containerMainSizePx === null) return controlledLeftPx;
+  const splitSizes = (() => {
+    if (!isOpen || containerMainSizePx === null) {
+      return null;
+    }
 
-    // Reserve space for the right pane and divider first; only give the rest to the left pane.
-    // This keeps the right pane (e.g. Changed Files) from being squeezed to 0 when the
-    // container shrinks below the left pane's configured fixed size.
-    const maxLeftPx = Math.max(0, containerMainSizePx - minRightPx - DIVIDER_WIDTH_PX);
-    return Math.min(controlledLeftPx, maxLeftPx);
+    return clampSplitSizes({
+      usableMainAxis: Math.max(0, containerMainSizePx - DIVIDER_WIDTH_PX),
+      minLeftPx,
+      minRightPx,
+      controlledLeftPx,
+      leftPercent: leftWidthPercent,
+    });
   })();
 
   const leftStyle: CSSProperties = !isOpen
     ? { flex: '1 1 auto', width: '100%', height: '100%' }
-    : typeof effectiveLeftPx === 'number'
+    : splitSizes
       ? orientation === 'horizontal'
-        ? { flex: `0 0 ${effectiveLeftPx}px`, width: `${effectiveLeftPx}px` }
-        : { flex: `0 0 ${effectiveLeftPx}px`, height: `${effectiveLeftPx}px` }
+        ? { flex: `0 0 ${splitSizes.leftPx}px`, width: `${splitSizes.leftPx}px` }
+        : { flex: `0 0 ${splitSizes.leftPx}px`, height: `${splitSizes.leftPx}px` }
       : orientation === 'horizontal'
-        ? { flex: `0 0 ${leftWidthPercent}%`, width: `${leftWidthPercent}%` }
-        : { flex: `0 0 ${leftWidthPercent}%`, height: `${leftWidthPercent}%` };
+        ? { flex: `0 0 calc((100% - ${DIVIDER_WIDTH_PX}px) * ${leftWidthPercent / 100})`, width: `calc((100% - ${DIVIDER_WIDTH_PX}px) * ${leftWidthPercent / 100})` }
+        : { flex: `0 0 calc((100% - ${DIVIDER_WIDTH_PX}px) * ${leftWidthPercent / 100})`, height: `calc((100% - ${DIVIDER_WIDTH_PX}px) * ${leftWidthPercent / 100})` };
+
+  const rightStyle: CSSProperties = !isOpen
+    ? { flex: '1 1 auto', width: '100%', height: '100%' }
+    : splitSizes
+      ? orientation === 'horizontal'
+        ? { flex: `0 0 ${splitSizes.rightPx}px`, width: `${splitSizes.rightPx}px` }
+        : { flex: `0 0 ${splitSizes.rightPx}px`, height: `${splitSizes.rightPx}px` }
+      : orientation === 'horizontal'
+        ? { flex: `0 0 calc((100% - ${DIVIDER_WIDTH_PX}px) * ${(100 - leftWidthPercent) / 100})`, width: `calc((100% - ${DIVIDER_WIDTH_PX}px) * ${(100 - leftWidthPercent) / 100})` }
+        : { flex: `0 0 calc((100% - ${DIVIDER_WIDTH_PX}px) * ${(100 - leftWidthPercent) / 100})`, height: `calc((100% - ${DIVIDER_WIDTH_PX}px) * ${(100 - leftWidthPercent) / 100})` };
 
   return (
     <section
@@ -133,7 +191,7 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
         className,
       ].filter(Boolean).join(' ')}
     >
-      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden flex-[1_1_auto]" style={leftStyle}>
+      <div className="flex min-h-0 min-w-0 flex-col overflow-hidden" style={leftStyle}>
         {left}
       </div>
       {isOpen ? (
@@ -158,7 +216,7 @@ export const ResizableSplitPane: FC<ResizableSplitPaneProps> = ({
           />
         </div>
       ) : null}
-      {isOpen ? <div className="flex min-h-0 min-w-0 flex-[1_1_auto] flex-col overflow-hidden">{right}</div> : null}
+      {isOpen ? <div className="flex min-h-0 min-w-0 flex-col overflow-hidden" style={rightStyle}>{right}</div> : null}
     </section>
   );
 };

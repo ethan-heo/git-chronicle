@@ -27,6 +27,8 @@ interface AISummaryViewerProps {
   savedPath: string | null;
   providerLabel: string | null;
   qaCompletionCount: number;
+  headerLeading?: ReactNode;
+  headerTrailing?: ReactNode;
   onAskQuestion: (question: string) => void;
   onGoToSettings: () => void;
   onRegenerate: () => void;
@@ -47,6 +49,8 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   noteRelativePath = null,
   providerLabel,
   qaCompletionCount,
+  headerLeading,
+  headerTrailing,
   onAskQuestion,
   onGoToSettings,
   onRegenerate,
@@ -59,7 +63,6 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const markdownContainerRef = useMarkdownSourceCopy(content);
 
   const showRegenerate = Boolean(content) || isGenerating;
-  const showSavedPath = hasSavedSummary && Boolean(noteRelativePath);
   const canAskQuestion = !isGenerating && Boolean(content) && hasSavedSummary;
   const markdownComponents = useMemo(() => {
     let mermaidBlockIndex = 0;
@@ -210,31 +213,29 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
 
   return (
     <section className="flex min-h-0 flex-1 flex-col" role="region" aria-label={t('ai_summary.ai_result')} aria-live={isGenerating ? 'polite' : undefined}>
-      <div className="flex items-center justify-between gap-3 border-b border-line bg-panel px-6 py-2">
+      <div className="flex h-10 items-center justify-between gap-2 border-b border-line bg-panel px-1">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="shrink-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted">
-            {formatSourceTag(t, hasSavedSummary, isGenerating, providerLabel)}
-          </span>
-          {showSavedPath ? (
-            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm text-muted" title={noteRelativePath ?? undefined}>
-              {noteRelativePath}
-            </span>
-          ) : null}
+          {headerLeading ? <div className="shrink-0">{headerLeading}</div> : null}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {!hasSavedSummary && content ? (
             <button
               ref={saveButtonRef}
               type="button"
-              className="inline-flex size-8 items-center justify-center rounded-md bg-secondary text-text transition-colors hover:bg-secondary-hi"
+              className="inline-flex h-8 items-center justify-center rounded-md px-1.5 text-muted transition-colors hover:bg-hover hover:text-text"
               aria-label={t('ai_summary.save')}
               title={t('ai_summary.save')}
               onClick={onSave}
             >
-              <span aria-hidden="true">📄</span>
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M5 2.5h4.5L13 6v7.5H5z" />
+                <path d="M9.5 2.5V6H13" />
+                <path d="M7 9h4M7 11h4" />
+              </svg>
             </button>
           ) : null}
           {showRegenerate ? <RegenerateButton disabled={isGenerating} onClick={onRegenerate} /> : null}
+          {headerTrailing ? <div className="shrink-0">{headerTrailing}</div> : null}
         </div>
       </div>
 
