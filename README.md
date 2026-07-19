@@ -41,6 +41,14 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 
 Keep a commit-scoped markdown note alongside your analysis. Paste markdown or Mermaid snippets copied from other panels, and your notes auto-save with no explicit save action needed. Mermaid code blocks render as diagrams in the preview.
 
+### GitHub PR / Issue
+
+Browse open, closed, and merged pull requests and issues for the current repository right in the sidebar. Click an item to open its title, author, status, labels, and body in a workspace tab, with an infinite-scrolling list of related commits — click one to jump straight to it. Sign in with VSCode's built-in GitHub authentication; no extra credentials or dependencies required.
+
+### Commit Groups
+
+Multi-select commits from the log and save them as a named group for quick recall later. Filter the commit list down to a single group (combined with the existing date/author/keyword filters), and edit or delete groups at any time. Groups are saved per workspace and persist across VSCode restarts.
+
 ## Requirements
 
 - VSCode `1.85.0` or later
@@ -50,7 +58,7 @@ Keep a commit-scoped markdown note alongside your analysis. Paste markdown or Me
 ## Usage
 
 1. Open the Command Palette (`⌘+Shift+P` / `Ctrl+Shift+P`)
-2. Run **`GitChronicle: Open`**
+2. Run **`GitChronicle: Open`** (or **`GitChronicle: Open in New Window`** to open in a separate editor window)
 3. Browse commits → select a commit → explore changed files, diffs, dependencies, symbol graphs, AI summaries, and notes
 
 ## Extension Settings
@@ -74,3 +82,7 @@ The in-extension settings screen (⚙ icon) exposes additional options not avail
 | Codex    | `gpt-5.4-mini`           | `gpt-5.4-mini`           |
 
 **Per-project isolation**: active provider, model choices, and save path are workspace-scoped — each project keeps its own configuration. CLI registration is shared globally across all projects.
+
+## License
+
+Proprietary — see [LICENSE](./LICENSE). Installation and use are permitted for personal, non-commercial purposes via the Visual Studio Code Marketplace only.
