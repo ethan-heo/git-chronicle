@@ -12,6 +12,7 @@ describe('appStore webview filter persistence', () => {
       postMessage: vi.fn(),
       getState: vi.fn(() => ({
         filter: {
+          filterBranch: 'feature/notes',
           filterDateStart: '2026-06-01',
           filterDateEnd: '2026-06-27',
           filterAuthor: 'Jane Cooper',
@@ -27,6 +28,7 @@ describe('appStore webview filter persistence', () => {
     expect(state.filterDateStart).toBe('2026-06-01');
     expect(state.filterDateEnd).toBe('2026-06-27');
     expect(state.filterAuthor).toBe('Jane Cooper');
+    expect(state.filterBranch).toBe('feature/notes');
     expect(state.filterKeyword).toBe('refactor');
   });
 
@@ -37,6 +39,7 @@ describe('appStore webview filter persistence', () => {
       postMessage: vi.fn(),
       getState: vi.fn(() => ({
         filter: {
+          filterBranch: 'main',
           filterDateStart: null,
           filterDateEnd: null,
           filterAuthor: 'Jane Cooper',
@@ -55,6 +58,7 @@ describe('appStore webview filter persistence', () => {
         filterDateStart: null,
         filterDateEnd: null,
         filterAuthor: 'Jane Cooper',
+        filterBranch: 'main',
         filterExcludeKeyword: '',
         filterGroupId: null,
         filterKeyword: 'summary',
@@ -69,6 +73,7 @@ describe('appStore webview filter persistence', () => {
         filterDateStart: null,
         filterDateEnd: null,
         filterAuthor: null,
+        filterBranch: null,
         filterExcludeKeyword: '',
         filterGroupId: null,
         filterKeyword: '',

@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import { loadAISettingsState } from '../aiProviderService';
 import { findCommitGroup } from '../commitGroupService';
-import { fetchChangedFiles, fetchCommitCount, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from '../gitService';
+import { fetchBranches, fetchChangedFiles, fetchCommitCount, fetchCommits, fetchFileDiff, GitRepositoryNotFoundError } from '../gitService';
 
 export interface FetchCommitsPayload {
   page?: number;
   pageSize?: number;
   requestId?: number;
+  filterBranch?: string | null;
   filterDateStart?: string | null;
   filterDateEnd?: string | null;
   filterAuthor?: string | null;
@@ -14,6 +15,10 @@ export interface FetchCommitsPayload {
   filterExcludeKeyword?: string;
   filterGroupId?: string | null;
   sortOrder?: 'desc' | 'asc';
+}
+
+export interface FetchBranchesPayload {
+  refresh?: boolean;
 }
 
 export interface FetchChangedFilesPayload {
@@ -80,6 +85,7 @@ export async function handleFetchCommits(panel: vscode.WebviewPanel, context: vs
       keyword: payload.filterKeyword,
       sortOrder: payload.sortOrder,
       excludeKeywords,
+      branch: commitHashes ? null : payload.filterBranch,
       commitHashes,
     });
     const filteredCount = result.rawCount;
@@ -88,6 +94,7 @@ export async function handleFetchCommits(panel: vscode.WebviewPanel, context: vs
       : payload.sortOrder === 'asc'
         ? (await fetchCommitCount({
             repoPath,
+            branch: payload.filterBranch,
             dateStart: payload.filterDateStart,
             dateEnd: payload.filterDateEnd,
             author: payload.filterAuthor,
@@ -120,6 +127,41 @@ export async function handleFetchCommits(panel: vscode.WebviewPanel, context: vs
       type: 'COMMITS_LOAD_FAILED',
       payload: {
         message: error instanceof Error ? error.message : 'Failed to load commit list',
+      },
+    });
+  }
+}
+
+export async function handleFetchBranches(panel: vscode.WebviewPanel, payload: FetchBranchesPayload = {}): Promise<void> {
+  const repoPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+  if (!repoPath) {
+    await panel.webview.postMessage({
+      type: 'BRANCHES_LOAD_FAILED',
+      payload: {
+        message: 'No Git repository detected',
+        refresh: payload.refresh ?? false,
+      },
+    });
+    return;
+  }
+
+  try {
+    const branches = await fetchBranches(repoPath, { refresh: payload.refresh });
+
+    await panel.webview.postMessage({
+      type: 'BRANCHES_LOADED',
+      payload: {
+        branches,
+        refresh: payload.refresh ?? false,
+      },
+    });
+  } catch (error) {
+    await panel.webview.postMessage({
+      type: 'BRANCHES_LOAD_FAILED',
+      payload: {
+        message: error instanceof Error ? error.message : 'Failed to load branches',
+        refresh: payload.refresh ?? false,
       },
     });
   }

@@ -14,6 +14,7 @@ import { NoteEditorPanel, NotesSection } from '../F11';
 import { IssueDetailPanel, IssuesSection, PRDetailPanel, PRsSection, useGithubAuth } from '../F12';
 import type { IssueSummary, PullRequestSummary } from '../F12';
 import { CommitGroupFilterDropdown, CommitGroupFilterToggleButton, CommitSelectionActionBar, SelectModeToggleButton, useCommitGroups } from '../F13';
+import { BranchesSection } from '../F14';
 import { CodeTabSplitArea } from './CodeTabSplitArea';
 import { FileAISummaryToggleButton } from './FileAISummaryToggleButton';
 import { FileTree } from './FileTree';
@@ -32,14 +33,17 @@ const SIDEBAR_COLLAPSE_WIDTH = 0;
 const SECTION_MIN_HEIGHT = 120;
 const DEFAULT_COMMIT_LIST_SECTION_HEIGHT = 280;
 const DEFAULT_FILE_TREE_SECTION_HEIGHT = 280;
+const DEFAULT_BRANCHES_SECTION_HEIGHT = 160;
 const DEFAULT_PRS_SECTION_HEIGHT = 200;
 const DEFAULT_ISSUES_SECTION_HEIGHT = 200;
 const DEFAULT_NOTES_SECTION_HEIGHT = 220;
 const SIDEBAR_VIEW_TRANSITION_DURATION_MS = 200;
 
 const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
+  isBranchesSectionExpanded: true,
   isCommitListSectionExpanded: true,
   isFileTreeSectionExpanded: true,
+  branchesSectionHeight: DEFAULT_BRANCHES_SECTION_HEIGHT,
   commitListSectionHeight: DEFAULT_COMMIT_LIST_SECTION_HEIGHT,
   fileTreeSectionHeight: DEFAULT_FILE_TREE_SECTION_HEIGHT,
   isPRsSectionExpanded: false,
@@ -74,6 +78,7 @@ export const S02WorkspaceScreen: FC = () => {
   const filterDateStart = useAppStore((state) => state.filterDateStart);
   const filterDateEnd = useAppStore((state) => state.filterDateEnd);
   const filterAuthor = useAppStore((state) => state.filterAuthor);
+  const filterBranch = useAppStore((state) => state.filterBranch);
   const filterKeyword = useAppStore((state) => state.filterKeyword);
   const filterExcludeKeyword = useAppStore((state) => state.filterExcludeKeyword);
   const filterGroupId = useAppStore((state) => state.filterGroupId);
@@ -128,6 +133,12 @@ export const S02WorkspaceScreen: FC = () => {
   const [isSidebarDragging, setIsSidebarDragging] = useState(false);
   const [isCommitListSectionExpanded, setIsCommitListSectionExpanded] = useState(persistedSidebarState.isCommitListSectionExpanded);
   const [isFileTreeSectionExpanded, setIsFileTreeSectionExpanded] = useState(persistedSidebarState.isFileTreeSectionExpanded);
+  const [isBranchesSectionExpanded, setIsBranchesSectionExpanded] = useState(
+    persistedSidebarState.isBranchesSectionExpanded ?? DEFAULT_SIDEBAR_STATE.isBranchesSectionExpanded,
+  );
+  const [branchesSectionHeight, setBranchesSectionHeight] = useState(
+    persistedSidebarState.branchesSectionHeight ?? DEFAULT_SIDEBAR_STATE.branchesSectionHeight,
+  );
   const [commitListSectionHeight, setCommitListSectionHeight] = useState(persistedSidebarState.commitListSectionHeight);
   const [fileTreeSectionHeight, setFileTreeSectionHeight] = useState(persistedSidebarState.fileTreeSectionHeight);
   const [isPRsSectionExpanded, setIsPRsSectionExpanded] = useState(
@@ -164,7 +175,7 @@ export const S02WorkspaceScreen: FC = () => {
 
   const isActiveTabCommitSelected = Boolean(activeTab && activeTab.commit && selectedCommit && activeTab.commit.hash === selectedCommit.hash);
   const isFilterActive = Boolean(
-    filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim() || filterGroupId,
+    filterBranch || filterDateStart || filterDateEnd || filterAuthor || filterKeyword.trim() || filterExcludeKeyword.trim() || filterGroupId,
   );
   const activeFilterCount = [
     filterDateStart,
@@ -230,6 +241,8 @@ export const S02WorkspaceScreen: FC = () => {
       workspaceSidebar: {
         isCommitListSectionExpanded,
         isFileTreeSectionExpanded,
+        isBranchesSectionExpanded,
+        branchesSectionHeight,
         commitListSectionHeight,
         fileTreeSectionHeight,
         isPRsSectionExpanded,
@@ -244,7 +257,9 @@ export const S02WorkspaceScreen: FC = () => {
     });
   }, [
     commitListSectionHeight,
+    branchesSectionHeight,
     fileTreeSectionHeight,
+    isBranchesSectionExpanded,
     isCommitListSectionExpanded,
     isFileTreeSectionExpanded,
     isIssuesSectionExpanded,
@@ -393,6 +408,7 @@ export const S02WorkspaceScreen: FC = () => {
               </div>
               <CommitFilterPanel
                 variant="embedded"
+                filterBranch={filterBranch}
                 filterDateStart={filterDateStart}
                 filterDateEnd={filterDateEnd}
                 filterAuthor={filterAuthor}
@@ -532,6 +548,20 @@ export const S02WorkspaceScreen: FC = () => {
   );
 
   const sidebarSections: SidebarSectionGroupItem[] = [
+    {
+      key: 'branch',
+      minHeightPx: SECTION_MIN_HEIGHT,
+      heightPx: branchesSectionHeight ?? DEFAULT_BRANCHES_SECTION_HEIGHT,
+      isExpanded: isBranchesSectionExpanded ?? true,
+      onHeightChange: setBranchesSectionHeight,
+      node: (
+        <BranchesSection
+          isActive={isRouteSlotActive}
+          isExpanded={isBranchesSectionExpanded ?? true}
+          onToggleExpanded={() => setIsBranchesSectionExpanded((current) => !current)}
+        />
+      ),
+    },
     {
       key: 'commit',
       minHeightPx: SECTION_MIN_HEIGHT,

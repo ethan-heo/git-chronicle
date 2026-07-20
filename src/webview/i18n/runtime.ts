@@ -59,7 +59,10 @@ export function changeLanguage(language: string): void {
   runtime.changeLanguage(language);
 }
 
-export function useTranslation() {
+export function useTranslation(): {
+  t: (key: string, vars?: Record<string, string | number>) => string;
+  i18n: { language: string; changeLanguage: typeof changeLanguage };
+} {
   useSyncExternalStore((cb) => runtime.subscribe(cb), runtime.snapshot, runtime.snapshot);
   return {
     t: (key: string, vars?: Record<string, string | number>) => runtime.t(key, vars),

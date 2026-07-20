@@ -2,8 +2,10 @@ import type { FilterState } from '../types/commit';
 import { getWebviewState, setWebviewState } from './vscodeApi';
 
 export interface PersistedWorkspaceSidebarState {
+  isBranchesSectionExpanded?: boolean;
   isCommitListSectionExpanded: boolean;
   isFileTreeSectionExpanded: boolean;
+  branchesSectionHeight?: number;
   commitListSectionHeight: number;
   fileTreeSectionHeight: number;
   isPRsSectionExpanded: boolean;

@@ -7,6 +7,7 @@ export interface Commit {
 }
 
 export interface FilterState {
+  filterBranch: string | null;
   filterDateStart: string | null;
   filterDateEnd: string | null;
   filterAuthor: string | null;
@@ -30,6 +31,15 @@ export interface ChangedFile {
   path: string;
   oldPath?: string;
   status: FileStatus;
+}
+
+export interface Branch {
+  name: string;
+  scope: 'local' | 'remote';
+  isCurrent: boolean;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
 }
 
 export type DependencyKind = 'import' | 'require';

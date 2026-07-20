@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createCommitGroupSlice, type CommitGroupSlice } from './slices/commitGroupSlice';
 import { createCommitListSlice, type CommitListSlice } from './slices/commitListSlice';
+import { createBranchSlice, type BranchSlice } from './slices/branchSlice';
 import { createNavigationSlice, type NavigationSlice } from './slices/navigationSlice';
 import { createChangedFilesSlice, type ChangedFilesSlice } from './slices/changedFilesSlice';
 import { createDependencyGraphSlice, type DependencyGraphSlice } from './slices/dependencyGraphSlice';
@@ -13,6 +14,7 @@ import { createToastSlice, type ToastSlice } from './slices/toastSlice';
 import { createWorkspaceTabsSlice, type WorkspaceTabsSlice } from './slices/workspaceTabsSlice';
 
 export type AppState = CommitListSlice &
+  BranchSlice &
   NavigationSlice &
   ChangedFilesSlice &
   DependencyGraphSlice &
@@ -27,6 +29,7 @@ export type AppState = CommitListSlice &
 
 export const useAppStore = create<AppState>()((...a) => ({
   ...createCommitListSlice(...a),
+  ...createBranchSlice(...a),
   ...createNavigationSlice(...a),
   ...createChangedFilesSlice(...a),
   ...createDependencyGraphSlice(...a),

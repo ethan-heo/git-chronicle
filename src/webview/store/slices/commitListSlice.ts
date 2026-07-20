@@ -7,6 +7,7 @@ import type { AppState } from '../appStore';
 const PAGE_SIZE = 200;
 const DEMO_PAGE_SIZE = 12;
 const DEFAULT_FILTER_STATE: FilterState = {
+  filterBranch: null,
   filterDateStart: null,
   filterDateEnd: null,
   filterAuthor: null,
@@ -55,6 +56,7 @@ function persistFilterState(state: FilterState): void {
       filterDateStart: state.filterDateStart,
       filterDateEnd: state.filterDateEnd,
       filterAuthor: state.filterAuthor,
+      filterBranch: state.filterBranch,
       filterKeyword: state.filterKeyword,
       filterExcludeKeyword: state.filterExcludeKeyword,
       filterGroupId: state.filterGroupId,
@@ -199,6 +201,7 @@ export const createCommitListSlice: StateCreator<AppState, [], [], CommitListSli
       filterDateStart: state.filterDateStart,
       filterDateEnd: state.filterDateEnd,
       filterAuthor: state.filterAuthor,
+      filterBranch: state.filterGroupId ? null : state.filterBranch,
       filterKeyword: state.filterKeyword,
       filterExcludeKeyword: state.filterExcludeKeyword,
       filterGroupId: state.filterGroupId,

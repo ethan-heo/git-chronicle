@@ -340,6 +340,11 @@
     "related_commits_title": "연관된 커밋",
     "related_commits_loading": "연관된 커밋을 불러오는 중..."
   },
+  "branch": {
+    "title": "Branches",
+    "fetch": "Fetch",
+    "empty": "로컬 브랜치가 없습니다"
+  },
   "toast": {
     "file_node_mermaid_copied": "파일 노드 Mermaid를 복사했습니다",
     "graph_mermaid_copied": "Mermaid 그래프를 복사했습니다",
@@ -354,6 +359,7 @@
     "commit_group_deleted": "그룹이 삭제되었습니다",
     "commit_group_create_failed": "그룹을 생성하지 못했습니다",
     "commit_group_update_failed": "그룹을 저장하지 못했습니다",
-    "commit_group_delete_failed": "그룹을 삭제하지 못했습니다"
+    "commit_group_delete_failed": "그룹을 삭제하지 못했습니다",
+    "branches_fetch_failed": "브랜치를 새로고침하지 못했습니다"
   }
 }

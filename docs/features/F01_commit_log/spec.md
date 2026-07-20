@@ -59,7 +59,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 종료일 포함 | `--before=<date>T23:59:59` 형태로 전달하여 종료일 당일 커밋을 포함 |
 | 작성자 필터 | 드롭다운 선택. 커밋 로드 시 작성자 목록 추출하여 선택지 표시 |
 | 키워드 검색 | 커밋 메시지 대상 (`--grep`). 입력 후 300ms 디바운싱. 대소문자 구분 없음 |
-| 필터 조합 | 기간·작성자·키워드 세 조건 AND 고정. [F13_CommitGroups](../F13_commit_groups/spec.md)의 그룹 필터(`filterGroupId`)도 같은 `FilterState`의 필드로 추가되어 네 번째 조건으로 AND 결합된다 |
+| 필터 조합 | 기간·작성자·키워드 세 조건 AND 고정. [F14_BranchSwitcher](../F14_branch_switcher/spec.md)의 브랜치 필터(`filterBranch`)가 추가되면 `git log <branch>` 범위를 먼저 좁히고, [F13_CommitGroups](../F13_commit_groups/spec.md)의 그룹 필터(`filterGroupId`)도 같은 `FilterState`의 필드로 추가되어 추가 조건으로 결합된다. 단, 그룹 필터가 활성화되면 브랜치 범위는 무시된다 |
 | 필터 상태 복원 | `vscode.getState()` / `setState()`에 필터 값만 저장하여 Webview 재생성 후 복원 |
 | 목록 스크롤 복원 | 워크스페이스 내에서는 커밋 목록 컴포넌트가 유지되어 스크롤 위치를 그대로 사용하고, Webview 재생성 시에는 저장된 `commitListScrollTop`으로 복원 |
 | 정렬 | 기본값은 커밋 생성 시간 기준 내림차순. 사용자는 `sortOrder`로 오래된순 전환 가능. `asc`일 때는 전체 건수를 먼저 계산한 뒤 역산된 페이지 기준으로 가져온다 |
@@ -104,6 +104,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | `filterDateStart` | `string \| null` | 전역 상태. `--after` 옵션으로 git 명령에 전달 |
 | `filterDateEnd` | `string \| null` | 전역 상태. `--before=<date>T23:59:59` 형태로 git 명령에 전달 |
 | `filterAuthor` | `string \| null` | 전역 상태. `--author` 옵션으로 git 명령에 전달 |
+| `filterBranch` | `string \| null` | 전역 상태. 값이 있으면 `git log <branch>` / `git rev-list --count <branch>` 범위로 전달 |
 | `filterKeyword` | `string` | 전역 상태. `--regexp-ignore-case --grep` 옵션으로 git 명령에 전달 |
 | `filterExcludeKeyword` | `string` | 전역 상태. 쉼표 구분 후 Extension Host에서 후처리 필터로 적용 |
 | `sortOrder` | `'desc' \| 'asc'` | 전역 상태. `asc`일 때 전체 카운트를 기반으로 오래된순 페이지를 계산 |

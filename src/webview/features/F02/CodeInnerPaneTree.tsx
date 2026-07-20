@@ -195,7 +195,6 @@ const CodeInnerPanelHost: FC<{
   onMoveInnerPanel,
   onGoToSettings,
 }) => {
-  const { t } = useTranslation();
   const dragContext = useContext(CodeInnerPaneDragContext);
   const [dropZone, setDropZone] = useState<Exclude<DropZone, 'center'> | null>(null);
   const isDropEnabled = Boolean(dragContext?.dragState && dragContext.dragState.sourcePanel !== node.panel);

@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps, type Position } from '@xyflow/react';
-import { memo, type CSSProperties, type FC } from 'react';
+import { memo, type CSSProperties, type FC, type ReactElement } from 'react';
 import type { SymbolDependencyKind } from '../../types/commit';
 import type { SymbolEdgeType } from './symbolGraphUtils';
 
@@ -120,18 +120,18 @@ function getMarkerEndPoint(targetX: number, targetY: number, targetPosition: Pos
   }
 }
 
-function renderMarker(kind: SymbolDependencyKind, x: number, y: number, position: Position | undefined, stroke: string, strokeWidth: number) {
+function renderMarker(kind: SymbolDependencyKind, x: number, y: number, position: Position | undefined, stroke: string, strokeWidth: number): ReactElement {
   return kind === 'extends' || kind === 'implements'
     ? renderTriangleMarker(x, y, position, stroke, strokeWidth)
     : renderOpenArrowMarker(x, y, position, stroke, strokeWidth);
 }
 
-function renderTriangleMarker(x: number, y: number, position: Position | undefined, stroke: string, strokeWidth: number) {
+function renderTriangleMarker(x: number, y: number, position: Position | undefined, stroke: string, strokeWidth: number): ReactElement {
   const points = getTrianglePoints(x, y, position);
   return <polygon points={points} fill="var(--gae-color-surface-primary)" stroke={stroke} strokeWidth={strokeWidth} />;
 }
 
-function renderOpenArrowMarker(x: number, y: number, position: Position | undefined, stroke: string, strokeWidth: number) {
+function renderOpenArrowMarker(x: number, y: number, position: Position | undefined, stroke: string, strokeWidth: number): ReactElement {
   const points = getOpenArrowPoints(x, y, position);
   return <polyline points={points} fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />;
 }

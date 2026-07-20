@@ -46,8 +46,6 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   hasSavedSummary,
   hasAIProvider,
   hasSavePath,
-  noteRelativePath = null,
-  providerLabel,
   qaCompletionCount,
   headerLeading,
   headerTrailing,
@@ -315,23 +313,4 @@ function sliceFromPosition(
   }
 
   return content.slice(start, end);
-}
-
-function formatSourceTag(
-  t: (key: string, vars?: Record<string, string | number>) => string,
-  hasSavedSummary: boolean,
-  isGenerating: boolean,
-  providerLabel: string | null,
-): string {
-  const provider = providerLabel ?? 'AI';
-
-  if (isGenerating) {
-    return t('ai_summary.source_generating', { provider });
-  }
-
-  if (hasSavedSummary) {
-    return t('ai_summary.source_saved', { provider });
-  }
-
-  return t('ai_summary.source_generated', { provider });
 }

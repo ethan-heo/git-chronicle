@@ -340,6 +340,11 @@
     "related_commits_title": "Related commits",
     "related_commits_loading": "Loading related commits..."
   },
+  "branch": {
+    "title": "Branches",
+    "fetch": "Fetch",
+    "empty": "No local branches"
+  },
   "toast": {
     "file_node_mermaid_copied": "Copied file node Mermaid",
     "graph_mermaid_copied": "Copied Mermaid graph",
@@ -354,6 +359,7 @@
     "commit_group_deleted": "Group deleted",
     "commit_group_create_failed": "Failed to create group",
     "commit_group_update_failed": "Failed to save group",
-    "commit_group_delete_failed": "Failed to delete group"
+    "commit_group_delete_failed": "Failed to delete group",
+    "branches_fetch_failed": "Failed to refresh branches"
   }
 }

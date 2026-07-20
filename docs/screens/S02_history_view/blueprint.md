@@ -11,6 +11,7 @@
 - [F10_IntraFileSymbolDependencyCanvas](../../features/F10_intra_file_symbol_dependency_canvas/spec.md)
 - [F12_GitHubActivity](../../features/F12_github_activity/spec.md)
 - [F13_CommitGroups](../../features/F13_commit_groups/spec.md)
+- [F14_BranchSwitcher](../../features/F14_branch_switcher/spec.md)
 
 ---
 
@@ -48,6 +49,9 @@ S02_WorkspaceScreen
 │     │  ├─ WorkspaceHeading
 │     │  │  └─ SettingsToggleButton
 │     │  └─ SidebarSectionGroup
+│     │     ├─ BranchesSection
+│     │     │  ├─ header actions → FetchBranchesButton
+│     │     │  └─ BranchList → BranchListItem[]
 │     │     ├─ CommitsSection
 │     │     │  ├─ header actions → SortOrderToggle, FilterToggleButton, CommitGroupFilterToggleButton, SelectModeToggleButton
 │     │     │  ├─ Popover
@@ -92,7 +96,7 @@ S02_WorkspaceScreen
       └─ split → ResizableSplitPane (재귀)
 ```
 
-사이드바 안의 `CommitsSection`/`FileTreeSection`/`PRsSection`/`IssuesSection`/`NotesSection` 5개 섹션은 [`SidebarSectionGroup`](../../core/global_components.md#sidebarsectiongroup)이 동등한 형제로 묶어 배치한다. 각 섹션은 독립적으로 접고 펼칠 수 있고, 펼침 상태와 마지막 높이를 모두 Webview State에 저장한다. 필터 입력은 커밋 목록 섹션 헤더의 토글 버튼이 여는 팝오버 오버레이로 제공되며, 목록 레이아웃 높이에는 영향을 주지 않는다.
+사이드바 안의 `BranchesSection`/`CommitsSection`/`FileTreeSection`/`PRsSection`/`IssuesSection`/`NotesSection` 6개 섹션은 [`SidebarSectionGroup`](../../core/global_components.md#sidebarsectiongroup)이 동등한 형제로 묶어 배치한다. 각 섹션은 독립적으로 접고 펼칠 수 있고, 펼침 상태와 마지막 높이를 모두 Webview State에 저장한다. 필터 입력은 커밋 목록 섹션 헤더의 토글 버튼이 여는 팝오버 오버레이로 제공되며, 목록 레이아웃 높이에는 영향을 주지 않는다.
 
 연속으로 펼쳐진 섹션들은 서로 `ResizableSplitPane` 세로 분할로 드래그 리사이즈할 수 있다 — 클러스터의 마지막 섹션이 `flex-1`로 남은 공간을 흡수하고, 그 앞 섹션들은 각각 최소 높이(120px)를 지키는 선에서 고정 높이를 가진다. 컨테이너가 좁아져 모든 펼친 섹션이 자기 최소 높이조차 못 받으면, 각 섹션이 정확히 최소 높이를 받고 사이드바 본문 컨테이너 자체가 세로 스크롤된다(어느 섹션도 0으로 사라지지 않는다). 접힌 섹션으로 서로 떨어진 펼침 섹션들(예: Commit만 펼치고 File은 접고 PR을 펼친 경우)은 독립된 그룹으로 남은 공간을 비례 분배한다. 자세한 동작은 [global_components](../../core/global_components.md#sidebarsectiongroup)를 참고한다.
 
@@ -106,6 +110,7 @@ S02_WorkspaceScreen
 | `SidebarSection` | 이 문서 | `src/webview/shared/components/SidebarSection.tsx` |
 | `SidebarSectionGroup` | [global_components](../../core/global_components.md#sidebarsectiongroup) | `src/webview/shared/components/SidebarSectionGroup.tsx` |
 | `Popover` | [global_components](../../core/global_components.md#popover) | `src/webview/shared/components/Popover.tsx` |
+| `BranchesSection` | [F14 blueprint](../../features/F14_branch_switcher/blueprint.md#component-definitions) | `src/webview/features/F14/BranchesSection.tsx` |
 | `CommitFilterPanel` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitfilterpanel) | `src/webview/features/F01/CommitFilterPanel.tsx` |
 | `FilterToggleButton` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-filtertogglebutton) | `src/webview/features/F01/FilterToggleButton.tsx` |
 | `CommitList` | [F01 blueprint](../../features/F01_commit_log/blueprint.md#component-commitlist) | `src/webview/features/F01/CommitList.tsx` |

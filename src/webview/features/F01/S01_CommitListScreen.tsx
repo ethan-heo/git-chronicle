@@ -29,6 +29,7 @@ export const S01CommitListScreen: FC = () => {
   const filterDateStart = useAppStore((state) => state.filterDateStart);
   const filterDateEnd = useAppStore((state) => state.filterDateEnd);
   const filterAuthor = useAppStore((state) => state.filterAuthor);
+  const filterBranch = useAppStore((state) => state.filterBranch);
   const filterKeyword = useAppStore((state) => state.filterKeyword);
   const filterExcludeKeyword = useAppStore((state) => state.filterExcludeKeyword);
   const sortOrder = useAppStore((state) => state.sortOrder);
@@ -46,6 +47,7 @@ export const S01CommitListScreen: FC = () => {
     <main className="app-shell flex h-screen min-h-0 flex-col overflow-hidden">
       <TopHeader title="GitChronicle" context={t('commit.list_title')} showSettingsIcon onSettingsClick={goToSettingsView} />
       <CommitFilterPanel
+        filterBranch={filterBranch}
         filterDateStart={filterDateStart}
         filterDateEnd={filterDateEnd}
         filterAuthor={filterAuthor}

@@ -25,7 +25,7 @@ import {
   type StartAISummaryFilePayload,
   type StartAIQAPayload,
 } from './messageHandler/aiHandlers';
-import { handleFetchChangedFiles, handleFetchCommits, handleFetchFileDiff, type FetchChangedFilesPayload, type FetchCommitsPayload, type FetchFileDiffPayload } from './messageHandler/gitHandlers';
+import { handleFetchBranches, handleFetchChangedFiles, handleFetchCommits, handleFetchFileDiff, type FetchBranchesPayload, type FetchChangedFilesPayload, type FetchCommitsPayload, type FetchFileDiffPayload } from './messageHandler/gitHandlers';
 import {
   handleConnectGithub,
   handleFetchGithubAuthState,
@@ -56,6 +56,7 @@ interface WebviewMessage {
   type: string;
   payload?:
     | FetchCommitsPayload
+    | FetchBranchesPayload
     | FetchChangedFilesPayload
     | FetchFileDiffPayload
     | AnalyzeDependenciesPayload
@@ -87,6 +88,9 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'FETCH_COMMITS':
         await handleFetchCommits(panel, context, message.payload as FetchCommitsPayload);
+        break;
+      case 'FETCH_BRANCHES':
+        await handleFetchBranches(panel, message.payload as FetchBranchesPayload);
         break;
       case 'FETCH_CHANGED_FILES':
         await handleFetchChangedFiles(panel, context, message.payload as FetchChangedFilesPayload);

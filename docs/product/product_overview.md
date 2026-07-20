@@ -92,6 +92,8 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F11_Notes](../features/F11_notes/spec.md) | 노트 | S02 사이드바에서 독립 노트 파일 트리를 관리하고, 선택한 노트를 워크스페이스 탭에서 자동 저장 편집 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F12_GitHubActivity](../features/F12_github_activity/spec.md) | GitHub PR/Issue | 사이드바에서 현재 저장소의 GitHub PR/Issue 목록을 조회하고, 클릭 시 본문 탭에서 제목·상태·라벨·본문·리뷰·댓글을 확인 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F13_CommitGroups](../features/F13_commit_groups/spec.md) | 커밋 그룹 | 커밋 다중 선택으로 그룹을 만들고, 저장한 그룹을 커밋 목록 필터로 다시 적용 | [S02](../screens/S02_history_view/blueprint.md) |
+| [F14_BranchSwitcher](../features/F14_branch_switcher/spec.md) | 브랜치 스위처 | 실제 checkout은 유지한 채 로컬 브랜치별 커밋 로그 범위를 전환하고 ahead/behind를 확인 | [S02](../screens/S02_history_view/blueprint.md) |
 
 ---
 
@@ -110,3 +112,5 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 - [F-10: 파일 내부 심볼 의존성 캔버스](#f-10) → [features/F10_intra_file_symbol_dependency_canvas/spec.md](../features/F10_intra_file_symbol_dependency_canvas/spec.md)
 - [F-11: 노트](#f-11) → [features/F11_notes/spec.md](../features/F11_notes/spec.md)
 - [F-12: GitHub PR/Issue](#f-12) → [features/F12_github_activity/spec.md](../features/F12_github_activity/spec.md)
+- [F-13: 커밋 그룹](#f-13) → [features/F13_commit_groups/spec.md](../features/F13_commit_groups/spec.md)
+- [F-14: 브랜치 스위처](#f-14) → [features/F14_branch_switcher/spec.md](../features/F14_branch_switcher/spec.md)

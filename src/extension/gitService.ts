@@ -26,6 +26,7 @@ export interface FetchCommitsOptions {
   repoPath: string;
   page: number;
   pageSize?: number;
+  branch?: string | null;
   dateStart?: string | null;
   dateEnd?: string | null;
   author?: string | null;
@@ -37,6 +38,7 @@ export interface FetchCommitsOptions {
 
 export interface FetchCommitCountOptions {
   repoPath: string;
+  branch?: string | null;
   dateStart?: string | null;
   dateEnd?: string | null;
   author?: string | null;
@@ -49,9 +51,19 @@ export interface FileDiffResult {
   isDeleted: boolean;
 }
 
+export interface Branch {
+  name: string;
+  scope: 'local' | 'remote';
+  isCurrent: boolean;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+}
+
 const DEFAULT_PAGE_SIZE = 200;
 const FIELD_SEPARATOR = '\x1f';
 const RECORD_SEPARATOR = '\x1e';
+const BRANCH_FIELD_SEPARATOR = '\t';
 
 export class GitRepositoryNotFoundError extends Error {
   constructor(repoPath: string) {
@@ -116,6 +128,8 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<FetchC
 
   if (isGroupScoped) {
     args.push(...options.commitHashes!);
+  } else if (options.branch?.trim()) {
+    args.push(options.branch.trim());
   }
 
   const output = await git.raw(args);
@@ -166,7 +180,7 @@ export async function fetchCommitCount(options: FetchCommitCountOptions): Promis
     throw new GitRepositoryNotFoundError(options.repoPath);
   }
 
-  const args = ['rev-list', '--count', 'HEAD'];
+  const args = ['rev-list', '--count', options.branch?.trim() || 'HEAD'];
 
   if (options.dateStart) {
     args.push(`--after=${options.dateStart}`);
@@ -235,8 +249,92 @@ async function fetchLatestRemoteRefs(git: SimpleGit): Promise<void> {
     return;
   }
 
-  await git.fetch(primaryRemote.name);
+  await git.raw([
+    'fetch',
+    '--prune',
+    primaryRemote.name,
+    `+refs/heads/*:refs/remotes/${primaryRemote.name}/*`,
+  ]);
 }
+
+function parseTrack(track: string | undefined): Pick<Branch, 'ahead' | 'behind'> {
+  if (!track) {
+    return { ahead: 0, behind: 0 };
+  }
+
+  const aheadMatch = track.match(/ahead (\d+)/);
+  const behindMatch = track.match(/behind (\d+)/);
+
+  return {
+    ahead: aheadMatch ? Number.parseInt(aheadMatch[1], 10) : 0,
+    behind: behindMatch ? Number.parseInt(behindMatch[1], 10) : 0,
+  };
+}
+
+function parseBranchRecords(output: string, scope: Branch['scope']): Branch[] {
+  return output
+    .split('\n')
+    .map((record) => record.trimEnd())
+    .filter(Boolean)
+    .map((record) => {
+      const [headMarker, name, upstream, track, symref] = record.split(BRANCH_FIELD_SEPARATOR);
+
+      if (!name || symref || name.endsWith('/HEAD')) {
+        return null;
+      }
+
+      const { ahead, behind } = parseTrack(track);
+
+      return {
+        name,
+        scope,
+        isCurrent: scope === 'local' && headMarker === '*',
+        upstream: upstream || null,
+        ahead: scope === 'local' ? ahead : 0,
+        behind: scope === 'local' ? behind : 0,
+      } satisfies Branch;
+    })
+    .filter((branch): branch is Branch => Boolean(branch));
+}
+
+export async function fetchBranches(repoPath: string, options: { refresh?: boolean } = {}): Promise<Branch[]> {
+  const git = simpleGit(repoPath);
+  const isRepo = await git.checkIsRepo();
+
+  if (!isRepo) {
+    throw new GitRepositoryNotFoundError(repoPath);
+  }
+
+  if (options.refresh) {
+    await fetchLatestRemoteRefs(git);
+  }
+
+  const localOutput = await git.raw([
+    'for-each-ref',
+    `--format=%(HEAD)${BRANCH_FIELD_SEPARATOR}%(refname:short)${BRANCH_FIELD_SEPARATOR}%(upstream:short)${BRANCH_FIELD_SEPARATOR}%(upstream:track)${BRANCH_FIELD_SEPARATOR}%(symref)`,
+    'refs/heads',
+  ]);
+  const remoteOutput = await git.raw([
+    'for-each-ref',
+    `--format=%(HEAD)${BRANCH_FIELD_SEPARATOR}%(refname:short)${BRANCH_FIELD_SEPARATOR}%(upstream:short)${BRANCH_FIELD_SEPARATOR}%(upstream:track)${BRANCH_FIELD_SEPARATOR}%(symref)`,
+    'refs/remotes',
+  ]);
+
+  return [...parseBranchRecords(localOutput, 'local'), ...parseBranchRecords(remoteOutput, 'remote')]
+    .sort((left, right) => {
+      if (left.scope !== right.scope) {
+        return left.scope === 'local' ? -1 : 1;
+      }
+
+      if (left.isCurrent !== right.isCurrent) {
+        return left.isCurrent ? -1 : 1;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
+}
+
+export { fetchLatestRemoteRefs };
 
 export async function fetchFileDiff(repoPath: string, commitHash: string, filePath: string): Promise<FileDiffResult> {
   const git = simpleGit(repoPath);
