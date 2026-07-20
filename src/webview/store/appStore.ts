@@ -8,7 +8,6 @@ import { createDependencyGraphSlice, type DependencyGraphSlice } from './slices/
 import { createFileDiffSlice, type FileDiffSlice } from './slices/fileDiffSlice';
 import { createSymbolGraphSlice, type SymbolGraphSlice } from './slices/symbolGraphSlice';
 import { createAISlice, type AISlice } from './slices/aiSlice';
-import { createGithubSlice, type GithubSlice } from './slices/githubSlice';
 import { createNoteSlice, type NoteSlice } from './slices/noteSlice';
 import { createToastSlice, type ToastSlice } from './slices/toastSlice';
 import { createWorkspaceTabsSlice, type WorkspaceTabsSlice } from './slices/workspaceTabsSlice';
@@ -24,7 +23,6 @@ export type AppState = CommitListSlice &
   NoteSlice &
   ToastSlice &
   WorkspaceTabsSlice &
-  GithubSlice &
   CommitGroupSlice;
 
 export const useAppStore = create<AppState>()((...a) => ({
@@ -39,6 +37,5 @@ export const useAppStore = create<AppState>()((...a) => ({
   ...createNoteSlice(...a),
   ...createToastSlice(...a),
   ...createWorkspaceTabsSlice(...a),
-  ...createGithubSlice(...a),
   ...createCommitGroupSlice(...a),
 }));

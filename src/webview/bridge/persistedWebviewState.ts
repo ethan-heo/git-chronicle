@@ -8,10 +8,6 @@ export interface PersistedWorkspaceSidebarState {
   branchesSectionHeight?: number;
   commitListSectionHeight: number;
   fileTreeSectionHeight: number;
-  isPRsSectionExpanded: boolean;
-  prsSectionHeight: number;
-  isIssuesSectionExpanded: boolean;
-  issuesSectionHeight: number;
   isNotesSectionExpanded?: boolean;
   notesSectionHeight?: number;
   sidebarWidth: number;

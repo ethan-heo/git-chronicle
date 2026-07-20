@@ -101,7 +101,7 @@ src/webview/
 ├── App.tsx                           # currentScreen에 따라 Screen 렌더링 + 라우트 전환 슬롯 관리
 ├── store/
 │   ├── appStore.ts                   # Zustand 스토어 combinator (11개 slice 조합, 상태/액션 정의 없음)
-│   └── slices/                       # 도메인별 slice (commitList/navigation/changedFiles/dependencyGraph/symbolGraph/ai/note/toast/workspaceTabs/github/commitGroup)
+│   └── slices/                       # 도메인별 slice (commitList/navigation/changedFiles/dependencyGraph/symbolGraph/ai/note/toast/workspaceTabs/commitGroup)
 ├── types/
 │   ├── commit.ts                     # Commit, FilterState, ScreenID, RouteTransitionDirection 타입
 │   └── note.ts                       # F11 NoteEntry 타입

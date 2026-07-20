@@ -2,7 +2,7 @@
 
 > **요약:** GitChronicle의 제품 목적, 사용자 목표, 화면 전환 모델(S01~S07), 전역 비즈니스 규칙, 전체 Feature 목록을 정의한다. 새 기능을 기획하거나 화면 흐름·Feature 관계를 파악할 때 가장 먼저 참고한다.
 
-> **버전** v1.4 | **작성일** 2026-06-25 | **갱신** 2026-07-03 (F05/F08 제거, 사용자 주도 분석 방향 반영) | **상태** 각 기능 spec.md를 최신 기준으로 삼음
+> **버전** v1.4 | **작성일** 2026-06-25 | **갱신** 2026-07-20 (F12 제거, GitHub API 503 오류로 인한 기능 폐기) | **상태** 각 기능 spec.md를 최신 기준으로 삼음
 
 ---
 
@@ -68,8 +68,6 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
        ├─ 선택된 커밋 호버 [AI 요약] → 본문 aiSummary 패널
        ├─ 선택된 커밋 호버 [파일 캔버스] → 본문 fileCanvas 패널
        ├─ 파일 [심볼 그래프]         → 본문 symbolGraph 패널
-       ├─ 사이드바 [PR 클릭]         → 본문 pr 패널
-       ├─ 사이드바 [Issue 클릭]      → 본문 issue 패널
        └─ [노트]                    → [S-07: 노트] ──(뒤로가기)──→ 복귀
 
   [⚙ 아이콘] → [S-02 사이드바 설정 뷰]
@@ -91,7 +89,6 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 | [F09_AISummaryQA](../features/F09_ai_summary_qa/spec.md) | AI 요약 Q&A | 요약 완료 후 질문/답변으로 개별 파일까지 파고들며 분석. 커밋 전체 diff를 근거로 답변하며, 답변을 기존 요약 문서 하단에 append | [S02](../screens/S02_history_view/blueprint.md) |
 | [F10_IntraFileSymbolDependencyCanvas](../features/F10_intra_file_symbol_dependency_canvas/spec.md) | 파일 내부 심볼 의존성 캔버스 | 단일 파일 내 함수·클래스 등 심볼 간 호출·참조·상속 관계를 노드-엣지 그래프로 시각화 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F11_Notes](../features/F11_notes/spec.md) | 노트 | S02 사이드바에서 독립 노트 파일 트리를 관리하고, 선택한 노트를 워크스페이스 탭에서 자동 저장 편집 | [S02](../screens/S02_history_view/blueprint.md) |
-| [F12_GitHubActivity](../features/F12_github_activity/spec.md) | GitHub PR/Issue | 사이드바에서 현재 저장소의 GitHub PR/Issue 목록을 조회하고, 클릭 시 본문 탭에서 제목·상태·라벨·본문·리뷰·댓글을 확인 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F13_CommitGroups](../features/F13_commit_groups/spec.md) | 커밋 그룹 | 커밋 다중 선택으로 그룹을 만들고, 저장한 그룹을 커밋 목록 필터로 다시 적용 | [S02](../screens/S02_history_view/blueprint.md) |
 | [F14_BranchSwitcher](../features/F14_branch_switcher/spec.md) | 브랜치 스위처 | 실제 checkout은 유지한 채 로컬 브랜치별 커밋 로그 범위를 전환하고 ahead/behind를 확인 | [S02](../screens/S02_history_view/blueprint.md) |
 
@@ -111,6 +108,5 @@ GitChronicle는 VSCode Extension으로, 개발자가 자신의 Git 커밋 이력
 - [F-09: AI 요약 Q&A](#f-09) → [features/F09_ai_summary_qa/spec.md](../features/F09_ai_summary_qa/spec.md)
 - [F-10: 파일 내부 심볼 의존성 캔버스](#f-10) → [features/F10_intra_file_symbol_dependency_canvas/spec.md](../features/F10_intra_file_symbol_dependency_canvas/spec.md)
 - [F-11: 노트](#f-11) → [features/F11_notes/spec.md](../features/F11_notes/spec.md)
-- [F-12: GitHub PR/Issue](#f-12) → [features/F12_github_activity/spec.md](../features/F12_github_activity/spec.md)
 - [F-13: 커밋 그룹](#f-13) → [features/F13_commit_groups/spec.md](../features/F13_commit_groups/spec.md)
 - [F-14: 브랜치 스위처](#f-14) → [features/F14_branch_switcher/spec.md](../features/F14_branch_switcher/spec.md)

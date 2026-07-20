@@ -113,14 +113,6 @@ type WebviewToExtensionMessage =
   | { type: 'MOVE_NOTE'; payload: { savePath?: string | null; fromRelativePath: string; toRelativePath: string } }
   | { type: 'FETCH_NOTE'; payload: { paneId?: string; relativePath: string; savePath?: string | null } }
   | { type: 'SAVE_NOTE'; payload: { paneId?: string; relativePath: string; savePath?: string | null; content: string; linkContext?: { commitHash: string; filePath?: string | null; scope: 'commit' | 'file' } } }
-  | { type: 'FETCH_GITHUB_AUTH_STATE' }
-  | { type: 'CONNECT_GITHUB' }
-  | { type: 'FETCH_PULL_REQUESTS'; payload: { page?: number } }
-  | { type: 'FETCH_ISSUES'; payload: { page?: number } }
-  | { type: 'FETCH_PR_DETAIL'; payload: { number?: number } }
-  | { type: 'FETCH_ISSUE_DETAIL'; payload: { number?: number } }
-  | { type: 'FETCH_PR_RELATED_COMMITS'; payload: { number?: number; page?: number } }
-  | { type: 'FETCH_ISSUE_RELATED_COMMITS'; payload: { number?: number; page?: number } }
   | { type: 'FETCH_COMMIT_GROUPS' }
   | { type: 'CREATE_COMMIT_GROUP'; payload: { name: string; commitHashes: string[] } }
   | { type: 'UPDATE_COMMIT_GROUP'; payload: { id: string; name?: string; commitHashes?: string[] } }
@@ -176,19 +168,6 @@ type ExtensionToWebviewMessage =
   | { type: 'NOTE_LOAD_FAILED'; payload: { paneId?: string; message: string } }
   | { type: 'NOTE_SAVED'; payload: { paneId?: string; content: string; savedPath: string | null; hasSavedNote: boolean } }
   | { type: 'NOTE_SAVE_FAILED'; payload: { paneId?: string; message: string } }
-  | { type: 'GITHUB_AUTH_STATE'; payload: { status: GithubAuthStatus; login?: string } }
-  | { type: 'PULL_REQUESTS_LOADED'; payload: { items: PullRequestSummary[]; hasMore: boolean; page: number } }
-  | { type: 'PULL_REQUESTS_LOAD_FAILED'; payload: { message: string } }
-  | { type: 'ISSUES_LOADED'; payload: { items: IssueSummary[]; hasMore: boolean; page: number } }
-  | { type: 'ISSUES_LOAD_FAILED'; payload: { message: string } }
-  | { type: 'PR_DETAIL_LOADED'; payload: { detail: PullRequestDetail } }
-  | { type: 'PR_DETAIL_LOAD_FAILED'; payload: { number?: number; message: string } }
-  | { type: 'ISSUE_DETAIL_LOADED'; payload: { detail: IssueDetail } }
-  | { type: 'ISSUE_DETAIL_LOAD_FAILED'; payload: { number?: number; message: string } }
-  | { type: 'PR_RELATED_COMMITS_LOADED'; payload: { number: number; items: Commit[]; hasMore: boolean; page: number } }
-  | { type: 'PR_RELATED_COMMITS_LOAD_FAILED'; payload: { number?: number; message: string } }
-  | { type: 'ISSUE_RELATED_COMMITS_LOADED'; payload: { number: number; items: Commit[]; hasMore: boolean; page: number } }
-  | { type: 'ISSUE_RELATED_COMMITS_LOAD_FAILED'; payload: { number?: number; message: string } }
   | { type: 'COMMIT_GROUPS_LOADED'; payload: { groups: CommitGroup[] } }
   | { type: 'COMMIT_GROUP_CREATED'; payload: { group: CommitGroup } }
   | { type: 'COMMIT_GROUP_CREATE_FAILED'; payload: { message: string } }

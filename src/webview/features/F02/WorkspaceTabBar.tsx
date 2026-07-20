@@ -154,20 +154,12 @@ function getTabLabel(tab: WorkspaceTab, t: (key: string) => string): string {
     return t('workspace.tab_label_file_canvas');
   }
 
-  if (tab.panelType === 'pr' || tab.panelType === 'issue') {
-    return tab.title ?? `#${tab.prNumber ?? tab.issueNumber}`;
-  }
-
   return tab.title ?? tab.relativePath?.split('/').at(-1) ?? t('workspace.tab_label_note');
 }
 
 function getTabBadge(tab: WorkspaceTab, t: (key: string) => string): string {
   if (tab.panelType === 'note') {
     return t('workspace.tab_label_note');
-  }
-
-  if (tab.panelType === 'pr' || tab.panelType === 'issue') {
-    return `#${tab.prNumber ?? tab.issueNumber}`;
   }
 
   return tab.commit?.shortHash ?? '';

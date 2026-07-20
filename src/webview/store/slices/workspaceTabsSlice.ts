@@ -3,7 +3,7 @@ import type { Commit } from '../../types/commit';
 import type { NoteEntry } from '../../types/note';
 import type { AppState } from '../appStore';
 
-export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'note' | 'pr' | 'issue';
+export type WorkspaceTabPanelType = 'code' | 'aiSummary' | 'fileCanvas' | 'note';
 export type PaneSplitOrientation = 'horizontal' | 'vertical';
 export type DropZone = 'left' | 'right' | 'top' | 'bottom' | 'center';
 export type CodeInnerPanelKind = 'diff' | 'aiSummary' | 'symbolGraph';
@@ -26,22 +26,17 @@ export type CodeInnerPaneNode = CodeInnerLeafNode | CodeInnerSplitNode;
 export interface WorkspaceTab {
   id: string;
   panelType: WorkspaceTabPanelType;
-  // 'note'/'pr'/'issue' 탭은 커밋과 무관하므로 commit이 없다. 나머지 panelType은 항상 non-null이다.
+  // 'note' 탭은 커밋과 무관하므로 commit이 없다. 나머지 panelType은 항상 non-null이다.
   commit: Commit | null;
   filePath: string | null;
   relativePath?: string | null;
   codeInnerPaneTree?: CodeInnerPaneNode;
-  prNumber?: number | null;
-  issueNumber?: number | null;
-  // pr/issue 탭 전용 라벨. 상세 데이터 로드 전에도 탭바에 제목을 즉시 보여주기 위해 목록 클릭 시점에 캐시한다.
   title?: string | null;
 }
 
 export type OpenWorkspaceTabInput =
   | { panelType: 'code' | 'aiSummary' | 'fileCanvas'; commit: Commit; filePath?: string | null; paneId?: string }
-  | { panelType: 'note'; relativePath: string; paneId?: string }
-  | { panelType: 'pr'; prNumber: number; title?: string | null; paneId?: string }
-  | { panelType: 'issue'; issueNumber: number; title?: string | null; paneId?: string };
+  | { panelType: 'note'; relativePath: string; paneId?: string };
 
 export interface PaneLeafNode {
   paneId: string;
@@ -63,8 +58,6 @@ export type PaneNode = PaneLeafNode | PaneSplitNode;
 export interface WorkspaceTabsSlice {
   paneTree: PaneNode;
   focusedPaneId: string;
-  sidebarActivePRNumber: number | null;
-  sidebarActiveIssueNumber: number | null;
   openWorkspaceTab: (input: OpenWorkspaceTabInput) => void;
   openNoteTreeEntry: (relativePath: string) => void;
   closeWorkspaceTab: (paneId: string, tabId: string) => void;
@@ -88,10 +81,6 @@ export interface WorkspaceTabsSlice {
 
 export function computeWorkspaceTabId(panelType: WorkspaceTabPanelType, commitHash: string, filePath?: string | null): string {
   return `${panelType}:${commitHash}:${filePath ?? '_'}`;
-}
-
-export function computeGithubWorkspaceTabId(panelType: 'pr' | 'issue', number: number): string {
-  return `${panelType}:${number}`;
 }
 
 export function computeNoteWorkspaceTabId(relativePath: string): string {
@@ -124,35 +113,7 @@ export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
       commit: null,
       filePath: null,
       relativePath: input.relativePath,
-      prNumber: null,
-      issueNumber: null,
       title: getNoteTabTitle(input.relativePath),
-    };
-  }
-
-  if (input.panelType === 'pr') {
-    return {
-      id: computeGithubWorkspaceTabId('pr', input.prNumber),
-      panelType: 'pr',
-      commit: null,
-      filePath: null,
-      relativePath: null,
-      prNumber: input.prNumber,
-      issueNumber: null,
-      title: input.title ?? null,
-    };
-  }
-
-  if (input.panelType === 'issue') {
-    return {
-      id: computeGithubWorkspaceTabId('issue', input.issueNumber),
-      panelType: 'issue',
-      commit: null,
-      filePath: null,
-      relativePath: null,
-      prNumber: null,
-      issueNumber: input.issueNumber,
-      title: input.title ?? null,
     };
   }
 
@@ -165,8 +126,6 @@ export function createWorkspaceTab(input: OpenWorkspaceTabInput): WorkspaceTab {
     codeInnerPaneTree: input.panelType === 'code'
       ? createDefaultCodeInnerPaneTree()
       : undefined,
-    prNumber: null,
-    issueNumber: null,
     title: null,
   };
 }
@@ -463,8 +422,6 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
   return {
     paneTree: rootPane,
     focusedPaneId: rootPane.paneId,
-    sidebarActivePRNumber: null,
-    sidebarActiveIssueNumber: null,
 
     openWorkspaceTab: (input) => {
       const nextTab = createWorkspaceTab(input);
@@ -480,10 +437,6 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
       if (existingTab) {
         set((current) => ({
           selectedCommit: nextTab.commit ?? current.selectedCommit,
-          sidebarActivePRNumber: nextTab.panelType === 'pr' ? nextTab.prNumber ?? null : current.sidebarActivePRNumber,
-          sidebarActiveIssueNumber: nextTab.panelType === 'issue'
-            ? nextTab.issueNumber ?? null
-            : current.sidebarActiveIssueNumber,
         }));
         get().activateWorkspaceTab(targetPaneId, existingTab.id);
         return;
@@ -502,12 +455,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           };
         }),
         focusedPaneId: targetPaneId,
-        // note/pr/issue 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
+        // note 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
         selectedCommit: nextTab.commit ?? current.selectedCommit,
-        sidebarActivePRNumber: nextTab.panelType === 'pr' ? nextTab.prNumber ?? null : current.sidebarActivePRNumber,
-        sidebarActiveIssueNumber: nextTab.panelType === 'issue'
-          ? nextTab.issueNumber ?? null
-          : current.sidebarActiveIssueNumber,
       }));
     },
 

@@ -38,7 +38,6 @@
 | F09 | F09_AISummaryQA |
 | F10 | F10_IntraFileSymbolDependencyCanvas |
 | F11 | F11_Notes |
-| F12 | F12_GitHubActivity |
 | F13 | F13_CommitGroups |
 | F14 | F14_BranchSwitcher |
 

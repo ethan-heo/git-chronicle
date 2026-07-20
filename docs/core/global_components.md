@@ -173,7 +173,7 @@
 
 ## InfiniteScrollTrigger
 
-**용도:** 스크롤 하단 감지 시 추가 데이터 로드를 트리거하는 `IntersectionObserver` 기반 컴포넌트. F01 커밋 목록과 F12 PR/Issue 목록의 무한 스크롤에서 공통으로 사용한다.
+**용도:** 스크롤 하단 감지 시 추가 데이터 로드를 트리거하는 `IntersectionObserver` 기반 컴포넌트. 현재는 F01 커밋 목록의 무한 스크롤에서 사용한다.
 
 | 속성 | 타입 | 설명 |
 |------|------|------|
@@ -227,7 +227,7 @@
 
 ## SidebarSection
 
-**용도:** 사이드바 안에서 접고 펼 수 있는 섹션 컨테이너. 제목·배지·헤더 액션 슬롯을 제공한다. F02의 `CommitsSection`/`FileTreeSection`, F12의 `PRsSection`/`IssuesSection`에서 사용한다.
+**용도:** 사이드바 안에서 접고 펼 수 있는 섹션 컨테이너. 제목·배지·헤더 액션 슬롯을 제공한다. F02의 `CommitsSection`/`FileTreeSection`, F11의 `NotesSection`, F14의 `BranchesSection`에서 사용한다.
 
 | 속성 | 타입 | 설명 |
 |------|------|------|
@@ -244,7 +244,7 @@
 
 ## SidebarSectionGroup
 
-**용도:** `SidebarSection`으로 감싼 N개 섹션을 하나의 세로 스택으로 배치하고, 펼쳐진 섹션끼리는 서로 리사이즈 가능하게, 접힌 섹션은 헤더만 차지하게 만드는 공용 레이아웃 컨테이너. S02 사이드바의 `CommitsSection`/`FileTreeSection`/`PRsSection`/`IssuesSection` 4개를 동등한 형제로 묶는 데 사용한다.
+**용도:** `SidebarSection`으로 감싼 N개 섹션을 하나의 세로 스택으로 배치하고, 펼쳐진 섹션끼리는 서로 리사이즈 가능하게, 접힌 섹션은 헤더만 차지하게 만드는 공용 레이아웃 컨테이너. S02 사이드바의 `BranchesSection`/`CommitsSection`/`FileTreeSection`/`NotesSection`을 동등한 형제로 묶는 데 사용한다.
 
 | 속성 | 타입 | 설명 |
 |------|------|------|

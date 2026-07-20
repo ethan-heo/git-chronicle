@@ -318,28 +318,6 @@
     "load_failed": "Failed to load the note",
     "save_failed": "Failed to save the note"
   },
-  "github": {
-    "prs_title": "Pull Requests",
-    "issues_title": "Issues",
-    "connect_cta": "Connect",
-    "status_open": "Open",
-    "status_closed": "Closed",
-    "status_merged": "Merged",
-    "prs_loading": "Loading pull requests...",
-    "prs_error": "Failed to load pull requests",
-    "prs_empty": "No pull requests",
-    "prs_empty_unauthenticated": "Connect your GitHub account",
-    "prs_empty_no_remote": "No GitHub remote found",
-    "issues_loading": "Loading issues...",
-    "issues_error": "Failed to load issues",
-    "issues_empty": "No issues",
-    "issues_empty_unauthenticated": "Connect your GitHub account",
-    "issues_empty_no_remote": "No GitHub remote found",
-    "detail_loading": "Loading...",
-    "detail_error": "Failed to load",
-    "related_commits_title": "Related commits",
-    "related_commits_loading": "Loading related commits..."
-  },
   "branch": {
     "title": "Branches",
     "fetch": "Fetch",

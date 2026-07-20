@@ -318,28 +318,6 @@
     "load_failed": "노트를 불러오지 못했습니다",
     "save_failed": "노트를 저장하지 못했습니다"
   },
-  "github": {
-    "prs_title": "Pull Requests",
-    "issues_title": "Issues",
-    "connect_cta": "연결하기",
-    "status_open": "열림",
-    "status_closed": "닫힘",
-    "status_merged": "병합됨",
-    "prs_loading": "PR 목록을 불러오는 중...",
-    "prs_error": "PR 목록을 불러오지 못했습니다",
-    "prs_empty": "PR이 없습니다",
-    "prs_empty_unauthenticated": "GitHub 계정을 연결해주세요",
-    "prs_empty_no_remote": "GitHub 원격 저장소가 없습니다",
-    "issues_loading": "Issue 목록을 불러오는 중...",
-    "issues_error": "Issue 목록을 불러오지 못했습니다",
-    "issues_empty": "Issue가 없습니다",
-    "issues_empty_unauthenticated": "GitHub 계정을 연결해주세요",
-    "issues_empty_no_remote": "GitHub 원격 저장소가 없습니다",
-    "detail_loading": "불러오는 중...",
-    "detail_error": "불러오지 못했습니다",
-    "related_commits_title": "연관된 커밋",
-    "related_commits_loading": "연관된 커밋을 불러오는 중..."
-  },
   "branch": {
     "title": "Branches",
     "fetch": "Fetch",

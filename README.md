@@ -41,10 +41,6 @@ Generate markdown summaries of your work using your local AI CLI (Claude, Gemini
 
 Keep a commit-scoped markdown note alongside your analysis. Paste markdown or Mermaid snippets copied from other panels, and your notes auto-save with no explicit save action needed. Mermaid code blocks render as diagrams in the preview.
 
-### GitHub PR / Issue
-
-Browse open, closed, and merged pull requests and issues for the current repository right in the sidebar. Click an item to open its title, author, status, labels, and body in a workspace tab, with an infinite-scrolling list of related commits — click one to jump straight to it. Sign in with VSCode's built-in GitHub authentication; no extra credentials or dependencies required.
-
 ### Commit Groups
 
 Multi-select commits from the log and save them as a named group for quick recall later. Filter the commit list down to a single group (combined with the existing date/author/keyword filters), and edit or delete groups at any time. Groups are saved per workspace and persist across VSCode restarts.

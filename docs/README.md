@@ -78,7 +78,6 @@ UI 전체에 일관되게 적용되는 원칙, 토큰, 규칙입니다.
 | **F09** AI 요약 Q&A | [spec](features/F09_ai_summary_qa/spec.md) | [blueprint](features/F09_ai_summary_qa/blueprint.md) |
 | **F10** 파일 내부 심볼 의존성 캔버스 | [spec](features/F10_intra_file_symbol_dependency_canvas/spec.md) | [blueprint](features/F10_intra_file_symbol_dependency_canvas/blueprint.md) |
 | **F11** 노트 | [spec](features/F11_notes/spec.md) | [blueprint](features/F11_notes/blueprint.md) |
-| **F12** GitHub PR/Issue | [spec](features/F12_github_activity/spec.md) | [blueprint](features/F12_github_activity/blueprint.md) |
 | **F13** 커밋 그룹 | [spec](features/F13_commit_groups/spec.md) | [blueprint](features/F13_commit_groups/blueprint.md) |
 | **F14** 브랜치 스위처 | [spec](features/F14_branch_switcher/spec.md) | [blueprint](features/F14_branch_switcher/blueprint.md) |
 

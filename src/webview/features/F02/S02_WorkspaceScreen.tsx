@@ -11,8 +11,6 @@ import { DependencyCanvasPanel } from '../F04';
 import { AISummaryPanel } from '../F05b';
 import { SidebarSettingsPanel } from '../F06';
 import { NoteEditorPanel, NotesSection } from '../F11';
-import { IssueDetailPanel, IssuesSection, PRDetailPanel, PRsSection, useGithubAuth } from '../F12';
-import type { IssueSummary, PullRequestSummary } from '../F12';
 import { CommitGroupFilterDropdown, CommitGroupFilterToggleButton, CommitSelectionActionBar, SelectModeToggleButton, useCommitGroups } from '../F13';
 import { BranchesSection } from '../F14';
 import { CodeTabSplitArea } from './CodeTabSplitArea';
@@ -34,8 +32,6 @@ const SECTION_MIN_HEIGHT = 120;
 const DEFAULT_COMMIT_LIST_SECTION_HEIGHT = 280;
 const DEFAULT_FILE_TREE_SECTION_HEIGHT = 280;
 const DEFAULT_BRANCHES_SECTION_HEIGHT = 160;
-const DEFAULT_PRS_SECTION_HEIGHT = 200;
-const DEFAULT_ISSUES_SECTION_HEIGHT = 200;
 const DEFAULT_NOTES_SECTION_HEIGHT = 220;
 const SIDEBAR_VIEW_TRANSITION_DURATION_MS = 200;
 
@@ -46,10 +42,6 @@ const DEFAULT_SIDEBAR_STATE: PersistedWorkspaceSidebarState = {
   branchesSectionHeight: DEFAULT_BRANCHES_SECTION_HEIGHT,
   commitListSectionHeight: DEFAULT_COMMIT_LIST_SECTION_HEIGHT,
   fileTreeSectionHeight: DEFAULT_FILE_TREE_SECTION_HEIGHT,
-  isPRsSectionExpanded: false,
-  prsSectionHeight: DEFAULT_PRS_SECTION_HEIGHT,
-  isIssuesSectionExpanded: false,
-  issuesSectionHeight: DEFAULT_ISSUES_SECTION_HEIGHT,
   isNotesSectionExpanded: true,
   notesSectionHeight: DEFAULT_NOTES_SECTION_HEIGHT,
   sidebarWidth: SIDEBAR_DEFAULT_WIDTH,
@@ -63,8 +55,6 @@ export const S02WorkspaceScreen: FC = () => {
   const selectedCommit = useAppStore((state) => state.selectedCommit);
   const paneTree = useAppStore((state) => state.paneTree);
   const focusedPaneId = useAppStore((state) => state.focusedPaneId);
-  const sidebarActivePRNumber = useAppStore((state) => state.sidebarActivePRNumber);
-  const sidebarActiveIssueNumber = useAppStore((state) => state.sidebarActiveIssueNumber);
   const openWorkspaceTab = useAppStore((state) => state.openWorkspaceTab);
   const closeWorkspaceTab = useAppStore((state) => state.closeWorkspaceTab);
   const activateWorkspaceTab = useAppStore((state) => state.activateWorkspaceTab);
@@ -93,7 +83,6 @@ export const S02WorkspaceScreen: FC = () => {
   const changedFileTree = useChangedFileTree({ isActive: isRouteSlotActive, commit: selectedCommit });
   const focusedPane = findLeafPane(paneTree, focusedPaneId) ?? findFirstPane(paneTree);
   const activeTab = focusedPane ? getActiveTab(focusedPane) : null;
-  useGithubAuth({ isActive: isRouteSlotActive });
   const {
     commitList,
     hasMoreCommits,
@@ -141,18 +130,6 @@ export const S02WorkspaceScreen: FC = () => {
   );
   const [commitListSectionHeight, setCommitListSectionHeight] = useState(persistedSidebarState.commitListSectionHeight);
   const [fileTreeSectionHeight, setFileTreeSectionHeight] = useState(persistedSidebarState.fileTreeSectionHeight);
-  const [isPRsSectionExpanded, setIsPRsSectionExpanded] = useState(
-    persistedSidebarState.isPRsSectionExpanded ?? DEFAULT_SIDEBAR_STATE.isPRsSectionExpanded,
-  );
-  const [prsSectionHeight, setPRsSectionHeight] = useState(
-    persistedSidebarState.prsSectionHeight ?? DEFAULT_SIDEBAR_STATE.prsSectionHeight,
-  );
-  const [isIssuesSectionExpanded, setIsIssuesSectionExpanded] = useState(
-    persistedSidebarState.isIssuesSectionExpanded ?? DEFAULT_SIDEBAR_STATE.isIssuesSectionExpanded,
-  );
-  const [issuesSectionHeight, setIssuesSectionHeight] = useState(
-    persistedSidebarState.issuesSectionHeight ?? DEFAULT_SIDEBAR_STATE.issuesSectionHeight,
-  );
   const [isNotesSectionExpanded, setIsNotesSectionExpanded] = useState(
     persistedSidebarState.isNotesSectionExpanded ?? DEFAULT_SIDEBAR_STATE.isNotesSectionExpanded,
   );
@@ -225,17 +202,6 @@ export const S02WorkspaceScreen: FC = () => {
     openTab('code', file);
   }, [openTab]);
 
-  const openPRTab = useCallback((pullRequest: PullRequestSummary) => {
-    openWorkspaceTab({ panelType: 'pr', prNumber: pullRequest.number, title: pullRequest.title });
-  }, [openWorkspaceTab]);
-
-  const openIssueTab = useCallback((issue: IssueSummary) => {
-    openWorkspaceTab({ panelType: 'issue', issueNumber: issue.number, title: issue.title });
-  }, [openWorkspaceTab]);
-
-  const activePRNumber = sidebarActivePRNumber;
-  const activeIssueNumber = sidebarActiveIssueNumber;
-
   useEffect(() => {
     mergePersistedWebviewState({
       workspaceSidebar: {
@@ -245,10 +211,6 @@ export const S02WorkspaceScreen: FC = () => {
         branchesSectionHeight,
         commitListSectionHeight,
         fileTreeSectionHeight,
-        isPRsSectionExpanded,
-        prsSectionHeight,
-        isIssuesSectionExpanded,
-        issuesSectionHeight,
         isNotesSectionExpanded,
         notesSectionHeight,
         sidebarWidth: isSidebarCollapsed ? 0 : sidebarWidth,
@@ -262,14 +224,10 @@ export const S02WorkspaceScreen: FC = () => {
     isBranchesSectionExpanded,
     isCommitListSectionExpanded,
     isFileTreeSectionExpanded,
-    isIssuesSectionExpanded,
     isNotesSectionExpanded,
-    isPRsSectionExpanded,
     isSidebarCollapsed,
-    issuesSectionHeight,
     lastSidebarWidth,
     notesSectionHeight,
-    prsSectionHeight,
     sidebarWidth,
   ]);
 
@@ -593,38 +551,6 @@ export const S02WorkspaceScreen: FC = () => {
         />
       ),
     },
-    {
-      key: 'pr',
-      minHeightPx: SECTION_MIN_HEIGHT,
-      heightPx: prsSectionHeight,
-      isExpanded: isPRsSectionExpanded,
-      onHeightChange: setPRsSectionHeight,
-      node: (
-        <PRsSection
-          isActive={isRouteSlotActive}
-          activePRNumber={activePRNumber}
-          isExpanded={isPRsSectionExpanded}
-          onToggleExpanded={() => setIsPRsSectionExpanded((current) => !current)}
-          onSelectPullRequest={openPRTab}
-        />
-      ),
-    },
-    {
-      key: 'issue',
-      minHeightPx: SECTION_MIN_HEIGHT,
-      heightPx: issuesSectionHeight,
-      isExpanded: isIssuesSectionExpanded,
-      onHeightChange: setIssuesSectionHeight,
-      node: (
-        <IssuesSection
-          isActive={isRouteSlotActive}
-          activeIssueNumber={activeIssueNumber}
-          isExpanded={isIssuesSectionExpanded}
-          onToggleExpanded={() => setIsIssuesSectionExpanded((current) => !current)}
-          onSelectIssue={openIssueTab}
-        />
-      ),
-    },
   ];
 
   const renderSidebarView = (view: SidebarView, state: 'entering' | 'exiting' | null): ReactElement => {
@@ -858,14 +784,6 @@ const WorkspacePaneContent: FC<{
   // changedFileTree가 아직 로드되기 전에는 codeFile이 파일 미해당인지 아직 로딩 중인지 구분되지 않는다.
   // AISummaryPanel이 이 구간을 '커밋 스코프'로 오인해 자동 재생성하지 않도록 로딩 상태를 함께 전달한다.
   const isSelectedFilePending = activeTab.panelType === 'code' && Boolean(activeTab.filePath) && !changedFileTree.hasLoaded;
-
-  if (activeTab.panelType === 'pr' && activeTab.prNumber != null) {
-    return <PRDetailPanel prNumber={activeTab.prNumber} isActive={isRouteSlotActive} />;
-  }
-
-  if (activeTab.panelType === 'issue' && activeTab.issueNumber != null) {
-    return <IssueDetailPanel issueNumber={activeTab.issueNumber} isActive={isRouteSlotActive} />;
-  }
 
   if (activeTab.panelType === 'note' && activeTab.relativePath) {
     return <NoteEditorPanel paneId={paneId} relativePath={activeTab.relativePath} isActive={isRouteSlotActive} />;

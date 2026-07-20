@@ -27,21 +27,6 @@ import {
 } from './messageHandler/aiHandlers';
 import { handleFetchBranches, handleFetchChangedFiles, handleFetchCommits, handleFetchFileDiff, type FetchBranchesPayload, type FetchChangedFilesPayload, type FetchCommitsPayload, type FetchFileDiffPayload } from './messageHandler/gitHandlers';
 import {
-  handleConnectGithub,
-  handleFetchGithubAuthState,
-  handleFetchIssueDetail,
-  handleFetchIssueRelatedCommits,
-  handleFetchIssues,
-  handleFetchPRDetail,
-  handleFetchPRRelatedCommits,
-  handleFetchPullRequests,
-  type FetchIssueDetailPayload,
-  type FetchIssuesPayload,
-  type FetchPRDetailPayload,
-  type FetchPullRequestsPayload,
-  type FetchRelatedCommitsPayload,
-} from './messageHandler/githubHandlers';
-import {
   handleCreateNote,
   handleDeleteNote,
   handleFetchNote,
@@ -67,11 +52,6 @@ interface WebviewMessage {
     | AIProviderPayload
     | OpenExternalUrlPayload
     | NotePayload
-    | FetchPullRequestsPayload
-    | FetchIssuesPayload
-    | FetchPRDetailPayload
-    | FetchIssueDetailPayload
-    | FetchRelatedCommitsPayload
     | CommitGroupPayload;
 }
 
@@ -152,30 +132,6 @@ export function registerMessageHandler(panel: vscode.WebviewPanel, context: vsco
         break;
       case 'SAVE_NOTE':
         await handleSaveNote(panel, context, message.payload as NotePayload);
-        break;
-      case 'FETCH_GITHUB_AUTH_STATE':
-        await handleFetchGithubAuthState(panel);
-        break;
-      case 'CONNECT_GITHUB':
-        await handleConnectGithub(panel);
-        break;
-      case 'FETCH_PULL_REQUESTS':
-        await handleFetchPullRequests(panel, message.payload as FetchPullRequestsPayload);
-        break;
-      case 'FETCH_ISSUES':
-        await handleFetchIssues(panel, message.payload as FetchIssuesPayload);
-        break;
-      case 'FETCH_PR_DETAIL':
-        await handleFetchPRDetail(panel, message.payload as FetchPRDetailPayload);
-        break;
-      case 'FETCH_ISSUE_DETAIL':
-        await handleFetchIssueDetail(panel, message.payload as FetchIssueDetailPayload);
-        break;
-      case 'FETCH_PR_RELATED_COMMITS':
-        await handleFetchPRRelatedCommits(panel, message.payload as FetchRelatedCommitsPayload);
-        break;
-      case 'FETCH_ISSUE_RELATED_COMMITS':
-        await handleFetchIssueRelatedCommits(panel, message.payload as FetchRelatedCommitsPayload);
         break;
       case 'OPEN_REPOSITORY':
         await vscode.commands.executeCommand('vscode.openFolder');
