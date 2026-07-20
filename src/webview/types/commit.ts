@@ -107,8 +107,6 @@ export interface AIProvider {
   brandColor: string;
 }
 
-export type AIModelUsage = 'summary' | 'qa';
-
 export type ScreenID = 'S02';
 
 export type RouteTransitionDirection = 'forward' | 'back';

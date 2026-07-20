@@ -11,7 +11,7 @@
 
 ## Purpose
 
-Claude / Gemini / Codex CLI를 VSCode Extension에 등록하고, 활성화/비활성화를 관리하며, 활성 프로바이더별 요약용/Q&A용 모델을 선택할 수 있게 한다.
+Claude / Gemini / Codex CLI를 VSCode Extension에 등록하고, 활성화/비활성화를 관리하며, 활성 프로바이더별 모델을 선택할 수 있게 한다. 선택한 모델은 요약 생성과 Q&A 응답 생성에 공통으로 사용된다.
 
 ---
 
@@ -23,7 +23,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 ## User Goal
 
-내가 사용하는 AI CLI를 등록하고 활성화한 뒤, 작업 성격에 맞는 요약용/Q&A용 모델을 선택하여 AI 정리 기능을 사용할 수 있는 상태로 만든다.
+내가 사용하는 AI CLI를 등록하고 활성화한 뒤, 작업 성격에 맞는 모델을 선택하여 AI 정리 기능을 사용할 수 있는 상태로 만든다.
 
 ---
 
@@ -33,7 +33,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
    - 비활성화 상태의 버튼을 클릭하면 CLI 연동 과정이 수행되고, 성공 시 버튼이 활성화 상태로 전환된다.
    - 활성화 상태의 버튼을 클릭하면 비활성화된다.
 2. 하나의 AI가 활성화되면 나머지는 자동으로 비활성화된다.
-3. AI가 활성화되면 해당 버튼 아래에 모델 선택 UI가 펼쳐지고, 요약용 모델과 Q&A용 모델을 각각 따로 선택할 수 있다.
+3. AI가 활성화되면 해당 버튼 아래에 모델 선택 UI가 펼쳐지고, 요약 생성과 Q&A 응답에 공통으로 사용할 모델을 선택할 수 있다.
 4. 프로바이더를 전환했다가 다시 돌아와도 이전에 선택한 모델이 유지된다.
 
 ---
@@ -50,11 +50,11 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 비대화형 실행 규칙 | Claude는 `-p` print mode + stdin prompt, Gemini는 `--skip-trust --prompt`, Codex는 `exec --skip-git-repo-check` + stdin prompt를 사용 |
 | 상태 관리 | 활성화 / 비활성화 토글 |
 | 다중 등록 | 복수 등록 가능. 단 하나만 활성화 가능. 하나가 활성화되면 나머지는 자동으로 비활성화 |
-| 모델 선택 | 활성 프로바이더에 한해 `summaryModel`, `qaModel` 드롭다운 노출 |
-| 기본 모델 | Claude: `claude-haiku-4-5`, Gemini: `gemini-2.5-flash`, Codex: `gpt-5.4-mini` |
-| 선택 가능 모델 | Claude: `claude-haiku-4-5`, `claude-sonnet-5`, `claude-opus-4-8` / Gemini: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.5-flash`, `gemini-3.1-pro-preview` / Codex: `gpt-5.4-mini`, `gpt-5.4`, `gpt-5.5` |
+| 모델 선택 | 활성 프로바이더에 한해 `summaryModel` 드롭다운 노출. 이 모델은 요약 생성과 Q&A 응답 생성에 공통 사용 |
+| 기본 모델 | Claude: `claude-haiku-4-5-20251001`, Gemini: `gemini-2.5-flash`, Codex: `gpt-5.4-mini` |
+| 선택 가능 모델 | Claude: `claude-haiku-4-5-20251001`, `claude-sonnet-5`, `claude-opus-4-8`, `claude-fable-5` / Gemini: `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3.5-flash`, `gemini-3.1-pro-preview`, `gemini-3.1-flash-lite` / Codex: `gpt-5.4-mini`, `gpt-5.4`, `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` |
 | 모델 영속화 | 프로바이더별 마지막 선택값을 현재 워크스페이스 기준 `ExtensionContext.workspaceState`에 저장 |
-| 프로젝트별 분리 | `activeAIProvider`, `summaryModel`, `qaModel`은 프로젝트마다 독립 유지 |
+| 프로젝트별 분리 | `activeAIProvider`, `summaryModel`은 프로젝트마다 독립 유지 |
 | 전역 유지 항목 | CLI 등록 정보(`registeredProviders`)만 `ExtensionContext.globalState`에 저장 |
 
 ---
@@ -75,7 +75,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 ## Dependencies
 
 - [F05b_AISummaryCommit](../F05b_ai_summary_commit/spec.md) — `activeAIProvider` 소비
-- [F09_AISummaryQA](../F09_ai_summary_qa/spec.md) — `qaModel` 소비
+- [F09_AISummaryQA](../F09_ai_summary_qa/spec.md) — `summaryModel` 소비
 
 ---
 
@@ -91,8 +91,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 |------|------|------|
 | `registeredProviders` | `AIProviderName[]` | 전역 상태. 등록된 CLI 이름 목록 |
 | `activeAIProvider` | `AIProviderName \| null` | 워크스페이스별 상태. 현재 활성 CLI |
-| `summaryModel` | `string \| null` | 워크스페이스별 상태. 활성 프로바이더의 요약용 모델 |
-| `qaModel` | `string \| null` | 워크스페이스별 상태. 활성 프로바이더의 Q&A용 모델 |
+| `summaryModel` | `string \| null` | 워크스페이스별 상태. 활성 프로바이더의 모델 (요약 생성과 Q&A 응답 생성에 공통 사용) |
 | VSCode ExtensionContext | `Memento` | `globalState`는 CLI 등록 정보, `workspaceState`는 프로젝트별 AI 설정 복원에 사용 |
 | `child_process.execFile` | exit code | `{cli} --version` 실행 결과로 CLI 설치 여부 확인 |
 
@@ -105,7 +104,6 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | `registeredProviders` | `AIProviderName[]` | 전역 상태 업데이트 |
 | `activeAIProvider` | `AIProviderName \| null` | 워크스페이스별 상태 업데이트 |
 | `summaryModel` | `string \| null` | 워크스페이스별 상태 업데이트 |
-| `qaModel` | `string \| null` | 워크스페이스별 상태 업데이트 |
 
 ---
 
@@ -115,5 +113,5 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 |------|--------|------|
 | `registeredProviders` 전역 상태 업데이트 | CLI 등록 / 비활성화 | 등록 목록 변경 |
 | `activeAIProvider` 워크스페이스별 상태 업데이트 | 활성화 토글 | 단 하나만 활성화 — 나머지 자동 `inactive` |
-| `summaryModel` / `qaModel` 워크스페이스별 상태 업데이트 | 모델 변경 | 활성 프로바이더에 대한 선택 모델 변경 |
+| `summaryModel` 워크스페이스별 상태 업데이트 | 모델 변경 | 활성 프로바이더에 대한 선택 모델 변경 |
 | VSCode ExtensionContext 영속 저장 | 설정 변경 시 | `registeredProviders`는 `context.globalState.update`, 나머지 AI 설정은 `context.workspaceState.update` |

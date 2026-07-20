@@ -21,7 +21,6 @@ export interface AISlice {
   registeredProviders: AIProviderName[];
   activeAIProvider: AIProviderName | null;
   summaryModel: string | null;
-  qaModel: string | null;
   currentSummaryContent: string;
   currentSummaryUsage: AIUsageInfo | null;
   isLoadingSummary: boolean;
@@ -38,7 +37,7 @@ export interface AISlice {
   completedSummaryCache: Record<string, CachedSummaryEntry>;
   summaryViewCache: Record<string, SummaryViewCacheEntry>;
 
-  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null; summaryModel?: string | null; qaModel?: string | null }) => void;
+  setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null; summaryModel?: string | null }) => void;
   resetAISummary: () => void;
   startAISummaryLoading: (options?: { preserveSavedSummary?: boolean; commitHash?: string | null; targetKey?: string | null }) => void;
   startAISummaryGeneration: (options?: { preserveSavedSummary?: boolean; commitHash?: string | null; targetKey?: string | null }) => void;
@@ -58,8 +57,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
   savePath: isVSCodeRuntime() ? null : '.git-author',
   registeredProviders: isVSCodeRuntime() ? [] : ['claude', 'gemini'],
   activeAIProvider: isVSCodeRuntime() ? null : 'claude',
-  summaryModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
-  qaModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
+  summaryModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5-20251001',
   currentSummaryContent: '',
   currentSummaryUsage: null,
   isLoadingSummary: false,
@@ -82,7 +80,6 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
       ...(settings.registeredProviders !== undefined ? { registeredProviders: settings.registeredProviders } : {}),
       ...(settings.activeAIProvider !== undefined ? { activeAIProvider: settings.activeAIProvider } : {}),
       ...(settings.summaryModel !== undefined ? { summaryModel: settings.summaryModel } : {}),
-      ...(settings.qaModel !== undefined ? { qaModel: settings.qaModel } : {}),
     });
   },
 

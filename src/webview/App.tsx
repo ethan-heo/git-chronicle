@@ -13,7 +13,6 @@ interface WebviewEventPayload {
   activeAIProvider?: AIProviderName | null;
   registeredProviders?: AIProviderName[];
   summaryModel?: string | null;
-  qaModel?: string | null;
   isOverLimit?: boolean;
   chunk?: string;
   content?: string;
@@ -57,7 +56,6 @@ export const App: FC = () => {
           activeAIProvider: event.data.payload?.activeAIProvider ?? null,
           registeredProviders: event.data.payload?.registeredProviders ?? [],
           summaryModel: event.data.payload?.summaryModel ?? null,
-          qaModel: event.data.payload?.qaModel ?? null,
         });
         return;
       }
@@ -68,7 +66,6 @@ export const App: FC = () => {
           activeAIProvider: event.data.payload?.activeAIProvider ?? null,
           registeredProviders: event.data.payload?.registeredProviders ?? [],
           summaryModel: event.data.payload?.summaryModel ?? null,
-          qaModel: event.data.payload?.qaModel ?? null,
         });
         return;
       }

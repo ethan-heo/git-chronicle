@@ -99,7 +99,6 @@ export function useAISummary(options?: {
   const noteEntries = useAppStore((state) => state.noteTree);
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
   const summaryModel = useAppStore((state) => state.summaryModel);
-  const qaModel = useAppStore((state) => state.qaModel);
   const activeSummaryTargetKey = useAppStore((state) => state.activeSummaryTargetKey);
   const summaryViewCache = useAppStore((state) => state.summaryViewCache);
   const currentSummaryContent = useAppStore((state) => state.currentSummaryContent);
@@ -212,7 +211,7 @@ export function useAISummary(options?: {
   }, [activeAIProvider, appendAISummaryChunk, commit, completeAISummary, savePath, setSummaryTokenWarning, startAISummaryGeneration, startAISummaryLoading, summaryModel, summaryScope, summaryTargetKey, targetFile]);
 
   const askQuestion = useCallback((question: string): void => {
-    if (!commit || !activeAIProvider || !savePath || !displayedSummaryContent || !qaModel || !displayedNoteRelativePath) {
+    if (!commit || !activeAIProvider || !savePath || !displayedSummaryContent || !summaryModel || !displayedNoteRelativePath) {
       return;
     }
 
@@ -252,11 +251,10 @@ export function useAISummary(options?: {
       commitMessage: commit.message,
       filePath: targetFile?.path,
       provider: activeAIProvider,
-      qaModel,
       savePath,
       noteRelativePath: displayedNoteRelativePath,
     });
-  }, [activeAIProvider, commit, completeAIQA, displayedNoteRelativePath, displayedSummaryContent, qaModel, savePath, startAIQA, targetFile]);
+  }, [activeAIProvider, commit, completeAIQA, displayedNoteRelativePath, displayedSummaryContent, savePath, startAIQA, summaryModel, targetFile]);
 
   const openSavePopover = useCallback(() => {
     if (!displayedSummaryContent) {
@@ -328,14 +326,13 @@ export function useAISummary(options?: {
   }, []);
 
   useEffect(() => {
-    const handler = (event: MessageEvent<{ type: string; payload?: { activeAIProvider?: AIProviderName | null; registeredProviders?: AIProviderName[]; savePath?: string | null; summaryModel?: string | null; qaModel?: string | null; isOverLimit?: boolean; chunk?: string; content?: string; savedPath?: string | null; message?: string; appendedContent?: string; noteRelativePath?: string | null; provider?: AIProviderName | null } }>): void => {
+    const handler = (event: MessageEvent<{ type: string; payload?: { activeAIProvider?: AIProviderName | null; registeredProviders?: AIProviderName[]; savePath?: string | null; summaryModel?: string | null; isOverLimit?: boolean; chunk?: string; content?: string; savedPath?: string | null; message?: string; appendedContent?: string; noteRelativePath?: string | null; provider?: AIProviderName | null } }>): void => {
       if (event.data.type === 'AI_SUMMARY_SETTINGS_LOADED') {
         setAISummarySettings({
           savePath: event.data.payload?.savePath ?? null,
           registeredProviders: event.data.payload?.registeredProviders ?? [],
           activeAIProvider: event.data.payload?.activeAIProvider ?? null,
           summaryModel: event.data.payload?.summaryModel ?? null,
-          qaModel: event.data.payload?.qaModel ?? null,
         });
         setHasLoadedSettings(true);
         return;

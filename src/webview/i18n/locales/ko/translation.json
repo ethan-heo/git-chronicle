@@ -232,7 +232,6 @@
     "provider_none_selected": "선택된 AI 제공자가 없습니다",
     "provider_codex_missing": "Codex CLI를 찾을 수 없습니다",
     "summary_model_label": "요약용 모델",
-    "qa_model_label": "Q&A용 모델",
     "save_path_demo": "/Users/example/git-author-summaries",
     "settings_toast": "상태 메시지",
     "open_install_page": "{{name}} 설치 페이지 열기"

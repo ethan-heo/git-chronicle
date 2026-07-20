@@ -232,7 +232,6 @@
     "provider_none_selected": "No AI provider selected",
     "provider_codex_missing": "Could not find the Codex CLI",
     "summary_model_label": "Summary model",
-    "qa_model_label": "Q&A model",
     "save_path_demo": "/Users/example/git-author-summaries",
     "settings_toast": "Status message",
     "open_install_page": "Open {{name}} installation page"

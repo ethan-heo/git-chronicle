@@ -1,7 +1,7 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as vscode from 'vscode';
-import type { AIModelUsage, AIProviderDefinition, AIProviderModelMap, AIProviderName } from './aiTypes';
+import type { AIProviderDefinition, AIProviderModelMap, AIProviderName } from './aiTypes';
 
 const execFileAsync = promisify(execFile);
 
@@ -9,22 +9,15 @@ const REGISTERED_PROVIDERS_KEY = 'gitChronicle.registeredProviders';
 const ACTIVE_PROVIDER_KEY = 'gitChronicle.activeAIProvider';
 const SAVE_PATH_KEY = 'gitChronicle.savePath';
 const SUMMARY_MODEL_KEY = 'gitRewind.summaryModelPerProvider';
-const QA_MODEL_KEY = 'gitRewind.qaModelPerProvider';
 
 export const AI_PROVIDER_MODELS: Record<AIProviderName, readonly string[]> = {
-  claude: ['claude-haiku-4-5', 'claude-sonnet-5', 'claude-opus-4-8'],
-  gemini: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.5-flash', 'gemini-3.1-pro-preview'],
-  codex: ['gpt-5.4-mini', 'gpt-5.4', 'gpt-5.5'],
+  claude: ['claude-haiku-4-5-20251001', 'claude-sonnet-5', 'claude-opus-4-8', 'claude-fable-5'],
+  gemini: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.5-flash', 'gemini-3.1-pro-preview', 'gemini-3.1-flash-lite'],
+  codex: ['gpt-5.4-mini', 'gpt-5.4', 'gpt-5.5', 'gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol'],
 };
 
 const DEFAULT_SUMMARY_MODELS: AIProviderModelMap = {
-  claude: 'claude-haiku-4-5',
-  gemini: 'gemini-2.5-flash',
-  codex: 'gpt-5.4-mini',
-};
-
-const DEFAULT_QA_MODELS: AIProviderModelMap = {
-  claude: 'claude-haiku-4-5',
+  claude: 'claude-haiku-4-5-20251001',
   gemini: 'gemini-2.5-flash',
   codex: 'gpt-5.4-mini',
 };
@@ -55,9 +48,7 @@ export interface AISettingsState {
   activeAIProvider: AIProviderName | null;
   savePath: string | null;
   summaryModel: string | null;
-  qaModel: string | null;
   summaryModelPerProvider: AIProviderModelMap;
-  qaModelPerProvider: AIProviderModelMap;
 }
 
 export interface CheckCLIResult {
@@ -109,8 +100,7 @@ export async function registerAIProvider(context: vscode.ExtensionContext, provi
     ...state,
     registeredProviders,
     activeAIProvider: providerName,
-    summaryModelPerProvider: ensureModelSelection(state.summaryModelPerProvider, providerName, 'summary'),
-    qaModelPerProvider: ensureModelSelection(state.qaModelPerProvider, providerName, 'qa'),
+    summaryModelPerProvider: ensureModelSelection(state.summaryModelPerProvider, providerName),
   };
 
   await persistAISettingsState(context, nextState);
@@ -128,8 +118,7 @@ export async function setActiveAIProvider(context: vscode.ExtensionContext, prov
     ...state,
     registeredProviders,
     activeAIProvider,
-    summaryModelPerProvider: activeAIProvider ? ensureModelSelection(state.summaryModelPerProvider, activeAIProvider, 'summary') : state.summaryModelPerProvider,
-    qaModelPerProvider: activeAIProvider ? ensureModelSelection(state.qaModelPerProvider, activeAIProvider, 'qa') : state.qaModelPerProvider,
+    summaryModelPerProvider: activeAIProvider ? ensureModelSelection(state.summaryModelPerProvider, activeAIProvider) : state.summaryModelPerProvider,
   };
 
   await persistAISettingsState(context, nextState);
@@ -146,14 +135,12 @@ export async function setSavePath(context: vscode.ExtensionContext, savePath: st
 export async function setAIModel(
   context: vscode.ExtensionContext,
   providerName: AIProviderName,
-  usage: AIModelUsage,
   model: string,
 ): Promise<AISettingsState> {
   const state = loadAISettingsState(context);
   const nextState = {
     ...state,
-    summaryModelPerProvider: usage === 'summary' ? { ...state.summaryModelPerProvider, [providerName]: model } : state.summaryModelPerProvider,
-    qaModelPerProvider: usage === 'qa' ? { ...state.qaModelPerProvider, [providerName]: model } : state.qaModelPerProvider,
+    summaryModelPerProvider: { ...state.summaryModelPerProvider, [providerName]: model },
   };
 
   await persistAISettingsState(context, nextState);
@@ -172,19 +159,13 @@ export function loadAISettingsState(context: vscode.ExtensionContext): AISetting
     context.workspaceState.get<Partial<Record<AIProviderName, string>>>(SUMMARY_MODEL_KEY),
     DEFAULT_SUMMARY_MODELS,
   );
-  const qaModelPerProvider = normalizeModelMap(
-    context.workspaceState.get<Partial<Record<AIProviderName, string>>>(QA_MODEL_KEY),
-    DEFAULT_QA_MODELS,
-  );
 
   return {
     registeredProviders,
     activeAIProvider,
     savePath,
     summaryModel: activeAIProvider ? summaryModelPerProvider[activeAIProvider] : null,
-    qaModel: activeAIProvider ? qaModelPerProvider[activeAIProvider] : null,
     summaryModelPerProvider,
-    qaModelPerProvider,
   };
 }
 
@@ -193,7 +174,6 @@ async function persistAISettingsState(context: vscode.ExtensionContext, state: A
     context.globalState.update(REGISTERED_PROVIDERS_KEY, state.registeredProviders),
     context.workspaceState.update(ACTIVE_PROVIDER_KEY, state.activeAIProvider ?? undefined),
     context.workspaceState.update(SUMMARY_MODEL_KEY, state.summaryModelPerProvider),
-    context.workspaceState.update(QA_MODEL_KEY, state.qaModelPerProvider),
   ]);
 }
 
@@ -228,18 +208,14 @@ function sanitizeModelName(providerName: AIProviderName, model: string | undefin
   return AI_PROVIDER_MODELS[providerName].includes(model) ? model : null;
 }
 
-function ensureModelSelection(
-  models: AIProviderModelMap,
-  providerName: AIProviderName,
-  usage: AIModelUsage,
-): AIProviderModelMap {
-  const nextModel = sanitizeModelName(providerName, models[providerName]) ?? getDefaultModel(providerName, usage);
+function ensureModelSelection(models: AIProviderModelMap, providerName: AIProviderName): AIProviderModelMap {
+  const nextModel = sanitizeModelName(providerName, models[providerName]) ?? getDefaultModel(providerName);
   return {
     ...models,
     [providerName]: nextModel,
   };
 }
 
-export function getDefaultModel(providerName: AIProviderName, usage: AIModelUsage): string {
-  return usage === 'summary' ? DEFAULT_SUMMARY_MODELS[providerName] : DEFAULT_QA_MODELS[providerName];
+export function getDefaultModel(providerName: AIProviderName): string {
+  return DEFAULT_SUMMARY_MODELS[providerName];
 }

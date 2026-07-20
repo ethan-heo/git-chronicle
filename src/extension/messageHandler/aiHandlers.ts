@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { AI_PROVIDERS, loadAISettingsState, registerAIProvider, setAIModel, setActiveAIProvider, setSavePath } from '../aiProviderService';
 import { streamAISummary } from '../aiService';
-import type { AIModelUsage, AIProviderName } from '../aiTypes';
+import type { AIProviderName } from '../aiTypes';
 import { filterDiffForSummary } from '../diffFilterService';
 import { fetchCommitFullDiff, fetchFileDiff } from '../gitService';
 import { readNote, NoteFileError } from '../noteFileService';
@@ -28,7 +28,6 @@ export interface StartAISummaryFilePayload extends StartAISummaryCommitPayload {
 export interface AIProviderPayload {
   name?: AIProviderName;
   providerName?: AIProviderName;
-  usage?: AIModelUsage;
   model?: string;
 }
 
@@ -40,7 +39,6 @@ export interface StartAIQAPayload {
   commitMessage?: string;
   filePath?: string;
   provider?: AIProviderName | null;
-  qaModel?: string | null;
   savePath?: string | null;
   noteRelativePath?: string | null;
 }
@@ -114,12 +112,12 @@ export async function handleSetActiveAIProvider(panel: vscode.WebviewPanel, cont
 export async function handleSetAIModel(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, payload: AIProviderPayload = {}): Promise<void> {
   const providerName = payload.providerName ?? payload.name;
 
-  if (!providerName || !payload.usage || !payload.model) {
+  if (!providerName || !payload.model) {
     await postAISettingsError(panel, l10n('AI model update payload is invalid'));
     return;
   }
 
-  const state = await setAIModel(context, providerName, payload.usage, payload.model);
+  const state = await setAIModel(context, providerName, payload.model);
 
   await panel.webview.postMessage({
     type: 'AI_MODEL_UPDATED',
@@ -380,7 +378,7 @@ export async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscod
   const settings = loadAISettingsState(context);
   const provider = payload.provider ?? settings.activeAIProvider;
   const savePath = payload.savePath ?? settings.savePath;
-  const qaModel = payload.qaModel ?? settings.qaModel;
+  const summaryModel = settings.summaryModel;
 
   if (!repoPath) {
     await postAIQAError(panel, 'No Git repository detected');
@@ -436,7 +434,7 @@ export async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscod
 
   streamAISummary({
     provider,
-    model: qaModel,
+    model: summaryModel,
     prompt,
     onChunk: (chunk) => {
       answer += chunk;

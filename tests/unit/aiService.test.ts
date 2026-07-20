@@ -3,9 +3,9 @@ import { getCLIErrorMessage, getProviderCommand, parseProviderJsonLine } from '.
 
 describe('aiService', () => {
   it('keeps Claude on non-interactive print mode with stdin prompt delivery', () => {
-    expect(getProviderCommand('claude', 'claude-haiku-4-5', 'Summarize this diff')).toEqual({
+    expect(getProviderCommand('claude', 'claude-haiku-4-5-20251001', 'Summarize this diff')).toEqual({
       command: 'claude',
-      args: ['--model', 'claude-haiku-4-5', '-p', '--output-format', 'stream-json', '--include-partial-messages', '--verbose'],
+      args: ['--model', 'claude-haiku-4-5-20251001', '-p', '--output-format', 'stream-json', '--include-partial-messages', '--verbose'],
       stdinPrompt: 'Summarize this diff',
     });
   });

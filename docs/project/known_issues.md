@@ -18,7 +18,6 @@
 | `ACTIVE_PROVIDER_KEY` | `gitChronicle.activeAIProvider` |
 | `SAVE_PATH_KEY` | `gitChronicle.savePath` |
 | `SUMMARY_MODEL_KEY` | `gitRewind.summaryModelPerProvider` |
-| `QA_MODEL_KEY` | `gitRewind.qaModelPerProvider` |
 
 `docs/project/state_management.md`의 ExtensionContext Memento 표는 이 실제 코드를 그대로 반영한 것이며 문서 오류가 아니다. 키를 `gitChronicle.*`로 통일하려면 기존 사용자의 워크스페이스에 저장된 모델 선택값이 새 키로 마이그레이션되지 않고 초기화된다는 점을 감안해 별도로 처리해야 한다.
 

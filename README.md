@@ -71,11 +71,11 @@ The in-extension settings screen (⚙ icon) exposes additional options not avail
 - **AI provider registration** — detect and register installed CLI tools; only one provider can be active at a time
 - **Model selection** — choose separate models for summary generation and Q&A per provider
 
-| Provider | Default summary model    | Default Q&A model        |
-| -------- | ------------------------ | ------------------------ |
-| Claude   | `claude-haiku-4-5`       | `claude-haiku-4-5`       |
-| Gemini   | `gemini-2.5-flash`       | `gemini-2.5-flash`       |
-| Codex    | `gpt-5.4-mini`           | `gpt-5.4-mini`           |
+| Provider | Default summary model         | Default Q&A model             |
+| -------- | ------------------------------ | ------------------------------ |
+| Claude   | `claude-haiku-4-5-20251001`   | `claude-haiku-4-5-20251001`   |
+| Gemini   | `gemini-2.5-flash`             | `gemini-2.5-flash`             |
+| Codex    | `gpt-5.4-mini`                 | `gpt-5.4-mini`                 |
 
 **Per-project isolation**: active provider, model choices, and save path are workspace-scoped — each project keeps its own configuration. CLI registration is shared globally across all projects.
 

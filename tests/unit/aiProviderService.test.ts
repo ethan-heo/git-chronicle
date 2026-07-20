@@ -79,9 +79,6 @@ describe('aiProviderService per-project settings', () => {
         'gitRewind.summaryModelPerProvider': {
           claude: 'claude-sonnet-5',
         },
-        'gitRewind.qaModelPerProvider': {
-          codex: 'gpt-4o-mini',
-        },
       },
     });
 
@@ -91,7 +88,6 @@ describe('aiProviderService per-project settings', () => {
     expect(state.activeAIProvider).toBe('codex');
     expect(state.savePath).toBe('/workspace/path');
     expect(state.summaryModelPerProvider.claude).toBe('claude-sonnet-5');
-    expect(state.qaModelPerProvider.codex).toBe('gpt-5.4-mini');
   });
 
   it('falls back to configured values when workspaceState is empty', () => {
@@ -130,7 +126,7 @@ describe('aiProviderService per-project settings', () => {
     });
 
     await setActiveAIProvider(context, 'codex');
-    await setAIModel(context, 'codex', 'summary', 'gpt-5.4');
+    await setAIModel(context, 'codex', 'gpt-5.4');
     await setSavePath(context, '/project/notes');
 
     expect(context.globalState.get('gitChronicle.registeredProviders')).toEqual(['claude', 'codex']);
@@ -141,7 +137,7 @@ describe('aiProviderService per-project settings', () => {
     expect(context.workspaceState.get('gitChronicle.activeAIProvider')).toBe('codex');
     expect(context.workspaceState.get('gitChronicle.savePath')).toBe('/project/notes');
     expect(context.workspaceState.get('gitRewind.summaryModelPerProvider')).toEqual({
-      claude: 'claude-haiku-4-5',
+      claude: 'claude-haiku-4-5-20251001',
       gemini: 'gemini-2.5-flash',
       codex: 'gpt-5.4',
     });

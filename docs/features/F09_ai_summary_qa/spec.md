@@ -48,7 +48,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 |------|------|
 | 적용 범위 | F05b 커밋 단위 요약과 파일 트리의 파일 단위 AI 요약. 현재 표시 중인 요약 범위에 맞는 diff를 근거로 답변한다 |
 | 질문 가능 조건 | `isGeneratingSummary = false` 이고 `content !== ''` 이며 현재 스코프에 연결된 저장 노트가 존재 |
-| 모델 선택 | 활성 프로바이더의 `qaModel` 사용 |
+| 모델 선택 | 활성 프로바이더의 `summaryModel` 사용 (요약 생성과 동일 모델) |
 | 프롬프트 입력 | 기존 요약 본문 + 원본 diff + 현재 질문 |
 | 멀티턴 여부 | 미지원. 이전 Q&A는 다음 질문 프롬프트에 포함하지 않음 |
 | 저장 방식 | 기존 저장본 `.md` 파일 끝에 `---` 구분선 뒤 `### Q. ...` 질문/답변 블록 append |
@@ -76,7 +76,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 |------|------|------|
 | `currentSummaryContent` | `string` | 현재 화면에 표시된 요약 본문 |
 | `summaryNoteRelativePath` | `string \| null` | 현재 스코프에 연결된 저장 노트 상대 경로 |
-| `qaModel` | `string \| null` | 활성 프로바이더의 Q&A용 모델 |
+| `summaryModel` | `string \| null` | 활성 프로바이더의 모델 (요약 생성과 공통 사용) |
 | Git diff | `string` | Host가 파일/커밋 기준으로 재조회한 diff |
 
 ---
@@ -107,7 +107,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 | 메시지 | 방향 | 페이로드 |
 |--------|------|---------|
-| `START_AI_QA` | Webview → Host | `{ question, summaryContent, commitHash, commitMessage, filePath?, provider, qaModel, savePath, noteRelativePath }` |
+| `START_AI_QA` | Webview → Host | `{ question, summaryContent, commitHash, commitMessage, filePath?, provider, savePath, noteRelativePath }` |
 | `AI_QA_CHUNK` | Host → Webview | `{ chunk: string }` |
 | `AI_QA_COMPLETE` | Host → Webview | `{ appendedContent: string }` |
 | `AI_QA_ERROR` | Host → Webview | `{ message: string }` |

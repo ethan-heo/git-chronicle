@@ -100,10 +100,10 @@ type WebviewToExtensionMessage =
   | { type: 'FETCH_AI_SUMMARY_SETTINGS' }
   | { type: 'START_AI_SUMMARY_COMMIT'; payload: { commitHash: string; commitMessage?: string; provider?: AIProviderName | null; summaryModel?: string | null; savePath?: string | null; forceRegenerate?: boolean } }
   | { type: 'START_AI_SUMMARY_FILE'; payload: { commitHash: string; commitMessage?: string; filePath: string; provider?: AIProviderName | null; summaryModel?: string | null; savePath?: string | null; forceRegenerate?: boolean } }
-  | { type: 'START_AI_QA'; payload: { question: string; diff?: string; summaryContent: string; commitHash: string; commitMessage?: string; filePath?: string; provider?: AIProviderName | null; qaModel?: string | null; savePath?: string | null; noteRelativePath?: string | null } }
+  | { type: 'START_AI_QA'; payload: { question: string; diff?: string; summaryContent: string; commitHash: string; commitMessage?: string; filePath?: string; provider?: AIProviderName | null; savePath?: string | null; noteRelativePath?: string | null } }
   | { type: 'REGISTER_AI_PROVIDER'; payload: { name: AIProviderName } }
   | { type: 'ACTIVATE_AI_PROVIDER' | 'SET_ACTIVE_AI_PROVIDER'; payload: { name: AIProviderName } }
-  | { type: 'SET_AI_MODEL'; payload: { name: AIProviderName; usage: 'summary' | 'qa'; model: string } }
+  | { type: 'SET_AI_MODEL'; payload: { name: AIProviderName; model: string } }
   | { type: 'OPEN_EXTERNAL_URL'; payload: { url: string } }
   | { type: 'SET_SAVE_PATH' }
   | { type: 'CLEAR_SAVE_PATH' }
@@ -200,9 +200,7 @@ interface AISettingsState {
   activeAIProvider: AIProviderName | null;
   savePath: string | null;
   summaryModel: string | null;
-  qaModel: string | null;
   summaryModelPerProvider: Record<AIProviderName, string | undefined>;
-  qaModelPerProvider: Record<AIProviderName, string | undefined>;
 }
 ```
 

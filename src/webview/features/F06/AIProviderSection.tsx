@@ -11,10 +11,8 @@ interface AIProviderSectionProps {
   registeringProvider: AIProviderName | null;
   providerErrors: Partial<Record<AIProviderName, string>>;
   summaryModel: string | null;
-  qaModel: string | null;
   onProviderClick: (providerName: AIProviderName) => void;
   onSummaryModelChange: (providerName: AIProviderName, model: string) => void;
-  onQAModelChange: (providerName: AIProviderName, model: string) => void;
   onOpenInstall: (url: string) => void;
 }
 
@@ -24,10 +22,8 @@ export const AIProviderSection: FC<AIProviderSectionProps> = ({
   registeringProvider,
   providerErrors,
   summaryModel,
-  qaModel,
   onProviderClick,
   onSummaryModelChange,
-  onQAModelChange,
   onOpenInstall,
 }) => {
   const { t } = useTranslation();
@@ -58,10 +54,8 @@ export const AIProviderSection: FC<AIProviderSectionProps> = ({
             {activeAIProvider === provider.name ? (
               <ModelSelectorGroup
                 summaryModel={summaryModel}
-                qaModel={qaModel}
                 models={AI_PROVIDER_MODELS[provider.name]}
                 onChangeSummaryModel={(model) => onSummaryModelChange(provider.name, model)}
-                onChangeQAModel={(model) => onQAModelChange(provider.name, model)}
               />
             ) : null}
           </AIProviderButton>

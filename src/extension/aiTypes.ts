@@ -7,8 +7,6 @@ export interface AIProviderDefinition {
   checkCommand: string;
 }
 
-export type AIModelUsage = 'summary' | 'qa';
-
 export type AIProviderModelMap = Record<AIProviderName, string>;
 
 export interface AIUsageInfo {
