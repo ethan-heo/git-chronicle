@@ -3,10 +3,15 @@ import type { SummaryLanguage } from './summaryFileService';
 interface PromptLanguageStrings {
   outputLanguage: string;
   vagueExample: string;
+  oneLineSummaryHeading: string;
+  changePurposeHeading: string;
   changePurposeOptions: string;
+  keyPointsHeading: string;
+  keyFilesAndPointsHeading: string;
   changedLabel: string;
   matterLabel: string;
   cautionsHeading: string;
+  technicalRationaleHeading: string;
   inferenceHedge: string;
   otherFilesExample: string;
   fileImportanceExamples: string;
@@ -17,10 +22,15 @@ function getPromptLanguageStrings(language: SummaryLanguage): PromptLanguageStri
     return {
       outputLanguage: 'English',
       vagueExample: 'the code was improved',
+      oneLineSummaryHeading: 'One-line summary',
+      changePurposeHeading: 'Change purpose',
       changePurposeOptions: 'feature addition / bug fix / refactoring / performance improvement / documentation / test coverage / maintenance (build, config, etc.) / style cleanup',
+      keyPointsHeading: 'Key points',
+      keyFilesAndPointsHeading: 'Key files and points',
       changedLabel: 'What changed',
       matterLabel: 'Why it matters',
       cautionsHeading: 'Cautions and impact scope',
+      technicalRationaleHeading: 'Technical rationale, if applicable',
       inferenceHedge: '"appears to be" or "is likely"',
       otherFilesExample: 'N. Other {N} files: (shared characteristic summary)',
       fileImportanceExamples: '"it contains the core logic", "it is the starting point of this change", "it changes a common type referenced by other files"',
@@ -30,10 +40,15 @@ function getPromptLanguageStrings(language: SummaryLanguage): PromptLanguageStri
   return {
     outputLanguage: 'Korean',
     vagueExample: '코드를 개선했습니다',
+    oneLineSummaryHeading: '한 줄 요약',
+    changePurposeHeading: '변경 목적',
     changePurposeOptions: '기능 추가 / 버그 수정 / 리팩터링 / 성능 개선 / 문서화 / 테스트 보강 / 유지보수(빌드·설정 등) / 스타일 정리',
+    keyPointsHeading: '핵심 포인트',
+    keyFilesAndPointsHeading: '핵심 파일과 포인트',
     changedLabel: '바뀐 점',
     matterLabel: '중요한 점',
     cautionsHeading: '주의할 점 및 영향 범위',
+    technicalRationaleHeading: '기술적 근거 (해당 시)',
     inferenceHedge: '"보임" 또는 "추정됨"',
     otherFilesExample: 'N. 그 외 {N}개 파일: (공통 성격 요약)',
     fileImportanceExamples: '"핵심 로직이 있어서", "이 변경의 시작점이라서", "다른 파일이 참조하는 공통 타입이 바뀌어서"',
@@ -66,13 +81,13 @@ ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 - Follow the structure below
 
 ## Output format
-### One-line summary
+### ${s.oneLineSummaryHeading}
 (Summarize the change in one sentence)
 
-### Change purpose
+### ${s.changePurposeHeading}
 (One or more of: ${s.changePurposeOptions} — multiple allowed, described in plain language, not developer shorthand like "feat"/"fix". Explain why, citing the diff)
 
-### Key points
+### ${s.keyPointsHeading}
 - Select only the points that truly matter for understanding the change; skip trivial details
 - Order the numbered list from most to least important, so the first item is what the reader should notice first
 - List points as a numbered list. Each numbered item is the function/variable name or line, followed by two nested unordered sub-bullets, exactly in this shape:
@@ -83,7 +98,7 @@ ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ### ${s.cautionsHeading}
 (Optional. Note any cautions, likely callers/exports/tests/configs that may need follow-up, or places that could be affected based only on this file's diff. If nothing notable stands out, omit this section)
 
-### Technical rationale, if applicable
+### ${s.technicalRationaleHeading}
 (Explain any notable implementation choices or patterns)
 
 ## diff
@@ -119,13 +134,13 @@ ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 - Follow the structure below
 
 ## Output format
-### One-line summary
+### ${s.oneLineSummaryHeading}
 (Summarize the work in one sentence)
 
-### Change purpose
+### ${s.changePurposeHeading}
 (One or more of: ${s.changePurposeOptions} — multiple allowed, described in plain language, not developer shorthand like "feat"/"fix". Explain why, citing the diff)
 
-### Key files and points
+### ${s.keyFilesAndPointsHeading}
 - Use the file-size table (--stat summary) at the top of the diff below to judge which files matter most
 - Order the numbered list from most to least important, so the file that most drives the commit's purpose comes first
 - List files with substantial changes as a numbered list. Each numbered item is the file name, followed by two nested unordered sub-bullets, exactly in this shape:
@@ -139,7 +154,7 @@ ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ### ${s.cautionsHeading}
 (Optional. Note any breaking-change risk, affected modules/callers/configs, migration or follow-up work, or suspicious mixed concerns that deserve extra review. If nothing notable stands out, omit this section)
 
-### Technical rationale, if applicable
+### ${s.technicalRationaleHeading}
 (Explain any notable implementation choices or patterns, referencing specific code)
 
 ## diff

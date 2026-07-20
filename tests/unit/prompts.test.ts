@@ -7,7 +7,11 @@ describe('prompts language handling', () => {
 
     expect(prompt).toContain('Output language: Korean');
     expect(prompt).toContain('바뀐 점');
+    expect(prompt).toContain('### 한 줄 요약');
+    expect(prompt).toContain('### 변경 목적');
+    expect(prompt).toContain('### 핵심 파일과 포인트');
     expect(prompt).toContain('### 주의할 점 및 영향 범위');
+    expect(prompt).toContain('### 기술적 근거 (해당 시)');
   });
 
   it('switches the commit prompt to English labels when language is "en"', () => {
@@ -16,9 +20,23 @@ describe('prompts language handling', () => {
     expect(prompt).toContain('Output language: English');
     expect(prompt).toContain('What changed');
     expect(prompt).toContain('Why it matters');
+    expect(prompt).toContain('### One-line summary');
+    expect(prompt).toContain('### Change purpose');
+    expect(prompt).toContain('### Key files and points');
     expect(prompt).toContain('### Cautions and impact scope');
+    expect(prompt).toContain('### Technical rationale, if applicable');
     expect(prompt).not.toContain('바뀐 점');
     expect(prompt).not.toContain('중요한 점');
+  });
+
+  it('localizes the file prompt headings to Korean by default', () => {
+    const prompt = buildFileSummaryPrompt('src/App.tsx', 'diff content');
+
+    expect(prompt).toContain('### 한 줄 요약');
+    expect(prompt).toContain('### 변경 목적');
+    expect(prompt).toContain('### 핵심 포인트');
+    expect(prompt).toContain('### 주의할 점 및 영향 범위');
+    expect(prompt).toContain('### 기술적 근거 (해당 시)');
   });
 
   it('switches the file prompt to English labels when language is "en"', () => {
@@ -26,6 +44,7 @@ describe('prompts language handling', () => {
 
     expect(prompt).toContain('Output language: English');
     expect(prompt).toContain('What changed');
+    expect(prompt).toContain('### Key points');
     expect(prompt).toContain('### Cautions and impact scope');
   });
 

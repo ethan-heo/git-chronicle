@@ -70,7 +70,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 ## 기본 프롬프트 (커밋 단위)
 
-실제 템플릿은 [prompts.ts의 `buildCommitSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다. 지시문은 항상 영어로 작성되고, 아래는 `language` 인자가 기본값 `'ko'`일 때의 예시다. `language`가 `'en'`이면 `Output language`, `바뀐 점`/`중요한 점`, `주의할 점 및 영향 범위` 헤더, 예시 문구들이 영어 대응 문구로 치환된다(`getPromptLanguageStrings()` 참고) — `## Conditions`/`## Output format`/`## diff` 같은 프롬프트 자체의 섹션 제목은 언어와 무관하게 항상 영어로 고정된다.
+실제 템플릿은 [prompts.ts의 `buildCommitSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다. 지시문은 항상 영어로 작성되고, 아래는 `language` 인자가 기본값 `'ko'`일 때의 예시다. `language`가 `'en'`이면 `Output language`, `### 한 줄 요약`/`### 변경 목적`/`### 핵심 파일과 포인트`/`### 주의할 점 및 영향 범위`/`### 기술적 근거 (해당 시)` 등 `## Output format` 아래의 출력 섹션 헤더 전부와 `바뀐 점`/`중요한 점` 라벨, 예시 문구들이 영어 대응 문구로 치환된다(`getPromptLanguageStrings()` 참고) — `## Conditions`/`## Output format`/`## diff` 같은 프롬프트 자체의 메타 섹션 제목만 언어와 무관하게 항상 영어로 고정된다.
 
 ```
 Here is the diff for all files changed in a Git commit.
@@ -93,13 +93,13 @@ Commit message: {commitMessage}
 - Follow the structure below
 
 ## Output format
-### One-line summary
+### 한 줄 요약
 (Summarize the work in one sentence)
 
-### Change purpose
+### 변경 목적
 (One or more of: 기능 추가 / 버그 수정 / 리팩터링 / 성능 개선 / 문서화 / 테스트 보강 / 유지보수(빌드·설정 등) / 스타일 정리 — multiple allowed, described in plain Korean, not developer shorthand like "feat"/"fix". Explain why, citing the diff)
 
-### Key files and points
+### 핵심 파일과 포인트
 - Use the file-size table (--stat summary) at the top of the diff below to judge which files matter most
 - Order the numbered list from most to least important, so the file that most drives the commit's purpose comes first
 - List files with substantial changes as a numbered list. Each numbered item is the file name, followed by two nested unordered sub-bullets, exactly in this shape:
@@ -113,7 +113,7 @@ Commit message: {commitMessage}
 ### 주의할 점 및 영향 범위
 (Optional. Note any breaking-change risk, affected modules/callers/configs, migration or follow-up work, or suspicious mixed concerns that deserve extra review. If nothing notable stands out, omit this section)
 
-### Technical rationale, if applicable
+### 기술적 근거 (해당 시)
 (Explain any notable implementation choices or patterns, referencing specific code)
 
 ## diff
@@ -148,13 +148,13 @@ Commit message: {commitMessage}
 - Follow the structure below
 
 ## Output format
-### One-line summary
+### 한 줄 요약
 (Summarize the change in one sentence)
 
-### Change purpose
+### 변경 목적
 (One or more of: 기능 추가 / 버그 수정 / 리팩터링 / 성능 개선 / 문서화 / 테스트 보강 / 유지보수(빌드·설정 등) / 스타일 정리 — multiple allowed, described in plain Korean, not developer shorthand like "feat"/"fix". Explain why, citing the diff)
 
-### Key points
+### 핵심 포인트
 - Select only the points that truly matter for understanding the change; skip trivial details
 - Order the numbered list from most to least important, so the first item is what the reader should notice first
 - List points as a numbered list. Each numbered item is the function/variable name or line, followed by two nested unordered sub-bullets, exactly in this shape:
@@ -165,7 +165,7 @@ Commit message: {commitMessage}
 ### 주의할 점 및 영향 범위
 (Optional. Note any cautions, likely callers/exports/tests/configs that may need follow-up, or places that could be affected based only on this file's diff. If nothing notable stands out, omit this section)
 
-### Technical rationale, if applicable
+### 기술적 근거 (해당 시)
 (Explain any notable implementation choices or patterns)
 
 ## diff
