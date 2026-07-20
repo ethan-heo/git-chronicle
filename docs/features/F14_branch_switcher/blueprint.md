@@ -26,7 +26,7 @@ BranchesSection
 
 - `SidebarSection` 래퍼를 사용한다.
 - S02의 `SidebarSectionGroup` 최상단에 배치된다.
-- 기본 펼침 상태는 `true`, 기본 높이는 `160px`.
+- 기본 펼침 상태는 `true`, 기본 높이는 `140px`.
 - 헤더 우측 액션으로 `FetchBranchesButton`을 가진다.
 
 ### `BranchList`
