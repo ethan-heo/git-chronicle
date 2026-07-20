@@ -10,3 +10,9 @@ export interface AIProviderDefinition {
 export type AIModelUsage = 'summary' | 'qa';
 
 export type AIProviderModelMap = Record<AIProviderName, string>;
+
+export interface AIUsageInfo {
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number | null;
+}

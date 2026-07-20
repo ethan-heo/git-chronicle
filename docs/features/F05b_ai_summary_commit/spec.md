@@ -50,7 +50,8 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 항목 | 내용 |
 |------|------|
 | 입력 | 커밋 내 전체 파일 diff 합산 + 커밋 메시지(목적 분류 힌트로 프롬프트에 포함) |
-| 처리 | 설정된 AI CLI에 커밋 단위 프롬프트 + 전체 diff 전달 (`child_process.spawn` 스트리밍) |
+| 출력 언어 결정 | 프롬프트 지시문 자체는 항상 영어로 작성된다. 실제 출력 언어(한국어/영어)는 `vscode.env.language`를 읽는 `getCurrentSummaryLanguage()`(`messageHandler/shared.ts`)로 결정되며, `ko`로 시작하지 않으면 영어로 전환된다. F09 Q&A 프롬프트도 동일 기준을 따른다 |
+| 처리 | 커밋 단위는 `--stat -p` 전체 diff에서 lockfile / 빌드 산출물 / 생성 파일 / 500줄 초과 단일 파일 diff를 `[diff omitted: reason]` 마커로 치환한 뒤, 설정된 AI CLI에 커밋 단위 프롬프트 + 필터링된 diff를 전달한다. 파일 단위는 사용자가 직접 연 파일이므로 필터링 없이 전체 diff를 그대로 전달한다 |
 | CLI 실행 옵션 | Claude는 `-p`, Gemini는 `--skip-trust --prompt`, Codex는 `exec --skip-git-repo-check` 조합으로 비대화형 실행 |
 | 출력 | 마크다운 형식의 커밋 종합 요약 (스트리밍 타이핑 효과로 실시간 표시) |
 | 저장 | 자동 저장하지 않는다. 사용자가 명시적으로 [저장]을 눌렀을 때만 저장 버튼에 앵커링된 팝오버에서 상대 경로를 입력해 `{savePath}` 아래 저장하며, 실제 파일명 확장자는 항상 `.ai.md`로 치환한다 |
@@ -59,15 +60,17 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 복사 | 완료된 요약 본문 일부를 드래그해 복사하면 렌더링된 plain text가 아니라 해당 범위의 원본 마크다운 문자열 조각이 클립보드에 기록된다 |
 | Code block copy | fenced code block 위에 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 클립보드에 기록하고 성공 토스트를 표시한다 |
 | Code block highlighting | fenced code block에 언어 태그가 있으면 `shiki` 기반 문법 강조를 적용한다. 지원 언어는 기존 웹 중심 세트(css/html/javascript/json/jsx/markdown/mdx/tsx/typescript/yaml)에 `bash`, `python`, `sql`, `diff`를 추가한 범위를 따른다 |
+| Mermaid diagram 생성 | 커밋/파일 요약 모두 흐름·상태 전환·구조 관계 등 비trivial한 변경으로 AI가 판단하면 관련 섹션(주로 Key files and points/Key points 또는 Technical rationale) 안에 Mermaid 다이어그램을 프롬프트 지시로 조건부 포함시킨다. 포매팅·단순 리네임 등 사소한 변경에는 포함하지 않는다. 표현해야 할 관계가 여러 개(예: before/after 비교, 서로 무관한 두 흐름)면 하나의 다이어그램에 subgraph로 몰아넣지 않고 각각 별도의 Mermaid fenced block으로 분리한다 |
 | Mermaid preview | ```` ```mermaid ```` 코드블록은 다이어그램 preview로 렌더링되며, preview 상태에서도 hover 복사 버튼 또는 preview 선택 복사로 원본 Mermaid 마크다운 블록 복사가 가능해야 하고, 복사 버튼 클릭 시 성공 토스트를 표시한다 |
-| 토큰 한계 초과 | "diff가 큽니다. AI가 일부를 생략할 수 있습니다" 안내 표시 후 그대로 호출 |
+| 토큰 사용량 표시 | Claude·Codex로 새로 생성이 완료되면 헤더에 `입력 N / 출력 M` 사용량을 표시한다. Claude는 비용(`$x.xxxx`)도 함께 표시하고, Gemini·저장본 즉시 로드·Q&A에는 표시하지 않는다 |
+| 토큰 한계 초과 | 커밋 단위는 필터링된 diff 길이를 기준으로 "diff가 큽니다. AI가 일부를 생략할 수 있습니다" 안내를 표시한 뒤 호출 |
 | 실패 / 타임아웃 | 타임아웃 120초. 실패 시 "생성에 실패했습니다" 오류 메시지 + [재시도] 버튼 표시 |
 
 ---
 
 ## 기본 프롬프트 (커밋 단위)
 
-실제 템플릿은 [prompts.ts의 `buildCommitSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다. 지시문은 영어, 출력 조건에 명시된 결과물은 한국어로 생성된다.
+실제 템플릿은 [prompts.ts의 `buildCommitSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다. 지시문은 항상 영어로 작성되고, 아래는 `language` 인자가 기본값 `'ko'`일 때의 예시다. `language`가 `'en'`이면 `Output language`, `바뀐 점`/`중요한 점`, `주의할 점 및 영향 범위` 헤더, 예시 문구들이 영어 대응 문구로 치환된다(`getPromptLanguageStrings()` 참고) — `## Conditions`/`## Output format`/`## diff` 같은 프롬프트 자체의 섹션 제목은 언어와 무관하게 항상 영어로 고정된다.
 
 ```
 Here is the diff for all files changed in a Git commit.
@@ -83,6 +86,9 @@ Commit message: {commitMessage}
 - Focus on intent and context rather than translating code line by line
 - Use the commit message as a hint for intent, but verify it against the actual diff and call out any mismatch
 - Avoid vague statements like "코드를 개선했습니다"; cite actual function/variable names, file paths, or concrete before → after behavior
+- If the diff contains a line like "[diff omitted: reason]", do not invent omitted details. Mention that file under the final "그 외 N개 파일" group with the omission reason when relevant
+- If the commit introduces a non-trivial flow, call sequence, or structural relationship between files/functions (e.g. a new data flow, an architecture change, a before → after control-flow shift), include a small Mermaid diagram (```mermaid fenced block) inside whichever section below best explains it (commonly the per-file breakdown or the implementation-rationale note) — in addition to the prose explanation. Skip diagrams entirely for trivial changes (formatting, renames, single-line fixes, config tweaks, dependency bumps)
+- If more than one relationship needs a diagram (e.g. a before/after comparison, or two unrelated flows across different files), use a separate ```mermaid fenced block for each one instead of combining them into a single diagram with multiple subgraphs — one diagram per concern
 - If inference is needed, phrase it as "보임" or "추정됨"
 - Follow the structure below
 
@@ -101,7 +107,11 @@ Commit message: {commitMessage}
      - 바뀐 점: (what changed, citing concrete names or paths)
      - 중요한 점: (why this file matters: its role in the commit's purpose, e.g. "핵심 로직이 있어서", "이 변경의 시작점이라서", "다른 파일이 참조하는 공통 타입이 바뀌어서")
 - If more than 5 files changed, group minor ones (formatting, lockfiles, generated code, or small unrelated edits) into one final numbered item without sub-bullets, e.g. "N. 그 외 {N}개 파일: (공통 성격 요약)"
+- When omitted diff markers appear, include each omitted file name and omission reason (lockfile / build-artifact / generated / oversized) in that final grouped item instead of guessing the hidden contents
 - If 5 or fewer files changed, list all of them individually without grouping
+
+### 주의할 점 및 영향 범위
+(Optional. Note any breaking-change risk, affected modules/callers/configs, migration or follow-up work, or suspicious mixed concerns that deserve extra review. If nothing notable stands out, omit this section)
 
 ### Technical rationale, if applicable
 (Explain any notable implementation choices or patterns, referencing specific code)
@@ -116,7 +126,7 @@ Commit message: {commitMessage}
 
 ## 기본 프롬프트 (파일 단위)
 
-S02 `code` 탭 내부의 파일 AI 요약 토글([F02_ChangedFileTree](../F02_changed_file_tree/spec.md), [design_principles.md](../../core/design_principles.md))이 호출하는 프롬프트다. `useAISummary`가 commit/file 스코프를 함께 다루므로 이 문서에 함께 둔다. 실제 템플릿은 [prompts.ts의 `buildFileSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다.
+S02 `code` 탭 내부의 파일 AI 요약 토글([F02_ChangedFileTree](../F02_changed_file_tree/spec.md), [design_principles.md](../../core/design_principles.md))이 호출하는 프롬프트다. `useAISummary`가 commit/file 스코프를 함께 다루므로 이 문서에 함께 둔다. 실제 템플릿은 [prompts.ts의 `buildFileSummaryPrompt`](../../../src/extension/prompts.ts)가 유일한 출처다. 언어 처리 방식은 위 커밋 단위 프롬프트와 동일하다.
 
 ```
 Here is the diff for a file changed in a Git commit.
@@ -131,6 +141,9 @@ Commit message: {commitMessage}
 - Focus on intent and context rather than translating code line by line
 - Use the commit message only as background context for why this file was touched — not as grounds for classifying Change purpose or selecting Key points, which must be judged from this file's own diff. If the commit message's overall intent doesn't match what this file's diff actually shows, call out the mismatch
 - Avoid vague statements like "코드를 개선했습니다"; cite actual function/variable names or concrete before → after behavior
+- Keep any caution/impact-scope analysis strictly scoped to what can be inferred from this file's own diff. Do not claim cross-file impact unless this file itself clearly signals it
+- If this file's change involves a non-trivial internal flow, state transition, or call/dependency relationship (e.g. control flow restructuring, a new state machine, a changed call chain), include a small Mermaid diagram (```mermaid fenced block) inside whichever section below best explains it (commonly the points list or the implementation-rationale note) — in addition to the prose explanation. Skip diagrams entirely for trivial changes (formatting, renames, single-line fixes, config tweaks, dependency bumps)
+- If more than one relationship needs a diagram (e.g. a before/after comparison, or two unrelated flows), use a separate ```mermaid fenced block for each one instead of combining them into a single diagram with multiple subgraphs — one diagram per concern
 - If inference is needed, phrase it as "보임" or "추정됨"
 - Follow the structure below
 
@@ -148,6 +161,9 @@ Commit message: {commitMessage}
   1. `{function/variable name or line}`
      - 바뀐 점: (what changed)
      - 중요한 점: (why this matters: what problem it solves or what behavior it changes)
+
+### 주의할 점 및 영향 범위
+(Optional. Note any cautions, likely callers/exports/tests/configs that may need follow-up, or places that could be affected based only on this file's diff. If nothing notable stands out, omit this section)
 
 ### Technical rationale, if applicable
 (Explain any notable implementation choices or patterns)

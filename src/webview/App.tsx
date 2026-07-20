@@ -4,7 +4,7 @@ import { isVSCodeRuntime, postMessage } from './bridge/vscodeApi';
 import { ToastContainer } from './shared/components';
 import { RouteSlotProvider } from './shared/route/RouteSlotContext';
 import { useAppStore } from './store/appStore';
-import type { AIProviderName, RouteTransitionDirection, ScreenID } from './types/commit';
+import type { AIProviderName, AIUsageInfo, RouteTransitionDirection, ScreenID } from './types/commit';
 
 const ROUTE_TRANSITION_DURATION_MS = 200;
 
@@ -20,6 +20,7 @@ interface WebviewEventPayload {
   savedPath?: string | null;
   noteRelativePath?: string | null;
   provider?: AIProviderName | null;
+  usage?: AIUsageInfo | null;
   message?: string;
 }
 
@@ -106,6 +107,7 @@ export const App: FC = () => {
           savedPath: event.data.payload?.savedPath ?? null,
           noteRelativePath: event.data.payload?.noteRelativePath ?? null,
           provider: event.data.payload?.provider ?? null,
+          usage: event.data.payload?.usage ?? null,
           scope: 'commit',
           commitHash: activeSummaryCommitHash,
           targetKey: activeSummaryTargetKey,

@@ -23,6 +23,7 @@ flowchart TD
 
 const baseProps = {
   content: MERMAID_CONTENT,
+  usage: null,
   error: null,
   isLoading: false,
   isGenerating: false,

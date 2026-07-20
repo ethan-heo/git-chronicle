@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { AISummaryViewer } from '../../src/webview/features/F05b/AISummaryViewer';
 
 const baseProps = {
-  content: '',
+  content: '### 한 줄 요약\n\n정리한 커밋.',
   usage: null,
   error: null,
   isLoading: false,
   isGenerating: false,
   isGeneratingQA: false,
-  hasSavedSummary: false,
+  hasSavedSummary: true,
   hasAIProvider: true,
   hasSavePath: true,
   savedPath: null,
@@ -21,27 +21,27 @@ const baseProps = {
   onRetry: () => {},
 } satisfies React.ComponentProps<typeof AISummaryViewer>;
 
-describe('AISummaryViewer hooks', () => {
-  it('keeps rendering when moving from loading state to loaded content', () => {
-    const { rerender } = render(
+describe('AISummaryViewer usage badge', () => {
+  it('shows usage before the action buttons when generation is complete', () => {
+    render(
       <AISummaryViewer
         {...baseProps}
-        isLoading
+        usage={{ inputTokens: 1234, outputTokens: 567, costUsd: 0.0123 }}
       />,
     );
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('ai_summary.usage_in · ai_summary.usage_out · ai_summary.usage_cost')).toBeInTheDocument();
+  });
 
-    rerender(
+  it('hides usage while generation is still in progress', () => {
+    render(
       <AISummaryViewer
         {...baseProps}
-        content="한 줄 요약\n\n정리한 커밋."
+        isGenerating
+        usage={{ inputTokens: 1234, outputTokens: 567, costUsd: null }}
       />,
     );
 
-    const region = screen.getByRole('region', { name: 'ai_summary.ai_result' });
-    expect(region).toBeInTheDocument();
-    expect(region).toHaveTextContent('한 줄 요약');
-    expect(region).toHaveTextContent('정리한 커밋.');
+    expect(screen.queryByLabelText('ai_summary.usage_badge_aria')).not.toBeInTheDocument();
   });
 });

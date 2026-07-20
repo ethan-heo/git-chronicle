@@ -178,7 +178,11 @@
     "qa_loading": "Generating answer...",
     "thinking": "Thinking",
     "commit_full_summary": "Full commit summary",
-    "generating_badge_aria": "Generating AI summary"
+    "generating_badge_aria": "Generating AI summary",
+    "usage_badge_aria": "AI token usage: {{usage}}",
+    "usage_in": "{{count}} in",
+    "usage_out": "{{count}} out",
+    "usage_cost": "${{amount}}"
   },
   "action_bar": {
     "commit_ai_aria": "Summarize the entire commit with AI",

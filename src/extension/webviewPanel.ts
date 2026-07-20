@@ -6,10 +6,13 @@ export class GitChroniclePanel {
   private static currentPanel: GitChroniclePanel | undefined;
   private readonly panel: vscode.WebviewPanel;
   private readonly disposables: vscode.Disposable[] = [];
+  private appliedScriptFile: string;
 
   private constructor(panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
     this.panel = panel;
-    this.panel.webview.html = this.getHtmlForWebview(context.extensionUri, vscode.env.language);
+    const entry = readManifestEntry(context.extensionUri);
+    this.appliedScriptFile = entry.file;
+    this.panel.webview.html = this.getHtmlForWebview(context.extensionUri, vscode.env.language, entry);
 
     registerMessageHandler(this.panel, context);
 
@@ -20,11 +23,19 @@ export class GitChroniclePanel {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
     if (GitChroniclePanel.currentPanel) {
-      GitChroniclePanel.currentPanel.panel.webview.html = GitChroniclePanel.currentPanel.getHtmlForWebview(
-        context.extensionUri,
-        vscode.env.language,
-      );
-      GitChroniclePanel.currentPanel.panel.reveal(column);
+      const current = GitChroniclePanel.currentPanel;
+      const latestEntry = readManifestEntry(context.extensionUri);
+
+      // 웹뷰가 이미 최신 빌드를 서빙 중이면 webview.html을 다시 대입하지 않는다. html 재대입은
+      // 웹뷰 스크립트 전체를 처음부터 다시 실행시키므로(acquireVsCodeApi() 재호출 등), 그 사이
+      // 이전 스크립트 컨텍스트에서 진행 중이던 작업(AI 요약 스트리밍, Mermaid 렌더링 등)과
+      // 경쟁하며 "An instance of the VS Code API has already been acquired" 같은 오류를 낼 수 있다.
+      if (latestEntry.file !== current.appliedScriptFile) {
+        current.appliedScriptFile = latestEntry.file;
+        current.panel.webview.html = current.getHtmlForWebview(context.extensionUri, vscode.env.language, latestEntry);
+      }
+
+      current.panel.reveal(column);
       return;
     }
 
@@ -63,16 +74,10 @@ export class GitChroniclePanel {
     }
   }
 
-  private getHtmlForWebview(extensionUri: vscode.Uri, language: string): string {
+  private getHtmlForWebview(extensionUri: vscode.Uri, language: string, entry: ManifestEntry): string {
     const webview = this.panel.webview;
-    const scriptPath = vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'assets', 'index.js');
-    const stylePath = vscode.Uri.joinPath(extensionUri, 'dist', 'webview', 'assets', 'index.css');
-    // vite가 index.js/index.css를 콘텐츠 해시 없이 고정 파일명으로 내보내기 때문에, 빌드를
-    // 다시 해도 URI 문자열이 그대로면 webview(Electron/Chromium)가 이전 빌드를 캐시에서 계속
-    // 서빙할 수 있다. 빌드 파일의 mtime을 쿼리로 붙여 재빌드마다 URI 자체가 바뀌도록 한다.
-    const cacheBuster = getCacheBuster(scriptPath.fsPath);
-    const scriptUri = `${webview.asWebviewUri(scriptPath).toString()}?v=${cacheBuster}`;
-    const styleUri = `${webview.asWebviewUri(stylePath).toString()}?v=${cacheBuster}`;
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'webview', entry.file)).toString();
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'webview', entry.css[0])).toString();
     const normalizedLanguage = normalizeLanguage(language);
     const nonce = getNonce();
 
@@ -109,10 +114,20 @@ function normalizeLanguage(language: string): 'en' | 'ko' {
   return language.toLowerCase().startsWith('ko') ? 'ko' : 'en';
 }
 
-function getCacheBuster(filePath: string): number {
-  try {
-    return fs.statSync(filePath).mtimeMs;
-  } catch {
-    return Date.now();
-  }
+interface ManifestEntry {
+  file: string;
+  css: string[];
+}
+
+// Vite가 콘텐츠 해시를 파일명에 포함시켜 내보내므로(예: index-B7CiKlxg.js), 빌드가 바뀌면
+// 파일명 자체가 바뀌어 별도의 캐시 버스팅 없이도 항상 최신 빌드가 로드된다. 이 해시 파일명은
+// Mermaid 다이어그램 청크 등 다른 청크가 엔트리를 참조할 때도 Rollup이 동일하게 사용하므로,
+// 엔트리 스크립트 URL에 쿼리 스트링을 임의로 붙이면 청크의 상대 경로 import("./index-*.js")와
+// URL이 어긋나 브라우저가 엔트리를 두 번 로드·실행하게 된다(acquireVsCodeApi() 중복 호출로 인한
+// "already been acquired" 오류의 원인이었다). 그래서 manifest에 기록된 실제 파일명을 그대로 쓴다.
+function readManifestEntry(extensionUri: vscode.Uri): ManifestEntry {
+  const manifestPath = vscode.Uri.joinPath(extensionUri, 'dist', 'webview', '.vite', 'manifest.json');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath.fsPath, 'utf-8')) as Record<string, ManifestEntry>;
+
+  return manifest['index.html'];
 }

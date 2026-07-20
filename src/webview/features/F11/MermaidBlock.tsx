@@ -103,6 +103,13 @@ export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
           return;
         }
 
+        // eslint-disable-next-line no-console
+        console.error('[MermaidBlock] render failed', cacheKey);
+        // eslint-disable-next-line no-console
+        console.error('[MermaidBlock] error.stack:', renderError instanceof Error ? renderError.stack : String(renderError));
+        // eslint-disable-next-line no-console
+        console.error('[MermaidBlock] failing code:', code);
+
         const fallbackSvg = renderedDiagramCache.get(cacheKey) ?? null;
         setSvgMarkup(fallbackSvg);
         setError(renderError instanceof Error ? renderError.message : 'Mermaid diagram could not be rendered.');

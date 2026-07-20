@@ -77,8 +77,11 @@ src/extension/
 ├── aiProviderService.ts              # AI 프로바이더/모델 선택 상태(AISettingsState) 관리
 │   - registerAIProvider / setActiveAIProvider / setAIModel / setSavePath
 ├── prompts.ts                        # AI 정리 프롬프트 빌더
-│   - buildCommitSummaryPrompt(commitHash, diff)
+│   - buildFileSummaryPrompt(filePath, diff, commitMessage?)
+│   - buildCommitSummaryPrompt(commitHash, diff, commitMessage?)
 │   - buildSummaryQAPrompt(summaryContent, diff, question)  # F09 Q&A
+├── diffFilterService.ts              # 커밋 단위 AI 요약용 diff 생략 필터
+│   - filterDiffForSummary(diff)      # lockfile/빌드 산출물/생성 파일/초대형 diff를 [diff omitted:*] 마커로 치환
 ├── noteFileService.ts                # 독립 노트 파일 트리/읽기/쓰기/이동/삭제 (F11)
 ├── summaryFileService.ts             # AI 정리 파일 읽기/쓰기/존재 확인
 │   - SummarySaveError                # 저장 경로 생성/쓰기 실패 전용 오류

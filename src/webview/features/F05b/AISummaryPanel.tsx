@@ -28,6 +28,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({
   const {
     activeAIProvider,
     currentSummaryContent,
+    currentSummaryUsage,
     hasCurrentSavedSummary,
     hasLoadedSettings,
     isGeneratingQA,
@@ -68,6 +69,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({
       />
       <AISummaryViewer
         content={currentSummaryContent}
+        usage={currentSummaryUsage}
         error={summaryError}
         isLoading={!hasLoadedSettings || isLoadingSummary || !isActive}
         isGenerating={isGeneratingSummary}

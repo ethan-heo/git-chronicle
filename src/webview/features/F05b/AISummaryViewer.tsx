@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { rehypeAnnotateSourceOffsets } from './rehypeAnnotateSourceOffsets';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
+import type { AIUsageInfo } from '../../types/commit';
 import { EmptyState, ErrorState } from '../../shared/components';
 import { HighlightedCode } from '../../shared/highlighter';
 import { QAInputArea } from '../F09/QAInputArea';
@@ -16,6 +17,7 @@ import './AISummaryViewer.css';
 
 interface AISummaryViewerProps {
   content: string;
+  usage: AIUsageInfo | null;
   error: string | null;
   isLoading: boolean;
   isGenerating: boolean;
@@ -39,6 +41,7 @@ interface AISummaryViewerProps {
 
 export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   content,
+  usage,
   error,
   isLoading,
   isGenerating,
@@ -59,6 +62,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const { t } = useTranslation();
   const summaryEndRef = useRef<HTMLDivElement | null>(null);
   const markdownContainerRef = useMarkdownSourceCopy(content);
+  const usageLabel = usage ? formatUsageLabel(usage, t) : null;
 
   const showRegenerate = Boolean(content) || isGenerating;
   const canAskQuestion = !isGenerating && Boolean(content) && hasSavedSummary;
@@ -216,6 +220,15 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
           {headerLeading ? <div className="shrink-0">{headerLeading}</div> : null}
         </div>
         <div className="flex items-center gap-1">
+          {!isGenerating && usageLabel ? (
+            <span
+              className="inline-flex h-7 items-center rounded-full border border-line bg-surface px-2.5 text-[11px] font-medium text-muted"
+              aria-label={t('ai_summary.usage_badge_aria', { usage: usageLabel })}
+              title={usageLabel}
+            >
+              {usageLabel}
+            </span>
+          ) : null}
           {!hasSavedSummary && content ? (
             <button
               ref={saveButtonRef}
@@ -313,4 +326,17 @@ function sliceFromPosition(
   }
 
   return content.slice(start, end);
+}
+
+function formatUsageLabel(usage: AIUsageInfo, t: (key: string, options?: Record<string, string | number>) => string): string {
+  const parts = [
+    t('ai_summary.usage_in', { count: usage.inputTokens.toLocaleString() }),
+    t('ai_summary.usage_out', { count: usage.outputTokens.toLocaleString() }),
+  ];
+
+  if (usage.costUsd !== null) {
+    parts.push(t('ai_summary.usage_cost', { amount: usage.costUsd.toFixed(4) }));
+  }
+
+  return parts.join(' · ');
 }

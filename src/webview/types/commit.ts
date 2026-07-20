@@ -91,6 +91,12 @@ export interface SymbolEdge {
 
 export type AIProviderName = 'claude' | 'gemini' | 'codex';
 
+export interface AIUsageInfo {
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number | null;
+}
+
 export type AIProviderButtonState = 'unregistered' | 'registering' | 'active' | 'inactive' | 'error';
 
 export interface AIProvider {

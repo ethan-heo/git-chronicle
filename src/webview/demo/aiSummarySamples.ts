@@ -1,4 +1,4 @@
-import type { AIProviderName } from '../types/commit';
+import type { AIProviderName, AIUsageInfo } from '../types/commit';
 import type { NoteEntry } from '../types/note';
 
 export const DEMO_COMMIT_SUMMARY_HASH = 'a1b2c3d9e';
@@ -51,6 +51,7 @@ export const DEMO_AI_SUMMARY_VIEW_CACHE: Record<string, {
   savedPath: string | null;
   noteRelativePath: string | null;
   provider: AIProviderName | null;
+  usage: AIUsageInfo | null;
   hasSavedSummary: boolean;
 }> = {
   [`${DEMO_COMMIT_SUMMARY_HASH}::__commit__`]: {
@@ -58,6 +59,7 @@ export const DEMO_AI_SUMMARY_VIEW_CACHE: Record<string, {
     savedPath: `.git-author/${DEMO_COMMIT_SUMMARY_NOTE_PATH}`,
     noteRelativePath: DEMO_COMMIT_SUMMARY_NOTE_PATH,
     provider: DEMO_AI_SUMMARY_PROVIDER,
+    usage: null,
     hasSavedSummary: true,
   },
   [`${DEMO_COMMIT_SUMMARY_HASH}::${DEMO_FILE_SUMMARY_PATH}`]: {
@@ -65,6 +67,7 @@ export const DEMO_AI_SUMMARY_VIEW_CACHE: Record<string, {
     savedPath: `.git-author/${DEMO_FILE_SUMMARY_NOTE_PATH}`,
     noteRelativePath: DEMO_FILE_SUMMARY_NOTE_PATH,
     provider: DEMO_AI_SUMMARY_PROVIDER,
+    usage: null,
     hasSavedSummary: true,
   },
 };

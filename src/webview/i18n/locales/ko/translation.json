@@ -178,7 +178,11 @@
     "qa_loading": "답변 생성 중...",
     "thinking": "생각중",
     "commit_full_summary": "커밋 전체 요약",
-    "generating_badge_aria": "AI 생성 중"
+    "generating_badge_aria": "AI 생성 중",
+    "usage_badge_aria": "AI 토큰 사용량: {{usage}}",
+    "usage_in": "입력 {{count}}",
+    "usage_out": "출력 {{count}}",
+    "usage_cost": "${{amount}}"
   },
   "action_bar": {
     "commit_ai_aria": "커밋 전체 AI 정리",

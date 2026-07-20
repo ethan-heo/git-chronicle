@@ -51,6 +51,7 @@ describe('AISummaryViewer source copy', () => {
     render(
       <AISummaryViewer
         content={SUMMARY_CONTENT}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}
@@ -90,6 +91,7 @@ describe('AISummaryViewer source copy', () => {
       <div>
         <AISummaryViewer
           content={SUMMARY_CONTENT}
+          usage={null}
           error={null}
           isLoading={false}
           isGenerating={false}
@@ -127,6 +129,7 @@ describe('AISummaryViewer source copy', () => {
     render(
       <AISummaryViewer
         content={SUMMARY_CONTENT}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}
@@ -168,6 +171,7 @@ describe('AISummaryViewer source copy', () => {
     render(
       <AISummaryViewer
         content={SUMMARY_CONTENT}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}
@@ -206,6 +210,7 @@ describe('AISummaryViewer source copy', () => {
     render(
       <AISummaryViewer
         content={TABLE_CONTENT}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}
@@ -261,6 +266,7 @@ describe('AISummaryViewer source copy', () => {
     const { rerender } = render(
       <AISummaryViewer
         content={SUMMARY_CONTENT}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating
@@ -281,6 +287,7 @@ describe('AISummaryViewer source copy', () => {
     rerender(
       <AISummaryViewer
         content={SUMMARY_CONTENT}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}
@@ -330,6 +337,7 @@ describe('AISummaryViewer source copy', () => {
     render(
       <AISummaryViewer
         content={'```ts\nconst value = 1;\n```'}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}
@@ -379,6 +387,7 @@ describe('AISummaryViewer source copy', () => {
     render(
       <AISummaryViewer
         content={'```mermaid\ngraph TD\n  A --> B\n```'}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}
@@ -413,6 +422,7 @@ describe('AISummaryViewer source copy', () => {
     render(
       <AISummaryViewer
         content={CODE_BLOCK_CONTENT}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}
@@ -455,6 +465,7 @@ describe('AISummaryViewer source copy', () => {
     render(
       <AISummaryViewer
         content={CODE_BLOCK_CONTENT}
+        usage={null}
         error={null}
         isLoading={false}
         isGenerating={false}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useAppStore } from '../../store/appStore';
-import type { AIProviderName, ChangedFile, Commit } from '../../types/commit';
+import type { AIProviderName, AIUsageInfo, ChangedFile, Commit } from '../../types/commit';
 
 const DEMO_COMMIT_SUMMARY = `### 한 줄 요약
 무한 스크롤 로직을 옵저버 기반으로 전환하고 관련 훅과 테스트를 정리한 커밋.
@@ -34,7 +34,7 @@ interface StreamDemoSummaryOptions {
   forceRegenerate: boolean;
   scope: 'commit' | 'file';
   appendChunk: (chunk: string) => void;
-  complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null }) => void;
+  complete: (payload: { content?: string; savedPath?: string | null; provider?: AIProviderName | null; usage?: AIUsageInfo | null }) => void;
 }
 
 export interface QAMessage {
@@ -51,6 +51,7 @@ interface SaveDraft {
 interface UseAISummaryResult {
   activeAIProvider: AIProviderName | null;
   currentSummaryContent: string;
+  currentSummaryUsage: AIUsageInfo | null;
   hasCurrentSavedSummary: boolean;
   hasLoadedSettings: boolean;
   isGeneratingQA: boolean;
@@ -102,6 +103,7 @@ export function useAISummary(options?: {
   const activeSummaryTargetKey = useAppStore((state) => state.activeSummaryTargetKey);
   const summaryViewCache = useAppStore((state) => state.summaryViewCache);
   const currentSummaryContent = useAppStore((state) => state.currentSummaryContent);
+  const currentSummaryUsage = useAppStore((state) => state.currentSummaryUsage);
   const isLoadingSummary = useAppStore((state) => state.isLoadingSummary);
   const isGeneratingSummary = useAppStore((state) => state.isGeneratingSummary);
   const isGeneratingQA = useAppStore((state) => state.isGeneratingQA);
@@ -148,6 +150,7 @@ export function useAISummary(options?: {
   const displayedSummaryContent = isActiveSummaryTarget ? currentSummaryContent : (cachedSummary?.content ?? '');
   const displayedSavedPath = isActiveSummaryTarget ? summarySavedPath : (cachedSummary?.savedPath ?? null);
   const displayedNoteRelativePath = isActiveSummaryTarget ? summaryNoteRelativePath : (cachedSummary?.noteRelativePath ?? null);
+  const displayedSummaryUsage = isActiveSummaryTarget ? currentSummaryUsage : (cachedSummary?.usage ?? null);
   const displayedHasSavedSummary = isActiveSummaryTarget ? hasCurrentSavedSummary : Boolean(cachedSummary?.hasSavedSummary);
   const displayedSummaryError = isActiveSummaryTarget ? summaryError : null;
   const displayedIsLoadingSummary = isActiveSummaryTarget ? isLoadingSummary : false;
@@ -176,6 +179,7 @@ export function useAISummary(options?: {
         appendChunk: appendAISummaryChunk,
         complete: (payload) => completeAISummary({
           ...payload,
+          usage: null,
           scope: summaryScope,
           commitHash: commit.hash,
           targetKey: summaryTargetKey,
@@ -393,6 +397,7 @@ export function useAISummary(options?: {
   return {
     activeAIProvider,
     currentSummaryContent: displayedSummaryContent,
+    currentSummaryUsage: displayedSummaryUsage,
     hasCurrentSavedSummary: displayedHasSavedSummary,
     hasLoadedSettings,
     isGeneratingQA: displayedIsGeneratingQA,

@@ -1,5 +1,5 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
-import type { AIProviderName } from './aiTypes';
+import type { AIProviderName, AIUsageInfo } from './aiTypes';
 
 interface StreamAISummaryOptions {
   provider: AIProviderName;
@@ -7,7 +7,7 @@ interface StreamAISummaryOptions {
   model?: string | null;
   timeoutMs?: number;
   onChunk: (chunk: string) => void;
-  onComplete: () => void;
+  onComplete: (usage: AIUsageInfo | null) => void;
   onError: (message: string) => void;
 }
 
@@ -20,6 +20,8 @@ export function streamAISummary(options: StreamAISummaryOptions): () => void {
   const { command, args, stdinPrompt } = invocation;
   let settled = false;
   let stderr = '';
+  let usage: AIUsageInfo | null = null;
+  let stdoutBuffer = '';
 
   let process: ChildProcessWithoutNullStreams;
 
@@ -44,7 +46,24 @@ export function streamAISummary(options: StreamAISummaryOptions): () => void {
   }, timeoutMs);
 
   process.stdout.on('data', (data: Buffer) => {
-    onChunk(data.toString());
+    const chunk = data.toString();
+
+    if (provider === 'gemini') {
+      onChunk(chunk);
+      return;
+    }
+
+    stdoutBuffer += chunk;
+    const lines = stdoutBuffer.split('\n');
+    stdoutBuffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      if (!line.trim()) {
+        continue;
+      }
+
+      usage = parseProviderJsonLine(provider, line, onChunk, usage);
+    }
   });
 
   process.stderr.on('data', (data: Buffer) => {
@@ -70,7 +89,11 @@ export function streamAISummary(options: StreamAISummaryOptions): () => void {
     clearTimeout(timeout);
 
     if (code === 0) {
-      onComplete();
+      if (provider !== 'gemini' && stdoutBuffer.trim()) {
+        usage = parseProviderJsonLine(provider, stdoutBuffer, onChunk, usage);
+      }
+
+      onComplete(provider === 'gemini' ? null : usage);
       return;
     }
 
@@ -130,7 +153,9 @@ export function getProviderCommand(provider: AIProviderName, model: string | nul
   if (provider === 'claude') {
     return {
       command: 'claude',
-      args: model ? ['--model', model, '-p'] : ['-p'],
+      args: model
+        ? ['--model', model, '-p', '--output-format', 'stream-json', '--include-partial-messages', '--verbose']
+        : ['-p', '--output-format', 'stream-json', '--include-partial-messages', '--verbose'],
       stdinPrompt: prompt,
     };
   }
@@ -144,7 +169,71 @@ export function getProviderCommand(provider: AIProviderName, model: string | nul
 
   return {
     command: 'codex',
-    args: model ? ['exec', '--skip-git-repo-check', '--model', model, '-'] : ['exec', '--skip-git-repo-check', '-'],
+    args: model
+      ? ['exec', '--skip-git-repo-check', '--model', model, '--json', '-']
+      : ['exec', '--skip-git-repo-check', '--json', '-'],
     stdinPrompt: prompt,
   };
+}
+
+export function parseProviderJsonLine(
+  provider: Exclude<AIProviderName, 'gemini'>,
+  line: string,
+  onChunk: (chunk: string) => void,
+  currentUsage: AIUsageInfo | null,
+): AIUsageInfo | null {
+  try {
+    const parsed = JSON.parse(line) as Record<string, unknown>;
+
+    if (provider === 'claude') {
+      // "assistant" events carry the same turn's text already emitted incrementally via
+      // content_block_delta above — handling both would double every chunk.
+      const event = parsed.type === 'stream_event' ? asRecord(parsed.event) : null;
+      const delta = event?.type === 'content_block_delta' ? asRecord(event.delta) : null;
+
+      if (delta?.type === 'text_delta' && typeof delta.text === 'string') {
+        onChunk(delta.text);
+      }
+
+      if (parsed.type === 'result') {
+        const parsedUsage = asRecord(parsed.usage);
+        return toUsageInfo(parsedUsage?.input_tokens, parsedUsage?.output_tokens, parsed.total_cost_usd);
+      }
+
+      return currentUsage;
+    }
+
+    if (parsed.type === 'item.completed') {
+      const item = asRecord(parsed.item);
+      if (item?.type === 'agent_message' && typeof item.text === 'string') {
+        onChunk(item.text);
+      }
+      return currentUsage;
+    }
+
+    if (parsed.type === 'turn.completed') {
+      const parsedUsage = asRecord(parsed.usage);
+      return toUsageInfo(parsedUsage?.input_tokens, parsedUsage?.output_tokens, null);
+    }
+  } catch {
+    return currentUsage;
+  }
+
+  return currentUsage;
+}
+
+function toUsageInfo(inputTokens: unknown, outputTokens: unknown, costUsd: unknown): AIUsageInfo | null {
+  if (typeof inputTokens !== 'number' || typeof outputTokens !== 'number') {
+    return null;
+  }
+
+  return {
+    inputTokens,
+    outputTokens,
+    costUsd: typeof costUsd === 'number' ? costUsd : null,
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null ? value as Record<string, unknown> : null;
 }

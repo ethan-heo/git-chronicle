@@ -1,8 +1,20 @@
 import type { StateCreator } from 'zustand';
 import { isVSCodeRuntime } from '../../bridge/vscodeApi';
 import { DEMO_AI_SUMMARY_VIEW_CACHE } from '../../demo/aiSummarySamples';
-import type { AIProviderName } from '../../types/commit';
+import type { AIProviderName, AIUsageInfo } from '../../types/commit';
 import type { AppState } from '../appStore';
+
+interface CachedSummaryEntry {
+  content: string;
+  savedPath: string | null;
+  noteRelativePath: string | null;
+  provider: AIProviderName | null;
+  usage: AIUsageInfo | null;
+}
+
+interface SummaryViewCacheEntry extends CachedSummaryEntry {
+  hasSavedSummary: boolean;
+}
 
 export interface AISlice {
   savePath: string | null;
@@ -11,6 +23,7 @@ export interface AISlice {
   summaryModel: string | null;
   qaModel: string | null;
   currentSummaryContent: string;
+  currentSummaryUsage: AIUsageInfo | null;
   isLoadingSummary: boolean;
   isGeneratingSummary: boolean;
   isGeneratingQA: boolean;
@@ -22,15 +35,15 @@ export interface AISlice {
   isSummaryTokenLimitExceeded: boolean;
   activeSummaryCommitHash: string | null;
   activeSummaryTargetKey: string | null;
-  completedSummaryCache: Record<string, { content: string; savedPath: string | null; noteRelativePath: string | null; provider: AIProviderName | null }>;
-  summaryViewCache: Record<string, { content: string; savedPath: string | null; noteRelativePath: string | null; provider: AIProviderName | null; hasSavedSummary: boolean }>;
+  completedSummaryCache: Record<string, CachedSummaryEntry>;
+  summaryViewCache: Record<string, SummaryViewCacheEntry>;
 
   setAISummarySettings: (settings: { savePath?: string | null; registeredProviders?: AIProviderName[]; activeAIProvider?: AIProviderName | null; summaryModel?: string | null; qaModel?: string | null }) => void;
   resetAISummary: () => void;
   startAISummaryLoading: (options?: { preserveSavedSummary?: boolean; commitHash?: string | null; targetKey?: string | null }) => void;
   startAISummaryGeneration: (options?: { preserveSavedSummary?: boolean; commitHash?: string | null; targetKey?: string | null }) => void;
   appendAISummaryChunk: (chunk: string) => void;
-  completeAISummary: (payload: { content?: string; savedPath?: string | null; noteRelativePath?: string | null; provider?: AIProviderName | null; scope?: 'commit' | 'file'; commitHash?: string | null; targetKey?: string | null }) => void;
+  completeAISummary: (payload: { content?: string; savedPath?: string | null; noteRelativePath?: string | null; provider?: AIProviderName | null; usage?: AIUsageInfo | null; scope?: 'commit' | 'file'; commitHash?: string | null; targetKey?: string | null }) => void;
   loadSavedAISummary: (payload: { content: string; savedPath?: string | null; noteRelativePath?: string | null; provider?: AIProviderName | null; scope?: 'commit' | 'file'; commitHash?: string | null; targetKey?: string | null }) => void;
   markCurrentSummarySaved: (payload: { content?: string; savedPath?: string | null; noteRelativePath: string; provider?: AIProviderName | null; commitHash?: string | null; targetKey?: string | null }) => void;
   failAISummary: (message?: string) => void;
@@ -48,6 +61,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
   summaryModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
   qaModel: isVSCodeRuntime() ? null : 'claude-haiku-4-5',
   currentSummaryContent: '',
+  currentSummaryUsage: null,
   isLoadingSummary: false,
   isGeneratingSummary: false,
   isGeneratingQA: false,
@@ -75,6 +89,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
   resetAISummary: () => {
     set({
       currentSummaryContent: '',
+      currentSummaryUsage: null,
       isLoadingSummary: false,
       isGeneratingSummary: false,
       isGeneratingQA: false,
@@ -92,6 +107,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
   startAISummaryLoading: (options = {}) => {
     set((state) => ({
       currentSummaryContent: '',
+      currentSummaryUsage: null,
       isLoadingSummary: true,
       isGeneratingSummary: false,
       isGeneratingQA: false,
@@ -108,6 +124,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
   startAISummaryGeneration: (options = {}) => {
     set((state) => ({
       currentSummaryContent: '',
+      currentSummaryUsage: null,
       isLoadingSummary: false,
       isGeneratingSummary: true,
       isGeneratingQA: false,
@@ -132,9 +149,10 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
     }));
   },
 
-  completeAISummary: ({ content, savedPath, noteRelativePath, provider, commitHash, targetKey }) => {
+  completeAISummary: ({ content, savedPath, noteRelativePath, provider, usage, commitHash, targetKey }) => {
     set((state) => ({
       currentSummaryContent: content ?? state.currentSummaryContent,
+      currentSummaryUsage: usage ?? null,
       isLoadingSummary: false,
       isGeneratingSummary: false,
       isGeneratingQA: false,
@@ -153,6 +171,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
             savedPath: savedPath ?? state.summarySavedPath,
             noteRelativePath: noteRelativePath ?? state.summaryNoteRelativePath,
             provider: provider ?? null,
+            usage: usage ?? null,
           },
         }
         : state.completedSummaryCache,
@@ -164,6 +183,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
             savedPath: savedPath ?? state.summarySavedPath,
             noteRelativePath: noteRelativePath ?? state.summaryNoteRelativePath,
             provider: provider ?? null,
+            usage: usage ?? null,
             hasSavedSummary: Boolean(noteRelativePath),
           },
         }
@@ -175,6 +195,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
   loadSavedAISummary: ({ content, savedPath, noteRelativePath, provider, commitHash, targetKey }) => {
     set((state) => ({
       currentSummaryContent: content,
+      currentSummaryUsage: null,
       isLoadingSummary: false,
       isGeneratingSummary: false,
       isGeneratingQA: false,
@@ -194,6 +215,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
             savedPath: savedPath ?? null,
             noteRelativePath: noteRelativePath ?? null,
             provider: provider ?? null,
+            usage: null,
           },
         }
         : state.completedSummaryCache,
@@ -205,6 +227,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
             savedPath: savedPath ?? null,
             noteRelativePath: noteRelativePath ?? null,
             provider: provider ?? null,
+            usage: null,
             hasSavedSummary: true,
           },
         }
@@ -229,6 +252,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
             savedPath: savedPath ?? state.summarySavedPath,
             noteRelativePath,
             provider: provider ?? null,
+            usage: state.currentSummaryUsage,
           },
         }
         : state.completedSummaryCache,
@@ -240,6 +264,7 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
             savedPath: savedPath ?? state.summarySavedPath,
             noteRelativePath,
             provider: provider ?? null,
+            usage: state.currentSummaryUsage,
             hasSavedSummary: true,
           },
         }

@@ -2,12 +2,13 @@ import * as vscode from 'vscode';
 import { AI_PROVIDERS, loadAISettingsState, registerAIProvider, setAIModel, setActiveAIProvider, setSavePath } from '../aiProviderService';
 import { streamAISummary } from '../aiService';
 import type { AIModelUsage, AIProviderName } from '../aiTypes';
+import { filterDiffForSummary } from '../diffFilterService';
 import { fetchCommitFullDiff, fetchFileDiff } from '../gitService';
 import { readNote, NoteFileError } from '../noteFileService';
 import { buildCommitSummaryPrompt, buildFileSummaryPrompt, buildSummaryQAPrompt } from '../prompts';
 import { appendSummaryQA, SummarySaveError } from '../summaryFileService';
 import { getLinkedNoteRelativePath } from '../summaryNoteLinkService';
-import { l10n } from './shared';
+import { getCurrentSummaryLanguage, l10n } from './shared';
 
 const COMMIT_TOKEN_LIMIT_CHARS = 20_000;
 
@@ -223,11 +224,12 @@ export async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, con
     }
 
     const diff = await fetchCommitFullDiff(repoPath, payload.commitHash);
+    const filteredDiff = filterDiffForSummary(diff);
 
     await panel.webview.postMessage({
       type: 'AI_SUMMARY_TOKEN_WARNING',
       payload: {
-        isOverLimit: diff.length > COMMIT_TOKEN_LIMIT_CHARS,
+        isOverLimit: filteredDiff.length > COMMIT_TOKEN_LIMIT_CHARS,
       },
     });
 
@@ -238,7 +240,7 @@ export async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, con
       },
     });
 
-    const prompt = buildCommitSummaryPrompt(payload.commitHash, diff, payload.commitMessage);
+    const prompt = buildCommitSummaryPrompt(payload.commitHash, filteredDiff, payload.commitMessage, getCurrentSummaryLanguage());
     let content = '';
 
     streamAISummary({
@@ -254,12 +256,13 @@ export async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, con
           },
         });
       },
-      onComplete: () => {
+      onComplete: (usage) => {
         void panel.webview.postMessage({
           type: 'AI_SUMMARY_DONE',
           payload: {
             content,
             provider,
+            usage,
           },
         });
       },
@@ -337,7 +340,7 @@ export async function handleStartAISummaryFile(panel: vscode.WebviewPanel, conte
       },
     });
 
-    const prompt = buildFileSummaryPrompt(payload.filePath, diff.rawDiff, payload.commitMessage);
+    const prompt = buildFileSummaryPrompt(payload.filePath, diff.rawDiff, payload.commitMessage, getCurrentSummaryLanguage());
     let content = '';
 
     streamAISummary({
@@ -353,12 +356,13 @@ export async function handleStartAISummaryFile(panel: vscode.WebviewPanel, conte
           },
         });
       },
-      onComplete: () => {
+      onComplete: (usage) => {
         void panel.webview.postMessage({
           type: 'AI_SUMMARY_DONE',
           payload: {
             content,
             provider,
+            usage,
           },
         });
       },
@@ -427,7 +431,7 @@ export async function handleStartAIQA(panel: vscode.WebviewPanel, context: vscod
     return;
   }
 
-  const prompt = buildSummaryQAPrompt(payload.summaryContent, diff, payload.question);
+  const prompt = buildSummaryQAPrompt(payload.summaryContent, diff, payload.question, getCurrentSummaryLanguage());
   let answer = '';
 
   streamAISummary({
