@@ -299,6 +299,15 @@ export const createAISlice: StateCreator<AppState, [], [], AISlice> = (set) => (
       currentSummaryContent: `${state.currentSummaryContent}${appendedContent}`,
       isGeneratingQA: false,
       qaError: null,
+      summaryViewCache: state.activeSummaryTargetKey
+        ? {
+          ...state.summaryViewCache,
+          [state.activeSummaryTargetKey]: {
+            ...state.summaryViewCache[state.activeSummaryTargetKey],
+            content: `${state.currentSummaryContent}${appendedContent}`,
+          },
+        }
+        : state.summaryViewCache,
     }));
   },
 
