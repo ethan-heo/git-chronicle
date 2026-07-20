@@ -78,18 +78,26 @@ export const SymbolEdge = memo(SymbolEdgeComponent, arePropsEqual);
 function getEdgeStyle(kind: SymbolDependencyKind, stroke: string, highlighted: boolean): CSSProperties {
   const base: CSSProperties = {
     stroke,
-    strokeWidth: highlighted ? 2.8 : 2,
+    strokeWidth: highlighted ? 3 : 2,
+    opacity: highlighted ? 1 : 0.72,
     fill: 'none',
+    filter: highlighted ? 'drop-shadow(0 0 8px color-mix(in srgb, var(--gae-color-symbol-highlight) 44%, transparent))' : undefined,
+    transition: [
+      'stroke var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+      'stroke-width var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+      'opacity var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+      'filter var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+    ].join(', '),
   };
 
   if (kind === 'uses') {
-    return { ...base, strokeWidth: highlighted ? 2.2 : 1.5, strokeDasharray: '4 4', strokeLinecap: 'round' };
+    return { ...base, strokeWidth: highlighted ? 2.5 : 1.5, strokeDasharray: '4 4', strokeLinecap: 'round' };
   }
   if (kind === 'extends') {
-    return { ...base, strokeWidth: highlighted ? 3.1 : 2.5 };
+    return { ...base, strokeWidth: highlighted ? 3.4 : 2.5 };
   }
   if (kind === 'implements') {
-    return { ...base, strokeWidth: highlighted ? 3.1 : 2.5, strokeDasharray: '6 4', strokeLinecap: 'round' };
+    return { ...base, strokeWidth: highlighted ? 3.4 : 2.5, strokeDasharray: '6 4', strokeLinecap: 'round' };
   }
 
   return base;

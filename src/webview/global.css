@@ -91,7 +91,7 @@
   --gae-color-semantic-error: var(--color-error);
   --gae-color-semantic-warning: var(--color-warning);
   --gae-color-semantic-info: var(--color-info);
-  --gae-color-symbol-highlight: #4ea8ff;
+  --gae-color-symbol-highlight: #ffd166;
   --gae-color-symbol-default: #ffffff;
   --gae-color-symbol-dimmed: #5f6b7a;
   --gae-color-symbol-calls: #4ea8ff;

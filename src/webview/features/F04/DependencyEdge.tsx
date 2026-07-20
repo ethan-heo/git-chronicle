@@ -42,11 +42,19 @@ const DependencyEdgeComponent: FC<EdgeProps<DependencyEdgeType>> = ({
         markerEnd={markerEnd}
         className={className}
         style={{
-          strokeWidth: highlighted ? 2.4 : 1.6,
-          opacity: dimmed ? 0.2 : 1,
-          stroke: highlighted ? 'var(--gae-color-text-link)' : 'var(--gae-color-text-secondary)',
+          strokeWidth: highlighted ? 3 : 1.5,
+          opacity: dimmed ? 0.18 : highlighted ? 1 : 0.62,
+          stroke: highlighted
+            ? 'var(--gae-color-accent-primary)'
+            : 'color-mix(in srgb, var(--gae-color-text-secondary) 86%, transparent)',
           strokeDasharray: kind === 'require' ? '5 5' : undefined,
-          transition: 'opacity var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+          filter: highlighted ? 'drop-shadow(0 0 8px color-mix(in srgb, var(--gae-color-accent-primary) 38%, transparent))' : undefined,
+          transition: [
+            'stroke var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+            'stroke-width var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+            'opacity var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+            'filter var(--gae-motion-duration-fast) var(--gae-motion-easing-default)',
+          ].join(', '),
         }}
       />
       <EdgeLabelRenderer>
