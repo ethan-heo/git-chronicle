@@ -17,6 +17,18 @@ const DEFAULT_FILTER_STATE: FilterState = {
   sortOrder: 'desc',
 };
 
+const DEFAULT_COMMIT_FILTER_VALUES: Pick<
+  FilterState,
+  'filterDateStart' | 'filterDateEnd' | 'filterAuthor' | 'filterKeyword' | 'filterExcludeKeyword' | 'sortOrder'
+> = {
+  filterDateStart: DEFAULT_FILTER_STATE.filterDateStart,
+  filterDateEnd: DEFAULT_FILTER_STATE.filterDateEnd,
+  filterAuthor: DEFAULT_FILTER_STATE.filterAuthor,
+  filterKeyword: DEFAULT_FILTER_STATE.filterKeyword,
+  filterExcludeKeyword: DEFAULT_FILTER_STATE.filterExcludeKeyword,
+  sortOrder: DEFAULT_FILTER_STATE.sortOrder,
+};
+
 interface CommitsLoadedPayload {
   commits: Commit[];
   page: number;
@@ -218,7 +230,7 @@ export const createCommitListSlice: StateCreator<AppState, [], [], CommitListSli
   },
 
   clearFilters: () => {
-    set(DEFAULT_FILTER_STATE);
+    set(DEFAULT_COMMIT_FILTER_VALUES);
     set({ commitListScrollTop: 0 });
     persistFilterState(get());
     get().loadCommits(true);

@@ -73,7 +73,7 @@ describe('appStore webview filter persistence', () => {
         filterDateStart: null,
         filterDateEnd: null,
         filterAuthor: null,
-        filterBranch: null,
+        filterBranch: 'main',
         filterExcludeKeyword: '',
         filterGroupId: null,
         filterKeyword: '',

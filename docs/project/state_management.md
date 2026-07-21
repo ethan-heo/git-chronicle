@@ -65,7 +65,7 @@ stateDiagram-v2
 | 액션 | 트리거 | 부수효과 |
 |------|--------|----------|
 | `setFilter(filter)` | 필터 값 변경 | 상태 병합 → Webview State에 `{ filter }`만 저장(목록·로딩 상태는 저장 안 함) → `loadCommits(true)` |
-| `clearFilters()` | 필터 초기화 | `DEFAULT_FILTER_STATE`로 리셋 → Webview State 저장 → `loadCommits(true)` |
+| `clearFilters()` | 커밋 목록 필터 초기화 | 날짜·작성자·포함/제외 키워드·정렬만 기본값으로 리셋하고 `filterBranch`/`filterGroupId`는 유지 → Webview State 저장 → `loadCommits(true)` |
 
 - `S01_CommitListScreen`은 active route slot이 될 때 `loadCommits(true)`를 호출한다. 웹뷰가 숨김 상태에서 파괴되었다가 다시 생성되어도 저장된 `{ filter }`가 먼저 복원되므로, 재로드 요청은 복원된 필터 조건을 사용한다.
 - 정렬 순서가 `asc`일 때는 Extension Host가 전체 커밋 수를 먼저 계산한 뒤 역산된 페이지 오프셋으로 오래된 순 목록을 가져와 응답한다 — 최신순과 달리 "끝에서부터 세는" 방식이라 전체 카운트가 선행되어야 한다.
