@@ -1,4 +1,4 @@
-import { useState, type DragEvent, type FC, type KeyboardEvent } from 'react';
+import { memo, useState, type DragEvent, type FC, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface NoteFileNodeProps {
@@ -12,7 +12,7 @@ interface NoteFileNodeProps {
   onDragStateChange?: (relativePath: string | null) => void;
 }
 
-export const NoteFileNode: FC<NoteFileNodeProps> = ({
+const NoteFileNodeComponent: FC<NoteFileNodeProps> = ({
   relativePath,
   name,
   depth,
@@ -96,3 +96,5 @@ export const NoteFileNode: FC<NoteFileNodeProps> = ({
     </div>
   );
 };
+
+export const NoteFileNode = memo(NoteFileNodeComponent);

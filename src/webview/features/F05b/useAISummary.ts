@@ -67,7 +67,6 @@ interface UseAISummaryResult {
   onRegenerate: () => void;
   onRetry: () => void;
   onSave: () => void;
-  qaError: string | null;
   qaMessages: QAMessage[];
   qaCompletionCount: number;
   saveDraft: SaveDraft;
@@ -97,19 +96,6 @@ export function useAISummary(options?: {
   const noteEntries = useAppStore((state) => state.noteTree);
   const activeAIProvider = useAppStore((state) => state.activeAIProvider);
   const summaryModel = useAppStore((state) => state.summaryModel);
-  const activeSummaryTargetKey = useAppStore((state) => state.activeSummaryTargetKey);
-  const summaryViewCache = useAppStore((state) => state.summaryViewCache);
-  const currentSummaryContent = useAppStore((state) => state.currentSummaryContent);
-  const currentSummaryUsage = useAppStore((state) => state.currentSummaryUsage);
-  const isLoadingSummary = useAppStore((state) => state.isLoadingSummary);
-  const isGeneratingSummary = useAppStore((state) => state.isGeneratingSummary);
-  const isGeneratingQA = useAppStore((state) => state.isGeneratingQA);
-  const summaryError = useAppStore((state) => state.summaryError);
-  const qaError = useAppStore((state) => state.qaError);
-  const summarySavedPath = useAppStore((state) => state.summarySavedPath);
-  const summaryNoteRelativePath = useAppStore((state) => state.summaryNoteRelativePath);
-  const hasCurrentSavedSummary = useAppStore((state) => state.hasCurrentSavedSummary);
-  const isSummaryTokenLimitExceeded = useAppStore((state) => state.isSummaryTokenLimitExceeded);
   const setAISummarySettings = useAppStore((state) => state.setAISummarySettings);
   const startAISummaryLoading = useAppStore((state) => state.startAISummaryLoading);
   const startAISummaryGeneration = useAppStore((state) => state.startAISummaryGeneration);
@@ -142,18 +128,41 @@ export function useAISummary(options?: {
   const canStartSummary = Boolean(commit && activeAIProvider && savePath);
   const summaryScope = targetFile ? 'file' : 'commit';
   const summaryTargetKey = `${commit?.hash ?? 'none'}::${targetFile?.path ?? '__commit__'}`;
-  const cachedSummary = summaryViewCache[summaryTargetKey] ?? null;
-  const isActiveSummaryTarget = activeSummaryTargetKey === summaryTargetKey;
-  const displayedSummaryContent = isActiveSummaryTarget ? currentSummaryContent : (cachedSummary?.content ?? '');
-  const displayedSavedPath = isActiveSummaryTarget ? summarySavedPath : (cachedSummary?.savedPath ?? null);
-  const displayedNoteRelativePath = isActiveSummaryTarget ? summaryNoteRelativePath : (cachedSummary?.noteRelativePath ?? null);
-  const displayedSummaryUsage = isActiveSummaryTarget ? currentSummaryUsage : (cachedSummary?.usage ?? null);
-  const displayedHasSavedSummary = isActiveSummaryTarget ? hasCurrentSavedSummary : Boolean(cachedSummary?.hasSavedSummary);
-  const displayedSummaryError = isActiveSummaryTarget ? summaryError : null;
-  const displayedIsLoadingSummary = isActiveSummaryTarget ? isLoadingSummary : false;
-  const displayedIsGeneratingSummary = isActiveSummaryTarget ? isGeneratingSummary : false;
-  const displayedIsGeneratingQA = isActiveSummaryTarget ? isGeneratingQA : false;
-  const displayedIsSummaryTokenLimitExceeded = isActiveSummaryTarget ? isSummaryTokenLimitExceeded : false;
+
+  // 활성 대상 여부를 selector 안에서 직접 판정해, 다른 탭/파일의 요약을 보는 인스턴스는
+  // activeSummaryTargetKey가 자신과 다른 한 currentSummaryContent 등 스트리밍 원본 필드가
+  // 바뀌어도 selector 반환값이 그대로라 리렌더되지 않는다(스트리밍 청크마다 전체 인스턴스가
+  // 리렌더되는 것을 방지).
+  const displayedSummaryContent = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.currentSummaryContent : (state.summaryViewCache[summaryTargetKey]?.content ?? '')
+  ));
+  const displayedSavedPath = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.summarySavedPath : (state.summaryViewCache[summaryTargetKey]?.savedPath ?? null)
+  ));
+  const displayedNoteRelativePath = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.summaryNoteRelativePath : (state.summaryViewCache[summaryTargetKey]?.noteRelativePath ?? null)
+  ));
+  const displayedSummaryUsage = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.currentSummaryUsage : (state.summaryViewCache[summaryTargetKey]?.usage ?? null)
+  ));
+  const displayedHasSavedSummary = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.hasCurrentSavedSummary : Boolean(state.summaryViewCache[summaryTargetKey]?.hasSavedSummary)
+  ));
+  const displayedSummaryError = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.summaryError : null
+  ));
+  const displayedIsLoadingSummary = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.isLoadingSummary : false
+  ));
+  const displayedIsGeneratingSummary = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.isGeneratingSummary : false
+  ));
+  const displayedIsGeneratingQA = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.isGeneratingQA : false
+  ));
+  const displayedIsSummaryTokenLimitExceeded = useAppStore((state) => (
+    state.activeSummaryTargetKey === summaryTargetKey ? state.isSummaryTokenLimitExceeded : false
+  ));
   const shouldWarnBeforeOverwrite = Boolean(displayedNoteRelativePath && !displayedHasSavedSummary);
   const lastStatusToastKeyRef = useRef<string | null>(null);
 
@@ -464,7 +473,6 @@ export function useAISummary(options?: {
     onRegenerate: () => setIsRegenerateDialogOpen(true),
     onRetry: () => startSummary(true),
     onSave: openSavePopover,
-    qaError,
     qaMessages,
     qaCompletionCount,
     saveDraft,

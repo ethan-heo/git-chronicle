@@ -7,6 +7,8 @@ import { CommitFilterPanel } from './CommitFilterPanel';
 import { CommitList } from './CommitList';
 import { useCommitList } from './useCommitList';
 
+const noop = (): void => {};
+
 export const S01CommitListScreen: FC = () => {
   const { t } = useTranslation();
   const isRouteSlotActive = useRouteSlotActive();
@@ -75,8 +77,8 @@ export const S01CommitListScreen: FC = () => {
         onClearFilters={clearFilters}
         savedScrollTop={commitListScrollTop}
         onScrollTopChange={setCommitListScrollTop}
-        onOpenAISummary={() => {}}
-        onOpenFileCanvas={() => {}}
+        onOpenAISummary={noop}
+        onOpenFileCanvas={noop}
         isAIViewActive={false}
         isFileCanvasActive={false}
       />

@@ -1,4 +1,4 @@
-import { useState, type DragEvent, type FC } from 'react';
+import { memo, useState, type DragEvent, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NoteTreeNode } from './noteTreeModel';
 import { isNoteDirectoryNode } from './noteTreeModel';
@@ -17,7 +17,7 @@ interface NoteDirectoryNodeProps {
   onRootDragStateChange: (isDragOver: boolean) => void;
 }
 
-export const NoteDirectoryNode: FC<NoteDirectoryNodeProps> = ({
+const NoteDirectoryNodeComponent: FC<NoteDirectoryNodeProps> = ({
   node,
   depth,
   activeRelativePath,
@@ -119,3 +119,5 @@ export const NoteDirectoryNode: FC<NoteDirectoryNodeProps> = ({
     </div>
   );
 };
+
+export const NoteDirectoryNode = memo(NoteDirectoryNodeComponent);

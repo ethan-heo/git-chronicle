@@ -1,4 +1,4 @@
-import type { FC, KeyboardEvent } from 'react';
+import { memo, type FC, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FileActionButtons, FileStatusBadge } from '../../shared/components';
 import { useAppStore } from '../../store/appStore';
@@ -13,7 +13,7 @@ interface FileTreeNodeProps {
   isCodeViewActive?: boolean;
 }
 
-export const FileTreeNode: FC<FileTreeNodeProps> = ({
+const FileTreeNodeComponent: FC<FileTreeNodeProps> = ({
   file,
   name,
   depth,
@@ -75,6 +75,8 @@ export const FileTreeNode: FC<FileTreeNodeProps> = ({
     </div>
   );
 };
+
+export const FileTreeNode = memo(FileTreeNodeComponent);
 
 function getStatusLabel(status: ChangedFile['status'], t: (key: string) => string): string {
   const labels: Record<ChangedFile['status'], string> = {

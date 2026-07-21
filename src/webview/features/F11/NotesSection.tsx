@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { DEMO_AI_SUMMARY_NOTE_ENTRIES } from '../../demo/aiSummarySamples';
@@ -122,6 +122,54 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
     </strong>
   ), [noteTree.length]);
 
+  const handleNoteTreeRetry = useCallback(() => {
+    if (!savePath) {
+      pushToast(t('ai_summary.no_save_path'), 'warning');
+      return;
+    }
+    loadNoteTree();
+    postMessage('FETCH_NOTE_TREE', { savePath });
+  }, [loadNoteTree, pushToast, savePath, t]);
+
+  const handleNoteOpen = useCallback((relativePath: string) => openNoteTreeEntry(relativePath), [openNoteTreeEntry]);
+
+  const handleNoteDelete = useCallback((relativePath: string) => {
+    if (!savePath) {
+      return;
+    }
+
+    if (!isVSCodeRuntime()) {
+      handleNoteDeleted({ relativePath });
+      closeNoteTabs(relativePath);
+      return;
+    }
+
+    deleteNoteState();
+    postMessage('DELETE_NOTE', { savePath, relativePath });
+  }, [closeNoteTabs, deleteNoteState, handleNoteDeleted, savePath]);
+
+  const handleNoteMove = useCallback((fromRelativePath: string, toRelativePath: string) => {
+    if (!savePath) {
+      return;
+    }
+
+    if (!isVSCodeRuntime()) {
+      const nextRelativePath = ensureDemoNotePath(toRelativePath);
+      const exists = noteTree.some((entry) => entry.relativePath === nextRelativePath && entry.relativePath !== fromRelativePath);
+      if (exists) {
+        handleNoteMoveFailed({ message: t('note.move_failed') });
+        return;
+      }
+
+      handleNoteMoved({ fromRelativePath, toRelativePath: nextRelativePath });
+      renameNoteTabs(fromRelativePath, nextRelativePath);
+      return;
+    }
+
+    moveNoteState();
+    postMessage('MOVE_NOTE', { savePath, fromRelativePath, toRelativePath });
+  }, [handleNoteMoveFailed, handleNoteMoved, moveNoteState, noteTree, renameNoteTabs, savePath, t]);
+
   const submitCreate = (): void => {
     if (!savePath || !draftName.trim()) {
       return;
@@ -187,50 +235,10 @@ export const NotesSection: FC<NotesSectionProps> = ({ isActive, isExpanded, onTo
           isLoading={isLoadingNoteTree}
           error={noteTreeError}
           activeRelativePath={activeRelativePath}
-          onRetry={() => {
-            if (!savePath) {
-              pushToast(t('ai_summary.no_save_path'), 'warning');
-              return;
-            }
-            loadNoteTree();
-            postMessage('FETCH_NOTE_TREE', { savePath });
-          }}
-          onOpen={(relativePath: string) => openNoteTreeEntry(relativePath)}
-          onDelete={(relativePath: string) => {
-            if (!savePath) {
-              return;
-            }
-
-            if (!isVSCodeRuntime()) {
-              handleNoteDeleted({ relativePath });
-              closeNoteTabs(relativePath);
-              return;
-            }
-
-            deleteNoteState();
-            postMessage('DELETE_NOTE', { savePath, relativePath });
-          }}
-          onMove={(fromRelativePath: string, toRelativePath: string) => {
-            if (!savePath) {
-              return;
-            }
-
-            if (!isVSCodeRuntime()) {
-              const nextRelativePath = ensureDemoNotePath(toRelativePath);
-              const exists = noteTree.some((entry) => entry.relativePath === nextRelativePath && entry.relativePath !== fromRelativePath);
-              if (exists) {
-                handleNoteMoveFailed({ message: t('note.move_failed') });
-                return;
-              }
-
-              handleNoteMoved({ fromRelativePath, toRelativePath: nextRelativePath });
-              renameNoteTabs(fromRelativePath, nextRelativePath);
-              return;
-            }
-
-            moveNoteState();
-            postMessage('MOVE_NOTE', { savePath, fromRelativePath, toRelativePath });
-          }}
+          onRetry={handleNoteTreeRetry}
+          onOpen={handleNoteOpen}
+          onDelete={handleNoteDelete}
+          onMove={handleNoteMove}
         />
       </div>
     </SidebarSection>

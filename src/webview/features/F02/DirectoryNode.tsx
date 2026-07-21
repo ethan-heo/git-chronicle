@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react';
+import { memo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ChangedFile } from '../../types/commit';
 import { FileTreeNode } from './FileTreeNode';
@@ -12,7 +12,7 @@ interface DirectoryNodeProps {
   activeCodeFilePath?: string | null;
 }
 
-export const DirectoryNode: FC<DirectoryNodeProps> = ({
+const DirectoryNodeComponent: FC<DirectoryNodeProps> = ({
   node,
   depth,
   onCodeView,
@@ -68,3 +68,5 @@ export const DirectoryNode: FC<DirectoryNodeProps> = ({
     </div>
   );
 };
+
+export const DirectoryNode = memo(DirectoryNodeComponent);

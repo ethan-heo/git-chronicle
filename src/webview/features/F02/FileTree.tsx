@@ -1,4 +1,4 @@
-import { useMemo, type FC } from 'react';
+import { memo, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, LoadingState } from '../../shared/components';
 import type { ChangedFile } from '../../types/commit';
@@ -16,7 +16,7 @@ interface FileTreeProps {
   showHeader?: boolean;
 }
 
-export const FileTree: FC<FileTreeProps> = ({
+const FileTreeComponent: FC<FileTreeProps> = ({
   changedFiles,
   isLoading,
   error,
@@ -108,6 +108,8 @@ export const FileTree: FC<FileTreeProps> = ({
     </section>
   );
 };
+
+export const FileTree = memo(FileTreeComponent);
 
 function getFileStats(files: ChangedFile[]): Record<ChangedFile['status'], number> {
   return files.reduce(

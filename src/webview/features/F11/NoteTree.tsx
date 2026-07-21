@@ -1,4 +1,4 @@
-import { useState, type DragEvent, type FC } from 'react';
+import { memo, useMemo, useState, type DragEvent, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
 import type { NoteEntry } from '../../types/note';
@@ -17,7 +17,7 @@ interface NoteTreeProps {
   onMove: (fromRelativePath: string, toRelativePath: string) => void;
 }
 
-export const NoteTree: FC<NoteTreeProps> = ({
+const NoteTreeComponent: FC<NoteTreeProps> = ({
   entries,
   isLoading,
   error,
@@ -30,6 +30,7 @@ export const NoteTree: FC<NoteTreeProps> = ({
   const { t } = useTranslation();
   const [draggedRelativePath, setDraggedRelativePath] = useState<string | null>(null);
   const [isRootDragOver, setIsRootDragOver] = useState(false);
+  const root = useMemo(() => buildNoteTree(entries), [entries]);
 
   if (isLoading) {
     return <div className="flex min-h-0 flex-1 items-center justify-center p-6"><LoadingState label={t('note.tree_loading')} size="lg" /></div>;
@@ -42,8 +43,6 @@ export const NoteTree: FC<NoteTreeProps> = ({
   if (entries.length === 0) {
     return <div className="flex min-h-0 flex-1 items-center justify-center p-6"><EmptyState message={t('note.tree_empty')} /></div>;
   }
-
-  const root = buildNoteTree(entries);
 
   const handleRootDrop = (event: DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
@@ -112,3 +111,5 @@ export const NoteTree: FC<NoteTreeProps> = ({
     </div>
   );
 };
+
+export const NoteTree = memo(NoteTreeComponent);
