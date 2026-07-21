@@ -43,6 +43,7 @@ export interface FetchCommitCountOptions {
   dateEnd?: string | null;
   author?: string | null;
   keyword?: string;
+  excludeKeywords?: string[];
 }
 
 export interface FileDiffResult {
@@ -64,6 +65,7 @@ const DEFAULT_PAGE_SIZE = 200;
 const FIELD_SEPARATOR = '\x1f';
 const RECORD_SEPARATOR = '\x1e';
 const BRANCH_FIELD_SEPARATOR = '\t';
+const COMMIT_HASH_PATTERN = /[0-9a-f]{4,40}/gi;
 
 export class GitRepositoryNotFoundError extends Error {
   constructor(repoPath: string) {
@@ -95,6 +97,17 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<FetchC
   const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
   const shouldReverse = options.sortOrder === 'asc';
   const isGroupScoped = Boolean(options.commitHashes?.length);
+  const keyword = options.keyword?.trim() ?? '';
+
+  if (!isGroupScoped && keyword) {
+    return fetchCommitsByKeyword(git, {
+      ...options,
+      keyword,
+      pageSize,
+      sortOrder: options.sortOrder,
+    });
+  }
+
   const args = ['log', '--date=iso-strict', `--pretty=format:%H%x1f%h%x1f%s%x1f%an%x1f%aI%x1e`];
 
   if (isGroupScoped) {
@@ -117,9 +130,9 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<FetchC
     args.push(`--author=${options.author}`);
   }
 
-  if (options.keyword?.trim()) {
+  if (keyword) {
     args.push('--regexp-ignore-case');
-    args.push(`--grep=${options.keyword.trim()}`);
+    args.push(`--grep=${keyword}`);
   }
 
   if (shouldReverse) {
@@ -150,17 +163,7 @@ export async function fetchCommits(options: FetchCommitsOptions): Promise<FetchC
     });
 
   const commits = rawCommits
-    .filter((commit) => {
-      const excludeKeywords = options.excludeKeywords?.filter(Boolean).map((item) => item.toLowerCase()) ?? [];
-
-      if (excludeKeywords.length === 0) {
-        return true;
-      }
-
-      const message = commit.message.toLowerCase();
-
-      return !excludeKeywords.some((keyword) => message.includes(keyword));
-    });
+    .filter((commit) => matchesExcludeKeywords(commit, options.excludeKeywords));
 
   if (isGroupScoped || !shouldReverse) {
     return { commits, rawCount: rawCommits.length };
@@ -180,6 +183,25 @@ export async function fetchCommitCount(options: FetchCommitCountOptions): Promis
     throw new GitRepositoryNotFoundError(options.repoPath);
   }
 
+  const keyword = options.keyword?.trim() ?? '';
+
+  if (keyword) {
+    const result = await fetchCommitsByKeyword(git, {
+      repoPath: options.repoPath,
+      page: 0,
+      pageSize: Number.MAX_SAFE_INTEGER,
+      branch: options.branch,
+      dateStart: options.dateStart,
+      dateEnd: options.dateEnd,
+      author: options.author,
+      keyword,
+      sortOrder: 'desc',
+      excludeKeywords: options.excludeKeywords,
+    });
+
+    return result.rawCount;
+  }
+
   const args = ['rev-list', '--count', options.branch?.trim() || 'HEAD'];
 
   if (options.dateStart) {
@@ -194,13 +216,172 @@ export async function fetchCommitCount(options: FetchCommitCountOptions): Promis
     args.push(`--author=${options.author}`);
   }
 
-  if (options.keyword?.trim()) {
+  const output = await git.raw(args);
+  return Number.parseInt(output.trim(), 10) || 0;
+}
+
+async function fetchCommitsByKeyword(
+  git: SimpleGit,
+  options: FetchCommitsOptions & { keyword: string; pageSize: number },
+): Promise<FetchCommitsResult> {
+  const shouldReverse = options.sortOrder === 'asc';
+  const messageMatches = await runLogQuery(git, {
+    branch: options.branch,
+    dateStart: options.dateStart,
+    dateEnd: options.dateEnd,
+    author: options.author,
+    keyword: options.keyword,
+    reverse: shouldReverse,
+  });
+
+  const commitsByHash = new Map(messageMatches.map((commit) => [commit.hash, commit]));
+
+  const hashKeywords = extractCommitHashKeywords(options.keyword);
+
+  if (hashKeywords.length > 0) {
+    const hashCandidates = await listCommitHashes(git, {
+      dateStart: options.dateStart,
+      dateEnd: options.dateEnd,
+      author: options.author,
+    });
+
+    const matchingHashes = hashCandidates.filter((hash) => hashKeywords.some((candidate) => hash.startsWith(candidate)));
+
+    if (matchingHashes.length > 0) {
+      const hashMatches = await runLogQuery(git, {
+        branch: null,
+        reverse: shouldReverse,
+        commitHashes: matchingHashes,
+      });
+
+      for (const commit of hashMatches) {
+        commitsByHash.set(commit.hash, commit);
+      }
+    }
+  }
+
+  const commits = [...commitsByHash.values()].filter((commit) => matchesExcludeKeywords(commit, options.excludeKeywords));
+  const sortedCommits = sortCommits(commits, options.sortOrder ?? 'desc');
+  const start = Math.max(options.page, 0) * options.pageSize;
+  const end = start + options.pageSize;
+
+  return {
+    commits: sortedCommits.slice(start, end),
+    rawCount: sortedCommits.length,
+  };
+}
+
+async function runLogQuery(
+  git: SimpleGit,
+  options: {
+    branch?: string | null;
+    dateStart?: string | null;
+    dateEnd?: string | null;
+    author?: string | null;
+    keyword?: string;
+    reverse?: boolean;
+    commitHashes?: string[];
+  },
+): Promise<Commit[]> {
+  const args = ['log', '--date=iso-strict', `--pretty=format:%H%x1f%h%x1f%s%x1f%an%x1f%aI%x1e`];
+
+  if (options.dateStart) {
+    args.push(`--after=${options.dateStart}`);
+  }
+
+  if (options.dateEnd) {
+    args.push(`--before=${options.dateEnd}T23:59:59`);
+  }
+
+  if (options.author) {
+    args.push(`--author=${options.author}`);
+  }
+
+  if (options.keyword) {
     args.push('--regexp-ignore-case');
-    args.push(`--grep=${options.keyword.trim()}`);
+    args.push(`--grep=${options.keyword}`);
+  }
+
+  if (options.reverse) {
+    args.push('--reverse');
+  }
+
+  if (options.commitHashes?.length) {
+    args.push('--no-walk=sorted');
+    args.push(...options.commitHashes);
+  } else if (options.branch?.trim()) {
+    args.push(options.branch.trim());
   }
 
   const output = await git.raw(args);
-  return Number.parseInt(output.trim(), 10) || 0;
+  return parseCommitRecords(output);
+}
+
+async function listCommitHashes(
+  git: SimpleGit,
+  options: {
+    dateStart?: string | null;
+    dateEnd?: string | null;
+    author?: string | null;
+  },
+): Promise<string[]> {
+  const args = ['rev-list', '--all'];
+
+  if (options.dateStart) {
+    args.push(`--after=${options.dateStart}`);
+  }
+
+  if (options.dateEnd) {
+    args.push(`--before=${options.dateEnd}T23:59:59`);
+  }
+
+  if (options.author) {
+    args.push(`--author=${options.author}`);
+  }
+
+  const output = await git.raw(args);
+  return output
+    .split('\n')
+    .map((hash) => hash.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function parseCommitRecords(output: string): Commit[] {
+  return output
+    .split(RECORD_SEPARATOR)
+    .map((record) => record.trim())
+    .filter(Boolean)
+    .map((record) => {
+      const [hash, shortHash, message, author, date] = record.split(FIELD_SEPARATOR);
+
+      return {
+        hash,
+        shortHash,
+        message,
+        author,
+        date,
+      };
+    });
+}
+
+function sortCommits(commits: Commit[], sortOrder: 'desc' | 'asc'): Commit[] {
+  const sorted = [...commits].sort((left, right) => left.date.localeCompare(right.date));
+  return sortOrder === 'asc' ? sorted : sorted.reverse();
+}
+
+function extractCommitHashKeywords(keyword: string): string[] {
+  return [...new Set((keyword.toLowerCase().match(COMMIT_HASH_PATTERN) ?? []).map((value) => value.trim()).filter(Boolean))];
+}
+
+function matchesExcludeKeywords(commit: Commit, excludeKeywords?: string[]): boolean {
+  const normalizedKeywords = excludeKeywords?.filter(Boolean).map((item) => item.toLowerCase()) ?? [];
+
+  if (normalizedKeywords.length === 0) {
+    return true;
+  }
+
+  const message = commit.message.toLowerCase();
+  return !normalizedKeywords.some((keyword) => message.includes(keyword));
 }
 
 export async function fetchChangedFiles(repoPath: string, commitHash: string, savePath: string | null, commitMessage?: string): Promise<FetchChangedFilesResult> {

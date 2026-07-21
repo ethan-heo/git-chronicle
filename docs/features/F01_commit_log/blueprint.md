@@ -8,7 +8,7 @@
 
 ## Purpose
 
-커밋 이력 목록을 표시하고, 기간·작성자·포함/제외 키워드와 정렬 필터를 제공하며, 무한 스크롤로 추가 로드를 지원한다.
+커밋 이력 목록을 표시하고, 기간·작성자·메시지/해시 포함 키워드·메시지 제외 키워드와 정렬 필터를 제공하며, 무한 스크롤로 추가 로드를 지원한다.
 
 ---
 
@@ -194,7 +194,7 @@ F01_CommitLog 전용. CommitFilterPanel 내에서만 사용.
 ### Component: KeywordSearchInput
 
 #### Purpose
-커밋 메시지 키워드를 입력받아 필터링한다.
+커밋 메시지 또는 커밋 해시 키워드를 입력받아 필터링한다.
 
 #### Data
 - `keyword: string`
@@ -210,13 +210,14 @@ interface KeywordSearchInputProps {
 
 #### Interaction
 - 입력 후 300ms 디바운싱 후 `filterKeyword` 또는 `filterExcludeKeyword` 업데이트
+- 포함 키워드는 커밋 메시지와 커밋 해시(short/full hash)를 함께 검색한다.
 - 입력창 우측에 초기화(×) 버튼 표시 (입력값 있을 때)
 
 #### States
 - `empty`, `typing`, `filled`
 
 #### Accessibility
-- `aria-label="커밋 메시지 키워드 검색"`, `type="search"`
+- `aria-label="커밋 메시지 또는 해시 키워드 검색"`, `type="search"`
 
 #### Reusability
 F01_CommitLog 전용. CommitFilterPanel 내에서만 사용.

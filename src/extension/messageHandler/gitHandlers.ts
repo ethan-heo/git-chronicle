@@ -99,6 +99,7 @@ export async function handleFetchCommits(panel: vscode.WebviewPanel, context: vs
             dateEnd: payload.filterDateEnd,
             author: payload.filterAuthor,
             keyword: payload.filterKeyword,
+            excludeKeywords,
           })) > (page + 1) * pageSize
         : filteredCount >= pageSize;
 
