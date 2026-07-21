@@ -3,7 +3,6 @@ import type { ChangedFile, Commit } from '../../types/commit';
 import { AISummaryViewer } from './AISummaryViewer';
 import { OverwriteConfirmDialog } from './OverwriteConfirmDialog';
 import { SaveAsNotePopover } from './SaveAsNotePopover';
-import { TokenLimitWarning } from './TokenLimitWarning';
 import { useAISummary } from './useAISummary';
 
 interface AISummaryPanelProps {
@@ -36,8 +35,6 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({
     isLoadingSummary,
     isRegenerateDialogOpen,
     isSavePopoverOpen,
-    isSummaryTokenLimitExceeded,
-    isTokenWarningDismissed,
     noteEntries,
     onAskQuestion,
     onConfirmRegenerate,
@@ -51,7 +48,6 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({
     savePath,
     setIsRegenerateDialogOpen,
     setIsSavePopoverOpen,
-    setIsTokenWarningDismissed,
     setSaveDraft,
     shouldWarnBeforeOverwrite,
     summaryError,
@@ -63,10 +59,6 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <TokenLimitWarning
-        isVisible={isSummaryTokenLimitExceeded && !isTokenWarningDismissed}
-        onDismiss={() => setIsTokenWarningDismissed(true)}
-      />
       <AISummaryViewer
         content={currentSummaryContent}
         usage={currentSummaryUsage}

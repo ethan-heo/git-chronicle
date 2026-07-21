@@ -37,7 +37,6 @@ S02의 `code` 탭 안에서 파일 스코프 `AISummaryPanel`로도 재사용되
 - `HighlightedCode`
 - `StreamingTextRenderer`
 - `RegenerateButton`
-- `TokenLimitWarning`
 - `OverwriteConfirmDialog`
 
 ---
@@ -90,6 +89,7 @@ interface AIUsageInfo {
 - 수정 불가 (읽기 전용)
 - 저장본이 없는 완료 상태에서는 헤더의 저장 아이콘 버튼을 누르면 해당 버튼 아래 `SaveAsNotePopover`가 열린다
 - Claude·Codex로 새로 생성이 완료되면 헤더 오른쪽에서 저장 버튼 앞에 토큰 사용량 배지를 표시한다. Claude는 비용도 함께 표기하고, Gemini·저장본 즉시 로드 상태에서는 배지를 숨긴다
+- AI 미설정 / 저장 경로 미설정 / 생성 실패 / 큰 diff 경고 문구는 인라인 문장 대신 토스트로 표시한다. 본문에는 설정 이동 또는 재시도 같은 액션만 남긴다
 - 완료된 마크다운 본문에서 드래그 선택 후 복사 시, 선택 범위에 대응하는 원본 마크다운 조각을 클립보드에 기록한다
 - fenced 코드블록 위에는 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 복사하고 성공 토스트를 표시한다
 - fenced 코드블록에 언어 태그가 있으면 `HighlightedCode`가 `shiki` 기반 문법 강조 결과를 `<code>` 내부 토큰 span으로 렌더링한다
@@ -245,30 +245,6 @@ F05b_AISummaryCommit 전용. S02_WorkspaceScreen 본문 `aiSummary` 패널에서
 
 ---
 
-### Component: TokenLimitWarning
-
-#### Purpose
-diff 크기가 크다는 경고 배너. AI 호출은 계속 진행.
-
-#### Data
-없음
-
-#### Props
-```typescript
-interface TokenLimitWarningProps {
-  isVisible: boolean;
-  onDismiss: () => void;
-}
-```
-
-#### Interaction
-- [접기] 클릭 시 현재 화면에서 경고 배너 숨김
-
-#### Reusability
-F05b_AISummaryCommit 전용. AISummaryViewer 상단 배너로 사용.
-
----
-
 ### Component: OverwriteConfirmDialog
 
 #### Purpose
@@ -308,9 +284,10 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 - `generating`: `StreamingTextRenderer` 표시
 - `displaying.saved`: react-markdown + `RegenerateButton`
 - `displaying.new`: 새로 생성 완료 상태
-- `loading`: 상단 안내 문구 + 스켈레톤 프리뷰 카드
-- `noAI`: AI 미설정 `EmptyState`
-- `noPath`: 경로 미설정 `EmptyState`
+- `loading`: 스켈레톤 프리뷰 카드
+- `noAI`: 설정 이동 액션만 표시, 상태 문구는 토스트로 안내
+- `noPath`: 설정 이동 액션만 표시, 상태 문구는 토스트로 안내
+- `error`: 재시도 액션만 표시, 상태 문구는 토스트로 안내
 
 ### RegenerateButton
 - `default`: 활성 상태
@@ -325,7 +302,7 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 ## Layout Rules
 
 - `AISummaryViewer`는 S02 본문 `aiSummary` 패널의 단일 메인 콘텐츠로 표시된다.
-- `TokenLimitWarning`은 `AISummaryViewer` 상단에 배너로 표시된다.
+- 큰 diff 경고는 패널 상단 배너 대신 전역 토스트로 표시된다.
 
 ---
 
@@ -340,7 +317,7 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 | 재생성 아이콘 | 클릭 | `OverwriteConfirmDialog` 표시 |
 | [확인] | 다이얼로그 확인 | 동일 diff로 AI 재호출, 결과 덮어쓰기 |
 | [취소] | 다이얼로그 취소 | 현재 저장본 유지 |
-| [재시도] | `ErrorState` 버튼 클릭 | AI 재호출 |
+| [재시도] | 에러 액션 버튼 클릭 | AI 재호출 |
 | 드래그 복사 | 완료된 요약 본문에서 텍스트 선택 후 복사 | 렌더링 결과 대신 원본 마크다운 조각을 클립보드에 기록 |
 | 코드블록 복사 | fenced 코드블록 hover 후 복사 버튼 클릭 | 해당 코드블록의 원본 마크다운(```` 포함)을 클립보드에 기록하고 성공 토스트를 표시 |
 | Mermaid preview 복사 | Mermaid 다이어그램 preview의 복사 버튼 클릭 또는 preview 선택 후 복사 | 원본 ```` ```mermaid ```` 블록을 클립보드에 기록하고, 복사 버튼 클릭 시 성공 토스트를 표시 |
@@ -352,27 +329,20 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 
 | 상태 | 조건 | UI |
 |------|------|-----|
-| `noAI` | `activeAIProvider === null` | `EmptyState` (AI 미설정) |
-| `noPath` | `savePath === null` | `EmptyState` (경로 미설정) |
+| `noAI` | `activeAIProvider === null` | 설정 이동 액션 + 경고 토스트 |
+| `noPath` | `savePath === null` | 설정 이동 액션 + 경고 토스트 |
 | `loading` | `isLoadingSummary === true` 또는 설정 로딩 중 | AI 전용 로딩 프리뷰 |
 | `generating` | `isGeneratingSummary === true` | `StreamingTextRenderer` |
 | `displaying.saved` | 저장본 존재 | react-markdown + `RegenerateButton` |
 | `displaying.new` | 새로 생성 완료 | react-markdown + `RegenerateButton` |
-| `error` | 타임아웃 또는 CLI 실패 | `ErrorState` |
-
----
-
-## Empty States
-
-- `EmptyState` (message: "AI가 설정되지 않았습니다", ctaLabel: "설정으로 이동")
-- `EmptyState` (message: "저장 경로를 먼저 설정해주세요", ctaLabel: "설정으로 이동")
+| `error` | 타임아웃 또는 CLI 실패 | 재시도 액션 + 오류 토스트 |
 
 ---
 
 ## Error States
 
-- `ErrorState` (message: "생성에 실패했습니다", onRetry: AI 재호출)
-- `ErrorState` (message: "연결된 CLI를 찾을 수 없습니다. 설정을 확인하세요")
+- 토스트 (message: "생성에 실패했습니다")
+- 토스트 (message: "연결된 CLI를 찾을 수 없습니다. 설정을 확인하세요")
 
 ---
 
@@ -388,13 +358,10 @@ F05b_AISummaryCommit 전용. RegenerateButton 클릭 시 표시.
 ## Responsive Rules
 
 - `AISummaryViewer`는 화면 너비에 맞게 마크다운 콘텐츠 폭 조정
-- `TokenLimitWarning`은 좁은 너비에서 접기 가능
 
 ---
 
 ## Reusable Components
 
-- [`EmptyState`](../../core/global_components.md#emptystate)
-- [`ErrorState`](../../core/global_components.md#errorstate)
 - [`TopHeader`](../../core/global_components.md#topheader)
 - [`BackButton`](../../core/global_components.md#backbutton)

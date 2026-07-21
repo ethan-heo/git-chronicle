@@ -63,8 +63,8 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | Mermaid diagram 생성 | 커밋/파일 요약 모두 흐름·상태 전환·구조 관계 등 비trivial한 변경으로 AI가 판단하면 관련 섹션(주로 Key files and points/Key points 또는 Technical rationale) 안에 Mermaid 다이어그램을 프롬프트 지시로 조건부 포함시킨다. 포매팅·단순 리네임 등 사소한 변경에는 포함하지 않는다. 표현해야 할 관계가 여러 개(예: before/after 비교, 서로 무관한 두 흐름)면 하나의 다이어그램에 subgraph로 몰아넣지 않고 각각 별도의 Mermaid fenced block으로 분리한다 |
 | Mermaid preview | ```` ```mermaid ```` 코드블록은 다이어그램 preview로 렌더링되며, preview 상태에서도 hover 복사 버튼 또는 preview 선택 복사로 원본 Mermaid 마크다운 블록 복사가 가능해야 하고, 복사 버튼 클릭 시 성공 토스트를 표시한다 |
 | 토큰 사용량 표시 | Claude·Codex로 새로 생성이 완료되면 헤더에 `입력 N / 출력 M` 사용량을 표시한다. Claude는 비용(`$x.xxxx`)도 함께 표시하고, Gemini·저장본 즉시 로드·Q&A에는 표시하지 않는다 |
-| 토큰 한계 초과 | 커밋 단위는 필터링된 diff 길이를 기준으로 "diff가 큽니다. AI가 일부를 생략할 수 있습니다" 안내를 표시한 뒤 호출 |
-| 실패 / 타임아웃 | 타임아웃 120초. 실패 시 "생성에 실패했습니다" 오류 메시지 + [재시도] 버튼 표시 |
+| 토큰 한계 초과 | 커밋 단위는 필터링된 diff 길이를 기준으로 "diff가 큽니다. AI가 일부를 생략할 수 있습니다" 경고 토스트를 표시한 뒤 호출 |
+| 실패 / 타임아웃 | 타임아웃 120초. 실패 시 오류 토스트를 표시하고 [재시도] 버튼만 남긴다 |
 
 ---
 

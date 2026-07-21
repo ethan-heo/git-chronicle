@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
 import { isVSCodeRuntime, postMessage } from '../../bridge/vscodeApi';
 import { useAppStore } from '../../store/appStore';
 import type { AIProviderName, AIUsageInfo, ChangedFile, Commit } from '../../types/commit';
@@ -59,13 +60,10 @@ interface UseAISummaryResult {
   isLoadingSummary: boolean;
   isRegenerateDialogOpen: boolean;
   isSavePopoverOpen: boolean;
-  isSummaryTokenLimitExceeded: boolean;
-  isTokenWarningDismissed: boolean;
   noteEntries: { relativePath: string; name: string; updatedAt: string }[];
   onAskQuestion: (question: string) => void;
   onConfirmRegenerate: () => void;
   onConfirmSave: (relativePath: string) => void;
-  dismissTokenWarning: () => void;
   onRegenerate: () => void;
   onRetry: () => void;
   onSave: () => void;
@@ -77,7 +75,6 @@ interface UseAISummaryResult {
   savePath: string | null;
   setIsRegenerateDialogOpen: (isOpen: boolean) => void;
   setIsSavePopoverOpen: (isOpen: boolean) => void;
-  setIsTokenWarningDismissed: (isDismissed: boolean) => void;
   setSaveDraft: (draft: SaveDraft) => void;
   shouldWarnBeforeOverwrite: boolean;
   summaryError: string | null;
@@ -91,6 +88,7 @@ export function useAISummary(options?: {
   isTargetFilePending?: boolean;
   commit?: Commit | null;
 }): UseAISummaryResult {
+  const { t } = useTranslation();
   const isActive = options?.isActive ?? true;
   const targetFile = options?.targetFile ?? null;
   const isTargetFilePending = options?.isTargetFilePending ?? false;
@@ -123,10 +121,10 @@ export function useAISummary(options?: {
   const setSummaryTokenWarning = useAppStore((state) => state.setSummaryTokenWarning);
   const markCurrentSummarySaved = useAppStore((state) => state.markCurrentSummarySaved);
   const loadNoteTree = useAppStore((state) => state.loadNoteTree);
+  const pushToast = useAppStore((state) => state.pushToast);
 
   const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
   const [isSavePopoverOpen, setIsSavePopoverOpen] = useState(false);
-  const [isTokenWarningDismissed, setIsTokenWarningDismissed] = useState(false);
   const [hasLoadedSettings, setHasLoadedSettings] = useState(!isVSCodeRuntime());
   const [qaMessages, setQAMessages] = useState<QAMessage[]>([]);
   const [qaCompletionCount, setQACompletionCount] = useState(0);
@@ -157,6 +155,7 @@ export function useAISummary(options?: {
   const displayedIsGeneratingQA = isActiveSummaryTarget ? isGeneratingQA : false;
   const displayedIsSummaryTokenLimitExceeded = isActiveSummaryTarget ? isSummaryTokenLimitExceeded : false;
   const shouldWarnBeforeOverwrite = Boolean(displayedNoteRelativePath && !displayedHasSavedSummary);
+  const lastStatusToastKeyRef = useRef<string | null>(null);
 
   const startSummary = useCallback((forceRegenerate = false): void => {
     if (!commit || !activeAIProvider || !savePath) {
@@ -164,7 +163,7 @@ export function useAISummary(options?: {
     }
 
     setSummaryTokenWarning(false);
-    setIsTokenWarningDismissed(false);
+    lastStatusToastKeyRef.current = null;
 
     if (!isVSCodeRuntime()) {
       startAISummaryGeneration({
@@ -391,6 +390,59 @@ export function useAISummary(options?: {
     startSummary(false);
   }, [canStartSummary, displayedIsGeneratingSummary, displayedIsLoadingSummary, displayedSummaryContent, displayedSummaryError, hasLoadedSettings, isActive, isTargetFilePending, startSummary]);
 
+  useEffect(() => {
+    if (!isActive || !hasLoadedSettings) {
+      return;
+    }
+
+    if (!activeAIProvider) {
+      const nextKey = 'no-ai';
+      if (lastStatusToastKeyRef.current !== nextKey) {
+        pushToast(t('ai_summary.no_ai'), 'warning');
+        lastStatusToastKeyRef.current = nextKey;
+      }
+      return;
+    }
+
+    if (!savePath) {
+      const nextKey = 'no-save-path';
+      if (lastStatusToastKeyRef.current !== nextKey) {
+        pushToast(t('ai_summary.no_save_path'), 'warning');
+        lastStatusToastKeyRef.current = nextKey;
+      }
+      return;
+    }
+
+    if (displayedSummaryError) {
+      const nextKey = `summary-error:${displayedSummaryError}`;
+      if (lastStatusToastKeyRef.current !== nextKey) {
+        pushToast(displayedSummaryError, 'error');
+        lastStatusToastKeyRef.current = nextKey;
+      }
+      return;
+    }
+
+    if (displayedIsSummaryTokenLimitExceeded) {
+      const nextKey = 'token-warning';
+      if (lastStatusToastKeyRef.current !== nextKey) {
+        pushToast(t('ai_summary.token_warning'), 'warning');
+        lastStatusToastKeyRef.current = nextKey;
+      }
+      return;
+    }
+
+    lastStatusToastKeyRef.current = null;
+  }, [
+    activeAIProvider,
+    displayedIsSummaryTokenLimitExceeded,
+    displayedSummaryError,
+    hasLoadedSettings,
+    isActive,
+    pushToast,
+    savePath,
+    t,
+  ]);
+
   return {
     activeAIProvider,
     currentSummaryContent: displayedSummaryContent,
@@ -402,8 +454,6 @@ export function useAISummary(options?: {
     isLoadingSummary: displayedIsLoadingSummary,
     isRegenerateDialogOpen,
     isSavePopoverOpen,
-    isSummaryTokenLimitExceeded: displayedIsSummaryTokenLimitExceeded,
-    isTokenWarningDismissed,
     noteEntries,
     onAskQuestion: askQuestion,
     onConfirmRegenerate: () => {
@@ -411,7 +461,6 @@ export function useAISummary(options?: {
       startSummary(true);
     },
     onConfirmSave: confirmSave,
-    dismissTokenWarning: () => setIsTokenWarningDismissed(true),
     onRegenerate: () => setIsRegenerateDialogOpen(true),
     onRetry: () => startSummary(true),
     onSave: openSavePopover,
@@ -423,7 +472,6 @@ export function useAISummary(options?: {
     savePath,
     setIsRegenerateDialogOpen,
     setIsSavePopoverOpen,
-    setIsTokenWarningDismissed,
     setSaveDraft,
     shouldWarnBeforeOverwrite,
     summaryError: displayedSummaryError,

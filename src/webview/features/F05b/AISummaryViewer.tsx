@@ -4,7 +4,7 @@ import { rehypeAnnotateSourceOffsets } from './rehypeAnnotateSourceOffsets';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from 'react-i18next';
 import type { AIUsageInfo } from '../../types/commit';
-import { EmptyState, ErrorState } from '../../shared/components';
+import { EmptyState } from '../../shared/components';
 import { HighlightedCode } from '../../shared/highlighter';
 import { QAInputArea } from '../F09/QAInputArea';
 import { CopyMarkdownButton } from '../F11';
@@ -170,11 +170,31 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   }, [qaCompletionCount]);
 
   if (!hasAIProvider) {
-    return <EmptyState message={t('ai_summary.no_ai')} ctaLabel={t('ai_summary.go_to_settings')} onCtaClick={onGoToSettings} />;
+    return (
+      <section className="flex min-h-0 flex-1 items-center justify-center p-6">
+        <button
+          className="inline-flex items-center justify-center rounded-sm border border-line bg-secondary px-3 py-1.5 text-sm text-text transition-colors duration-100 ease-in-out hover:bg-secondary-hi"
+          type="button"
+          onClick={onGoToSettings}
+        >
+          {t('ai_summary.go_to_settings')}
+        </button>
+      </section>
+    );
   }
 
   if (!hasSavePath) {
-    return <EmptyState message={t('ai_summary.no_save_path')} ctaLabel={t('ai_summary.go_to_settings')} onCtaClick={onGoToSettings} />;
+    return (
+      <section className="flex min-h-0 flex-1 items-center justify-center p-6">
+        <button
+          className="inline-flex items-center justify-center rounded-sm border border-line bg-secondary px-3 py-1.5 text-sm text-text transition-colors duration-100 ease-in-out hover:bg-secondary-hi"
+          type="button"
+          onClick={onGoToSettings}
+        >
+          {t('ai_summary.go_to_settings')}
+        </button>
+      </section>
+    );
   }
 
   if (isLoading) {
@@ -210,7 +230,17 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   }
 
   if (error) {
-    return <ErrorState message={error} onRetry={onRetry} />;
+    return (
+      <section className="flex min-h-0 flex-1 items-center justify-center p-6">
+        <button
+          className="inline-flex items-center justify-center rounded-sm border border-line bg-secondary px-3 py-1.5 text-sm text-text transition-colors duration-100 ease-in-out hover:bg-secondary-hi"
+          type="button"
+          onClick={onRetry}
+        >
+          {t('common.retry')}
+        </button>
+      </section>
+    );
   }
 
   return (
