@@ -70,7 +70,7 @@ File path: ${filePath}
 ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ## Conditions
 - Output language: ${s.outputLanguage}
-- Write for someone new to this project: avoid unexplained jargon. When a technical term is unavoidable, do not gloss it inline in parentheses — instead mark its first use with a GFM footnote reference (e.g. \`term[^1]\`) and define it in a footnote. Number footnote references sequentially in order of first appearance ([^1], [^2], ...)
+- Write for someone new to this project: avoid unexplained jargon. When a technical term is unavoidable, do not gloss it inline in parentheses — instead mark only its first occurrence across the entire output with a GFM footnote reference (e.g. \`term[^1]\`) and define it in a footnote. Do not attach another footnote reference to later occurrences of the same term. Number footnote references sequentially in order of first appearance ([^1], [^2], ...)
 - Focus on intent and context rather than translating code line by line
 - Use the commit message only as background context for why this file was touched — not as grounds for classifying Change purpose or selecting Key points, which must be judged from this file's own diff. If the commit message's overall intent doesn't match what this file's diff actually shows, call out the mismatch
 - Avoid vague statements like "${s.vagueExample}"; cite actual function/variable names or concrete before → after behavior
@@ -126,7 +126,7 @@ Commit hash: ${commitHash.slice(0, 7)}
 ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ## Conditions
 - Output language: ${s.outputLanguage}
-- Write for someone new to this project: avoid unexplained jargon. When a technical term is unavoidable, do not gloss it inline in parentheses — instead mark its first use with a GFM footnote reference (e.g. \`term[^1]\`) and define it in a footnote. Number footnote references sequentially in order of first appearance ([^1], [^2], ...)
+- Write for someone new to this project: avoid unexplained jargon. When a technical term is unavoidable, do not gloss it inline in parentheses — instead mark only its first occurrence across the entire output with a GFM footnote reference (e.g. \`term[^1]\`) and define it in a footnote. Do not attach another footnote reference to later occurrences of the same term. Number footnote references sequentially in order of first appearance ([^1], [^2], ...)
 - Focus on what the commit achieved overall rather than listing each file
 - Focus on intent and context rather than translating code line by line
 - Use the commit message as a hint for intent, but verify it against the actual diff and call out any mismatch
