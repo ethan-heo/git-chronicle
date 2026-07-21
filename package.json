@@ -2,7 +2,7 @@
   "name": "git-chronicle",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "publisher": "ethanheo",
   "icon": "assets/icon.png",
   "repository": {
