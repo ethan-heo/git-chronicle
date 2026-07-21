@@ -90,6 +90,7 @@ Commit message: {commitMessage}
 - If the commit introduces a non-trivial flow, call sequence, or structural relationship between files/functions (e.g. a new data flow, an architecture change, a before → after control-flow shift), include a small Mermaid diagram (```mermaid fenced block) inside whichever section below best explains it (commonly the per-file breakdown or the implementation-rationale note) — in addition to the prose explanation. Skip diagrams entirely for trivial changes (formatting, renames, single-line fixes, config tweaks, dependency bumps)
 - If more than one relationship needs a diagram (e.g. a before/after comparison, or two unrelated flows across different files), use a separate ```mermaid fenced block for each one instead of combining them into a single diagram with multiple subgraphs — one diagram per concern
 - Inside any Mermaid node or edge label, always wrap the label text in double quotes if it contains code syntax or special characters such as parentheses, brackets, quotes, colons, or pipes (e.g. write `C["Number(query[0]) 변환"]`, not `C[Number(query[0]) 변환]`) — unquoted labels with those characters break Mermaid's parser
+- When writing a quoted edge label between pipes, place the quotes flush against the pipe characters with no space in between (e.g. write `-->|"아니오"|`, not `-->| "아니오" |`) — a space between `|` and a quoted label breaks Mermaid's parser even though unquoted labels tolerate that space
 - If inference is needed, phrase it as "보임" or "추정됨"
 - Follow the structure below
 
@@ -146,6 +147,7 @@ Commit message: {commitMessage}
 - If this file's change involves a non-trivial internal flow, state transition, or call/dependency relationship (e.g. control flow restructuring, a new state machine, a changed call chain), include a small Mermaid diagram (```mermaid fenced block) inside whichever section below best explains it (commonly the points list or the implementation-rationale note) — in addition to the prose explanation. Skip diagrams entirely for trivial changes (formatting, renames, single-line fixes, config tweaks, dependency bumps)
 - If more than one relationship needs a diagram (e.g. a before/after comparison, or two unrelated flows), use a separate ```mermaid fenced block for each one instead of combining them into a single diagram with multiple subgraphs — one diagram per concern
 - Inside any Mermaid node or edge label, always wrap the label text in double quotes if it contains code syntax or special characters such as parentheses, brackets, quotes, colons, or pipes (e.g. write `C["Number(query[0]) 변환"]`, not `C[Number(query[0]) 변환]`) — unquoted labels with those characters break Mermaid's parser
+- When writing a quoted edge label between pipes, place the quotes flush against the pipe characters with no space in between (e.g. write `-->|"아니오"|`, not `-->| "아니오" |`) — a space between `|` and a quoted label breaks Mermaid's parser even though unquoted labels tolerate that space
 - If inference is needed, phrase it as "보임" or "추정됨"
 - Follow the structure below
 
