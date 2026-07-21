@@ -70,7 +70,7 @@ File path: ${filePath}
 ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ## Conditions
 - Output language: ${s.outputLanguage}
-- Write for someone new to this project: avoid unexplained jargon, and when a technical term is unavoidable, add a short plain-language gloss in parentheses on first use
+- Write for someone new to this project: avoid unexplained jargon. When a technical term is unavoidable, do not gloss it inline in parentheses — instead mark its first use with a GFM footnote reference (e.g. \`term[^1]\`) and define it in a footnote. Number footnote references sequentially in order of first appearance ([^1], [^2], ...)
 - Focus on intent and context rather than translating code line by line
 - Use the commit message only as background context for why this file was touched — not as grounds for classifying Change purpose or selecting Key points, which must be judged from this file's own diff. If the commit message's overall intent doesn't match what this file's diff actually shows, call out the mismatch
 - Avoid vague statements like "${s.vagueExample}"; cite actual function/variable names or concrete before → after behavior
@@ -103,6 +103,8 @@ ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ### ${s.technicalRationaleHeading}
 (Explain any notable implementation choices or patterns)
 
+(If you used any footnote references above, list every corresponding definition here as the very last lines of the output, in the order they were introduced, one per line: \`[^1]: definition\`. Do not add a heading for this — the definitions alone are enough)
+
 ## diff
 \`\`\`diff
 ${diff}
@@ -124,7 +126,7 @@ Commit hash: ${commitHash.slice(0, 7)}
 ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 ## Conditions
 - Output language: ${s.outputLanguage}
-- Write for someone new to this project: avoid unexplained jargon, and when a technical term is unavoidable, add a short plain-language gloss in parentheses on first use
+- Write for someone new to this project: avoid unexplained jargon. When a technical term is unavoidable, do not gloss it inline in parentheses — instead mark its first use with a GFM footnote reference (e.g. \`term[^1]\`) and define it in a footnote. Number footnote references sequentially in order of first appearance ([^1], [^2], ...)
 - Focus on what the commit achieved overall rather than listing each file
 - Focus on intent and context rather than translating code line by line
 - Use the commit message as a hint for intent, but verify it against the actual diff and call out any mismatch
@@ -160,6 +162,8 @@ ${commitMessage ? `Commit message: ${commitMessage}\n` : ''}
 
 ### ${s.technicalRationaleHeading}
 (Explain any notable implementation choices or patterns, referencing specific code)
+
+(If you used any footnote references above, list every corresponding definition here as the very last lines of the output, in the order they were introduced, one per line: \`[^1]: definition\`. Do not add a heading for this — the definitions alone are enough)
 
 ## diff
 \`\`\`diff

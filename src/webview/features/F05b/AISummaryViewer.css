@@ -210,6 +210,31 @@
   border-top: 1px solid var(--gae-border-color-default);
 }
 
+.ai-summary-markdown [data-footnotes] {
+  margin-top: var(--gae-spacing-xl);
+  padding-top: 14px;
+  border-top: 1px solid var(--gae-border-color-default);
+}
+
+.ai-summary-markdown [data-footnotes] ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.ai-summary-markdown [data-footnotes] li {
+  font-size: var(--gae-font-size-sm);
+  color: var(--gae-color-text-secondary);
+}
+
+.ai-summary-markdown [data-footnote-ref] {
+  font-size: 0.75em;
+}
+
+.ai-summary-markdown [data-footnote-backref] {
+  margin-left: 4px;
+  text-decoration: none;
+}
+
 .ai-summary-mermaid-block {
   margin: 0 0 14px;
 }
