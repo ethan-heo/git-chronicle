@@ -1,4 +1,35 @@
 
+## [1.10.0](https://github.com/ethan-heo/git-chronicle/compare/v1.9.0...v1.10.0) (2026-07-21)
+
+### Features
+
+* add footnote guidance to ai summaries ([998237e](https://github.com/ethan-heo/git-chronicle/commit/998237e3ecf9a57ad0c97e80e9c0fd343f654123))
+* replace branch fetch label with icon button ([8b25969](https://github.com/ethan-heo/git-chronicle/commit/8b2596918d5adcf75258e7ed75400971afabbff2))
+* optimize AI summary prompts and usage display ([70da62c](https://github.com/ethan-heo/git-chronicle/commit/70da62c5c1a17e8a47a2e79aea0732837a3d59de))
+* add branch switcher sidebar and remote fetch support ([47a56d2](https://github.com/ethan-heo/git-chronicle/commit/47a56d214cd1f79221ca0b953a5e27a4562b02df))
+
+### Bug Fixes
+
+* refine footnote reference guidance ([8cc2dd6](https://github.com/ethan-heo/git-chronicle/commit/8cc2dd6d1b90a6572e498362c1e2c11f9e355c8a))
+* clarify mermaid label formatting rules ([11eb82e](https://github.com/ethan-heo/git-chronicle/commit/11eb82e26aca40064b22283aa109355bceb67c3f))
+* preserve branch selection when clearing commit filters ([e53f5b6](https://github.com/ethan-heo/git-chronicle/commit/e53f5b697f3ea173bc8b55bf3bf5730ed4265920))
+* support commit hash search in filters ([622a3d6](https://github.com/ethan-heo/git-chronicle/commit/622a3d640b397db8fb363c65eb2f7ff7c85f4ef4))
+* move AI summary status messages to toast notifications ([13252b4](https://github.com/ethan-heo/git-chronicle/commit/13252b4f6687748d1931682460a572b299b8ee09))
+* clarify mermaid quoted edge label syntax ([0932d1f](https://github.com/ethan-heo/git-chronicle/commit/0932d1f0887a89d2bfd80f9d84e2a88c35edac81))
+* clarify canvas edge hover highlighting ([49e53f0](https://github.com/ethan-heo/git-chronicle/commit/49e53f07959487f14aa64f1f18bd73b6415915c9))
+* sync AI summary Q&A cache on revisit ([b974f63](https://github.com/ethan-heo/git-chronicle/commit/b974f63ba4c5f1f6a4be1171e9f56d35248c54cf))
+* **ai-summary:** enforce quoted Mermaid labels in summary prompts ([5ae2bc1](https://github.com/ethan-heo/git-chronicle/commit/5ae2bc1a842c187a94443b48acd80d7ee415b17c))
+* localize AI summary prompt section headings ([3c23246](https://github.com/ethan-heo/git-chronicle/commit/3c23246baa59c90755f5ce99d8b7eab5e147ea01))
+* reduce expanded sidebar section heights ([20cdbab](https://github.com/ethan-heo/git-chronicle/commit/20cdbab37f32ea02dd74b2ed822a37cbb3e6d756))
+
+### Performance Improvements
+
+* reduce webview tree rerenders ([64f4f36](https://github.com/ethan-heo/git-chronicle/commit/64f4f36a11079c3212e3ea8208dcfff0b891073b))
+
+### Documentation
+
+* refresh README feature and license notes ([2436adc](https://github.com/ethan-heo/git-chronicle/commit/2436adce73a460edb4d784a90d9311fd71d27399))
+
 ## [1.9.0](https://github.com/ethan-heo/git-chronicle/compare/v1.8.0...v1.9.0) (2026-07-19)
 
 ### Features
