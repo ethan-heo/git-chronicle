@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FC, ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components';
+import { useRestoredScrollTop } from '../../shared/workspace/useRestoredScrollTop';
 import { useAppStore } from '../../store/appStore';
 import { CopyMarkdownButton, diffRangeToMarkdown } from '../F11';
 import { DiffFoldRow } from './DiffFoldRow';
@@ -16,6 +17,7 @@ interface DiffViewerProps {
   error: string | null;
   isBinaryFile: boolean;
   isDeletedFile: boolean;
+  scrollCacheKey?: string;
   highlightRange?: LineRange | null;
   scrollToRange?: LineRange | null;
   scrollRequestId?: number;
@@ -29,6 +31,7 @@ export const DiffViewer: FC<DiffViewerProps> = ({
   error,
   isBinaryFile,
   isDeletedFile,
+  scrollCacheKey,
   highlightRange = null,
   scrollToRange = null,
   scrollRequestId = 0,
@@ -36,6 +39,7 @@ export const DiffViewer: FC<DiffViewerProps> = ({
 }) => {
   const { t } = useTranslation();
   const pushToast = useAppStore((state) => state.pushToast);
+  const restoredScrollRef = useRestoredScrollTop<HTMLDivElement>(scrollCacheKey ?? `diff:${filePath}`, true);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pendingSelectionStartRef = useRef<number | null>(null);
   const hasDraggedSelectionRef = useRef(false);
@@ -307,7 +311,10 @@ export const DiffViewer: FC<DiffViewerProps> = ({
         </div>
       ) : null}
       <div
-        ref={containerRef}
+        ref={(element) => {
+          containerRef.current = element;
+          restoredScrollRef.current = element;
+        }}
         className="min-h-0 min-w-0 h-full overflow-auto font-mono text-[var(--vscode-editor-font-size,13px)] leading-[1.52] text-[var(--vscode-editor-foreground,var(--color-text))] focus-visible:outline-1 focus-visible:outline-focus focus-visible:outline-offset-[-1px]"
         role="region"
         aria-label={t('diff.region_aria', { filePath })}

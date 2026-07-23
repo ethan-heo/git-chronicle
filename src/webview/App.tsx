@@ -13,6 +13,7 @@ interface WebviewEventPayload {
   activeAIProvider?: AIProviderName | null;
   registeredProviders?: AIProviderName[];
   summaryModel?: string | null;
+  commitHash?: string | null;
   isOverLimit?: boolean;
   chunk?: string;
   content?: string;
@@ -76,7 +77,9 @@ export const App: FC = () => {
       }
 
       if (event.data.type === 'AI_SUMMARY_TOKEN_WARNING') {
-        setSummaryTokenWarning(Boolean(event.data.payload?.isOverLimit));
+        if (event.data.payload?.commitHash === activeSummaryCommitHash) {
+          setSummaryTokenWarning(Boolean(event.data.payload?.isOverLimit));
+        }
         return;
       }
 

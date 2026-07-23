@@ -9,6 +9,7 @@ interface CodeDiffPanelProps {
   commitHash: string | null;
   filePath: string;
   isDeletedFile: boolean;
+  scrollCacheKey?: string;
   highlightRange?: LineRange | null;
   scrollToRange?: LineRange | null;
   scrollRequestId?: number;
@@ -20,6 +21,7 @@ export const CodeDiffPanel: FC<CodeDiffPanelProps> = ({
   commitHash,
   filePath,
   isDeletedFile,
+  scrollCacheKey,
   highlightRange = null,
   scrollToRange = null,
   scrollRequestId = 0,
@@ -41,6 +43,7 @@ export const CodeDiffPanel: FC<CodeDiffPanelProps> = ({
         error={diffState.error}
         isBinaryFile={diffState.isBinaryFile}
         isDeletedFile={diffState.isDeletedFile}
+        scrollCacheKey={scrollCacheKey}
         highlightRange={highlightRange}
         scrollToRange={scrollToRange}
         scrollRequestId={scrollRequestId}

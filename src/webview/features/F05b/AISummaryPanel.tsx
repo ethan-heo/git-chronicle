@@ -10,6 +10,7 @@ interface AISummaryPanelProps {
   targetFile: ChangedFile | null;
   isTargetFilePending?: boolean;
   commit: Commit | null;
+  scrollCacheKey?: string;
   onGoToSettings: () => void;
   headerLeading?: ReactNode;
   headerTrailing?: ReactNode;
@@ -20,6 +21,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({
   targetFile,
   isTargetFilePending,
   commit,
+  scrollCacheKey,
   onGoToSettings,
   headerLeading,
   headerTrailing,
@@ -72,6 +74,7 @@ export const AISummaryPanel: FC<AISummaryPanelProps> = ({
         noteRelativePath={summaryNoteRelativePath}
         savedPath={summarySavedPath}
         providerLabel={activeAIProvider}
+        scrollCacheKey={scrollCacheKey}
         qaCompletionCount={qaCompletionCount}
         headerLeading={headerLeading}
         headerTrailing={headerTrailing}

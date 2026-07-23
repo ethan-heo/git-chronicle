@@ -417,6 +417,7 @@ function renderCodeInnerPanelBody(options: {
           commitHash={tab.commit.hash}
           filePath={tab.filePath}
           isDeletedFile={selectedFile?.status === 'D'}
+          scrollCacheKey={`workspace-tab:${tab.id}:diff`}
           highlightRange={
             symbolGraph.highlightedRange
               ? { start: symbolGraph.highlightedRange.lineStart, end: symbolGraph.highlightedRange.lineEnd }
@@ -436,6 +437,7 @@ function renderCodeInnerPanelBody(options: {
         targetFile={selectedFile}
         isTargetFilePending={isSelectedFilePending}
         commit={tab.commit}
+        scrollCacheKey={`workspace-tab:${tab.id}:ai-summary`}
         onGoToSettings={onGoToSettings}
         headerLeading={headerControls?.leading}
         headerTrailing={headerControls?.trailing}

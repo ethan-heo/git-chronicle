@@ -227,6 +227,7 @@ export async function handleStartAISummaryCommit(panel: vscode.WebviewPanel, con
     await panel.webview.postMessage({
       type: 'AI_SUMMARY_TOKEN_WARNING',
       payload: {
+        commitHash: payload.commitHash,
         isOverLimit: filteredDiff.length > COMMIT_TOKEN_LIMIT_CHARS,
       },
     });

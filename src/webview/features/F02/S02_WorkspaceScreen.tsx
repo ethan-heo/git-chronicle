@@ -814,6 +814,7 @@ const WorkspacePaneContent: FC<{
         isActive={isRouteSlotActive}
         targetFile={null}
         commit={activeTab.commit}
+        scrollCacheKey={`workspace-tab:${activeTab.id}:ai-summary`}
         onGoToSettings={openSidebarSettings}
       />
     );

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { AIUsageInfo } from '../../types/commit';
 import { EmptyState } from '../../shared/components';
 import { HighlightedCode } from '../../shared/highlighter';
+import { useRestoredScrollTop } from '../../shared/workspace/useRestoredScrollTop';
 import { QAInputArea } from '../F09/QAInputArea';
 import { CopyMarkdownButton } from '../F11';
 import { MermaidBlock } from '../F11/MermaidBlock';
@@ -28,6 +29,7 @@ interface AISummaryViewerProps {
   noteRelativePath?: string | null;
   savedPath: string | null;
   providerLabel: string | null;
+  scrollCacheKey?: string;
   qaCompletionCount: number;
   headerLeading?: ReactNode;
   headerTrailing?: ReactNode;
@@ -49,6 +51,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   hasSavedSummary,
   hasAIProvider,
   hasSavePath,
+  scrollCacheKey,
   qaCompletionCount,
   headerLeading,
   headerTrailing,
@@ -62,6 +65,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
   const { t } = useTranslation();
   const summaryEndRef = useRef<HTMLDivElement | null>(null);
   const markdownContainerRef = useMarkdownSourceCopy(content);
+  const scrollContainerRef = useRestoredScrollTop<HTMLDivElement>(scrollCacheKey ?? 'ai-summary:commit', true);
   const usageLabel = usage ? formatUsageLabel(usage, t) : null;
 
   const showRegenerate = Boolean(content) || isGenerating;
@@ -281,7 +285,7 @@ export const AISummaryViewer: FC<AISummaryViewerProps> = ({
       </div>
 
       <div className="ai-summary-content ai-summary-content-commit flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-auto px-7 pt-5 pb-16 sm:px-8">
+        <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-auto px-7 pt-5 pb-16 sm:px-8">
           {isGenerating ? (
             <StreamingTextRenderer content={content} isStreaming />
           ) : content ? (
