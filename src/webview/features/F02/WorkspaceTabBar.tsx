@@ -142,7 +142,7 @@ const WorkspaceTabItem = forwardRef<HTMLDivElement, WorkspaceTabItemProps>(
         data-tab-focus-state={isFocused ? 'focused' : 'unfocused'}
         className={[
           'group flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm transition-colors',
-          isVisible
+          isFocused
             ? 'bg-selected text-text'
             : 'bg-surface text-muted hover:bg-hover hover:text-text',
         ].join(' ')}
@@ -154,7 +154,7 @@ const WorkspaceTabItem = forwardRef<HTMLDivElement, WorkspaceTabItemProps>(
           className="flex items-center gap-2"
           onClick={onActivate}
           aria-label={tabLabel}
-          aria-current={isVisible ? 'page' : undefined}
+          aria-current={isFocused ? 'page' : undefined}
           title={tabLabel}
         >
           {tabBadge ? (
