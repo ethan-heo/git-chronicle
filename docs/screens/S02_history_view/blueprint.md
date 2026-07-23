@@ -22,7 +22,7 @@
 
 ## Entry Condition
 
-확장 프로그램을 열면 항상 S02로 진입한다. 초기 상태는 `selectedCommit = null`, 단일 leaf pane 1개를 가진 `paneTree`, `focusedPaneId = rootPaneId`이며, 사용자가 사이드바 커밋 목록에서 커밋을 선택하면 커밋 종속 상태만 리셋되고 화면 전환은 발생하지 않는다.
+확장 프로그램을 열면 항상 S02로 진입한다. 초기 상태는 `selectedCommit = null`이며, Webview State에 저장된 `paneTree`/`focusedPaneId`가 있으면 이를 우선 복원하고 없을 때만 단일 leaf pane 1개로 시작한다. 사용자가 사이드바 커밋 목록에서 커밋을 선택하면 커밋 종속 상태만 리셋되고 화면 전환은 발생하지 않는다.
 
 ---
 
@@ -154,6 +154,6 @@ S02_WorkspaceScreen
 - `Ctrl+W`(Win/Linux) 또는 `Cmd+W`(Mac)는 `focusedPaneId`의 활성 탭을 닫는다. 이 단축키는 텍스트 입력 필드에 커서가 있어도 항상 워크스페이스 탭 닫기로 처리된다. VS Code는 웹뷰의 `preventDefault()`와 무관하게 "에디터 닫기" 같은 워크벤치 키바인딩을 항상 호스트로 전달하므로, `package.json`의 `activeWebviewPanelId` when절 키바인딩으로 이 단축키를 `gitChronicle.closeActiveTab` 커맨드로 라우팅하고 그 커맨드가 `CLOSE_ACTIVE_TAB` 메시지를 웹뷰로 보내 탭을 닫는다. 웹뷰의 `preventDefault()` + 직접 처리는 VS Code 밖(브라우저 미리보기) 런타임에서만 쓰인다.
 - `Ctrl+Tab` / `Ctrl+Shift+Tab`은 Win/Linux에서만 `focusedPaneId` 안의 다음/이전 탭 순환 전환에 사용한다. macOS의 `Cmd+Tab` / `Cmd+Shift+Tab`은 시스템 앱 전환과 충돌하므로 워크스페이스 단축키로 지원하지 않는다.
 - 포커스 pane은 패널 내부 클릭 또는 탭 활성화로 전환된다. 다만 이미 열린 탭 사이의 포커스 전환, 탭 닫기 fallback, 중앙 드롭 병합 활성화는 사이드바의 커밋/파일 컨텍스트를 바꾸지 않으며, 사이드바에서 새 항목을 열 때만 그 컨텍스트가 갱신된다.
-- 분할 레이아웃은 Webview State에 저장하지 않는다. 웹뷰 재생성 후에는 단일 pane으로 초기화된다.
+- 최상위 `paneTree`, `focusedPaneId`, code 탭 내부 `codeInnerPaneTree`는 Webview State에 저장된다. VSCode 안에서 웹뷰가 숨겨졌다가 다시 생성되면 열려 있던 탭 목록, 분할 배치, 각 pane의 활성 탭이 복원되고, 탭 콘텐츠는 각 Feature의 기존 mount 로직으로 다시 로드된다.
 - 노트는 사이드바 `NotesSection`에서만 열며, S02 내부 `note` 탭으로 표시된다. 탭 이탈 시 저장되지 않은 초안은 즉시 플러시 저장되고, 목록에서 드래그 이동/삭제하면 열린 note 탭도 같은 `relativePath` 기준으로 갱신된다.
-- `code` 탭 내부의 `codeInnerPaneTree`(diff / 파일 AI 요약 / 심볼 그래프) 상태도 최상위 pane 분할과 마찬가지로 영속화하지 않는다. 웹뷰 재생성 후에는 항상 diff 단일 리프로 초기화된다.
+- `code` 탭 내부의 `codeInnerPaneTree`(diff / 파일 AI 요약 / 심볼 그래프)도 최상위 pane 분할과 함께 Webview State에 저장되며, 웹뷰 숨김/복귀 시 마지막 분할 상태가 복원된다.

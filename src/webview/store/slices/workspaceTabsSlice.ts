@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { mergePersistedWebviewState, readPersistedWebviewState } from '../../bridge/persistedWebviewState';
 import type { Commit } from '../../types/commit';
 import type { NoteEntry } from '../../types/note';
 import type { AppState } from '../appStore';
@@ -78,6 +79,8 @@ export interface WorkspaceTabsSlice {
   renameNoteTabs: (fromRelativePath: string, toRelativePath: string) => void;
   closeNoteTabs: (relativePath: string) => void;
 }
+
+let persistWorkspaceTabsTimer: number | null = null;
 
 export function computeWorkspaceTabId(panelType: WorkspaceTabPanelType, commitHash: string, filePath?: string | null): string {
   return `${panelType}:${commitHash}:${filePath ?? '_'}`;
@@ -263,6 +266,26 @@ function createLeafPane(tabs: WorkspaceTab[] = [], activeTabId: string | null = 
   };
 }
 
+function persistWorkspaceTabsState(paneTree: PaneNode, focusedPaneId: string): void {
+  mergePersistedWebviewState({
+    workspaceTabs: {
+      paneTree,
+      focusedPaneId,
+    },
+  });
+}
+
+function schedulePersistWorkspaceTabsState(paneTree: PaneNode, focusedPaneId: string): void {
+  if (persistWorkspaceTabsTimer !== null) {
+    window.clearTimeout(persistWorkspaceTabsTimer);
+  }
+
+  persistWorkspaceTabsTimer = window.setTimeout(() => {
+    persistWorkspaceTabsState(paneTree, focusedPaneId);
+    persistWorkspaceTabsTimer = null;
+  }, 120);
+}
+
 export function getActiveTab(node: PaneLeafNode): WorkspaceTab | null {
   return node.tabs.find((tab) => tab.id === node.activeTabId) ?? null;
 }
@@ -417,11 +440,16 @@ function mergeTabIntoLeaf(root: PaneNode, sourcePaneId: string, targetPaneId: st
 }
 
 export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceTabsSlice> = (set, get) => {
-  const rootPane = createLeafPane();
+  const persistedWorkspaceTabs = readPersistedWebviewState().workspaceTabs;
+  const rootPane = persistedWorkspaceTabs?.paneTree ?? createLeafPane();
+  const initialFocusedPane = persistedWorkspaceTabs?.focusedPaneId;
+  const resolvedFocusedPane = initialFocusedPane && findLeafPane(rootPane, initialFocusedPane)
+    ? initialFocusedPane
+    : getFirstLeafPane(rootPane).paneId;
 
   return {
     paneTree: rootPane,
-    focusedPaneId: rootPane.paneId,
+    focusedPaneId: resolvedFocusedPane,
 
     openWorkspaceTab: (input) => {
       const nextTab = createWorkspaceTab(input);
@@ -458,6 +486,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
         // note 탭은 commit이 없으므로 마지막 selectedCommit을 그대로 유지한다.
         selectedCommit: nextTab.commit ?? current.selectedCommit,
       }));
+      const nextState = get();
+      persistWorkspaceTabsState(nextState.paneTree, nextState.focusedPaneId);
     },
 
     openNoteTreeEntry: (relativePath) => {
@@ -519,6 +549,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
         paneTree: collapsedTree,
         focusedPaneId: nextFocusedPane.paneId,
       });
+      persistWorkspaceTabsState(collapsedTree, nextFocusedPane.paneId);
     },
 
     activateWorkspaceTab: (paneId, tabId) => {
@@ -535,6 +566,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           : currentPane),
         focusedPaneId: paneId,
       }));
+      persistWorkspaceTabsState(get().paneTree, get().focusedPaneId);
     },
 
     activateAdjacentWorkspaceTab: (paneId, direction) => {
@@ -586,6 +618,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           };
         }),
       }));
+      const nextState = get();
+      persistWorkspaceTabsState(nextState.paneTree, nextState.focusedPaneId);
     },
 
     focusPane: (paneId) => {
@@ -597,6 +631,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
       set({
         focusedPaneId: paneId,
       });
+      persistWorkspaceTabsState(get().paneTree, paneId);
     },
 
     moveWorkspaceTab: ({ sourcePaneId, tabId, targetPaneId, zone }) => {
@@ -610,6 +645,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           paneTree: nextTree,
           focusedPaneId: targetPaneId,
         });
+        persistWorkspaceTabsState(nextTree, targetPaneId);
         return;
       }
 
@@ -619,6 +655,7 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
         paneTree: nextTree,
         focusedPaneId: focusedPane.paneId,
       });
+      persistWorkspaceTabsState(nextTree, focusedPane.paneId);
     },
 
     moveCodeInnerPanel: ({ paneId, tabId, sourcePanel, targetPanel, zone }) => {
@@ -643,6 +680,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           };
         }),
       }));
+      const nextState = get();
+      persistWorkspaceTabsState(nextState.paneTree, nextState.focusedPaneId);
     },
 
     setPaneSplitSize: (paneId, sizePercent) => {
@@ -651,6 +690,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           ? { ...pane, sizePercent }
           : pane),
       }));
+      const nextState = get();
+      schedulePersistWorkspaceTabsState(nextState.paneTree, nextState.focusedPaneId);
     },
 
     resizeCodeInnerSplit: (paneId, tabId, nodeId, sizePercent) => {
@@ -681,6 +722,8 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
           };
         }),
       }));
+      const nextState = get();
+      schedulePersistWorkspaceTabsState(nextState.paneTree, nextState.focusedPaneId);
     },
 
     renameNoteTabs: (fromRelativePath, toRelativePath) => {
@@ -700,12 +743,16 @@ export const createWorkspaceTabsSlice: StateCreator<AppState, [], [], WorkspaceT
             : pane.activeTabId,
         })),
       }));
+      const nextState = get();
+      persistWorkspaceTabsState(nextState.paneTree, nextState.focusedPaneId);
     },
 
     closeNoteTabs: (relativePath) => {
       set((state) => ({
         paneTree: removeNoteTabsFromTree(state.paneTree, relativePath),
       }));
+      const nextState = get();
+      persistWorkspaceTabsState(nextState.paneTree, nextState.focusedPaneId);
     },
   };
 };

@@ -1,5 +1,6 @@
 import type { FilterState } from '../types/commit';
 import { getWebviewState, setWebviewState } from './vscodeApi';
+import type { PaneNode } from '../store/slices/workspaceTabsSlice';
 
 export interface PersistedWorkspaceSidebarState {
   isBranchesSectionExpanded?: boolean;
@@ -17,6 +18,12 @@ export interface PersistedWorkspaceSidebarState {
 export interface PersistedWebviewState {
   filter?: Partial<FilterState>;
   workspaceSidebar?: PersistedWorkspaceSidebarState;
+  workspaceTabs?: PersistedWorkspaceTabsState;
+}
+
+export interface PersistedWorkspaceTabsState {
+  paneTree: PaneNode;
+  focusedPaneId: string;
 }
 
 export function readPersistedWebviewState(): PersistedWebviewState {
