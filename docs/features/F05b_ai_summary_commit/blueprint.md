@@ -94,6 +94,7 @@ interface AIUsageInfo {
 - fenced 코드블록 위에는 hover 시 복사 버튼이 나타나며, 클릭 시 해당 코드블록의 원본 마크다운(```` 포함)을 복사하고 성공 토스트를 표시한다
 - fenced 코드블록에 언어 태그가 있으면 `HighlightedCode`가 `shiki` 기반 문법 강조 결과를 `<code>` 내부 토큰 span으로 렌더링한다
 - Mermaid 코드블록은 다이어그램 preview로 렌더링되며, preview 우측 상단 hover 복사 버튼 또는 preview 선택 복사 시 원본 Mermaid 마크다운 블록을 복사하고, 복사 버튼 클릭 시 성공 토스트를 표시한다
+- Mermaid preview는 마우스 휠 줌(0.3x~2.0x), 빈 영역 드래그 팬, 우상단 `+ / - / fit` 버튼을 제공한다
 
 #### States
 - `generating`: `StreamingTextRenderer` 표시

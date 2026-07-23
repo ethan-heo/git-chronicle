@@ -245,15 +245,85 @@
   margin: 0;
 }
 
-.ai-summary-markdown .note-preview-mermaid {
-  overflow-x: auto;
+.ai-summary-markdown .note-preview-mermaid-viewport {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-md);
+  background: var(--gae-color-surface-secondary);
   padding: 0;
+  min-height: 220px;
+  max-height: 480px;
 }
 
-.ai-summary-markdown .note-preview-mermaid svg {
+.ai-summary-markdown .note-preview-mermaid-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.ai-summary-markdown .note-preview-mermaid-panning .note-preview-mermaid-stage {
+  cursor: grabbing;
+}
+
+.ai-summary-markdown .note-preview-mermaid svg,
+.ai-summary-markdown .note-preview-mermaid-stage svg {
   display: block;
-  min-width: max-content;
-  max-width: none;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
+.ai-summary-markdown .note-preview-mermaid-zoom-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--gae-border-color-default);
+  border-radius: var(--gae-border-radius-sm);
+  background: color-mix(in srgb, var(--gae-color-surface-elevated) 94%, transparent);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
+}
+
+.ai-summary-markdown .note-preview-mermaid-zoom-button {
+  display: inline-flex;
+  width: 22px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-right: 1px solid var(--gae-border-color-default);
+  background: transparent;
+  padding: 0;
+  color: var(--gae-color-text-primary);
+  font-size: 11px;
+  line-height: 1;
+  transition:
+    background-color var(--gae-motion-duration-fast) var(--gae-motion-easing-default),
+    color var(--gae-motion-duration-fast) var(--gae-motion-easing-default);
+}
+
+.ai-summary-markdown .note-preview-mermaid-zoom-button:last-child {
+  border-right: 0;
+}
+
+.ai-summary-markdown .note-preview-mermaid-zoom-button:hover {
+  background: var(--gae-color-surface-hover);
+}
+
+.ai-summary-markdown .note-preview-mermaid-zoom-fit-icon {
+  width: 12px;
+  height: 12px;
+  color: currentColor;
 }
 
 .ai-summary-markdown .note-preview-mermaid-loading,

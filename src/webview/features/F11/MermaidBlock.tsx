@@ -1,6 +1,7 @@
-import { useEffect, useId, useState, type FC } from 'react';
+import { useEffect, useId, useRef, useState, type FC } from 'react';
 import mermaid from 'mermaid';
 import { useTranslation } from 'react-i18next';
+import { attachMermaidPanZoom } from './mermaidPanZoom';
 
 mermaid.initialize({
   startOnLoad: false,
@@ -76,6 +77,7 @@ export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
   const [svgMarkup, setSvgMarkup] = useState<string | null>(() => renderedDiagramCache.get(cacheKey) ?? null);
   const [error, setError] = useState<string | null>(null);
   const diagramId = useId().replace(/:/g, '-');
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // prewarmMermaidDiagram()가 이미 이 cacheKey를 렌더링해 두었다면 다시 렌더링하지 않는다.
@@ -126,6 +128,14 @@ export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
     };
   }, [cacheKey, code, diagramId]);
 
+  useEffect(() => {
+    if (!svgMarkup || !containerRef.current) {
+      return;
+    }
+
+    return attachMermaidPanZoom(containerRef.current);
+  }, [svgMarkup]);
+
   if (error) {
     return (
       <div className="note-preview-mermaid-error" role="alert">
@@ -147,6 +157,7 @@ export const MermaidBlock: FC<MermaidBlockProps> = ({ cacheKey, code }) => {
 
   return (
     <div
+      ref={containerRef}
       className="note-preview-mermaid"
       dangerouslySetInnerHTML={{ __html: svgMarkup }}
     />

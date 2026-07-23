@@ -36,6 +36,7 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 - `NoteEditorPanel`은 별도 모드 전환 없이 라이브 프리뷰 편집기 하나만 렌더링한다.
 - `edit` 라이브 프리뷰의 fenced code block은 언어 태그가 있으면 `shiki` 기반 문법 강조를 적용한다. 지원 언어 범위는 css/html/javascript/json/jsx/markdown/mdx/tsx/typescript/yaml/bash/python/sql/diff다.
 - `edit` 라이브 프리뷰에서 ```mermaid 블록은 커서가 블록 밖에 있을 때 다이어그램 위젯으로 치환되고, 커서가 블록 안으로 들어오면 다시 원문 마크다운으로 편집 가능해야 한다.
+- 접힌 Mermaid 위젯은 마우스 휠 줌(0.3x~2.0x), 빈 영역 드래그 팬, 우상단 `+ / - / fit` 버튼을 지원하며, 위젯이 다시 접힐 때마다 fit 기준 뷰로 리셋된다.
 
 ## Data Sources
 

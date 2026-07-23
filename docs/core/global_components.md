@@ -286,6 +286,23 @@
 
 ---
 
+## MermaidBlock
+
+**용도:** Mermaid fenced code block을 렌더링된 SVG preview로 보여주는 공유 컴포넌트. 현재 F05b AI 요약 뷰어와 F11 노트 라이브 프리뷰가 동일한 렌더 캐시와 pan/zoom 상호작용을 재사용한다.
+
+| 속성 | 타입 | 설명 |
+|------|------|------|
+| `cacheKey` | `string` | 렌더 결과 캐시 키. 같은 key면 기존 SVG 문자열을 재사용한다 |
+| `code` | `string` | Mermaid fenced block 내부의 원본 코드 |
+
+**States:** `loading`, `displaying`, `error`
+
+**상호작용:** 마우스 휠로 0.3x~2.0x 범위 확대/축소, 빈 영역 드래그 팬, 우상단 `+ / - / fit` 버튼으로 뷰 리셋. preview 상태에서도 원본 Mermaid 마크다운 복사 흐름을 유지한다.
+
+**구현 파일:** `src/webview/features/F11/MermaidBlock.tsx`
+
+---
+
 ## Export Rule
 
 전역 컴포넌트는 `src/webview/shared/components/index.ts`에서 재-export한다.

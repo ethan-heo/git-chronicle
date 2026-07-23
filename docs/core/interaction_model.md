@@ -48,16 +48,16 @@
 ### Zoom
 
 - **트리거:** 마우스 휠 스크롤 (캔버스 위에서)
-- **적용 대상:** `DependencyGraph` 캔버스 (React Flow 내장 Zoom)
-- **결과:** 캔버스 줌 인/아웃
-- **규칙:** 최소 줌 0.3x, 최대 줌 2.0x. 줌 레벨은 React Flow가 자동 관리.
+- **적용 대상:** `DependencyGraph` 캔버스 (React Flow 내장 Zoom), `MermaidBlock`(F05b), `MermaidWidget`(F11)
+- **결과:** 캔버스/다이어그램 줌 인/아웃
+- **규칙:** 최소 줌 0.3x, 최대 줌 2.0x. `DependencyGraph`는 React Flow가, Mermaid preview는 `svg-pan-zoom`이 줌 레벨을 관리한다. Mermaid preview는 우상단 `+ / - / fit` 툴바를 함께 제공한다.
 
 ### Pan
 
 - **트리거:** 마우스 드래그 (캔버스 빈 영역) 또는 스크롤 바 드래그
-- **적용 대상:** `DependencyGraph` 캔버스
-- **결과:** 캔버스 뷰포트 이동
-- **규칙:** React Flow 내장 패닝 동작 사용.
+- **적용 대상:** `DependencyGraph` 캔버스, `MermaidBlock`(F05b), `MermaidWidget`(F11)
+- **결과:** 캔버스/다이어그램 뷰포트 이동
+- **규칙:** `DependencyGraph`는 React Flow 내장 패닝을, Mermaid preview는 `svg-pan-zoom` 드래그 패닝을 사용한다. Mermaid preview는 위젯이 다시 마운트될 때마다 fit 기준 뷰로 시작한다.
 
 ### Scroll (Infinite)
 

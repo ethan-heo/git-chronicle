@@ -16,6 +16,7 @@ import {
 import { markdown } from '@codemirror/lang-markdown';
 import { getMarkdownHighlighter, resolveLanguageTag } from '../../shared/highlighter/shikiHighlighter';
 import { prewarmMermaidDiagram, renderedDiagramCache } from './MermaidBlock';
+import { attachMermaidPanZoom } from './mermaidPanZoom';
 
 interface MarkdownLiveEditorProps {
   value: string;
@@ -1159,6 +1160,8 @@ class HorizontalRuleWidget extends WidgetType {
 }
 
 class MermaidWidget extends WidgetType {
+  private disposePanZoom: (() => void) | null = null;
+
   constructor(
     private readonly cacheKey: string,
     private readonly code: string,
@@ -1183,6 +1186,7 @@ class MermaidWidget extends WidgetType {
     contentWrapper.className = 'note-preview-mermaid';
     contentWrapper.innerHTML = svg;
     element.append(contentWrapper);
+    this.disposePanZoom = attachMermaidPanZoom(contentWrapper);
 
     // 방향키 커서 이동 자체는 moveVerticalLineAvoidingMermaid()가 CodeMirror의 픽셀 좌표
     // 계산을 우회해서 처리하지만, 스크롤 위치 계산 등 다른 용도로도 줄 높이 캐시는 정확해야
@@ -1190,6 +1194,11 @@ class MermaidWidget extends WidgetType {
     view.requestMeasure();
 
     return element;
+  }
+
+  override destroy(): void {
+    this.disposePanZoom?.();
+    this.disposePanZoom = null;
   }
 }
 
