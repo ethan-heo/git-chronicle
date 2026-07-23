@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { fetchFileContentAtCommit } from './gitService';
-import { detectSourceLanguage } from './lang/fileExtensions';
+import { detectSourceLanguage, isAssetModuleFile } from './lang/fileExtensions';
 import { collectModuleReferences, createTsSourceFile } from './lang/tsSourceWalker';
 
 export type DependencyKind = 'import' | 'require';
@@ -21,13 +21,15 @@ export class DependencyCruiserNotFoundError extends Error {
   }
 }
 
+interface DependencyCruiserDependency {
+  resolved?: string;
+  module?: string;
+  dependencyTypes?: string[];
+}
+
 interface DependencyCruiserModule {
   source?: string;
-  dependencies?: Array<{
-    resolved?: string;
-    module?: string;
-    dependencyTypes?: string[];
-  }>;
+  dependencies?: DependencyCruiserDependency[];
 }
 
 interface DependencyCruiserResult {
@@ -50,7 +52,9 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
     return [];
   }
 
-  const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-chronicle-'));
+  // realpath resolves macOS's /var -> /private/var symlink (and similar) so tmpDir matches the
+  // paths dependency-cruiser reports internally; otherwise startsWith(tmpDir) checks below always fail.
+  const tmpDir = await fs.promises.realpath(await fs.promises.mkdtemp(path.join(os.tmpdir(), 'git-chronicle-')));
   const resolvedFiles = new Map<string, string>();
   const changedFileSet = new Set<string>();
   const tsConfigPath = findTsConfigPath(repoPath);
@@ -59,14 +63,20 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
   try {
     for (const filePath of analyzableFiles) {
       const normalizedRelativePath = normalizePath(filePath);
-      const onDiskPath = path.resolve(repoPath, filePath);
       const tmpFilePath = path.join(tmpDir, filePath);
       let content: string | null = null;
 
-      if (fs.existsSync(onDiskPath)) {
-        content = await fs.promises.readFile(onDiskPath, 'utf8');
-      } else if (commitHash) {
+      if (commitHash) {
+        // Always resolve from the commit snapshot so files that survived to HEAD don't get
+        // analyzed against a later refactor while files removed since the commit are analyzed
+        // at the commit's own state — a mismatch that silently drops real dependency edges.
         content = await fetchFileContentAtCommit(repoPath, commitHash, filePath);
+      } else {
+        const onDiskPath = path.resolve(repoPath, filePath);
+
+        if (fs.existsSync(onDiskPath)) {
+          content = await fs.promises.readFile(onDiskPath, 'utf8');
+        }
       }
 
       if (content === null) {
@@ -111,7 +121,10 @@ export async function analyzeDependencies(repoPath: string, filePaths: string[],
 }
 
 function isAnalyzableFile(filePath: string): boolean {
-  return detectSourceLanguage(filePath) !== null;
+  // Asset modules (CSS Modules/JSON/SVG) are never parsed for their own outgoing imports
+  // (groupFilesByAnalyzer only groups jsTs/python/go), but they must still be copied into
+  // resolvedFiles/changedFileSet so JS/TS imports pointing at them can resolve to a valid edge target.
+  return detectSourceLanguage(filePath) !== null || isAssetModuleFile(filePath);
 }
 
 function groupFilesByAnalyzer(filePaths: string[]): Record<AnalyzableGroup, string[]> {
@@ -166,13 +179,7 @@ async function* analyzeWithDependencyCruiser(
     }
 
     for (const dependency of module.dependencies ?? []) {
-      const to = resolveDependencyTargetPath(
-        tmpDir,
-        repoPath,
-        from,
-        dependency.resolved ?? dependency.module ?? '',
-        tsConfigPaths,
-      );
+      const to = resolveDependencyTargetPath(tmpDir, repoPath, from, dependency, tsConfigPaths);
 
       if (!changedFileSet.has(to)) {
         continue;
@@ -567,10 +574,17 @@ function resolveDependencyTargetPath(
   tmpDir: string,
   repoPath: string,
   fromPath: string,
-  candidatePath: string,
+  dependency: DependencyCruiserDependency,
   tsConfigPaths: TsConfigPaths | undefined,
 ): string {
-  const normalizedCandidate = normalizePath(candidatePath);
+  if (dependency.resolved) {
+    // dependency-cruiser already resolved this to a filesystem path relative to baseDir (repoPath) or
+    // absolute. Resolve it directly — rejoining it against the importing file's directory (as done below
+    // for raw specifiers) double-applies path segments and silently breaks nested-directory imports.
+    return resolveToChangedFilePath(tmpDir, repoPath, normalizePath(dependency.resolved));
+  }
+
+  const normalizedCandidate = normalizePath(dependency.module ?? '');
   const directResolution = resolveChangedFileCandidate(tmpDir, repoPath, fromPath, normalizedCandidate);
 
   if (path.isAbsolute(normalizedCandidate) || normalizedCandidate.startsWith('.') || normalizedCandidate.startsWith('/')) {

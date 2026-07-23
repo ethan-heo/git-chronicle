@@ -22,8 +22,9 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 용어 | 정의 | 관련 코드 식별자 |
 |---|---|---|
 | 감쇠(Dimmed) 엣지 | 호버 중인 노드와 연결되지 않은 엣지의 시각적 강조 해제 상태 | `graph.ts`, `LegendPanel.tsx` |
-| 입력 재구성 | 디스크의 현재 파일 + `git show`로 복원한 누락 파일을 임시 디렉토리에 모아 분석 입력으로 만드는 과정 | `analyzeDependencies()` (`dependencyService.ts`) |
+| 입력 재구성 | 선택된 커밋의 `commitHash`가 있으면 모든 변경 파일을 `git show`로 복원해 임시 디렉토리에 모으고, `commitHash`가 없을 때만 디스크의 현재 파일로 폴백하는 과정. 항상 같은 시점(커밋 스냅샷)의 파일만 섞어 분석해 파일 이동/리팩터링으로 인한 시점 불일치를 방지한다 | `analyzeDependencies()` (`dependencyService.ts`) |
 | 고립 노드 | 의존 관계가 없는 변경 파일도 엣지 없이 단독 노드로 표시하는 것 | `graph.ts` |
+| 자산 모듈(Asset Module) | JS/TS 코드에서 값으로 import되는 텍스트 기반 자산 파일(CSS Modules, JSON, SVG). 스스로 outgoing 의존성을 파싱하지는 않지만, JS/TS 쪽에서 이들을 가리키는 import는 엣지로 인식한다 | `isAssetModuleFile()` (`fileExtensions.ts`), `ANALYZABLE_FILE_PATTERN` (`graph.ts`) |
 
 ---
 
@@ -48,8 +49,8 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 
 | 항목 | 내용 |
 |------|------|
-| 분석 도구 | JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통한 dependency-cruiser API 실행, Python/Go는 텍스트 파싱 기반 분석 |
-| 입력 재구성 | 현재 디스크 파일은 임시 디렉토리로 복사, 누락 파일은 `git show <commitHash>:<filePath>`로 복원 후 분석 |
+| 분석 도구 | JS/TS/CJS/ESM은 `dist/depcruiser-runner.mjs`를 통한 dependency-cruiser API 실행, Python/Go는 텍스트 파싱 기반 분석. 자산 모듈(CSS Modules/JSON/SVG)은 스스로 파싱되지 않고, JS/TS 쪽 import의 엣지 대상으로만 인식 |
+| 입력 재구성 | `commitHash`가 있으면 모든 변경 파일을 `git show <commitHash>:<filePath>`로 복원(커밋 시점 스냅샷 보장). `commitHash`가 없을 때만 디스크의 현재 파일로 폴백 |
 | 경로 비교 | 분석 결과가 `tmpDir`/`repoPath` 절대 경로로 반환되더라도 변경 파일 집합과 비교할 수 있도록 repo-relative 경로로 정규화 |
 | JS/TS 경로 해석 | `dependency-cruiser`가 `resolved` 대신 `module`만 반환하거나, `./Button`처럼 확장자 없는 상대 경로를 반환해도 같은 커밋의 변경 파일로 재해석 |
 | 렌더링 라이브러리 | React Flow (MIT 라이선스, 줌·패닝·선택 인터랙션 내장) |
@@ -57,7 +58,8 @@ Feature 간 공유되는 용어는 [core/glossary.md](../../core/glossary.md)를
 | 엣지 | 변경 파일 간 import / require 의존 관계 |
 | 고립 노드 | 의존 관계가 없는 변경 파일도 노드로 표시 (엣지 없이 단독 노드) |
 | Python/Go 파일 | 변경 파일 간 import 의존 관계를 엣지로 표시 |
-| JS/TS 외, Python/Go 제외 파일 | 노드로 표시하되 엣지 없음. 노드에 "의존 관계 분석 불가" 툴팁 표시 |
+| 자산 모듈 파일 | CSS Modules(`.module.css`/`.module.scss`/`.module.sass`/`.module.less`), JSON, SVG는 JS/TS import의 엣지 대상 노드로 표시(자산 모듈 자체의 outgoing 의존성은 파싱하지 않음). 순수 바이너리 자산(이미지/폰트/미디어)과 사이드이펙트 전용 일반 CSS(`.css`/`.scss` 등, 모듈 아님)는 이번 범위에서 제외 |
+| JS/TS·Python/Go·자산 모듈 외 파일 | 노드로 표시하되 엣지 없음. 노드에 "의존 관계 분석 불가" 툴팁 표시 |
 | 레이아웃 | 엣지가 있으면 Dagre 계층 레이아웃, 없으면 고립 파일들을 한곳에 응집한 컴팩트 클러스터 배치. 연결 그래프 안의 고립 노드도 같은 응집 규칙을 유지 |
 | 인터랙션 | 노드 호버 → [복사] 아이콘 + 연결 엣지 강조 + 비연결 엣지 감쇠. [복사]는 노드 라벨을 파일명만 사용한 Mermaid 서브그래프를 생성하며, 복사한 파일에서 바깥으로 나가는 직접 의존 대상만 포함한다. 노드는 드래그로 위치 조정 가능 |
 | 화면 맞춤 | 초기 렌더링 및 캔버스 크기 변경 시 `fitView()` 자동 적용 |

@@ -2,7 +2,10 @@ import type { Edge, Node } from '@xyflow/react';
 import { graphlib, layout as layoutGraph } from '@dagrejs/dagre';
 import type { ChangedFile, DependencyEdge } from '../../types/commit';
 
-export const ANALYZABLE_FILE_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx)$/i;
+// Keep this extension set in sync with `isAnalyzableFile()` / `ASSET_MODULE_FILE_PATTERN` in
+// src/extension/lang/fileExtensions.ts — this pattern only drives the "no analysis" badge, but a
+// mismatch would show the badge on files the Extension Host actually generates edges for (or vice versa).
+export const ANALYZABLE_FILE_PATTERN = /\.(?:mjs|cjs|js|jsx|mts|cts|ts|tsx|module\.css|module\.scss|module\.sass|module\.less|json|svg)$/i;
 
 export interface FileNodeData extends Record<string, unknown> {
   file: ChangedFile;

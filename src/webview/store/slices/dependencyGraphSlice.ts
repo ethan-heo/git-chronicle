@@ -4,6 +4,7 @@ import type { DependencyEdge } from '../../types/commit';
 import type { AppState } from '../appStore';
 
 export interface DependencyGraphStateEntry {
+  commitHash: string | null;
   dependencyEdges: DependencyEdge[];
   isLoading: boolean;
   error: string | null;
@@ -30,6 +31,7 @@ const demoDependencyEdges: DependencyEdge[] = [
 ];
 
 export const EMPTY_DEPENDENCY_GRAPH_STATE: DependencyGraphStateEntry = {
+  commitHash: null,
   dependencyEdges: [],
   isLoading: false,
   error: null,
@@ -56,6 +58,7 @@ export const createDependencyGraphSlice: StateCreator<AppState, [], [], Dependen
         ...current.dependencyGraphsByPane,
         [paneId]: {
           ...getEntry(current, paneId),
+          commitHash,
           isLoading: true,
           error: null,
         },
@@ -81,6 +84,7 @@ export const createDependencyGraphSlice: StateCreator<AppState, [], [], Dependen
       dependencyGraphsByPane: {
         ...state.dependencyGraphsByPane,
         [paneId]: {
+          ...getEntry(state, paneId),
           dependencyEdges: edges,
           isLoading: false,
           error: null,
@@ -95,6 +99,7 @@ export const createDependencyGraphSlice: StateCreator<AppState, [], [], Dependen
       dependencyGraphsByPane: {
         ...state.dependencyGraphsByPane,
         [paneId]: {
+          ...getEntry(state, paneId),
           dependencyEdges: [],
           isLoading: false,
           error: message,

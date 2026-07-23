@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChangedFile } from '../../src/webview/types/commit';
-import { buildNodePathIndex, layoutFiles, resolveNodePath } from '../../src/webview/features/F04/graph';
+import { ANALYZABLE_FILE_PATTERN, buildNodePathIndex, layoutFiles, resolveNodePath } from '../../src/webview/features/F04/graph';
 
 describe('graph path resolution', () => {
   it('does not let duplicate file names overwrite each other in the node index', () => {
@@ -41,5 +41,17 @@ describe('graph path resolution', () => {
 
     expect(positions.get('src/a.ts')?.x).toBeLessThan(positions.get('src/b.ts')?.x ?? 0);
     expect(positions.get('src/c.ts')?.y).toBeGreaterThan(positions.get('src/b.ts')?.y ?? 0);
+  });
+
+  it('treats CSS Modules, JSON, and SVG as analyzable asset module targets', () => {
+    expect(ANALYZABLE_FILE_PATTERN.test('src/Button.module.css')).toBe(true);
+    expect(ANALYZABLE_FILE_PATTERN.test('src/Button.module.scss')).toBe(true);
+    expect(ANALYZABLE_FILE_PATTERN.test('src/data.json')).toBe(true);
+    expect(ANALYZABLE_FILE_PATTERN.test('src/icon.svg')).toBe(true);
+  });
+
+  it('does not treat plain (non-module) CSS or binary assets as analyzable', () => {
+    expect(ANALYZABLE_FILE_PATTERN.test('src/global.css')).toBe(false);
+    expect(ANALYZABLE_FILE_PATTERN.test('src/logo.png')).toBe(false);
   });
 });

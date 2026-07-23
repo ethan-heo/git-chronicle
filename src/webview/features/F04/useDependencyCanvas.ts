@@ -33,7 +33,19 @@ export function useDependencyCanvas(options: { isActive: boolean; paneId: string
       return;
     }
 
-    if (changedFilesState.changedFiles.length > 0 && !changedFilesState.isLoading && !changedFilesState.error && !dependencyState.hasLoaded && !dependencyState.isLoading && !dependencyState.error) {
+    // A pane keeps its dependency graph entry across commit switches (a workspace pane can show
+    // different commits' fileCanvas tabs over time), so `hasLoaded`/`error` alone would stay stuck
+    // from a previous commit and block ever loading the newly selected one. Only trust them when the
+    // cached entry actually belongs to the commit currently being viewed.
+    const isDependencyStateForCurrentCommit = dependencyState.commitHash === commit.hash;
+    const shouldLoadDependencies =
+      changedFilesState.changedFiles.length > 0 &&
+      !changedFilesState.isLoading &&
+      !changedFilesState.error &&
+      !dependencyState.isLoading &&
+      (!isDependencyStateForCurrentCommit || (!dependencyState.hasLoaded && !dependencyState.error));
+
+    if (shouldLoadDependencies) {
       loadDependencies({
         paneId,
         commitHash: commit.hash,
@@ -46,6 +58,7 @@ export function useDependencyCanvas(options: { isActive: boolean; paneId: string
     changedFilesState.hasLoaded,
     changedFilesState.isLoading,
     commit,
+    dependencyState.commitHash,
     dependencyState.hasLoaded,
     dependencyState.error,
     dependencyState.isLoading,
