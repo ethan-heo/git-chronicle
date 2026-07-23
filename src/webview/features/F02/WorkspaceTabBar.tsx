@@ -1,4 +1,4 @@
-import type { DragEventHandler, FC, ReactNode } from 'react';
+import { forwardRef, useEffect, useRef, type DragEventHandler, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkspaceTab } from '../../store/slices/workspaceTabsSlice';
 
@@ -37,6 +37,37 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
   leadingActions,
   trailingActions,
 }) => {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const activeTabRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isFocusedPane) {
+      return;
+    }
+
+    const scrollContainer = scrollContainerRef.current;
+    const activeTabElement = activeTabRef.current;
+    if (!scrollContainer || !activeTabElement) {
+      return;
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const tabRect = activeTabElement.getBoundingClientRect();
+    const nextScrollLeft =
+      tabRect.left < containerRect.left
+        ? scrollContainer.scrollLeft - (containerRect.left - tabRect.left)
+        : tabRect.right > containerRect.right
+          ? scrollContainer.scrollLeft + (tabRect.right - containerRect.right)
+          : null;
+
+    if (nextScrollLeft !== null) {
+      scrollContainer.scrollTo({
+        left: nextScrollLeft,
+        behavior: 'smooth',
+      });
+    }
+  }, [activeTabId, isFocusedPane, tabs]);
+
   return (
     <div
       className={[
@@ -53,11 +84,15 @@ export const WorkspaceTabBar: FC<WorkspaceTabBarProps> = ({
           {leadingActions}
         </div>
       ) : null}
-      <div className="workspace-tab-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 [scrollbar-gutter:stable]">
+      <div
+        ref={scrollContainerRef}
+        className="workspace-tab-scrollbar min-w-0 flex-1 overflow-x-auto pb-1 [scrollbar-gutter:stable]"
+      >
         <div className="flex min-w-max items-center gap-1 pr-1">
           {tabs.map((tab) => (
             <WorkspaceTabItem
               key={tab.id}
+              ref={tab.id === activeTabId ? activeTabRef : undefined}
               tab={tab}
               isVisible={tab.id === activeTabId}
               isFocused={isFocusedPane && tab.id === activeTabId}
@@ -92,54 +127,59 @@ interface WorkspaceTabItemProps {
   onDragEnd?: () => void;
 }
 
-const WorkspaceTabItem: FC<WorkspaceTabItemProps> = ({ paneId, tab, isVisible, isFocused, isGenerating, onActivate, onClose, onDragStart, onDragEnd }) => {
-  const { t } = useTranslation();
-  const tabLabel = getTabLabel(tab, t);
-  const tabBadge = getTabBadge(tab, t);
+const WorkspaceTabItem = forwardRef<HTMLDivElement, WorkspaceTabItemProps>(
+  ({ paneId, tab, isVisible, isFocused, isGenerating, onActivate, onClose, onDragStart, onDragEnd }, ref) => {
+    const { t } = useTranslation();
+    const tabLabel = getTabLabel(tab, t);
+    const tabBadge = getTabBadge(tab, t);
 
-  return (
-    <div
-      draggable
-      data-pane-id={paneId}
-      data-tab-visibility-state={isVisible ? 'visible' : 'hidden'}
-      data-tab-focus-state={isFocused ? 'focused' : 'unfocused'}
-      className={[
-        'group flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm transition-colors',
-        isVisible
-          ? 'bg-selected text-text'
-          : 'bg-surface text-muted hover:bg-hover hover:text-text',
-      ].join(' ')}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-    >
-      <button
-        type="button"
-        className="flex items-center gap-2"
-        onClick={onActivate}
-        aria-label={tabLabel}
-        aria-current={isVisible ? 'page' : undefined}
-        title={tabLabel}
+    return (
+      <div
+        ref={ref}
+        draggable
+        data-pane-id={paneId}
+        data-tab-visibility-state={isVisible ? 'visible' : 'hidden'}
+        data-tab-focus-state={isFocused ? 'focused' : 'unfocused'}
+        className={[
+          'group flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm transition-colors',
+          isVisible
+            ? 'bg-selected text-text'
+            : 'bg-surface text-muted hover:bg-hover hover:text-text',
+        ].join(' ')}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
       >
-        {tabBadge ? (
-          <span className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text">
-            {tabBadge}
-          </span>
-        ) : null}
-        <span className="max-w-[180px] truncate">{tabLabel}</span>
-        {isGenerating ? <span className="size-2 rounded-full bg-accent" aria-label={t('ai_summary.generating_badge_aria')} /> : null}
-      </button>
-      <button
-        type="button"
-        className="rounded p-1 text-muted transition-colors hover:bg-hover hover:text-text"
-        onClick={onClose}
-        aria-label={t('workspace.tab_close_aria', { label: tabLabel })}
-        title={t('workspace.tab_close_aria', { label: tabLabel })}
-      >
-        ×
-      </button>
-    </div>
-  );
-};
+        <button
+          type="button"
+          className="flex items-center gap-2"
+          onClick={onActivate}
+          aria-label={tabLabel}
+          aria-current={isVisible ? 'page' : undefined}
+          title={tabLabel}
+        >
+          {tabBadge ? (
+            <span className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-text">
+              {tabBadge}
+            </span>
+          ) : null}
+          <span className="max-w-[180px] truncate">{tabLabel}</span>
+          {isGenerating ? <span className="size-2 rounded-full bg-accent" aria-label={t('ai_summary.generating_badge_aria')} /> : null}
+        </button>
+        <button
+          type="button"
+          className="rounded p-1 text-muted transition-colors hover:bg-hover hover:text-text"
+          onClick={onClose}
+          aria-label={t('workspace.tab_close_aria', { label: tabLabel })}
+          title={t('workspace.tab_close_aria', { label: tabLabel })}
+        >
+          ×
+        </button>
+      </div>
+    );
+  },
+);
+
+WorkspaceTabItem.displayName = 'WorkspaceTabItem';
 
 function getTabLabel(tab: WorkspaceTab, t: (key: string) => string): string {
   if (tab.panelType === 'code') {
