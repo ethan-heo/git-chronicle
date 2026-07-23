@@ -1,4 +1,18 @@
 
+## [1.11.0](https://github.com/ethan-heo/git-chronicle/compare/v1.10.0...v1.11.0) (2026-07-23)
+
+### Features
+
+* add pan and zoom controls for mermaid previews ([1a26aa6](https://github.com/ethan-heo/git-chronicle/commit/1a26aa6d18a808316331dfd6493b87a41b541882))
+
+### Bug Fixes
+
+* persist workspace tabs across webview hide ([e3cf6b6](https://github.com/ethan-heo/git-chronicle/commit/e3cf6b63ace0e608422c4c7cd2dbfb74591f0504))
+* hide active tab styling in unfocused split panes ([5c4cb50](https://github.com/ethan-heo/git-chronicle/commit/5c4cb502ff9b3827cafbeb8c897ebd0377ce7d85))
+* keep focused workspace tab visible in tab bar ([a9798ab](https://github.com/ethan-heo/git-chronicle/commit/a9798ab9c0457531f3814e1910bf2bcdad3b29bb))
+* prevent stale AI summary warnings and restore tab scroll ([b2970bb](https://github.com/ethan-heo/git-chronicle/commit/b2970bbb2d741c557db3f9e752ee4783d166e9ad))
+* **f04:** restore dependency edges from commit snapshots ([8bdc9b5](https://github.com/ethan-heo/git-chronicle/commit/8bdc9b5e8cd49cceb430903c03c3a910ebd3bcbd))
+
 ## [1.10.0](https://github.com/ethan-heo/git-chronicle/compare/v1.9.0...v1.10.0) (2026-07-21)
 
 ### Features
